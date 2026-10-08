@@ -29,8 +29,8 @@ class SoftwareRasterizer:
                  num_threads: Optional[int] = None, backend: str = "tiles"):
         if not isinstance(tile_size, int) or not 1 <= tile_size <= 256:
             raise ValueError("tile_size must be between 1 and 256 pixels")
-        if backend not in ("tiles", "bands"):
-            raise ValueError("backend must be tiles or bands")
+        if backend not in ("tiles", "tiles-jit", "bands"):
+            raise ValueError("backend must be tiles, tiles-jit or bands")
         if num_threads is not None and (not isinstance(num_threads, int) or num_threads < 1):
             raise ValueError("num_threads must be positive")
         self.fb = framebuffer
@@ -87,8 +87,9 @@ class SoftwareRasterizer:
         if not triangles:
             return
 
-        if self.backend == "tiles":
-            rasterize_tiles(self.fb, triangles, shader, self.tile_size, self.executor, self.num_threads)
+        if self.backend in ("tiles", "tiles-jit"):
+            rasterize_tiles(self.fb, triangles, shader, self.tile_size, self.executor,
+                            self.num_threads, compiled=self.backend == "tiles-jit")
             return
 
         # Historical horizontal-band reference renderer (not actual tile binning).
