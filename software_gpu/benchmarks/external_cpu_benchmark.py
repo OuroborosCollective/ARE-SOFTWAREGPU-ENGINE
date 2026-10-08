@@ -224,6 +224,7 @@ def child_run(args):
             "resolution": size, "triangles": len(data) // 3,
             "backend": args.backend if args.scene != "msaa4" or args.backend == "llvmpipe" else "msaa4",
             "workers_requested": args.workers,
+            "requested_backend": args.backend,
             "timing": timing, "details": details,
             "image_sha256": hashlib.sha256(rgba.tobytes()).hexdigest(),
             "image_shape": list(rgba.shape),
@@ -353,7 +354,7 @@ def orchestrate(args):
                         max_error = int(pixel_error.max())
                         count = int(np.count_nonzero(np.any(pixel_error[..., :3] > 0, axis=2)))
                         for entry in results:
-                            if entry.get("scene") == scene and entry.get("backend") == backend and entry.get("status") == "MEASURED":
+                            if entry.get("scene") == scene and entry.get("requested_backend") == backend and entry.get("status") == "MEASURED":
                                 entry["are_reference_parity"] = {
                                     "maximum_channel_error": max_error,
                                     "mismatched_pixels": count,
@@ -371,7 +372,7 @@ def orchestrate(args):
                     if backend in samples:
                         match = compare_images(samples[backend], mesa, scene)
                         for result in results:
-                            if result.get("scene") == scene and result.get("backend") == (backend if scene != "msaa4" else "msaa4"):
+                            if result.get("scene") == scene and result.get("requested_backend") == backend:
                                 result["mesa_color_comparison"] = match
                                 result["observed_llvmpipe_to_are_wall_ratio"] = None
                                 if match["classification"] == "SCENE_COLOR_PARITY_WITH_TOLERANCE":
