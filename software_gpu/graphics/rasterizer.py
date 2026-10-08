@@ -11,6 +11,7 @@ import numpy as np
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
 from ..core.device import VirtualGPU
+from .tile_backend import rasterize_tiles
 
 
 def edge_function(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
@@ -19,10 +20,22 @@ def edge_function(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
 
 
 class SoftwareRasterizer:
-    """Tiled multi-core software rasterizer replacing dedicated GPU graphics hardware."""
-    def __init__(self, framebuffer: Framebuffer, tile_size: int = 32, num_threads: Optional[int] = None):
+    """CPU renderer with selectable tile and historical band backends.
+
+    The bands backend preserves the previous implementation as a measurable
+    reference. Neither backend is a physical GPU or hardware GPU driver.
+    """
+    def __init__(self, framebuffer: Framebuffer, tile_size: int = 32,
+                 num_threads: Optional[int] = None, backend: str = "tiles"):
+        if not isinstance(tile_size, int) or not 1 <= tile_size <= 256:
+            raise ValueError("tile_size must be between 1 and 256 pixels")
+        if backend not in ("tiles", "bands"):
+            raise ValueError("backend must be tiles or bands")
+        if num_threads is not None and (not isinstance(num_threads, int) or num_threads < 1):
+            raise ValueError("num_threads must be positive")
         self.fb = framebuffer
         self.tile_size = tile_size
+        self.backend = backend
         self.num_threads = num_threads or VirtualGPU.get_current_device().num_sms
         self.executor = ThreadPoolExecutor(max_workers=self.num_threads, thread_name_prefix="SoftGPU_RasterTile")
 
@@ -74,7 +87,11 @@ class SoftwareRasterizer:
         if not triangles:
             return
 
-        # Stage 3: Multi-core Rasterization by Horizontal Tile Bands (OpenSWR / llvmpipe design)
+        if self.backend == "tiles":
+            rasterize_tiles(self.fb, triangles, shader, self.tile_size, self.executor, self.num_threads)
+            return
+
+        # Historical horizontal-band reference renderer (not actual tile binning).
         num_bands = min(self.num_threads, max(1, self.fb.height // self.tile_size))
         band_height = (self.fb.height + num_bands - 1) // num_bands
 
