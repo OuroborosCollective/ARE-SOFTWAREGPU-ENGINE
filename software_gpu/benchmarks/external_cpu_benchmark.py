@@ -348,8 +348,20 @@ def orchestrate(args):
             cpu_baseline = samples.get("bands")
             if cpu_baseline is not None:
                 for backend in ("tiles", "tiles-jit"):
-                    if backend in samples and not np.array_equal(cpu_baseline, samples[backend]):
-                        hard_failures.append(f"{scene}/{backend}: ARE_BACKEND_IMAGE_PARITY_FAILED")
+                    if backend in samples:
+                        pixel_error = np.abs(cpu_baseline.astype(np.int16) - samples[backend].astype(np.int16))
+                        max_error = int(pixel_error.max())
+                        count = int(np.count_nonzero(np.any(pixel_error[..., :3] > 0, axis=2)))
+                        for entry in results:
+                            if entry.get("scene") == scene and entry.get("backend") == backend and entry.get("status") == "MEASURED":
+                                entry["are_reference_parity"] = {
+                                    "maximum_channel_error": max_error,
+                                    "mismatched_pixels": count,
+                                    "classification": "EXACT" if max_error == 0 else
+                                        "UNVERIFIED_NUMERICAL_DIFFERENCE",
+                                }
+                        if max_error > 0:
+                            hard_failures.append(f"{scene}/{backend}: ARE_REFERENCE_PIXEL_MISMATCH_MAX_{max_error}_COUNT_{count}")
             if mesa is not None:
                 for backend in ("bands", "tiles", "tiles-jit"):
                     if backend in samples:
