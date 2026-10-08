@@ -23,6 +23,7 @@ from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.shader import Vertex, BlinnPhongShader, Matrix4
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.redirector.interceptor import GPURedirector
+from software_gpu.core.output import output_file
 
 
 def run_all_benchmarks():
@@ -202,8 +203,8 @@ def run_all_benchmarks():
     render_time = time.perf_counter() - t0
 
     # Save real output image
-    bmp_path = "/workspace/software_gpu_render.bmp"
-    ppm_path = "/workspace/software_gpu_render.ppm"
+    bmp_path = output_file("software_gpu_render.bmp")
+    ppm_path = output_file("software_gpu_render.ppm")
     fb.save_bmp(bmp_path)
     fb.save_ppm(ppm_path)
 
