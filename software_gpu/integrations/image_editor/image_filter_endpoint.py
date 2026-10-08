@@ -12,6 +12,7 @@ from software_gpu.core.device import VirtualGPU
 from software_gpu.core.types import GPUArray
 from software_gpu.compute.compiler import cuda_kernel
 from software_gpu.compute.kernels import conv2d_simt_kernel, VectorizedGPUKernels
+from software_gpu.core.output import output_file
 
 
 class ImageFilterPipeline:
@@ -145,18 +146,18 @@ class ImageFilterPipeline:
 if __name__ == "__main__":
     pipeline = ImageFilterPipeline()
     # Test on the rendered scene image
-    src_img_path = "/workspace/software_gpu_sphere.bmp"
+    src_img_path = output_file("software_gpu_sphere.bmp")
     img = pipeline.load_bmp(src_img_path)
     print(f"Loaded image from {src_img_path}, shape: {img.shape}")
 
     # 1. Apply Gaussian Blur
     blurred = pipeline.gaussian_blur(img, radius=3)
-    out_blur = "/workspace/software_gpu_blurred.bmp"
+    out_blur = output_file("software_gpu_blurred.bmp")
     pipeline.save_bmp(out_blur, blurred)
     print(f"Gaussian Blur applied -> saved to {out_blur}")
 
     # 2. Apply Sobel Edge Detection
     edges = pipeline.sobel_edges(img)
-    out_edges = "/workspace/software_gpu_sobel.bmp"
+    out_edges = output_file("software_gpu_sobel.bmp")
     pipeline.save_bmp(out_edges, edges)
     print(f"Sobel Edge Detection applied -> saved to {out_edges}")
