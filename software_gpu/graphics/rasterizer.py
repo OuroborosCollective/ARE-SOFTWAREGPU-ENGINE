@@ -12,11 +12,8 @@ from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
 from ..core.device import VirtualGPU
 from .tile_backend import rasterize_tiles
+from .geometry import prepare_triangles, edge_function, edge_covered
 
-
-def edge_function(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
-    """Computes signed area / edge function for barycentric coordinates."""
-    return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])
 
 
 class SoftwareRasterizer:
@@ -44,45 +41,7 @@ class SoftwareRasterizer:
         device = VirtualGPU.get_current_device()
         device.total_draw_calls += 1
 
-        # Stage 1: Vertex Shader Stage
-        transformed_verts = []
-        vert_varyings = []
-        for v in vertices:
-            clip_pos, vary = shader.vertex_shader(v)
-            transformed_verts.append(clip_pos)
-            vert_varyings.append(vary)
-
-        # Stage 2: Primitive Assembly & Triangles
-        triangles = []
-        w = float(self.fb.width)
-        h = float(self.fb.height)
-
-        for i0, i1, i2 in indices:
-            p0, p1, p2 = transformed_verts[i0], transformed_verts[i1], transformed_verts[i2]
-            v0_var, v1_var, v2_var = vert_varyings[i0], vert_varyings[i1], vert_varyings[i2]
-
-            # Simple near-plane clip check (w > 0.01)
-            if p0[3] <= 0.01 or p1[3] <= 0.01 or p2[3] <= 0.01:
-                continue
-
-            # Perspective division to NDC space
-            inv_w0, inv_w1, inv_w2 = 1.0 / p0[3], 1.0 / p1[3], 1.0 / p2[3]
-            ndc0 = p0[:3] * inv_w0
-            ndc1 = p1[:3] * inv_w1
-            ndc2 = p2[:3] * inv_w2
-
-            # Viewport transformation to screen coordinates
-            s0 = np.array([(ndc0[0] + 1.0) * 0.5 * w, (1.0 - ndc0[1]) * 0.5 * h, ndc0[2]], dtype=np.float32)
-            s1 = np.array([(ndc1[0] + 1.0) * 0.5 * w, (1.0 - ndc1[1]) * 0.5 * h, ndc1[2]], dtype=np.float32)
-            s2 = np.array([(ndc2[0] + 1.0) * 0.5 * w, (1.0 - ndc2[1]) * 0.5 * h, ndc2[2]], dtype=np.float32)
-
-            # Backface culling: test 2D signed area of triangle on screen
-            area = edge_function(s0, s1, s2)
-            if area <= 0:
-                # Triangle facing away from camera or degenerate
-                continue
-
-            triangles.append((s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area))
+        triangles = prepare_triangles(vertices, indices, shader, self.fb.width, self.fb.height)
 
         if not triangles:
             return
@@ -135,7 +94,8 @@ class SoftwareRasterizer:
                     w2 = edge_function(s0, s1, p)
 
                     # Inside triangle test
-                    if w0 >= 0 and w1 >= 0 and w2 >= 0:
+                    if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
+                            edge_covered(w2, s0, s1)):
                         alpha = w0 * inv_area
                         beta = w1 * inv_area
                         gamma = w2 * inv_area
