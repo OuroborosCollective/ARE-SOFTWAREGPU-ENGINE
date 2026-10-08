@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths:
       - software_gpu/integrations/aurion/**
-      - software_gpu/tests/test_aurion_offline_lod.py
+      - software_gpu/tests/test_aurion_*.py
       - fixtures/aurion/**
       - .github/workflows/aurion-offline-glb.yml
   push:
@@ -35,6 +35,6 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install "numpy>=1.20,<3"
       - name: Real CPU rendering and security tests
-        run: python -m unittest software_gpu.tests.test_aurion_offline_lod -v
+        run: python -m unittest software_gpu.tests.test_aurion_offline_lod software_gpu.tests.test_aurion_original_batch2 -v
       - name: Offline worker CLI import
         run: python -m software_gpu.integrations.aurion.offline_lod_worker --help

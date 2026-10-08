@@ -1,0 +1,52 @@
+{
+  "protocol": "are.aurion.street-lamp.glb-fixture.v1",
+  "authority": "offline-read-only",
+  "origin": "Owner-supplied original Aurion GLB files in ChatGPT conversation, 2026-10-09",
+  "fixture_id": "fountain",
+  "available_lods": [
+    1,
+    2
+  ],
+  "absence_of_other_lods": "NOT_CREATED_NOT_REQUIRED",
+  "representation": "Original GLB2 meshes; geometry-only CPU comparison, NOT full textures/PBR",
+  "camera": {
+    "yaw_degrees": 35,
+    "pitch_degrees": 13,
+    "center_y": 1.56,
+    "x_half_extent": 1.88,
+    "y_half_extent": 2.1
+  },
+  "pixel_resolution": 192,
+  "independent_reference": {
+    "pipeline": "Independent geometry-only NumPy CPU raster, not ARE and not Aurion WebGL",
+    "resolution": 224,
+    "mask_iou_lod1_vs_lod2": 0.95846,
+    "byte_identical_replays": 2
+  },
+  "lods": [
+    {
+      "lod": 1,
+      "file": "fountain_LOD1.glb",
+      "source_sha256": "4d9b7bd1da813fd5eb784867cc95fcf2614738cadde6422b5221422108f5212a",
+      "bytes": 7316404,
+      "vertices": 2791,
+      "triangles": 2132,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3
+    },
+    {
+      "lod": 2,
+      "file": "fountain_LOD2.glb",
+      "source_sha256": "2210a9495ccc08a7328d4949ec06581a4e606c0f28f5c7e48b84f492b0af9add",
+      "bytes": 7274952,
+      "vertices": 1698,
+      "triangles": 1053,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3
+    }
+  ]
+}

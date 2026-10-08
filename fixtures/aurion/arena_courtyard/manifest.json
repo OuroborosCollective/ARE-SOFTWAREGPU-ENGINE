@@ -1,0 +1,52 @@
+{
+  "protocol": "are.aurion.street-lamp.glb-fixture.v1",
+  "authority": "offline-read-only",
+  "origin": "Owner-supplied original Aurion GLB files in ChatGPT conversation, 2026-10-09",
+  "fixture_id": "arena_courtyard",
+  "available_lods": [
+    1,
+    2
+  ],
+  "absence_of_other_lods": "NOT_CREATED_NOT_REQUIRED",
+  "representation": "Original GLB2 meshes; geometry-only CPU comparison, NOT full textures/PBR",
+  "camera": {
+    "yaw_degrees": 31,
+    "pitch_degrees": 21,
+    "center_y": 4.06,
+    "x_half_extent": 20,
+    "y_half_extent": 11.5
+  },
+  "pixel_resolution": 192,
+  "independent_reference": {
+    "pipeline": "Independent geometry-only NumPy CPU raster, not ARE and not Aurion WebGL",
+    "resolution": 224,
+    "mask_iou_lod1_vs_lod2": 0.98763,
+    "byte_identical_replays": 2
+  },
+  "lods": [
+    {
+      "lod": 1,
+      "file": "arena_courtyard_LOD1(1).glb",
+      "source_sha256": "2a8924fc67f93619e3b1d39134b27e7444c006185fed631e40aa7d1a33490130",
+      "bytes": 7575264,
+      "vertices": 4776,
+      "triangles": 2781,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3
+    },
+    {
+      "lod": 2,
+      "file": "arena_courtyard_LOD2(1).glb",
+      "source_sha256": "c30c50f76a3ffd2f15ce04d92083a29e322fe2eca4be2db1e3c8f01b81da8916",
+      "bytes": 7520104,
+      "vertices": 3233,
+      "triangles": 1818,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3
+    }
+  ]
+}
