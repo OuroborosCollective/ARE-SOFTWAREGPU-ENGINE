@@ -7,6 +7,7 @@ NO MOCKS, NO STUBS - executes real network traffic and real calculations.
 import unittest
 import time
 import os
+import secrets
 import numpy as np
 
 from software_gpu.network.server import SoftwareGPUServer
@@ -21,12 +22,13 @@ class TestNetworkAndIntegrations(unittest.TestCase):
         # Start SoftwareGPU server on test ports
         cls.http_port = 8188
         cls.tcp_port = 8189
-        cls.server = SoftwareGPUServer(http_port=cls.http_port, tcp_port=cls.tcp_port)
+        cls.token = secrets.token_urlsafe(36)
+        cls.server = SoftwareGPUServer(http_port=cls.http_port, tcp_port=cls.tcp_port, auth_token=cls.token)
         cls.server.start()
         time.sleep(0.1)  # Allow sockets to bind
 
-        cls.http_client = SoftwareGPUClient(http_port=cls.http_port, tcp_port=cls.tcp_port, use_tcp=False)
-        cls.tcp_client = SoftwareGPUClient(http_port=cls.http_port, tcp_port=cls.tcp_port, use_tcp=True)
+        cls.http_client = SoftwareGPUClient(http_port=cls.http_port, tcp_port=cls.tcp_port, use_tcp=False, token=cls.token)
+        cls.tcp_client = SoftwareGPUClient(http_port=cls.http_port, tcp_port=cls.tcp_port, use_tcp=True, token=cls.token)
 
     @classmethod
     def tearDownClass(cls):
