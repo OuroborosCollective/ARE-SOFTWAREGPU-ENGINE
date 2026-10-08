@@ -1,62 +1,86 @@
 # ARE SoftwareGPU Engine
 
-CPU-only Software-Rasterizer und Compute-Prototyp fuer reproduzierbare Grafik-/Matrixoperationen. Der Quellcode wurde aus dem vom Inhaber bereitgestellten TAR-Archiv **SoftwareGPU 1.2.0** ueber einen SHA-256-gebundenen GitHub-Actions-Import uebernommen.
+> **CPU-first Software-Rasterisierung, reproduzierbare Grafiktests und experimentelle Compute-Kernels – ohne dedizierte GPU.**
+>
+> **English subtitle:** A CPU-only software renderer and graphics-compute research engine with tiled rasterization, optional LLVM JIT and reproducible benchmarks.
 
-**Status: Forschungs- und Entwicklungsprojekt. Kein GPU-Treiber, kein Ersatz fuer CUDA, DirectX 11 oder OpenGL ES auf Systemebene.** Die D3D11-artige Python-API emuliert eine Renderpipeline; es existiert kein Nachweis, dass beliebige Windows-Spiele oder CUDA-Trainingsframeworks damit unveraendert laufen.
+**Entwickelt von OuroborosCollective · SoftwareGPU 1.2.0 · Source-available, nichtkommerziell**
 
-## Enthalten
-- NumPy-basierte CPU-Matrixoperationen, elementweise Aktivierungen und SIMT-artige Test-Kernels
-- CPU-Rasterizer, Software-Shader, Depth-Buffer, 4x MSAA, FXAA und HDR-Demos
-- VPS/CPU-Auslastungstelemetrie und Benchmarks ohne hardwarebeschleunigte GPU
-- HTTP- und TCP-Prototyp auf Loopback; Netzwerk-Clients in Python, JS, C, C++, C#, Go und Rust
-- Experimentelle Android-/OpenGL-ES- und MMORPG-Integrationen
+[Erste Schritte](docs/QUICKSTART.md) · [Architektur](software_gpu/docs/ARCHITECTURE.md) · [Benchmarks & Evidence](docs/RENDER_OPTIMIZATION_EVIDENCE.md) · [Lizenz](LICENSE.md) · [Namensnennung](NOTICE) · [Kommerzielle Nutzung](docs/LICENSING.md)
 
-Client-Beispiele und experimentelle Adapter sind **keine** Nachweise vollstaendiger Plattform- oder Sprachkompatibilitaet.
+## Was ist das?
 
-## Lokal pruefen
+ARE SoftwareGPU Engine ist ein eigenständiges **CPU-basiertes Grafik- und Compute-Forschungsprojekt**. Es rendert Dreiecke in einen Software-Framebuffer, berechnet Tiefen- und Deckungsmasken, verarbeitet ausgewählte Bildfilter und führt deterministische Vergleichstests aus – auch auf Systemen ohne dedizierte Grafikkarte.
 
-Voraussetzung: Python 3.11 oder 3.12 und eine CPU.
+Das Projekt simuliert ausgewählte GPU-nahe Konzepte in Software. **Es ist kein GPU-Gerätetreiber und kein kompatibler Ersatz für DirectX 11, CUDA, Vulkan oder das Training großer Sprachmodelle.** Die vorhandenen Direct3D-/CUDA-artigen Schnittstellen sind experimentelle Python-Adapter.
+
+## Funktionen und Nachweisstand
+
+| Bereich | Implementierung | Nachweisgrenze |
+| --- | --- | --- |
+| Rendering | Software-Framebuffer, Depth-Test, Triangle-Binning und Tile-Rasterisierung | CPU-Bildvergleich auf Linux/Windows |
+| Beschleunigung | NumPy-Tiles sowie optionaler Numba/LLVM-JIT für Coverage und Tiefentest | Keine garantierte SIMD-ISA oder GPU-Beschleunigung |
+| Kantenglättung | 4× MSAA-Resolve und FXAA | Testbilder/Regression, kein DirectX-Konformitätstest |
+| Bildbearbeitung | HDR/Bloom, Tone-Mapping und Filter-Demos | Experimentelle Pipeline |
+| Compute | NumPy-Matrixoperationen, Generator-SIMT und Schwarm-Demos | Kein CUDA-Treiber, keine PyTorch-GPU-Anbindung |
+| Schnittstellen | HTTP/TCP-Prototyp und Beispielclients verschiedener Sprachen | **Nicht für öffentliche Netze freigegeben** |
+| Plattformen | GitHub-CI für Linux und Windows, Python 3.11/3.12 | Android-Beispiele ohne bestätigten Gerätetest |
+
+### Gemessene Verbesserung
+
+In drei festen CPU-CI-Fixtures wurden die neuen Tiles gegenüber dem historischen Band-Renderer **1,51–1,57×** schneller gemessen, mit optionalem JIT **1,65–1,73×** (separate Runner-Konfigurationen). Die Vergleichsbilder waren in diesen Läufen farbgleich; es gab keine Tiefenabweichung. Diese Zahlen sind **keine** generelle Leistungszusage. [Messaufbau und Grenzen](docs/RENDER_OPTIMIZATION_EVIDENCE.md).
+
+## Schnellstart
+
+Voraussetzung: Python 3.11 oder 3.12 und ein CPU-System.
 
 ```bash
-python -m pip install "numpy>=1.20,<3"
+python -m pip install -e .
+software-gpu --help
+software-gpu --info
 python -m unittest discover -s software_gpu/tests -v
-python main.py --help
-python main.py --info
 ```
 
-Die GitHub-Actions-Regressionen testen Ubuntu und Windows mit Python 3.11/3.12. Das ist weder ein nativer DirectX-Test noch ein Android-Deploymenttest.
-
-## CPU-Rasterisierung: Tile-, LLVM- und Referenz-Backend
-
-- `backend="tiles"` (Standard): 2D-Triangle-Binning, deterministische Tile-Eigentuemerschaft, NumPy-Vektormasken fuer Coverage/Depth. Programmierbare Fragmentshader bleiben Python.
-- `backend="tiles-jit"` (optional): derselbe Pipelinevertrag mit Numba/LLVM-kompiliertem, GIL-freiem CPU-Coverage-Kern; weiterhin **kein GPU-Treiber** und keine kompilierten HLSL/GLSL-Shader.
-- `backend="bands"`: unveraenderte historische Streifen-Rasterisierung als A/B-Referenz.
-- 4x MSAA: Speicherschonender `uint16`-Resolve ohne temporaere Float32-Vollkopie; andere Sampling-Zahlen werden explizit abgewiesen.
+Optionaler CPU-LLVM-Kern und Benchmark:
 
 ```bash
 python -m pip install -e ".[jit]"
 python -m software_gpu.benchmarks.compare_tile_backends --workers 2 --repeats 3 --jit
-python -m unittest discover -s software_gpu/tests -v
 ```
 
-Der optionale JIT-Pfad benoetigt kein GPU-Geraet, jedoch eine installierbare CPU-Numba/LLVM-Laufzeit. Benchmarks sind Hardware- und Workload-spezifisch und vergleichen **nur CPU-Backends**. Nachweise, Fehlergrenzen und Quellen: [docs/RENDER_OPTIMIZATION_EVIDENCE.md](docs/RENDER_OPTIMIZATION_EVIDENCE.md).
+Renderausgaben lassen sich mit `ARE_SOFTWAREGPU_OUTPUT_DIR` in ein eigenes Verzeichnis schreiben. Starte **`--server` nicht an einer öffentlichen Netzwerkschnittstelle**; Authentisierung, TLS und harte Ressourcenlimits fehlen noch. [Details](docs/SECURITY_AND_LIMITS.md).
 
-## Source-Provenienz
-- Originalarchiv: `aistudio_agent_environment-805fd56f-4455-4da9-b5ab-a0fe51f950c8-2026_10_08T17_31_27_601Z.tar`
-- Erwarteter Archiv-SHA-256: `b8b44a39b46ecfb50a2de121b2534c5d9912fccda2b1b0475faf194fe8e589b8`
-- 62 selektiv importierte UTF-8-Quelldateien. Temporaere Bytecode-Dateien, Links, generierte Bilder und Binaerartefakte wurden **nicht** entpackt.
-- Historische Importpruefsummen: [evidence/source-manifest.json](evidence/source-manifest.json)
-- Original-Dokumentation (unueberpruefte Behauptungen): [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md)
-- Reproduzierbare Importquelle: [scripts/import_source_archive.py](scripts/import_source_archive.py)
+## Projektstruktur
 
-Die Manifest-Hashes dokumentieren den **urspruenglichen Importstand**; spaetere explizite Korrekturen muessen nicht bytegleich zu diesen Quellen bleiben.
+```text
+software_gpu/core/          CPU-Gerätemodell, Speicher, Output und VPS-Governor
+software_gpu/compute/       Generator-SIMT und NumPy-Compute
+software_gpu/graphics/      Renderer, Framebuffer, Tile/LLVM und Postprocessing
+software_gpu/benchmarks/    Reale CPU-Benchmarks und Vergleichs-Fixtures
+software_gpu/network/       Experimentelle HTTP/TCP-Protokolle
+software_gpu/clients/       Sprachübergreifende Prototypen
+software_gpu/mobile/        Experimentelle Android-/OpenGL-ES-Adapter
+software_gpu/integrations/  Blender-, Image- und MMORPG-Beispiele
+software_gpu/tests/         Unit- und Regressionstests
+docs/                       Lizenzleitfaden, Sicherheit, Evidenz, Aurion-Grenzen
+```
 
-## Netzwerk- und Produktionsgrenze
+Die vollständige Architektur, Grenzen und Beispielabläufe stehen in der [technischen Dokumentation](software_gpu/docs/ARCHITECTURE.md). Die ursprünglichen Quellbehauptungen sind zu Herkunftszwecken getrennt in [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md) archiviert und **nicht automatisch verifiziert**.
 
-**HTTP/TCP-Server nicht oeffentlich freigeben.** Der experimentelle Dienst bietet derzeit keine verpflichtende Authentisierung, TLS-Terminierung, Mandantentrennung und keine hinreichend strengen Payload-/Kostenlimits. Der Standardbind ist `127.0.0.1`. Vor externer Bereitstellung sind separate Security-Gates erforderlich.
+## Lizenz und Namensnennung
 
-## Aurion
+**Copyright (c) 2026 OuroborosCollective.**
 
-ARE SoftwareGPU wird nicht als zweite Spielwelt-, Persistenz-, Physik- oder Tick-Authority eingebunden. Eine spaetere Aurion-Anbindung darf nur **isolierte CPU-Offline-Render-/Benchmark-Ergebnisse** mit reproduzierbaren Eingabehashes, Limits und Evidence-Receipts zurueckgeben. Keine Schreibrechte auf kanonischen World State.
+Dieses Projekt steht, soweit die Rechte bei den genannten Rechteinhabern liegen, unter der **[PolyForm Noncommercial License 1.0.0](LICENSE.md)** (`PolyForm-Noncommercial-1.0.0`).
 
-Details und offener Nachweisbedarf: [PROJECT_STATUS.md](PROJECT_STATUS.md).
+- **Nichtkommerziell:** Verwenden, untersuchen, ändern und unter den Lizenzbedingungen weitergeben.
+- **Namensnennung:** Bei Weitergabe den [verpflichtenden Rechtehinweis](NOTICE) und die Lizenz bzw. ihren offiziellen Link mitgeben. Empfohlene sichtbare Quellenangabe: „Based on ARE SoftwareGPU Engine by OuroborosCollective“.
+- **Kommerziell:** Nur mit **separater vorheriger schriftlicher Vereinbarung** mit den zuständigen Rechteinhabern; die öffentliche Lizenz erteilt diese Erlaubnis nicht.
+
+Die Lizenz ist **source-available, nicht OSI-zertifiziertes Open Source**. Rechte an Drittkomponenten bleiben unberührt. Anfragen für kommerzielle Lizenzierung: [Lizenzleitfaden](docs/LICENSING.md). Beiträge: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Aurion: bewusst isoliert
+
+Eine eventuelle Verwendung bei Echoes of Aurion ist nur als **read-only Offline-Render-/Benchmark-Worker** vorgesehen. Es gibt **keine** Liveintegration in die kanonische Spielwelt, Physik-Autorität oder 100-ms-Ticksteuerung. [Schnittstellenvertrag](docs/AURION_OFFLINE_ADAPTER_CONTRACT.md).
+
+[Projektstatus und CI-Evidence](PROJECT_STATUS.md) · [Projektüberblick (DE/EN)](docs/PROJECT_OVERVIEW.md)
