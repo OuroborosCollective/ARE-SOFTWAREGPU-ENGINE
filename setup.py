@@ -11,6 +11,11 @@ setup(
     install_requires=[
         "numpy>=1.20.0",
     ],
+    extras_require={
+        # CPU LLVM JIT acceleration is opt-in. The default distribution
+        # remains minimal and runs without Numba or a GPU.
+        "jit": ["numba>=0.61.2,<0.67"],
+    },
     entry_points={
         "console_scripts": [
             "software-gpu=main:main",
