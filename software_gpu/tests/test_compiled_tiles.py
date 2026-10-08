@@ -30,9 +30,9 @@ class TestLLVMCompiledTiles(unittest.TestCase):
         engine = SoftwareRasterizer(fb, tile_size=16, num_threads=workers, backend=backend)
         shader = GradientShader()
         coords = [
-            ((-.8, -.7, .22), (.0, .8, .22), (.87, -.7, .22)),
-            ((-.85, -.1, .41), (.3, .92, .41), (.91, -.6, .41)),
-            ((-.4, -.5, .15), (.06, .76, .15), (.55, -.51, .15)),
+            ((-.8, -.7, .22), (.87, -.7, .22), (.0, .8, .22)),
+            ((-.85, -.1, .41), (.91, -.6, .41), (.3, .92, .41)),
+            ((-.4, -.5, .15), (.55, -.51, .15), (.06, .76, .15)),
         ]
         try:
             for i, points in enumerate(coords):
@@ -53,6 +53,7 @@ class TestLLVMCompiledTiles(unittest.TestCase):
         from software_gpu.graphics.compiled_tile import get_compiled_coverage
         reference = self._render("tiles", 1)
         compiled = self._render("tiles-jit", 1)
+        self.assertGreater(np.count_nonzero(compiled.depth_buffer < 1.0), 30)
         np.testing.assert_array_equal(compiled.color_buffer, reference.color_buffer)
         np.testing.assert_allclose(compiled.depth_buffer, reference.depth_buffer, rtol=1e-6, atol=1e-7)
         self.assertTrue(get_compiled_coverage().signatures, "LLVM kernel was not compiled")
