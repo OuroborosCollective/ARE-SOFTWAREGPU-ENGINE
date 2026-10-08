@@ -29,5 +29,13 @@
 - Missing published license decision; do not claim open-source grant merely because the repository is public.
 - Aurion read-only offline-worker contract is documented, **not yet integrated** into the Aurion game runtime.
 
-## Release gate
-The PR remains **Draft** pending network hardening, stronger cross-platform/Android and real workload evidence, and owner approval for merge. This document records tested capabilities, not a claim of universal GPU replacement.
+## Research-backed CPU optimization (2026-10-08)
+- **Tiles**: true 2-D binning with immutable triangle order per tile; disjoint framebuffer ownership and NumPy-vectorized barycentric/depth masks. The previous band renderer remains selectable for differential verification.
+- **Optional LLVM**: `software_gpu[jit]` enables a Numba-compiled CPU coverage kernel with `nogil=True`, `fastmath=False`; Python fragment shaders remain scalar callbacks. This does not claim SIMD machine-instruction verification.
+- **MSAA**: exact 4x `uint16` resolve removes an unnecessary float32 copy, and unsupported sample counts fail closed.
+- **Regressions**: baseline 31 tests, optional JIT 33 tests. Deterministic image/depth comparisons across tile sizes and CPU thread counts, Windows/Linux Python test matrix, wheel/CLI smoke.
+- **Evidence**: https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/37834676696 (all jobs successful at source SHA `a14be371f60c4dcb8243d4f47bcacc56cba95ce8`).
+- **Measured CI samples**: NumPy tiles: 1.51–1.57x versus historical band renderer (single worker). Optional JIT tiles: 1.65–1.73x versus band renderer (two workers). All three deterministic fixtures produced identical frame color and zero depth error in those runs. **These are bounded measurements, not hardware-independent performance promises**. See `docs/RENDER_OPTIMIZATION_EVIDENCE.md`.
+
+## Merge versus production gate
+The owner authorized merge of tested, CPU-only research changes into this standalone repository. **No public service or Aurion runtime deployment is authorized by merging.** Network authentication/quotas, Android device validation, native GPU API compliance and license selection remain separate release blockers.

@@ -26,6 +26,21 @@ python main.py --info
 
 Die GitHub-Actions-Regressionen testen Ubuntu und Windows mit Python 3.11/3.12. Das ist weder ein nativer DirectX-Test noch ein Android-Deploymenttest.
 
+## CPU-Rasterisierung: Tile-, LLVM- und Referenz-Backend
+
+- `backend="tiles"` (Standard): 2D-Triangle-Binning, deterministische Tile-Eigentuemerschaft, NumPy-Vektormasken fuer Coverage/Depth. Programmierbare Fragmentshader bleiben Python.
+- `backend="tiles-jit"` (optional): derselbe Pipelinevertrag mit Numba/LLVM-kompiliertem, GIL-freiem CPU-Coverage-Kern; weiterhin **kein GPU-Treiber** und keine kompilierten HLSL/GLSL-Shader.
+- `backend="bands"`: unveraenderte historische Streifen-Rasterisierung als A/B-Referenz.
+- 4x MSAA: Speicherschonender `uint16`-Resolve ohne temporaere Float32-Vollkopie; andere Sampling-Zahlen werden explizit abgewiesen.
+
+```bash
+python -m pip install -e ".[jit]"
+python -m software_gpu.benchmarks.compare_tile_backends --workers 2 --repeats 3 --jit
+python -m unittest discover -s software_gpu/tests -v
+```
+
+Der optionale JIT-Pfad benoetigt kein GPU-Geraet, jedoch eine installierbare CPU-Numba/LLVM-Laufzeit. Benchmarks sind Hardware- und Workload-spezifisch und vergleichen **nur CPU-Backends**. Nachweise, Fehlergrenzen und Quellen: [docs/RENDER_OPTIMIZATION_EVIDENCE.md](docs/RENDER_OPTIMIZATION_EVIDENCE.md).
+
 ## Source-Provenienz
 - Originalarchiv: `aistudio_agent_environment-805fd56f-4455-4da9-b5ab-a0fe51f950c8-2026_10_08T17_31_27_601Z.tar`
 - Erwarteter Archiv-SHA-256: `b8b44a39b46ecfb50a2de121b2534c5d9912fccda2b1b0475faf194fe8e589b8`

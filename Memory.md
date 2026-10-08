@@ -1,1 +1,2 @@
 2026-10-08 | Änderung: 62 SHA-256-geprüfte CPU-Quellen importiert, Swarm-Tempo/CLI/Pfade gefixt; Erkenntnis: Software-Renderer, kein nativer GPU-Ersatz; Evidence: Import-Run 37823687557 grün, CPU/Windows/Linux/Wheel-Run 37824923372 grün (27 Tests, 1 Windows-UDS-Skip).
+2026-10-08 | Änderung: CPU-Tile-Binning, Numba-LLVM-Option, MSAA-Resolve und A/B-Bench-Gate; Erkenntnis: CPU-CI 1,51–1,73x gegen alte Bänder bei Bildgleichheit, kein GPU-Ersatz; Evidence: Actions 37834676696 (alle 7 Jobs grün, 31/33 Tests).
