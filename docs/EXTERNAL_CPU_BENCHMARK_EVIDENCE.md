@@ -14,6 +14,7 @@ This is a **separate evidence lane**, not a performance promise or a GPU replace
 
 - ARE uses Python fragment shading; Mesa uses native compiled GLSL. The shader implementations and full cost breakdown are not identical.
 - OpenGL clipping/fill/depth rules may differ at edges. Error is measured, not hidden.
+- A real first benchmark discovered 688 near-plane JIT pixels differing from ARE bands by exactly one 8-bit channel step (maximum 1/255). The benchmark marks this as `NUMERIC_ONE_LSB_DIFFERENCE`, records mismatch counts, and fails for deviations larger than one LSB. This is **not** byte-identical rendering and warrants separate numerical-investigation work; no silently substituted output.
 - Mesa MSAA sample layout is implementation defined, while ARE has a fixed 2x2 pattern. The `msaa4` scene is therefore **NOT_COMPARABLE_MSAA_SAMPLE_POSITIONS** for direct speed claims.
 - Mesa depth buffer is **not read back** in this pilot: `depth_readback=UNVERIFIED`. No depth parity claim is permitted.
 - Input VBO transfer is included in llvmpipe timing; ARE memory is already resident but geometry and shading are included. Results are *same host observations*, not an equal-runtime-contract proof.
