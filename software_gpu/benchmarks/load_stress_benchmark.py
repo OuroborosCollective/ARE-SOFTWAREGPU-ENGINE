@@ -15,6 +15,7 @@ from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.shader import Vertex, BlinnPhongShader, Matrix4
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.compute.kernels import VectorizedGPUKernels
+from software_gpu.core.output import output_file
 
 
 def generate_stress_mesh(rings: int, sectors: int) -> tuple:
@@ -211,7 +212,7 @@ def run_load_stress_benchmark():
         "compute_stages": compute_results,
         "graphics_stages": graphics_results
     }
-    with open("/workspace/benchmark_load_curve_report.json", "w") as f:
+    with open(output_file("benchmark_load_curve_report.json"), "w") as f:
         json.dump(report, f, indent=2)
 
     return report
