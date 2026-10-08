@@ -1,0 +1,68 @@
+{
+  "protocol": "are.aurion.street-lamp.glb-fixture.v1",
+  "authority": "offline-read-only",
+  "origin": "Owner-supplied original GLB files in ChatGPT conversation, 2026-10-09",
+  "representation": "Original GLB2 meshes and PBR textures; geometry-only CPU path verified, NOT texture/PBR equivalence",
+  "camera": {
+    "yaw_degrees": 31,
+    "pitch_degrees": 12,
+    "center_y": 0.95,
+    "x_half_extent": 0.38,
+    "y_half_extent": 1.04
+  },
+  "pixel_resolution": 192,
+  "lods": [
+    {
+      "lod": 0,
+      "file": "Aurion_Street_Lamp_LOD0.glb",
+      "source_sha256": "8246a3c42834d9280cbad0cd89b6e354650857223590e7177b696a26cb6cd2ec",
+      "bytes": 2514256,
+      "vertices": 4089,
+      "triangles": 4172,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3,
+      "independent_reference_rgb_sha256": "85347814b4dde3b2472148598341b3788445c3f014d18696c3b1a9d314404463"
+    },
+    {
+      "lod": 1,
+      "file": "Aurion_Street_Lamp_LOD1.glb",
+      "source_sha256": "c6655649ba9ca1ef602371a08552ffd70cda8b35a0bc796f21bdcc98bbeaca42",
+      "bytes": 2484916,
+      "vertices": 3368,
+      "triangles": 3128,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3,
+      "independent_reference_rgb_sha256": "67f3b5c9264790a862f99af36953179ab8f4572749888f56aa7d4a09f2b25ff8"
+    },
+    {
+      "lod": 2,
+      "file": "Aurion_Street_Lamp_LOD2.glb",
+      "source_sha256": "61da6c957f63f9c994f6b657d813a165f6ec73f2e9680cb1406ac33557f212c8",
+      "bytes": 785232,
+      "vertices": 2605,
+      "triangles": 2086,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3,
+      "independent_reference_rgb_sha256": "d4aed0d2e21620b5b9e21c582ad6a2191589a223df7a05da3afee9d1e435b025"
+    },
+    {
+      "lod": 3,
+      "file": "Aurion_Street_Lamp_LOD3.glb",
+      "source_sha256": "9297ed693e9b6e693ceb90f0776872f24291ef0ee7505ffd007620c68d049e61",
+      "bytes": 259136,
+      "vertices": 1629,
+      "triangles": 1042,
+      "meshes": 1,
+      "materials": 1,
+      "images": 3,
+      "texture_count": 3,
+      "independent_reference_rgb_sha256": "51597b3724786bc36fa47ca56a2b4667fa07d0aeb8432fd31e5b58f071e54077"
+    }
+  ]
+}
