@@ -80,6 +80,8 @@ class TestGamingAndMobile(unittest.TestCase):
         glow_val = int(hdr_fb.color_buffer[32, 33, 0])
         self.assertGreater(glow_val, 10, "Bloom glow must bleed onto neighboring pixels")
 
+    @unittest.skipUnless(os.name == "posix" and hasattr(socket, "AF_UNIX"),
+                         "Linux/Android POSIX Unix-domain-socket test; unsupported on Windows")
     def test_android_unix_domain_socket_ipc(self):
         """Test Android UDS / LocalSocket IPC server and client communication."""
         sock_path = "/tmp/test_android_gpu.sock"
