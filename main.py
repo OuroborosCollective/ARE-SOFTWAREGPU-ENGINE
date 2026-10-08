@@ -153,7 +153,7 @@ def main():
     parser.add_argument("--blender", action="store_true", help="Run Blender render engine bridge")
     parser.add_argument("--filters", action="store_true", help="Run image filters (Gaussian blur, Sobel)")
     parser.add_argument("--benchmark", action="store_true", help="Run load stress benchmark with degradation curves")
-    parser.add_argument("--server", action="store_true", help="Start background server daemon")
+    parser.add_argument("--server", action="store_true", help="Start authenticated loopback-only server; SOFTWAREGPU_AUTH_TOKEN required")
     parser.add_argument("--http-port", type=int, default=8088, help="HTTP REST port")
     parser.add_argument("--tcp-port", type=int, default=8089, help="Binary TCP port")
 
