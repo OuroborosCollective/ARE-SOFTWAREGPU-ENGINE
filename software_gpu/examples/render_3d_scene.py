@@ -9,6 +9,7 @@ import numpy as np
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.shader import Vertex, BlinnPhongShader, Matrix4
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
+from software_gpu.core.output import output_file
 
 
 def generate_sphere(radius: float = 1.0, stacks: int = 16, slices: int = 16):
@@ -89,7 +90,7 @@ def main():
     print(f"Rasterizing 3D scene using multi-threaded CPU SoftwareRasterizer...")
     rasterizer.draw_mesh(verts, indices, shader)
 
-    output_path = "/workspace/software_gpu_sphere.bmp"
+    output_path = output_file("software_gpu_sphere.bmp")
     fb.save_bmp(output_path)
     print(f"Render completed! Image saved to: {output_path}")
 
