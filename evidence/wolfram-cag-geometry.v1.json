@@ -1,0 +1,166 @@
+{
+  "protocol": "are.wolfram-cag-geometry.v1",
+  "mutationAuthority": "none",
+  "sourceBoundary": "numeric_geometry_only",
+  "oracle": "Wolfram Language exact rational computation",
+  "nearClip": {
+    "clipVertices": [
+      [
+        "-7/10",
+        "-3/5",
+        "-8/5",
+        "1"
+      ],
+      [
+        "7/10",
+        "-3/5",
+        "0",
+        "1"
+      ],
+      [
+        "0",
+        "7/10",
+        "0",
+        "1"
+      ]
+    ],
+    "nearIntersections": [
+      [
+        "-7/40",
+        "-3/5",
+        "-1",
+        "1"
+      ],
+      [
+        "-7/16",
+        "-9/80",
+        "-1",
+        "1"
+      ]
+    ],
+    "remainingAreaXY": "1001/1280"
+  },
+  "perspective": {
+    "clipVertices": [
+      [
+        "-1/2",
+        "-1/2",
+        "0",
+        "1"
+      ],
+      [
+        "1/2",
+        "-1/2",
+        "0",
+        "1"
+      ],
+      [
+        "0",
+        "1/4",
+        "0",
+        "1/2"
+      ]
+    ],
+    "pixel": [
+      4,
+      4
+    ],
+    "screenBarycentric": [
+      "3/16",
+      "7/16",
+      "3/8"
+    ],
+    "expectedBlue": "6/11"
+  },
+  "msaa": {
+    "clipVertices": [
+      [
+        "-1/2",
+        "1/2",
+        "0",
+        "1"
+      ],
+      [
+        "-1/2",
+        "-1/2",
+        "0",
+        "1"
+      ],
+      [
+        "1/2",
+        "1/2",
+        "0",
+        "1"
+      ]
+    ],
+    "pixel": [
+      3,
+      4
+    ],
+    "samplePoints": [
+      [
+        "13/4",
+        "17/4"
+      ],
+      [
+        "15/4",
+        "17/4"
+      ],
+      [
+        "13/4",
+        "19/4"
+      ],
+      [
+        "15/4",
+        "19/4"
+      ]
+    ],
+    "coverage": [
+      true,
+      false,
+      false,
+      false
+    ],
+    "resolvedRed": 63
+  },
+  "sharedEdge": {
+    "screenTriangles": [
+      [
+        [
+          2,
+          6
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      [
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    ],
+    "resolution": [
+      8,
+      8
+    ],
+    "firstCount": 6,
+    "secondCount": 10,
+    "coveredCount": 16,
+    "overlapCount": 0
+  }
+}
