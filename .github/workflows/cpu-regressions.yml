@@ -34,6 +34,9 @@ jobs:
         run: python -m unittest discover -s software_gpu/tests -v
       - name: CLI import and help smoke test
         run: python main.py --help
+      - name: Real CPU reference/tile parity and timings
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: python -m software_gpu.benchmarks.compare_tile_backends --repeats 2 --workers 1
 
   package:
     name: Wheel and CLI smoke test
@@ -89,3 +92,5 @@ jobs:
         run: python -m pip install --disable-pip-version-check -e ".[jit]"
       - name: Prove LLVM compilation and renderer parity
         run: python -m unittest discover -s software_gpu/tests -v
+      - name: CPU-compiled backend benchmark and output parity
+        run: python -m software_gpu.benchmarks.compare_tile_backends --repeats 2 --workers 2 --jit
