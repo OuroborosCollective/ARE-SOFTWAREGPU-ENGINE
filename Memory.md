@@ -1,0 +1,1 @@
+2026-10-08 | Änderung: 62 SHA-256-geprüfte CPU-Quellen importiert, Swarm-Tempo/CLI/Pfade gefixt; Erkenntnis: Software-Renderer, kein nativer GPU-Ersatz; Evidence: Import-Run 37823687557 grün, CPU/Windows/Linux/Wheel-Run 37824923372 grün (27 Tests, 1 Windows-UDS-Skip).
