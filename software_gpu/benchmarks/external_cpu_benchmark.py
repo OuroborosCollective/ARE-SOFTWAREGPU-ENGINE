@@ -14,7 +14,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import resource
 import statistics
 import subprocess
 import sys
@@ -102,6 +101,7 @@ def _peak_memory():
     # On Linux resource.ru_maxrss is KiB, and is a cumulative process peak.
     if platform.system() != "Linux":
         return None
+    import resource
     return int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
 
 
