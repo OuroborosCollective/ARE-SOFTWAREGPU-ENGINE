@@ -45,7 +45,7 @@ class StandaloneBlenderBridge:
         camera_target: np.ndarray,
         fov_deg: float = 45.0,
         light_pos: np.ndarray = np.array([2.0, 3.0, 4.0], dtype=np.float32),
-        output_filepath: str = "/workspace/blender_software_gpu_render.bmp"
+        output_filepath: str = "blender_software_gpu_render.bmp"
     ) -> Framebuffer:
         """Executes full SoftwareGPU rasterization pipeline for Blender scene datablocks."""
         fb = Framebuffer(self.width, self.height)
@@ -159,4 +159,4 @@ if __name__ == "__main__":
         camera_eye=np.array([0.0, 1.0, 3.5], dtype=np.float32),
         camera_target=np.array([0.0, 0.0, 0.0], dtype=np.float32)
     )
-    print("Blender standalone bridge rendered test scene successfully to /workspace/blender_software_gpu_render.bmp")
+    print("Blender standalone bridge rendered test scene successfully")
