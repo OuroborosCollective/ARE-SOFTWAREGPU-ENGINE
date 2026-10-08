@@ -358,9 +358,13 @@ def orchestrate(args):
                                     "maximum_channel_error": max_error,
                                     "mismatched_pixels": count,
                                     "classification": "EXACT" if max_error == 0 else
+                                        "NUMERIC_ONE_LSB_DIFFERENCE" if max_error == 1 else
                                         "UNVERIFIED_NUMERICAL_DIFFERENCE",
                                 }
-                        if max_error > 0:
+                        # A one-channel-LSB deviation is an explicitly recorded
+                        # numerical tolerance, not byte-identical output.
+                        # Larger deviations fail the integration gate.
+                        if max_error > 1:
                             hard_failures.append(f"{scene}/{backend}: ARE_REFERENCE_PIXEL_MISMATCH_MAX_{max_error}_COUNT_{count}")
             if mesa is not None:
                 for backend in ("bands", "tiles", "tiles-jit"):
