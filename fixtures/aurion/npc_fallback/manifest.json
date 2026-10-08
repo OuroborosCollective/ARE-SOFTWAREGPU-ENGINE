@@ -1,0 +1,196 @@
+{
+  "protocol": "are.aurion.npc-fallback-fixtures.v1",
+  "authority": "offline-read-only",
+  "originals_available_in_actions": false,
+  "provenance": "Owner-provided original Aurion GLB2 NPC files; SHA and semantic inspection on 2026-10-09",
+  "source_binaries_checked_into_repo": false,
+  "lod_policy": "ONLY_0_AND_1_EXIST_FOR_THESE_FIVE_FAMILIES",
+  "skin_joint_count": 65,
+  "animation_names": [
+    "Attack 2",
+    "Cast Spell",
+    "Death",
+    "Fight",
+    "Idle",
+    "Run",
+    "Walk"
+  ],
+  "animation_durations_seconds": {
+    "Attack 2": 1.25,
+    "Cast Spell": 1.5,
+    "Death": 1.5,
+    "Fight": 1.25,
+    "Idle": 1.25,
+    "Run": 1,
+    "Walk": 1.25
+  },
+  "channels_per_clip": 195,
+  "expected_explicit_equipment_slot_names": [
+    "Slot_Hand_L",
+    "Slot_Shield",
+    "Slot_Shoulder_L",
+    "Slot_Hand_R",
+    "Slot_MainHand",
+    "Slot_Shoulder_R",
+    "Slot_Chest",
+    "Slot_Head",
+    "Slot_Legs"
+  ],
+  "known_limitations": [
+    "No PBR/texture parity with Aurion WebGL/WebGPU claimed",
+    "No live NPC animation, equipment placement or world authority writes",
+    "Original large GLB binaries not present in public GitHub repository/CI; local verifier must receive same SHA-pinned originals"
+  ],
+  "families": [
+    {
+      "name": "Base_Male",
+      "explicit_equipment_slots": true,
+      "meshes": 3,
+      "nodes": 78,
+      "materials": 3,
+      "images": 7,
+      "skins": 1,
+      "rig_joints": 65,
+      "animation_stream_sha256": "071aeacd2761f24ec4fa981173b43a884f2601bb96660304cb2323a252a1b8fe",
+      "rig_structure_sha256": "011365232617fe814763e25a15351a659b800c45c4c4bff749fe79fee69b551d",
+      "lods": [
+        {
+          "lod": 0,
+          "file": "Base_Male_LOD0_EquipmentSlots.glb",
+          "sha256": "a5efd0b505735662c48c2104e95672a76039e8d8eeb0a3dc887c6b274647e83b",
+          "bytes": 15209536,
+          "vertices": 1180,
+          "triangles": 1479
+        },
+        {
+          "lod": 1,
+          "file": "Base_Male_LOD1_EquipmentSlots.glb",
+          "sha256": "4ca2d083d9a7c286bce7d6b2d6de493444a0d3114fc313b2cfc6501134f29fc1",
+          "bytes": 15163136,
+          "vertices": 594,
+          "triangles": 643
+        }
+      ]
+    },
+    {
+      "name": "Reference_Female_SimpleParted",
+      "explicit_equipment_slots": true,
+      "meshes": 4,
+      "nodes": 79,
+      "materials": 4,
+      "images": 9,
+      "skins": 1,
+      "rig_joints": 65,
+      "animation_stream_sha256": "6dccc6dc063c7ac7970b164822eeaf930135c5037dbecf4b1c3fcb03e7bd8da4",
+      "rig_structure_sha256": "9efcc3e899e9a8b4229305b88bae92a1cb18e0bb32ce24338380e0c9c83b89cc",
+      "lods": [
+        {
+          "lod": 0,
+          "file": "Reference_Female_SimpleParted_LOD0_EquipmentSlots.glb",
+          "sha256": "03672baff53a727ea30e5d17f5d78ce97ca0ad6bc8823db73d449e8f9df4f440",
+          "bytes": 21407352,
+          "vertices": 1085,
+          "triangles": 1337
+        },
+        {
+          "lod": 1,
+          "file": "Reference_Female_SimpleParted_LOD1_EquipmentSlots.glb",
+          "sha256": "c1a0c523a8b6cf49d7c2b7a7952589c953b14906605a3ab225124153df055bd3",
+          "bytes": 21369760,
+          "vertices": 689,
+          "triangles": 734
+        }
+      ]
+    },
+    {
+      "name": "Reference_Male_SimpleParted",
+      "explicit_equipment_slots": true,
+      "meshes": 4,
+      "nodes": 79,
+      "materials": 4,
+      "images": 8,
+      "skins": 1,
+      "rig_joints": 65,
+      "animation_stream_sha256": "a43990ee313c3dff1f9bdb427044379b2419a4ac7a556ff0bb1ca407cc21fdb4",
+      "rig_structure_sha256": "c6dacaf26582d3ef925abec950077260836d16def97eaf9be884ea19b985d9ad",
+      "lods": [
+        {
+          "lod": 0,
+          "file": "Reference_Male_SimpleParted_LOD0_EquipmentSlots.glb",
+          "sha256": "340fac91f928f1e03e62c82ad9041c010ad3fe85df66c61a82f49d68a70a6f47",
+          "bytes": 19521884,
+          "vertices": 1031,
+          "triangles": 1234
+        },
+        {
+          "lod": 1,
+          "file": "Reference_Male_SimpleParted_LOD1_EquipmentSlots.glb",
+          "sha256": "56856368251c1da8651fb6b03a6cfeeca97e36b96f54d5a3106b7c5b27bf041d",
+          "bytes": 19492640,
+          "vertices": 645,
+          "triangles": 701
+        }
+      ]
+    },
+    {
+      "name": "Universal_Female_Buns",
+      "explicit_equipment_slots": false,
+      "meshes": 4,
+      "nodes": 70,
+      "materials": 4,
+      "images": 7,
+      "skins": 1,
+      "rig_joints": 65,
+      "animation_stream_sha256": "18df6bbfb73ed3c6c6f37246bcc4095f75f4263725edebd25b2a3f3ca1ca58d3",
+      "rig_structure_sha256": "d4ecc8b90b2f86adca2aeb151ac48d0f4f2c41990cb807f1c24459d68cd32eb3",
+      "lods": [
+        {
+          "lod": 0,
+          "file": "Universal_Female_Buns_LOD0.glb",
+          "sha256": "1d60d667a573814938c5d4d67e02120cb5a1ab1f94e868fbec9690ea29e876dd",
+          "bytes": 15521380,
+          "vertices": 1501,
+          "triangles": 1492
+        },
+        {
+          "lod": 1,
+          "file": "Universal_Female_Buns_LOD1.glb",
+          "sha256": "857f1b300a268541e2f4c3f4f85ab6415eb99cfcce40ff4cbaf37c77393b2c7f",
+          "bytes": 15476992,
+          "vertices": 939,
+          "triangles": 795
+        }
+      ]
+    },
+    {
+      "name": "Universal_Female_Buzzed",
+      "explicit_equipment_slots": false,
+      "meshes": 4,
+      "nodes": 70,
+      "materials": 4,
+      "images": 9,
+      "skins": 1,
+      "rig_joints": 65,
+      "animation_stream_sha256": "18df6bbfb73ed3c6c6f37246bcc4095f75f4263725edebd25b2a3f3ca1ca58d3",
+      "rig_structure_sha256": "a97cd9148d53bf47677883daa657f1953b4c6e95610b5e6bf3691ad08d3086bc",
+      "lods": [
+        {
+          "lod": 0,
+          "file": "Universal_Female_Buzzed_LOD0.glb",
+          "sha256": "d024a573e46a73dcf9b2bcc092e1e1de4368dfc54d3d3c5cd396a70ef9117e35",
+          "bytes": 21416232,
+          "vertices": 1189,
+          "triangles": 1488
+        },
+        {
+          "lod": 1,
+          "file": "Universal_Female_Buzzed_LOD1.glb",
+          "sha256": "da5a47dbe585da7fddf1461869f97e30efb6b15cbfce926ddb205fc1feeb155d",
+          "bytes": 21365572,
+          "vertices": 667,
+          "triangles": 713
+        }
+      ]
+    }
+  ]
+}
