@@ -26,7 +26,7 @@
 - Multilingual clients are prototypes; not all language ABIs have compilation/interop regression coverage.
 - Benchmarks are not independently validated against Mesa llvmpipe, WARP or other CPU baselines.
 - **Network service NOT production-safe**: no required authentication/TLS, access policy, payload/memory/CPU quotas or deadline enforcement; do not expose off-loopback.
-- Missing published license decision; do not claim open-source grant merely because the repository is public.
+- Licensing proposal now documented: PolyForm Noncommercial 1.0.0 plus `Required Notice:` attribution and separate written commercial licensing; this is source-available, not OSI-open-source. Verify provenance and third-party rights before granting commercial rights.
 - Aurion read-only offline-worker contract is documented, **not yet integrated** into the Aurion game runtime.
 
 ## Research-backed CPU optimization (2026-10-08)
