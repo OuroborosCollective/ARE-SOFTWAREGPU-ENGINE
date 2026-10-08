@@ -15,6 +15,8 @@ from .rasterizer import edge_function
 class MSAAFramebuffer:
     """Multi-Sample Framebuffer supporting 4x MSAA sub-pixel coverage sampling."""
     def __init__(self, width: int, height: int, samples: int = 4):
+        if samples != 4:
+            raise ValueError("Only 4x MSAA sample positions are supported")
         self.width = width
         self.height = height
         self.samples = samples
@@ -42,8 +44,10 @@ class MSAAFramebuffer:
         """Resolves multi-sample buffer into single anti-aliased framebuffer via box filter."""
         resolved_fb = Framebuffer(self.width, self.height)
         # Average sub-pixel color samples
-        avg_color = np.mean(self.color_samples.astype(np.float32), axis=2)
-        resolved_fb.color_buffer[...] = np.clip(avg_color, 0.0, 255.0).astype(np.uint8)
+        # Four uint8 samples sum to at most 1020. This matches the previous
+        # float average + uint8 truncation without allocating a float32 copy.
+        avg_color = np.sum(self.color_samples, axis=2, dtype=np.uint16)
+        resolved_fb.color_buffer[...] = (avg_color // 4).astype(np.uint8)
         # Depth minimum resolve
         resolved_fb.depth_buffer[...] = np.min(self.depth_samples, axis=2)
         return resolved_fb
