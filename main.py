@@ -18,10 +18,8 @@ import os
 import argparse
 import json
 
-# Ensure workspace is on sys.path
-sys.path.insert(0, '/workspace')
-
 import software_gpu as sgpu
+from software_gpu.core.output import output_file
 
 
 def show_info():
@@ -76,25 +74,26 @@ def run_blender_demo():
         sgpu.Vertex([ 0,  1, 1], [0, 0, 1], color=[0, 0, 1])
     ]
     indices = [(0, 1, 2)]
+    render_file = output_file("blender_software_gpu_render.bmp")
     fb = bridge.render_scene(
         verts, indices,
         camera_eye=np.array([0, 0, 3], dtype=np.float32),
         camera_target=np.array([0, 0, 0], dtype=np.float32),
-        output_filepath="/workspace/blender_software_gpu_render.bmp"
+        output_filepath=render_file
     )
-    print(f"Blender frame rendered and saved to: /workspace/blender_software_gpu_render.bmp")
+    print(f"Blender frame rendered and saved to: {render_file}")
 
 
 def run_filters_demo():
     print("\n>>> Running Image Filter Processing Endpoint...")
     pipeline = sgpu.ImageFilterPipeline()
-    src = "/workspace/software_gpu_sphere.bmp"
+    src = output_file("software_gpu_sphere.bmp")
     if os.path.exists(src):
         img = pipeline.load_bmp(src)
         blurred = pipeline.gaussian_blur(img, radius=2)
-        pipeline.save_bmp("/workspace/software_gpu_blurred.bmp", blurred)
+        pipeline.save_bmp(output_file("software_gpu_blurred.bmp"), blurred)
         edges = pipeline.sobel_edges(img)
-        pipeline.save_bmp("/workspace/software_gpu_sobel.bmp", edges)
+        pipeline.save_bmp(output_file("software_gpu_sobel.bmp"), edges)
         print("Gaussian Blur and Sobel Edge Detection executed and saved successfully!")
     else:
         print(f"Source image {src} not found, generating sample render first...")
