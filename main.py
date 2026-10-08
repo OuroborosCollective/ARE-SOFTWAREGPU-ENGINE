@@ -109,11 +109,10 @@ def run_stress_benchmark():
 
 
 def start_server(http_port=8088, tcp_port=8089):
-    print(f"\n>>> Starting SoftwareGPU Multi-Protocol Server on HTTP:{http_port}, TCP:{tcp_port} & Android UDS...")
+    print(f"\n>>> Starting SoftwareGPU Multi-Protocol Server on HTTP:{http_port}, TCP:{tcp_port} (loopback-only, authenticated)...")
     server = sgpu.SoftwareGPUServer(http_port=http_port, tcp_port=tcp_port)
-    android_server = sgpu.AndroidIPCServer()
+    # Android IPC has separate unaudited authority; do not autostart.
     server.start()
-    android_server.start()
     print("Server running! Press Ctrl+C to terminate.")
     try:
         import time
@@ -122,7 +121,6 @@ def start_server(http_port=8088, tcp_port=8089):
     except KeyboardInterrupt:
         print("\nStopping server...")
         server.stop()
-        android_server.stop()
 
 
 def run_all():
