@@ -248,9 +248,9 @@ def render_lod(path: Path, entry: dict, camera: dict, out: Path, pixels=192, rep
     ac = screens[faces[:,2]]-screens[faces[:,0]]
     orient = ab[:,0]*ac[:,1]-ab[:,1]*ac[:,0]
     faces = faces.copy()
-    # NDC Y points up, framebuffer Y points down; positive screen area
-    # corresponds to negative projected NDC area.
-    back = orient > 0
+    # The project edge function reverses the standard cross product; the
+    # screen-down Y flip cancels that reversal. Positive NDC winding is front.
+    back = orient < 0
     faces[back,1], faces[back,2] = faces[back,2].copy(), faces[back,1].copy()
     shader = _FlatShader()
     color = np.asarray([.80,.70,.45], dtype=np.float32)
