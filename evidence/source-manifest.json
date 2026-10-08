@@ -1,0 +1,318 @@
+{
+  "archive_sha256": "b8b44a39b46ecfb50a2de121b2534c5d9912fccda2b1b0475faf194fe8e589b8",
+  "archive_version": "1.2.0",
+  "files": [
+    {
+      "bytes": 7833,
+      "path": "docs/UPSTREAM_README.md",
+      "sha256": "d150c8adae04412b21d562bee65568ba6f05f0ecc582986b4d5de732e877912f"
+    },
+    {
+      "bytes": 6837,
+      "path": "main.py",
+      "sha256": "325ee38896b289b6458e1ee5a1e1a5a3b393063f79217dcab0f882258b4fda66"
+    },
+    {
+      "bytes": 624,
+      "path": "setup.py",
+      "sha256": "cb8ad4ca011665b4309c3d56daddab38426a8f9ec05c31512c7cc578a4f703ff"
+    },
+    {
+      "bytes": 3452,
+      "path": "software_gpu/__init__.py",
+      "sha256": "6d52e39a2df5dd42af5f9230b1200f823f42ad7970d44ca1cb6b114e8657a8c6"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/benchmarks/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 8700,
+      "path": "software_gpu/benchmarks/load_stress_benchmark.py",
+      "sha256": "d20a430b0db0880cfe4d5e3638c859211556356492902da6adac4fa4e4a5d864"
+    },
+    {
+      "bytes": 9994,
+      "path": "software_gpu/benchmarks/run_benchmarks.py",
+      "sha256": "a99d13887fec078b056e102a71d937ee64670723a6cb2b9b7361154f0d6e6665"
+    },
+    {
+      "bytes": 126,
+      "path": "software_gpu/clients/__init__.py",
+      "sha256": "6b55e9aea6cbd09b5ebb47db233f45894d68e1f06f184aff46c069e48b17f1c9"
+    },
+    {
+      "bytes": 2803,
+      "path": "software_gpu/clients/c_client.h",
+      "sha256": "77cbbcf616ddd20a1c7b23f318002c85843a8670f033669369289d3d8d3b3ddd"
+    },
+    {
+      "bytes": 1465,
+      "path": "software_gpu/clients/cpp_client.hpp",
+      "sha256": "ca3d2b81692dc958b3747ce25df815ceaa45056a86705e2e6cd24f93701daad9"
+    },
+    {
+      "bytes": 3020,
+      "path": "software_gpu/clients/csharp_client.cs",
+      "sha256": "b81597260101ce2f9b164c93b4b989ddc436a8bf740cba8c1ad11d797f4e42b5"
+    },
+    {
+      "bytes": 1774,
+      "path": "software_gpu/clients/go_client.go",
+      "sha256": "81a3f431b6deae63edb0e51e6651e8401d0866d19a1dd37c00c75626a11c51de"
+    },
+    {
+      "bytes": 3198,
+      "path": "software_gpu/clients/node_client.js",
+      "sha256": "2b77d0a1f25f4486463f98ccbb1dd3f708439d826b44713007493e12507ff049"
+    },
+    {
+      "bytes": 4204,
+      "path": "software_gpu/clients/python_client.py",
+      "sha256": "546b99e68a32be1712bf945408a390b24aafde2d88cebba559264e1e6d43ae9f"
+    },
+    {
+      "bytes": 1629,
+      "path": "software_gpu/clients/rust_client.rs",
+      "sha256": "06386532c78cbf35568c7e34a5868150259e9f50a5ad2316fd70d1bfdadbc082"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/compute/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2358,
+      "path": "software_gpu/compute/compiler.py",
+      "sha256": "eb4f78537904d8959e371b3ef233b757929bb5f0f6bd8187a0c24cae86f9fe97"
+    },
+    {
+      "bytes": 7462,
+      "path": "software_gpu/compute/executor.py",
+      "sha256": "bbb0780438de11d64eefce22f101292bfc0ab806e6cd1aab48bb61b6a510f49a"
+    },
+    {
+      "bytes": 6481,
+      "path": "software_gpu/compute/kernels.py",
+      "sha256": "98faa7796ad914a9be9ca9849cdfc6b4030cfbb51c10a0b894eb5222591c4f34"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/core/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3527,
+      "path": "software_gpu/core/device.py",
+      "sha256": "5813654ca3a980091ed586bad113e634e14da2b39043f877239e23d8ac50c786"
+    },
+    {
+      "bytes": 4521,
+      "path": "software_gpu/core/memory.py",
+      "sha256": "fa613a19bf7ef120e0541cc6c35f8a513f9daaa1bc18cb0368f1ee28b090af1d"
+    },
+    {
+      "bytes": 4891,
+      "path": "software_gpu/core/types.py",
+      "sha256": "ff56a0c95785001814179a9ba863f054500cd12d28fed2994af708bf30c7ac00"
+    },
+    {
+      "bytes": 6951,
+      "path": "software_gpu/core/vps_governor.py",
+      "sha256": "5b84b5d44602a5292d066d506423bfbbdb1e0f2bcc9708dc26377ec1aea9dd29"
+    },
+    {
+      "bytes": 675,
+      "path": "software_gpu/directx/__init__.py",
+      "sha256": "aa7e3fbc31997ad97f5183d24f483da7e596af3918d665c30fff77b0374629b5"
+    },
+    {
+      "bytes": 9890,
+      "path": "software_gpu/directx/d3d11.py",
+      "sha256": "c65b505ca54c7ae09accd5c473c8bd4c2aec6cfc8681e0c5e2eaa1f702d621dd"
+    },
+    {
+      "bytes": 3817,
+      "path": "software_gpu/directx/directx_demo.py",
+      "sha256": "3a56aa78cf7382e71ff161b41d2e51d8aeb8594434d0a463fc8dd15a2925f407"
+    },
+    {
+      "bytes": 6039,
+      "path": "software_gpu/docs/ARCHITECTURE.md",
+      "sha256": "455226133bec42bd4d65bc10d279e553c4f5cd63b6d2d60468fa36e0d6603235"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/examples/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2343,
+      "path": "software_gpu/examples/cuda_dropin_demo.py",
+      "sha256": "5a633bf8370b91f8951baf29d1d507967e1f0200a5ae523f70a96ed0b65f3f72"
+    },
+    {
+      "bytes": 6471,
+      "path": "software_gpu/examples/gaming_pc_demo.py",
+      "sha256": "39dfaf8ca2939ed15cd873b914986ab7c807c59b8e3ff986cf6d411a3ca27809"
+    },
+    {
+      "bytes": 3435,
+      "path": "software_gpu/examples/render_3d_scene.py",
+      "sha256": "e326095b6878ca8828b43e6dcddd3bbfa4f8ab06b289a562b2276803783cb17f"
+    },
+    {
+      "bytes": 920,
+      "path": "software_gpu/examples/test_node_client.js",
+      "sha256": "bb4d1c85b9c150119d707a432837299b582c56af15266512e0a915f2d02bd801"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/graphics/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3442,
+      "path": "software_gpu/graphics/framebuffer.py",
+      "sha256": "b60b0ab569686304efbe62938f086b2e427b6111ab2a5b919c8e835c4676954d"
+    },
+    {
+      "bytes": 12819,
+      "path": "software_gpu/graphics/postprocess.py",
+      "sha256": "567b7b21c085fb488a63adffda05927199b727b6d8cec2e88048c1fa9839ab41"
+    },
+    {
+      "bytes": 7090,
+      "path": "software_gpu/graphics/rasterizer.py",
+      "sha256": "da46dee3cc7a5e09239049015561826dea630ac45e148db608768506a95c96e9"
+    },
+    {
+      "bytes": 7616,
+      "path": "software_gpu/graphics/shader.py",
+      "sha256": "a930c120c37ec1706c4fce6f42bc6c71ca09d21cc46b358c70a22d132ae79595"
+    },
+    {
+      "bytes": 371,
+      "path": "software_gpu/integrations/__init__.py",
+      "sha256": "856a6f0fcc710260b683ca08dc5f4728c281195486c4f4f5ee00b45149208017"
+    },
+    {
+      "bytes": 367,
+      "path": "software_gpu/integrations/blender/__init__.py",
+      "sha256": "e37a94ae27777aa13e0b77bd56c8197cf3bed97da70108cf5d5e4e528e1a022a"
+    },
+    {
+      "bytes": 5995,
+      "path": "software_gpu/integrations/blender/blender_render_engine.py",
+      "sha256": "3ce5537ff521afd0f5aa54e8d6fb824a3ca7d61e41d3573d59e347263191e9f6"
+    },
+    {
+      "bytes": 157,
+      "path": "software_gpu/integrations/image_editor/__init__.py",
+      "sha256": "f2be6ec923b26dfc83a8bad5e928785665e48ef39ca1e1440c1e86f63636eb01"
+    },
+    {
+      "bytes": 6589,
+      "path": "software_gpu/integrations/image_editor/image_filter_endpoint.py",
+      "sha256": "914d86b06e003712bc1c0bb43f35da5f05a6faa0bb9c6b52d664d60336fd681d"
+    },
+    {
+      "bytes": 142,
+      "path": "software_gpu/integrations/mmorpg/__init__.py",
+      "sha256": "d56550bcd732d3755721c6f0b42ef79a23ec88225a532a8c55ce1e8438c810f9"
+    },
+    {
+      "bytes": 4562,
+      "path": "software_gpu/integrations/mmorpg/game_compute_adapter.py",
+      "sha256": "7a59aa5eb136f6c68fabc9f309fa2cd8ff010e3a6e6647a914b5d60d48349946"
+    },
+    {
+      "bytes": 2995,
+      "path": "software_gpu/integrations/mmorpg/mmorpg_server_demo.py",
+      "sha256": "41a83c0d87633c98df5ee6352a68010fae981a888943c619bc3cedbe379418d5"
+    },
+    {
+      "bytes": 3478,
+      "path": "software_gpu/mobile/AndroidGPUClient.kt",
+      "sha256": "e819e7e95e41bf72ba1f1f6de58abbecefc3499b1d8018e8884484895765b433"
+    },
+    {
+      "bytes": 298,
+      "path": "software_gpu/mobile/__init__.py",
+      "sha256": "2145aa80689434bd905f00ac828218e16035809fb956ad419edf7c270e32a166"
+    },
+    {
+      "bytes": 4133,
+      "path": "software_gpu/mobile/android_server.py",
+      "sha256": "3f7b3f31e0190fbf9ec9b81ba9013385af01842991bcfd32bf621e36dc5c3c3a"
+    },
+    {
+      "bytes": 2016,
+      "path": "software_gpu/mobile/opengles.py",
+      "sha256": "4dc1107f44dca662029003e6783ec4708330f6d3ac267fdb0be24c5d7df36322"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/network/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 8330,
+      "path": "software_gpu/network/dispatcher.py",
+      "sha256": "58ef720559dadb326eaca73bc0b553aa529842f680a521492151d57784897728"
+    },
+    {
+      "bytes": 2064,
+      "path": "software_gpu/network/protocol.py",
+      "sha256": "4875c746572acccad2a96386fb87118abcc9fd9032c26ae4cf5de63d77bb93c6"
+    },
+    {
+      "bytes": 7502,
+      "path": "software_gpu/network/server.py",
+      "sha256": "1f521608e3be48d9a412555555600aac593397b24c099a76343847ebd72bde4f"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/redirector/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1690,
+      "path": "software_gpu/redirector/cuda_runtime.py",
+      "sha256": "011e88d16163e2a39f1cd0aeec2b2496b4c662ea1927cb2fff9fd20d6966094e"
+    },
+    {
+      "bytes": 3903,
+      "path": "software_gpu/redirector/interceptor.py",
+      "sha256": "7de71ef98c50040f3bff6a8ca4278d6836d3e960b0019f2ce220656d5775be78"
+    },
+    {
+      "bytes": 0,
+      "path": "software_gpu/tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2991,
+      "path": "software_gpu/tests/test_directx_and_governor.py",
+      "sha256": "63c47c4a4d0b1300da00c6425c4ed4de49244e6492ad840bc83b5c0c4775c150"
+    },
+    {
+      "bytes": 5043,
+      "path": "software_gpu/tests/test_gaming_and_mobile.py",
+      "sha256": "0e08a01f506d086ca63931c7193564232f02310dbb98db2f46824838a6cfd9bc"
+    },
+    {
+      "bytes": 3930,
+      "path": "software_gpu/tests/test_network_and_integrations.py",
+      "sha256": "0af33d16edc82d666afdbc2a9cad931473cdcaa93c436f5ec1044c19d28f45fe"
+    },
+    {
+      "bytes": 10260,
+      "path": "software_gpu/tests/test_software_gpu.py",
+      "sha256": "6b68f309e93dd70bf4444e6cb0a4be386cfd68a539c5233dfda44b325c72f9a6"
+    }
+  ],
+  "source_file_count": 62,
+  "verified_native_gpu_compatibility": false
+}
