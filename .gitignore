@@ -1,0 +1,25 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+.venv/
+venv/
+build/
+dist/
+
+# Runtime-generated output and reports
+*.bmp
+*.ppm
+benchmark_load_curve_report.json
+.aurion-impact-results/
+run-output/
+*.log
+
+# Local-only configuration, never commit secrets
+.env
+.env.*
+!.env.example

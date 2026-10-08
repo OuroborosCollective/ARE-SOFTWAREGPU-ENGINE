@@ -1,0 +1,96 @@
+name: CPU regressions
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install CPU-only runtime dependency
+        run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Compile Python source
+        run: python -m compileall -q software_gpu main.py
+      - name: Run real CPU and loopback-network regression tests
+        run: python -m unittest discover -s software_gpu/tests -v
+      - name: CLI import and help smoke test
+        run: python main.py --help
+      - name: Real CPU reference/tile parity and timings
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: python -m software_gpu.benchmarks.compare_tile_backends --repeats 2 --workers 1
+
+  package:
+    name: Wheel and CLI smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Build independently installable wheel
+        run: |
+          python -m pip wheel --no-deps --wheel-dir wheelhouse .
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path("wheelhouse").glob("software_gpu-*.whl"))
+          assert len(wheels) == 1
+          with ZipFile(wheels[0]) as wheel:
+              assert "main.py" in wheel.namelist(), "CLI main module missing from wheel"
+              entrypoints = next(name for name in wheel.namelist() if name.endswith("/entry_points.txt"))
+              assert b"software-gpu = main:main" in wheel.read(entrypoints)
+          print("WHEEL_CLI_MANIFEST_OK")
+          PY
+      - name: Install and run console script from outside checkout
+        run: |
+          python -m pip install wheelhouse/software_gpu-*.whl
+          cd "${RUNNER_TEMP}"
+          software-gpu --help
+
+  llvm-jit:
+    name: LLVM JIT / ${{ matrix.os }} / Python 3.12
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install real CPU LLVM compiler and engine
+        run: python -m pip install --disable-pip-version-check -e ".[jit]"
+      - name: Prove LLVM compilation and renderer parity
+        run: python -m unittest discover -s software_gpu/tests -v
+      - name: CPU-compiled backend benchmark and output parity
+        run: python -m software_gpu.benchmarks.compare_tile_backends --repeats 2 --workers 2 --jit
