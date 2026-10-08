@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import platform
 import queue
+import re
 import struct
 import sys
 import time
@@ -273,7 +274,10 @@ def render_lod(path: Path, entry: dict, camera: dict, out: Path, pixels=192, rep
         if len(set(digests)) != 1 or max(covered) <= 0:
             raise ValueError("REPLAY_IMAGE_HASH_MISMATCH_OR_EMPTY")
         out.mkdir(parents=True, exist_ok=True)
-        image_path = out / ("Aurion_Street_Lamp_LOD%d_ARE.bmp" % entry["lod"])
+        source_stem = path.stem
+        if not re.fullmatch(r"[A-Za-z0-9_()]{1,80}", source_stem):
+            raise ValueError("GLB_NAME_INVALID")
+        image_path = out / (source_stem + "_ARE.bmp")
         fb.save_bmp(str(image_path))
         image_sha = _sha256(image_path.read_bytes())
     finally:
@@ -343,9 +347,17 @@ def read_manifest(path: Path):
     entries = doc.get("lods", [])
     if not isinstance(entries, list) or not 1 <= len(entries) <= 4:
         raise ValueError("LOD_MANIFEST_SIZE_INVALID")
+    family = doc.get("fixture_id", "street_lamp")
+    if family not in ("street_lamp", "arena_courtyard", "fountain"):
+        raise ValueError("FIXTURE_FAMILY_INVALID")
+    if family != "street_lamp" and sorted(x.get("lod") for x in entries) != [1, 2]:
+        raise ValueError("ONLY_ORIGINAL_LOD1_LOD2_EXIST")
     for entry in entries:
+        expected_name = (("Aurion_Street_Lamp_LOD%d.glb" % entry["lod"]) if family == "street_lamp"
+                         else ("arena_courtyard_LOD%d(1).glb" % entry["lod"] if family == "arena_courtyard"
+                               else "fountain_LOD%d.glb" % entry["lod"]))
         if (type(entry.get("lod")) is not int or
-            entry.get("file") != "Aurion_Street_Lamp_LOD%d.glb" % entry["lod"] or
+            entry.get("file") != expected_name or
             type(entry.get("bytes")) is not int or
             not 32 <= entry["bytes"] <= MAX_GLB_BYTES or
             not isinstance(entry.get("source_sha256"), str) or
