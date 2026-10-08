@@ -63,4 +63,6 @@ def decode_tensor_base64(d: Dict[str, Any]) -> np.ndarray:
     tensor_shape(d, SecurityLimits())
     raw_bytes = base64.b64decode(d["data_b64"], validate=True)
     arr = np.frombuffer(raw_bytes, dtype=np.dtype(d["dtype"]))
+    if not np.isfinite(arr).all():
+        raise ValueError("NONFINITE_TENSOR_CONTENT")
     return arr.reshape(d["shape"])
