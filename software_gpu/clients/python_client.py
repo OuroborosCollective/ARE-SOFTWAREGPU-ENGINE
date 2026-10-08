@@ -4,6 +4,7 @@ Supports both HTTP REST/JSON-RPC and High-Performance Binary TCP connections.
 """
 
 import json
+import os
 import socket
 import urllib.request
 import numpy as np
@@ -17,18 +18,19 @@ from ..network.protocol import (
 
 class SoftwareGPUClient:
     """Client for connecting to a local or remote SoftwareGPU server."""
-    def __init__(self, host: str = "127.0.0.1", http_port: int = 8088, tcp_port: int = 8089, use_tcp: bool = False):
+    def __init__(self, host: str = "127.0.0.1", http_port: int = 8088, tcp_port: int = 8089, use_tcp: bool = False, token: str = None):
         self.host = host
         self.http_port = http_port
         self.tcp_port = tcp_port
         self.use_tcp = use_tcp
+        self.token = token if token is not None else os.environ.get('SOFTWAREGPU_AUTH_TOKEN', '')
         self._sock = None
 
     def get_device_info(self) -> Dict[str, Any]:
         """Queries GPU hardware specifications and telemetry."""
         url = f"http://{self.host}:{self.http_port}/health"
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req) as resp:
+        req = urllib.request.Request(url, method="GET", headers={"Authorization": "Bearer " + self.token})
+        with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data["gpu"]
 
@@ -72,7 +74,7 @@ class SoftwareGPUClient:
     def _http_post(self, path: str, params: dict) -> dict:
         url = f"http://{self.host}:{self.http_port}{path}"
         body = json.dumps(params).encode("utf-8")
-        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", "Authorization": "Bearer " + self.token}, method="POST")
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if not data.get("success", False):
@@ -81,9 +83,10 @@ class SoftwareGPUClient:
 
     def _tcp_rpc(self, method: str, params: dict) -> dict:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(15)
         sock.connect((self.host, self.tcp_port))
         with sock:
-            req_msg = {"method": method, "params": params, "id": 1}
+            req_msg = {"method": method, "params": params, "id": 1, "token": self.token}
             sock.sendall(pack_message(MsgType.JSON_REQUEST, req_msg))
 
             header_bytes = self._recv_all(sock, HEADER_SIZE)

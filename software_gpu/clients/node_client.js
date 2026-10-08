@@ -11,6 +11,8 @@ class SoftwareGPUClient {
         this.host = options.host || '127.0.0.1';
         this.httpPort = options.httpPort || 8088;
         this.tcpPort = options.tcpPort || 8089;
+        this.token = options.token || process.env.SOFTWAREGPU_AUTH_TOKEN;
+        if (!this.token) throw new Error('SOFTWAREGPU_AUTH_TOKEN required');
     }
 
     /**
@@ -18,7 +20,7 @@ class SoftwareGPUClient {
      */
     async getDeviceInfo() {
         return new Promise((resolve, reject) => {
-            http.get(`http://${this.host}:${this.httpPort}/health`, (res) => {
+            http.get(`http://${this.host}:${this.httpPort}/health`, {headers: {Authorization: `Bearer ${this.token}`}}, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
@@ -40,7 +42,7 @@ class SoftwareGPUClient {
         return new Promise((resolve, reject) => {
             const client = new net.Socket();
             client.connect(this.tcpPort, this.host, () => {
-                const reqJson = JSON.stringify({ method, params, id: 1 });
+                const reqJson = JSON.stringify({ method, params, id: 1, token: this.token });
                 const payloadBuf = Buffer.from(reqJson, 'utf-8');
 
                 // Header: Magic(4) + MsgType(4) + Flags(4) + PayloadLen(8) = 20 Bytes

@@ -1,203 +1,251 @@
+"""Experimental authenticated LOOPBACK ONLY HTTP and TCP service.
+
+No public bind, no wildcard CORS and no unrestricted in-process compute.
 """
-Multi-Protocol Network Server for SoftwareGPU.
-Exposes both HTTP REST/JSON-RPC 2.0 and High-Speed TCP Binary Socket endpoints.
-Enables cross-process, cross-language, and networked GPU compute offloading.
-"""
+from __future__ import annotations
 
 import json
 import socket
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
-from typing import Optional, Tuple
 
-from .dispatcher import GPUCommandDispatcher
 from .protocol import unpack_header, pack_message, MsgType, HEADER_SIZE
+from .security import (RequestRejected, SecurityLimits, authorized, get_token,
+                       ensure_loopback, validate_request, bounded_json)
+from .isolated_worker import IsolatedExecutor
+
+PATHS = {
+    "/api/v1/compute/gemm": "gemm",
+    "/api/v1/compute/activation": "activation",
+    "/api/v1/compute/vector_add": "vector_add",
+    "/api/v1/graphics/render": "render_mesh",
+    "/api/v1/game/physics": "physics_step",
+    "/api/v1/game/boids": "boids_swarm",
+}
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
+    def __init__(self, addr, handler, policy):
+        self.policy = policy
+        super().__init__(addr, handler)
+
+    def process_request(self, request, client_address):
+        if not self.policy.connections.acquire(blocking=False):
+            request.close()
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self.policy.connections.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self.policy.connections.release()
+
+
+class ServicePolicy:
+    def __init__(self, token, limits):
+        self.token = get_token(token)
+        self.limits = limits
+        self.connections = threading.BoundedSemaphore(limits.max_clients)
+        self.jobs = threading.BoundedSemaphore(limits.max_jobs)
+        self.executor = IsolatedExecutor(limits)
+
+    def dispatch(self, method, params):
+        validate_request(method, params, self.limits)
+        if method == "device_info":
+            # Device metrics are reported through the same isolated worker.
+            pass
+        if not self.jobs.acquire(blocking=False):
+            raise RequestRejected("CAPACITY_EXHAUSTED", 429)
+        try:
+            result = self.executor.execute(method, params)
+            # Enforce response byte cap before handing to either protocol.
+            if len(json.dumps(result, allow_nan=False).encode("utf-8")) > self.limits.max_response_bytes:
+                raise RequestRejected("RESPONSE_TOO_LARGE", 413)
+            return result
+        finally:
+            self.jobs.release()
+
 
 class GPUHTTPRequestHandler(BaseHTTPRequestHandler):
-    dispatcher: GPUCommandDispatcher = None
+    protocol_version = "HTTP/1.0"
 
     def log_message(self, format, *args):
-        # Silent logging to prevent console pollution
         pass
 
-    def _send_json(self, status_code: int, data: dict):
-        response_bytes = json.dumps(data).encode("utf-8")
-        self.send_response(status_code)
+    def _reply(self, status, doc):
+        payload = json.dumps(doc, separators=(",", ":")).encode("utf-8")
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(response_bytes)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
-        self.wfile.write(response_bytes)
+        self.wfile.write(payload)
+
+    def _guard(self):
+        value = self.headers.get("Authorization", "")
+        if not value.startswith("Bearer ") or not authorized(self.server.policy.token, value[7:]):
+            self._reply(401, {"error": "UNAUTHORIZED"})
+            return False
+        return True
 
     def do_OPTIONS(self):
-        self._send_json(200, {"status": "ok"})
+        self._reply(405, {"error": "CORS_DISABLED"})
 
     def do_GET(self):
-        if self.path in ("/health", "/status", "/api/v1/status"):
-            info = self.dispatcher.op_device_info({})
-            self._send_json(200, {"status": "healthy", "gpu": info})
-        else:
-            self._send_json(404, {"error": "Endpoint not found"})
+        if not self._guard():
+            return
+        if self.path not in ("/health", "/status", "/api/v1/status"):
+            self._reply(404, {"error": "NOT_FOUND"})
+            return
+        try:
+            info = self.server.policy.dispatch("device_info", {})
+            self._reply(200, {"status": "healthy", "gpu": info})
+        except RequestRejected as exc:
+            self._reply(exc.status, {"error": exc.code})
 
     def do_POST(self):
-        content_length = int(self.headers.get("Content-Length", 0))
-        post_data = self.rfile.read(content_length)
-
+        if not self._guard():
+            return
+        raw = self.headers.get("Content-Length")
         try:
-            req = json.loads(post_data.decode("utf-8"))
-        except Exception as e:
-            self._send_json(400, {"error": f"Invalid JSON payload: {str(e)}"})
-            return
-
-        # Handle JSON-RPC 2.0 format
-        if "jsonrpc" in req and "method" in req:
-            req_id = req.get("id", None)
-            method = req["method"]
-            params = req.get("params", {})
-            try:
-                result = self.dispatcher.handle_request(method, params)
-                self._send_json(200, {
-                    "jsonrpc": "2.0",
-                    "result": result,
-                    "id": req_id
-                })
-            except Exception as e:
-                self._send_json(500, {
-                    "jsonrpc": "2.0",
-                    "error": {"code": -32603, "message": str(e)},
-                    "id": req_id
-                })
-            return
-
-        # Handle REST paths
-        path = self.path.rstrip("/")
-        method_map = {
-            "/api/v1/compute/gemm": "gemm",
-            "/api/v1/compute/activation": "activation",
-            "/api/v1/compute/vector_add": "vector_add",
-            "/api/v1/graphics/render": "render_mesh",
-            "/api/v1/game/physics": "physics_step",
-            "/api/v1/game/boids": "boids_swarm",
-        }
-
-        if path in method_map:
-            try:
-                result = self.dispatcher.handle_request(method_map[path], req)
-                self._send_json(200, {"success": True, "data": result})
-            except Exception as e:
-                self._send_json(500, {"success": False, "error": str(e)})
-        else:
-            self._send_json(404, {"error": f"Unknown path: {path}"})
+            if raw is None or not raw.isascii() or not raw.isdecimal():
+                raise RequestRejected("CONTENT_LENGTH_REQUIRED", 411)
+            length = int(raw)
+            if length < 1 or length > self.server.policy.limits.max_request_bytes:
+                raise RequestRejected("REQUEST_SIZE_LIMIT", 413)
+            payload = self.rfile.read(length)
+            if len(payload) != length:
+                raise RequestRejected("REQUEST_INCOMPLETE")
+            doc = json.loads(payload.decode("utf-8"),
+                             parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+            bounded_json(doc)
+            if not isinstance(doc, dict):
+                raise RequestRejected("REQUEST_OBJECT_REQUIRED")
+            if self.path.rstrip("/") == "/rpc":
+                if doc.get("jsonrpc") != "2.0":
+                    raise RequestRejected("JSONRPC_VERSION_INVALID")
+                method, params = doc.get("method"), doc.get("params", {})
+                result = self.server.policy.dispatch(method, params)
+                self._reply(200, {"jsonrpc": "2.0", "result": result, "id": doc.get("id")})
+            else:
+                method = PATHS.get(self.path.rstrip("/"))
+                if method is None:
+                    raise RequestRejected("NOT_FOUND", 404)
+                result = self.server.policy.dispatch(method, doc)
+                self._reply(200, {"success": True, "data": result})
+        except RequestRejected as exc:
+            self._reply(exc.status, {"error": exc.code})
+        except (ValueError, UnicodeError, TypeError):
+            self._reply(400, {"error": "MALFORMED_REQUEST"})
+        except BaseException:
+            self._reply(500, {"error": "INTERNAL_ERROR"})
 
 
 class BinaryTCPServer(threading.Thread):
-    """High-throughput binary socket server for direct tensor streaming."""
-    def __init__(self, host: str, port: int, dispatcher: GPUCommandDispatcher):
+    def __init__(self, host, port, policy):
         super().__init__(daemon=True, name="SoftGPU_TCPServer")
-        self.host = host
-        self.port = port
-        self.dispatcher = dispatcher
-        self._running = False
+        self.host, self.port, self.policy = host, port, policy
+        self._running = threading.Event()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind((host, port))
+        self.port = self._sock.getsockname()[1]
+        self._sock.settimeout(.2)
 
     def run(self):
-        self._sock.bind((self.host, self.port))
-        self._sock.listen(128)
-        self._running = True
-        while self._running:
+        self._sock.listen(self.policy.limits.max_clients)
+        self._running.set()
+        while self._running.is_set():
             try:
-                client_sock, addr = self._sock.accept()
-                threading.Thread(
-                    target=self._handle_client,
-                    args=(client_sock,),
-                    daemon=True
-                ).start()
-            except Exception:
+                conn, _ = self._sock.accept()
+            except socket.timeout:
+                continue
+            except OSError:
                 break
+            if not self.policy.connections.acquire(blocking=False):
+                conn.close()
+                continue
+            threading.Thread(target=self._handle_client, args=(conn,), daemon=True).start()
 
-    def _handle_client(self, client_sock: socket.socket):
+    def _handle_client(self, client):
         try:
-            with client_sock:
-                while self._running:
-                    # Read 20-byte header
-                    header_bytes = self._recv_all(client_sock, HEADER_SIZE)
-                    if not header_bytes:
-                        break
-                    msg_type, flags, payload_len = unpack_header(header_bytes)
-                    payload_bytes = self._recv_all(client_sock, payload_len)
-
-                    req = json.loads(payload_bytes.decode("utf-8"))
-                    method = req.get("method", "")
-                    params = req.get("params", {})
-                    req_id = req.get("id")
-
+            with client:
+                client.settimeout(self.policy.limits.io_timeout_seconds)
+                # One request per connection prevents indefinite idle sessions.
+                header = self._read(client, HEADER_SIZE)
+                if len(header) != HEADER_SIZE:
+                    return
+                kind, flags, length = unpack_header(header)
+                if kind != MsgType.JSON_REQUEST or flags != 0 or length < 1 or length > self.policy.limits.max_request_bytes:
+                    return
+                payload = self._read(client, length)
+                if len(payload) != length:
+                    return
+                doc = json.loads(payload.decode("utf-8"))
+                bounded_json(doc)
+                if not isinstance(doc, dict) or not authorized(self.policy.token, doc.get("token", "")):
+                    response = {"error": "UNAUTHORIZED"}
+                    response_kind = MsgType.ERROR
+                else:
                     try:
-                        res_data = self.dispatcher.handle_request(method, params)
-                        resp_payload = {"result": res_data, "id": req_id}
-                        resp_bytes = pack_message(MsgType.JSON_RESPONSE, resp_payload)
-                    except Exception as e:
-                        resp_payload = {"error": str(e), "id": req_id}
-                        resp_bytes = pack_message(MsgType.ERROR, resp_payload)
-
-                    client_sock.sendall(resp_bytes)
-        except Exception:
+                        result = self.policy.dispatch(doc.get("method"), doc.get("params", {}))
+                        response, response_kind = {"result": result, "id": doc.get("id")}, MsgType.JSON_RESPONSE
+                    except RequestRejected as exc:
+                        response, response_kind = {"error": exc.code}, MsgType.ERROR
+                if len(json.dumps(response).encode("utf-8")) <= self.policy.limits.max_response_bytes:
+                    client.sendall(pack_message(response_kind, response))
+        except (OSError, ValueError, UnicodeError, TimeoutError):
             pass
+        finally:
+            self.policy.connections.release()
 
-    def _recv_all(self, sock: socket.socket, length: int) -> bytes:
-        data = bytearray()
-        while len(data) < length:
-            chunk = sock.recv(min(length - len(data), 65536))
+    @staticmethod
+    def _read(conn, count):
+        out = bytearray()
+        while len(out) < count:
+            chunk = conn.recv(min(count - len(out), 65536))
             if not chunk:
-                return b""
-            data.extend(chunk)
-        return bytes(data)
+                break
+            out.extend(chunk)
+        return bytes(out)
 
     def stop(self):
-        self._running = False
-        try:
-            self._sock.close()
-        except Exception:
-            pass
+        self._running.clear()
+        self._sock.close()
+        if self.is_alive():
+            self.join(timeout=2)
 
 
 class SoftwareGPUServer:
-    """Manages lifecycle of both HTTP and TCP SoftwareGPU remote endpoints."""
-    def __init__(self, http_port: int = 8088, tcp_port: int = 8089, host: str = "127.0.0.1"):
-        self.http_port = http_port
-        self.tcp_port = tcp_port
-        self.host = host
-        self.dispatcher = GPUCommandDispatcher()
-
-        GPUHTTPRequestHandler.dispatcher = self.dispatcher
-        self.http_server = ThreadedHTTPServer((self.host, self.http_port), GPUHTTPRequestHandler)
-        self.tcp_server = BinaryTCPServer(self.host, self.tcp_port, self.dispatcher)
-
+    def __init__(self, http_port=8088, tcp_port=8089, host="127.0.0.1",
+                 auth_token=None, limits=None):
+        ensure_loopback(host)
+        self.policy = ServicePolicy(auth_token, limits or SecurityLimits())
+        self.http_server = ThreadedHTTPServer((host, http_port), GPUHTTPRequestHandler, self.policy)
+        self.tcp_server = BinaryTCPServer(host, tcp_port, self.policy)
+        self.http_port = self.http_server.server_address[1]
+        self.tcp_port = self.tcp_server.port
         self._http_thread = None
 
     def start(self):
-        """Starts HTTP and TCP server listeners in background threads."""
-        self._http_thread = threading.Thread(
-            target=self.http_server.serve_forever,
-            daemon=True,
-            name="SoftGPU_HTTPServer"
-        )
+        self._http_thread = threading.Thread(target=self.http_server.serve_forever,
+                                              daemon=True, name="SoftGPU_HTTPServer")
         self._http_thread.start()
         self.tcp_server.start()
 
     def stop(self):
-        """Stops listeners and releases sockets."""
-        if self.http_server:
-            self.http_server.shutdown()
-            self.http_server.server_close()
-        if self.tcp_server:
-            self.tcp_server.stop()
+        self.http_server.shutdown() if self._http_thread is not None else None
+        self.http_server.server_close()
+        self.tcp_server.stop()
+        if self._http_thread is not None:
+            self._http_thread.join(timeout=2)
