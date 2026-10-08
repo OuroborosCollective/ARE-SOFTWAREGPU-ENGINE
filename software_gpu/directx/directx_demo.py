@@ -12,6 +12,7 @@ from software_gpu.directx.d3d11 import (
     D3D11_PRIMITIVE_TOPOLOGY
 )
 from software_gpu.graphics.shader import Matrix4, Vertex
+from software_gpu.core.output import output_file
 
 
 def main():
@@ -96,7 +97,7 @@ def main():
     print("[5] Presenting frame via DXGI SwapChain...")
     swap_chain.Present()
 
-    out_file = "/workspace/directx_software_gpu_render.bmp"
+    out_file = output_file("directx_software_gpu_render.bmp")
     swap_chain.SaveFrame(out_file)
     print(f"SUCCESS: DirectX 11 frame rendered and saved to: {out_file} (Size: {os.path.getsize(out_file):,} bytes)")
 
