@@ -92,7 +92,9 @@ class GameComputeEngine:
 
         # Cap max speed
         speeds = np.linalg.norm(vel, axis=1, keepdims=True) + 1e-4
-        vel = np.where(speeds > max_speed, (vel / speeds) * max_speed, vel)
+        # Write the speed cap back to the device-backed buffer; rebinding vel
+        # leaves d_vel unchanged and returns an uncapped velocity.
+        vel[...] = np.where(speeds > max_speed, (vel / speeds) * max_speed, vel)
         pos += vel * dt
 
         res_pos = d_pos.to_numpy()
