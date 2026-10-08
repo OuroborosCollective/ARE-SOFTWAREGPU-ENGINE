@@ -71,7 +71,8 @@ jobs:
         run: |
           python scripts/import_source_archive.py --archive 'aistudio_agent_environment-805fd56f-4455-4da9-b5ab-a0fe51f950c8-2026_10_08T17_31_27_601Z.tar' --destination .
           git add -- main.py setup.py software_gpu docs/UPSTREAM_README.md evidence/source-manifest.json
-          git diff --cached --check
+          # Preserve uploaded source bytes; legacy blank-line whitespace is tracked, not rewritten.
+          git -c core.whitespace=-blank-at-eol diff --cached --check
           if git diff --cached --quiet; then
             echo "NO_CHANGES"
             exit 0
