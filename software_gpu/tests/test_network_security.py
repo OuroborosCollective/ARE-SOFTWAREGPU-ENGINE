@@ -105,6 +105,19 @@ class TestSecurity(unittest.TestCase):
             client.sendall(struct.pack("!4sIIQ", b"SGPU", 1, 0, 2**64-1))
             self.assertEqual(client.recv(1), b"")
 
+    def test_deadline_kills_spawned_worker(self):
+        from software_gpu.network.isolated_worker import IsolatedExecutor
+        tiny = SecurityLimits(worker_timeout_seconds=.01)
+        with self.assertRaisesRegex(RequestRejected, "WORKER_DEADLINE_EXCEEDED"):
+            IsolatedExecutor(tiny).execute("device_info", {})
+
+    def test_reject_nonfinite_encoded_tensor(self):
+        import numpy as np
+        from software_gpu.network.protocol import encode_tensor_base64, decode_tensor_base64
+        encoded = encode_tensor_base64(np.array([float("nan")], dtype=np.float32))
+        with self.assertRaisesRegex(ValueError, "NONFINITE_TENSOR"):
+            decode_tensor_base64(encoded)
+
     def test_job_capacity_guard(self):
         self.assertTrue(self.server.policy.jobs.acquire(False))
         self.assertTrue(self.server.policy.jobs.acquire(False))
