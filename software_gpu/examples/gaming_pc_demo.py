@@ -12,6 +12,7 @@ import numpy as np
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.shader import Vertex, BlinnPhongShader, Matrix4
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
+from software_gpu.core.output import output_file
 from software_gpu.graphics.postprocess import (
     MSAAFramebuffer,
     MSAARasterizer,
@@ -85,7 +86,7 @@ def main():
     rasterizer.draw_mesh(verts, indices, shader)
     time_no_aa = (time.perf_counter() - t0) * 1000.0
 
-    path_no_aa = "/workspace/gaming_aliased_no_aa.bmp"
+    path_no_aa = output_file("gaming_aliased_no_aa.bmp")
     fb_no_aa.save_bmp(path_no_aa)
     var_no_aa = measure_edge_gradient_variance(fb_no_aa)
     print(f"  -> Saved to: {path_no_aa} ({time_no_aa:.1f} ms, Edge Variance: {var_no_aa:.1f})")
@@ -102,7 +103,7 @@ def main():
     resolved_fb = msaa_fb.resolve()
     time_msaa = (time.perf_counter() - t0) * 1000.0
 
-    path_msaa = "/workspace/gaming_msaa_4x.bmp"
+    path_msaa = output_file("gaming_msaa_4x.bmp")
     resolved_fb.save_bmp(path_msaa)
     var_msaa = measure_edge_gradient_variance(resolved_fb)
     print(f"  -> Saved to: {path_msaa} ({time_msaa:.1f} ms, Edge Variance: {var_msaa:.1f})")
@@ -116,7 +117,7 @@ def main():
     fxaa_fb = FXAAPass.apply(fb_no_aa, edge_threshold=0.06, subpixel_quality=0.85)
     time_fxaa = (time.perf_counter() - t0) * 1000.0
 
-    path_fxaa = "/workspace/gaming_fxaa.bmp"
+    path_fxaa = output_file("gaming_fxaa.bmp")
     fxaa_fb.save_bmp(path_fxaa)
     var_fxaa = measure_edge_gradient_variance(fxaa_fb)
     print(f"  -> Saved to: {path_fxaa} ({time_fxaa:.1f} ms, Edge Variance: {var_fxaa:.1f})")
@@ -135,7 +136,7 @@ def main():
     )
     time_hdr = (time.perf_counter() - t0) * 1000.0
 
-    path_hdr = "/workspace/gaming_hdr_bloom_aces.bmp"
+    path_hdr = output_file("gaming_hdr_bloom_aces.bmp")
     hdr_fb.save_bmp(path_hdr)
     print(f"  -> Saved to: {path_hdr} ({time_hdr:.1f} ms)")
 
