@@ -27,7 +27,10 @@ def _coverage_kernel(s0, s1, s2, left, right, top, bottom, inv_area, depthbuf):
             w0 = (px-s1[0])*(s2[1]-s1[1]) - (py-s1[1])*(s2[0]-s1[0])
             w1 = (px-s2[0])*(s0[1]-s2[1]) - (py-s2[1])*(s0[0]-s2[0])
             w2 = (px-s0[0])*(s1[1]-s0[1]) - (py-s0[1])*(s1[0]-s0[0])
-            if w0 >= 0 and w1 >= 0 and w2 >= 0:
+            e0 = (s2[1] > s1[1]) or (s2[1] == s1[1] and s2[0] < s1[0])
+            e1 = (s0[1] > s2[1]) or (s0[1] == s2[1] and s0[0] < s2[0])
+            e2 = (s1[1] > s0[1]) or (s1[1] == s0[1] and s1[0] < s0[0])
+            if (w0 > 0 or (w0 == 0 and e0)) and (w1 > 0 or (w1 == 0 and e1)) and (w2 > 0 or (w2 == 0 and e2)):
                 a = w0 * inv_area
                 b = w1 * inv_area
                 c = w2 * inv_area
