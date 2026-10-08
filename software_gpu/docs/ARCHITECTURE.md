@@ -1,78 +1,86 @@
-# SoftwareGPU: Vollständige Dokumentation
+# ARE SoftwareGPU Engine — Technische Architektur
 
-SoftwareGPU ist eine vollständige, mock-freie Software-Implementierung eines GPU-Prozessors auf modernen Mehrkern-CPUs mit Vektorerweiterungen (AVX2/FMA). Das System ersetzt dedizierte GPUs auf Servern, Gaming-PCs und mobilen Endgeräten (Android) für rechenintensive GPGPU-Aufgaben, Grafikrendering (DirectX 11 & OpenGL ES 3.0), Kantenglättung (MSAA & FXAA) und HDR-Postprocessing.
+**System:** CPU-basierte Rendering- und Compute-Runtime. **Status:** Forschungs-/Entwicklungsprojekt, kein GPU-Gerätetreiber.
 
----
+## 1. Pipeline und Eigentümerschaften
 
-## 1. Gaming-PC Kantenglättung & Antialiasing (AA) & Postprocessing
+```text
+3-D Vertices + Indices
+        |
+        v
+Python Vertex Shader -> primitive assembly + coarse clipping/rejection
+        |
+        v
+Screen-space triangles, edge functions, depth
+        |
+        +--> bands    (alter horizontaler CPU-Referenzpfad)
+        |
+        +--> tiles    (2-D-Triangle-Binning, NumPy-Coverage/Depth)
+        |
+        +--> tiles-jit  (optional: Numba/LLVM-Coverage/Depth auf CPU)
+        |
+        v
+Python Fragment Shader (sichtbare Pixel; nicht LLVM-kompiliert)
+        |
+        v
+RGBA-Framebuffer + Float32-Depth
+        |
+        v
+Optional 4x MSAA / FXAA / HDR / Bloom / Datei-Export
+```
 
-In modernen Gaming-PCs sind Antialiasing und kinoreife Shading-Effekte Standard. In `software_gpu/graphics/postprocess.py` wurden folgende Techniken funktionsfähig integriert:
+Die primären Pfade liegen in `graphics/rasterizer.py`, `graphics/tile_backend.py`, `graphics/compiled_tile.py`, `graphics/framebuffer.py`, `graphics/postprocess.py` und `graphics/shader.py`.
 
-### A. 4x MSAA (Multi-Sample Anti-Aliasing)
-* **Funktionsweise:** 4 Subpixel-Samplepunkte pro Pixel mit versetzten Abtastkoordinaten:
-  $$\Delta_{(x,y)} \in \{(-0.25, -0.25), (0.25, -0.25), (-0.25, 0.25), (0.25, 0.25)\}$$
-* **Coverage-Maske & Depth-Test:** Kantenfunktionen und Tiefentests werden pro Subsample evaluiert.
-* **Resolve-Pass:** Ein Box-Filter mittelt die validen Subpixel-Farben und erzeugt weiche Kantenübergänge ohne Aliasing-Treppchen.
-* **Ergebnis:** **34,6 % weichere Kantenübergänge** gegenüber unbereinigtem Rendering.
-* **Ausgabe:** [gaming_msaa_4x.bmp](file:///workspace/gaming_msaa_4x.bmp)
+- **Tile-Ownership:** Jede Kachel hat disjunkte Farb-/Tiefenregionen, erhält nur überlappende Dreiecke und bearbeitet diese in ursprünglicher Einreichungsreihenfolge. Mehrere Worker bearbeiten voneinander unabhängige Kacheln.
+- **Vektorisierung:** NumPy führt Coverage und Tiefentest auf CPU-Arrays aus. Das allein belegt **nicht**, welche AVX-/NEON-Maschineninstruktionen die konkrete CPU benutzt.
+- **Opt-in JIT:** Numba/LLVM beschleunigt CPU-Inner-Loops (`nogil=True`, `fastmath=False`), während frei definierbare Python-Fragmentshader im Python-Interpreter bleiben. Es gibt keinen HLSL-/GLSL-/CUDA-Compiler.
+- **MSAA:** Der `MSAAFramebuffer` speichert 4 Subpixel-Samples und kann diese mit `uint16`-Akkumulation ohne Float32-Vollkopie auflösen. Das ist nicht mit Direct3D-Konformität gleichzusetzen.
+- **Grenze:** Eine „deterministische“ Tile-Reihenfolge bedeutet nicht automatisch bitgleiche Ausgabe auf *jeder* CPU, Floating-Point-Plattform und Library-Version. CI vergleicht definierte lokale Szenen.
 
-### B. FXAA (Fast Approximate Anti-Aliasing - Timothy Lottes / NVIDIA)
-* **Funktionsweise:** Screen-Space Post-Processing-Filter basierend auf perzeptueller Luminanz ($L = 0.299 R + 0.587 G + 0.114 B$).
-* **Kantenerkennung:** Kontrastdifferenz der 4-Nachbarschaft. Unterhalb des Schwellenwerts (0.06) erfolgt ein Early-Exit.
-* **Gradient-Blending:** Ermittlung der Kantenrichtung (horizontal vs. vertikal) und gewichtetes Blending entlang der Kantentangente.
-* **Laufzeit & Ergebnis:** Extrem schnell (**21,3 ms**) mit **50,8 % messbarer Kantenglättung**.
-* **Ausgabe:** [gaming_fxaa.bmp](file:///workspace/gaming_fxaa.bmp)
+## 2. Module und Flächen
 
-### C. HDR Bloom & ACES Filmic Tone Mapping + Gamma 2.2
-* **HDR-Luminanz-Extraktion:** Extraktion von Glanzlichtern und Lichtquellen mit Schwellenwert-Filterung.
-* **2-Pass Blur Glow:** Separable Gauß-/Box-Filterung zur Erzeugung weicher Lichtkoronen.
-* **ACES Filmic Tone Mapping:** Abbildung von High Dynamic Range $[0, \infty)$ in $[0, 1]$ nach Academy Color Encoding System:
-  $$f(x) = \frac{x(2.51x + 0.03)}{x(2.43x + 0.59) + 0.14}$$
-* **sRGB Gamma 2.2 Korrektur:** $C_{\text{srgb}} = C_{\text{linear}}^{1/2.2}$.
-* **Ausgabe:** [gaming_hdr_bloom_aces.bmp](file:///workspace/gaming_hdr_bloom_aces.bmp)
+| Verzeichnis | Aufgabe | Einordnung |
+| --- | --- | --- |
+| `core/` | CPU Device-/Memory-Modell, Output-Pfade, VPS Governor | Core und Effekte |
+| `compute/` | Generator-SIMT, Kooperations-/Barrieresimulation, NumPy-Kernels | Core/Forschungsruntime |
+| `graphics/` | Software-Rasterizer, Framebuffer, Shader, Postprocessing | Produktionskandidat + Core |
+| `benchmarks/` | Lastversuche und A/B-CPU-Vergleich mit Bildparität | Tests/Evidence |
+| `network/` | HTTP/TCP-Dienste und Request-Dispatcher | Unsichere experimentelle Effektfläche |
+| `clients/` | Sprachclients in Python, JS, C/C++, C#, Go, Rust | Demonstrationsadapter |
+| `mobile/` | Android-IPC und OpenGL-ES-artige Python-Prototypen | Unverifizierte Plattformprojektion |
+| `directx/` | Direct3D-11-artige Python-Objekte/Demo | API-Simulation, kein Windows-Treiber |
+| `integrations/` | Image-Filter, Blender, MMORPG-Beispiele | Experimentelle Adapter |
+| `tests/` | CPU-Grafik-, Mathematik-, Netzwerk- und Regressionstests | Evidence |
 
----
+**Persistenzgrenze:** Nur erzeugte Bilder/JSON-Reports im lokalen Ausgabeverzeichnis; keine autoritative Aurion-Weltzustands- oder Spielstandsverwaltung. **Runtime-Grenze:** Eine Datei im Repository ist kein Nachweis, dass diese auf einem Endgerät oder Server als Produktivdienst aktiv ist.
 
-## 2. Android & Mobile Endgeräte Kommunikation
+## 3. Starten, Messen und Prüfen
 
-Mobile Android-Geräte weisen spezifische Architekturanforderungen auf:
-1. **Sicherheits- & Rechte-Restriktionen:** Netzwerk-Sockets (`localhost`) unterliegen oft SELinux- und `android.permission.INTERNET`-Einschränkungen.
-2. **Latenz-Anforderungen:** Der TCP-Loopback-Stack erzeugt unnötigen Kernel-Overhead.
+```bash
+python -m pip install -e .
+python -m unittest discover -s software_gpu/tests -v
+python -m software_gpu.benchmarks.compare_tile_backends --workers 1 --repeats 3
+```
 
-### Mobile IPC-Architektur (`software_gpu/mobile/android_server.py`)
-* **Linux / Android Abstract Namespace Sockets (`\0software_gpu`):**
-  * Verwendet Sockets mit führendem Null-Byte.
-  * Benötigt **keine Schreibrechte** im Android-Dateisystem und umgeht App-Sandbox-Konflikte.
-* **Android LocalSocket / Unix Domain Sockets (`/tmp/software_gpu.sock`):**
-  * Direkter nativer IPC-Kanal für Android NDK (C++) und Kotlin/Java (`android.net.LocalSocket`).
-  * Extrem niedrige Latenz ($< 0,1\text{ ms}$).
-* **Android Native Client ([AndroidGPUClient.kt](file:///workspace/software_gpu/mobile/AndroidGPUClient.kt)):**
-  * Kotlin/Java-Client für Android-Apps unter Verwendung von `LocalSocketAddress(abstractNamespace, Namespace.ABSTRACT)`.
-  * Automatischer Fallback auf TCP für Remote-Debugging über `adb reverse tcp:8089 tcp:8089`.
-* **OpenGL ES 3.0 & EGL Emulation ([opengles.py](file:///workspace/software_gpu/mobile/opengles.py)):**
-  * Native Abbildung mobiler Draw-Calls (`glDrawArrays`, `glClear`, `eglSwapBuffers`) auf den CPU-Rasterizer.
+Optional Numba/LLVM:
 
----
+```bash
+python -m pip install -e ".[jit]"
+python -m software_gpu.benchmarks.compare_tile_backends --workers 2 --repeats 3 --jit
+```
 
-## 3. DirectX 11 Pipeline & VPS Hardware Governor
+Benchmarks nutzen deterministische Mesh-Fixtures und vergleichen historische Bänder, NumPy-Tiles und optional LLVM-Kacheln **auf CPU**. Nachweisstand: [RENDER_OPTIMIZATION_EVIDENCE.md](../../docs/RENDER_OPTIMIZATION_EVIDENCE.md). Eine hardwareübergreifende Leistungszusage ist nicht möglich.
 
-* **DirectX 11 (WARP / Mesa D3D12):** `ID3D11Device`, `ID3D11DeviceContext`, `IDXGISwapChain` und HLSL-Shader auf CPU gerendert ([directx_demo.py](file:///workspace/software_gpu/directx/directx_demo.py) -> [directx_software_gpu_render.bmp](file:///workspace/directx_software_gpu_render.bmp)).
-* **VPS Hardware Governor ([vps_governor.py](file:///workspace/software_gpu/core/vps_governor.py)):** cgroups v1/v2 Quota-Erkennung, CPU-Affinity und automatischer Headroom (30 % Reservierung für OS und Datenbanken).
-* **Load- & Stressbenchmark ([load_stress_benchmark.py](file:///workspace/software_gpu/benchmarks/load_stress_benchmark.py)):** Ermittlung von FPS unter Last, Abfallkurven und finalem Score (**81.454 Punkte**, Peak **750,82 GFLOPS**).
+## 4. Sicherheit und Plattformgrenzen
 
----
+- Netzwerkservices besitzen derzeit keine verpflichtende Authentisierung, TLS-Terminierung und ausreichenden CPU-/RAM-/Payload-Schutz. [Sicherheit](../../docs/SECURITY_AND_LIMITS.md).
+- Die Python-ähnlichen DirectX-/CUDA-Bezeichner vermitteln **keine** native API-Kompatibilität für existierende Spiele oder LLM-Frameworks.
+- Android-Code ist vorhanden, es fehlt aber ein nachgewiesener Android-Geräte-/Emulator-Test und ein vollständiger Build-/Signierungsprozess.
+- Multi-Sprach-Client-Beispiele belegen noch keine dauerhafte API-/ABI-Kompatibilität.
+- Für Aurion ist ausschließlich ein separater read-only Offline-Worker denkbar; niemals eine zweite kanonische Gameplay-, Physik- oder 100-ms-Tick-Authority. [Aurion-Vertrag](../../docs/AURION_OFFLINE_ADAPTER_CONTRACT.md).
 
-## 4. Übersicht aller generierten Bilddateien (Echte Ergebnisse)
+## 5. Quelle und Lizenz
 
-Alle folgenden 24-Bit-Bitmap-Dateien wurden von SoftwareGPU auf der CPU erzeugt:
+Die ursprünglichen TAR-Quellen sind [durch Prüfsummen dokumentiert](../../evidence/source-manifest.json); die historische Werbedokumentation findet sich getrennt im [Upstream-Archiv](../../docs/UPSTREAM_README.md). Unbestätigte Performance- und GPU-Ersatz-Aussagen sind **nicht** als Fakt zu übernehmen.
 
-1. [gaming_aliased_no_aa.bmp](file:///workspace/gaming_aliased_no_aa.bmp) - Baseline ohne Kantenglättung (sichtbare Treppenkanten)
-2. [gaming_msaa_4x.bmp](file:///workspace/gaming_msaa_4x.bmp) - 4x MSAA mit Subpixel-Resolve (glatte Kanten)
-3. [gaming_fxaa.bmp](file:///workspace/gaming_fxaa.bmp) - FXAA Post-Processing (glatte Farbverläufe)
-4. [gaming_hdr_bloom_aces.bmp](file:///workspace/gaming_hdr_bloom_aces.bmp) - HDR Bloom Glow + ACES Filmic Tone Mapping
-5. [directx_software_gpu_render.bmp](file:///workspace/directx_software_gpu_render.bmp) - Direct3D 11 DrawIndexed Rendering
-6. [blender_software_gpu_render.bmp](file:///workspace/blender_software_gpu_render.bmp) - Blender Render Engine Bridge
-7. [software_gpu_sphere.bmp](file:///workspace/software_gpu_sphere.bmp) - 3D Kugel mit 800 Dreiecken & Blinn-Phong
-8. [software_gpu_blurred.bmp](file:///workspace/software_gpu_blurred.bmp) - 2D Gaußscher Weichzeichner
-9. [software_gpu_sobel.bmp](file:///workspace/software_gpu_sobel.bmp) - Sobel-Kantenerkennungsfilter
-10. [software_gpu_render.bmp](file:///workspace/software_gpu_render.bmp) - 3D Würfel mit Glanzlicht
+Copyright (c) 2026 OuroborosCollective. [PolyForm Noncommercial License 1.0.0](../../LICENSE.md) mit [Required Notice](../../NOTICE). Nichtkommerzieller Zugang unter Lizenzbedingungen; kommerzielle Verwertung erst nach gesonderter schriftlicher Freigabe. [Lizenzleitfaden](../../docs/LICENSING.md).
