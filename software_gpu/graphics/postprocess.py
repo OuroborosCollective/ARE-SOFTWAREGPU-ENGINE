@@ -9,7 +9,7 @@ import numpy as np
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
-from .rasterizer import edge_function
+from .geometry import edge_function, edge_covered, prepare_triangles
 
 
 class MSAAFramebuffer:
@@ -205,31 +205,9 @@ class MSAARasterizer:
         w = float(self.msaa_fb.width)
         h = float(self.msaa_fb.height)
 
-        # Vertex Shader pass
-        transformed = []
-        varyings = []
-        for v in vertices:
-            clip, var = shader.vertex_shader(v)
-            transformed.append(clip)
-            varyings.append(var)
-
-        for i0, i1, i2 in indices:
-            p0, p1, p2 = transformed[i0], transformed[i1], transformed[i2]
-            if p0[3] <= 0.01 or p1[3] <= 0.01 or p2[3] <= 0.01:
-                continue
-
-            inv_w0, inv_w1, inv_w2 = 1.0 / p0[3], 1.0 / p1[3], 1.0 / p2[3]
-            ndc0 = p0[:3] * inv_w0
-            ndc1 = p1[:3] * inv_w1
-            ndc2 = p2[:3] * inv_w2
-
-            s0 = np.array([(ndc0[0] + 1.0) * 0.5 * w, (1.0 - ndc0[1]) * 0.5 * h, ndc0[2]], dtype=np.float32)
-            s1 = np.array([(ndc1[0] + 1.0) * 0.5 * w, (1.0 - ndc1[1]) * 0.5 * h, ndc1[2]], dtype=np.float32)
-            s2 = np.array([(ndc2[0] + 1.0) * 0.5 * w, (1.0 - ndc2[1]) * 0.5 * h, ndc2[2]], dtype=np.float32)
-
-            area = edge_function(s0, s1, s2)
-            if area <= 0:
-                continue
+        triangles = prepare_triangles(vertices, indices, shader, self.msaa_fb.width, self.msaa_fb.height)
+        for (s0, s1, s2, inv_w0, inv_w1, inv_w2,
+             v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
             min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
@@ -252,7 +230,8 @@ class MSAARasterizer:
                         w1 = edge_function(s2, s0, sample_pt)
                         w2 = edge_function(s0, s1, sample_pt)
 
-                        if w0 >= 0 and w1 >= 0 and w2 >= 0:
+                        if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
+                                edge_covered(w2, s0, s1)):
                             a = w0 * inv_area
                             b = w1 * inv_area
                             c = w2 * inv_area
@@ -279,8 +258,8 @@ class MSAARasterizer:
                     interp_factor = 1.0 / interp_inv_w if interp_inv_w > 1e-9 else 1.0
 
                     interp_varyings = {}
-                    for k in varyings[i0]:
-                        val0, val1, val2 = varyings[i0][k], varyings[i1][k], varyings[i2][k]
+                    for k in v0_var:
+                        val0, val1, val2 = v0_var[k], v1_var[k], v2_var[k]
                         if isinstance(val0, np.ndarray):
                             interp_varyings[k] = (cw0 * (val0 * inv_w0) + cw1 * (val1 * inv_w1) + cw2 * (val2 * inv_w2)) * interp_factor
                         else:

@@ -12,6 +12,7 @@ from concurrent.futures import Executor
 from typing import Any
 
 import numpy as np
+from .geometry import edge_covered
 
 
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
@@ -72,7 +73,7 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 w0 = (px - s1[0]) * (s2[1] - s1[1]) - (py - s1[1]) * (s2[0] - s1[0])
                 w1 = (px - s2[0]) * (s0[1] - s2[1]) - (py - s2[1]) * (s0[0] - s2[0])
                 w2 = (px - s0[0]) * (s1[1] - s0[1]) - (py - s0[1]) * (s1[0] - s0[0])
-                covered = (w0 >= 0) & (w1 >= 0) & (w2 >= 0)
+                covered = edge_covered(w0, s1, s2) & edge_covered(w1, s2, s0) & edge_covered(w2, s0, s1)
                 if not covered.any():
                     continue
                 alpha = w0 * inv_area
