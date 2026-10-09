@@ -1,0 +1,8 @@
+{
+  "code_revision": "aa316cae0cdd62a312a937072d201ac1b900fb04",
+  "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "base_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+  "evidence_revision": "8fdf45b005162655044da4d32f3e3614d147775a",
+  "atomic_revision": "f5ae268614ae5fb93e9ca059a9622c0349ddd7e4",
+  "bench_revision": "9a0fad37c4a41cf49d89334a00976f1e8ffbf710"
+}

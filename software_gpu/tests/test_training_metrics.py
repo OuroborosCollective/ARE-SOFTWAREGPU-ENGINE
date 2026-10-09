@@ -22,7 +22,8 @@ class TrainingMetricsTests(unittest.TestCase):
                 receipt = json.loads((recorder.output / "render_receipt.json").read_text())
                 self.assertEqual(receipt["observations"], 2)
                 for file, key in [("loss.jsonl", "loss_jsonl_sha256"),
-                                  ("loss.bmp", "image_sha256")]:
+                                  ("loss.bmp", "image_sha256"),
+                                  ("training_metrics.html", "html_sha256")]:
                     self.assertEqual(hashlib.sha256((recorder.output / file).read_bytes()).hexdigest(), receipt[key])
                 self.assertEqual((recorder.output / "loss.bmp").read_bytes()[:2], b"BM")
                 self.assertFalse(receipt["model_release_accepted"])

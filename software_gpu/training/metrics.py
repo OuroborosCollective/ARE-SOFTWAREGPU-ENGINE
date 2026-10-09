@@ -1,5 +1,6 @@
 """Render observed cross-entropy logs through the actual CPU tile rasterizer."""
 import hashlib
+import base64
 import json
 import math
 import re
@@ -84,12 +85,31 @@ class MetricRecorder:
             raster.executor.shutdown(wait=True)
         image = self.output / "loss.bmp"
         fb.save_bmp(str(image))
+        table = "".join(f"<tr><td>{row['step']}</td><td>{row['loss']!r}</td></tr>"
+                        for row in self.history)
+        chart = base64.b64encode(image.read_bytes()).decode("ascii")
+        report = self.output / "training_metrics.html"
+        report.write_text(f'''<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIHA CPU training metrics</title><style>
+body{{font:16px system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;color:#182536}}
+img{{width:100%;height:auto}}table{{border-collapse:collapse;width:100%}}th,td{{padding:.5rem;text-align:left;border-bottom:1px solid #ccd5de}}
+code{{overflow-wrap:anywhere}}.notice{{background:#eef3f8;padding:1rem;border-radius:8px}}
+</style><h1>MIHA CPU training metrics</h1>
+<p class="notice">Observed training logs. Model quality and release acceptance remain unvalidated.</p>
+<figure><img alt="CPU-rendered training loss bars" src="data:image/bmp;base64,{chart}">
+<figcaption>Cyan: training cross-entropy. Horizontal axis: logged global step (0–{maximum_step}).
+Vertical axis: loss (0–{maximum!r}). Only logged observations are shown.</figcaption></figure>
+<p>CPU tile renderer · {len(self.history)} observations · renderer <code>{self.revisions['renderer_revision']}</code></p>
+<table><thead><tr><th>Global step</th><th>Observed loss</th></tr></thead><tbody>{table}</tbody></table>
+<p>Exact measurements: loss.jsonl. Integrity and source references: render_receipt.json.</p></html>''')
         receipt = {**self.revisions, "device": "cpu", "backend": "tiles",
                    "observations": len(self.history), "x_axis": "logged global step",
                    "x_range": [0, maximum_step], "y_axis": "training cross-entropy",
                    "y_range": [0, maximum], "bar_color": "cyan", "axes_color": "grey",
                    "loss_jsonl_sha256": hashlib.sha256(raw).hexdigest(),
                    "image_sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+                   "html_sha256": hashlib.sha256(report.read_bytes()).hexdigest(),
                    "validation_metrics": None, "model_release_accepted": False}
         (self.output / "render_receipt.json").write_text(
             json.dumps(receipt, indent=2, allow_nan=False) + "\n")
