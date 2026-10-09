@@ -1,0 +1,176 @@
+{
+  "protocol": "are.aurion.production-male-fixtures.v1",
+  "authority": "offline-read-only",
+  "provenance": "Owner-confirmed original Aurion male optimized GLBs uploaded to ChatGPT 2026-10-09; authenticated production catalog not read",
+  "originals_available_in_github_ci": false,
+  "original_binaries_committed_to_public_repo": false,
+  "live_deployment_status": "UNVERIFIED_REQUIRES_APPROVED_RUNTIME_CATALOG_SHA_READBACK",
+  "physical_to_logical_lod": {
+    "1": 0,
+    "2": 1,
+    "3": 2,
+    "4": 3
+  },
+  "available_animations": [
+    "Attack 2",
+    "Cast Spell",
+    "Death",
+    "Fight",
+    "Idle",
+    "Run",
+    "Walk"
+  ],
+  "families": [
+    {
+      "familyId": "universal_male_buzzed",
+      "displayName": "Universal Male Buzzed",
+      "physical_lods_available": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "logical_lods": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explicit_equipment_slots": false,
+      "meshes": 4,
+      "nodes": 70,
+      "materials": 4,
+      "images": 8,
+      "rig_joints": 65,
+      "animation_count": 7,
+      "channels_per_clip": 195,
+      "rig_structure_sha256": "b9217fa658580815ee4e6f8a2a06c579edf5d067e4d95957b89c3cb941bf6f5d",
+      "animation_stream_sha256": "867711c8516dcab684315fcea9be771920ec1a4016b394ba967d1c028cceba3c",
+      "quality_warning": "MOBILE_UNDERARM_INFLUENCES_ABSENT_IN_ATTACK",
+      "lods": [
+        {
+          "physical_lod": 1,
+          "logical_lod": 0,
+          "quality": "High",
+          "file": "Universal Male Buzzed - LOD1 High.glb",
+          "sha256": "e6285ddd9e6ef7139f0954e7706a75068484b6a949658911d76238b4fca569a6",
+          "bytes": 971832,
+          "triangles": 441,
+          "vertices": 411,
+          "texture_max_dimension": 1024
+        },
+        {
+          "physical_lod": 2,
+          "logical_lod": 1,
+          "quality": "Medium",
+          "file": "Universal Male Buzzed - LOD2 Medium.glb",
+          "sha256": "991ac96c5692dbfa673daf26465d245f764e26360bbd88a2c25cbbd83b6f4859",
+          "bytes": 593404,
+          "triangles": 256,
+          "vertices": 260,
+          "texture_max_dimension": 512
+        },
+        {
+          "physical_lod": 3,
+          "logical_lod": 2,
+          "quality": "Low",
+          "file": "Universal Male Buzzed - LOD3 Low.glb",
+          "sha256": "137f26a0e415950687b666b086f9d6454a1ed942e1c5af8552a1be01273d43c7",
+          "bytes": 454104,
+          "triangles": 120,
+          "vertices": 135,
+          "texture_max_dimension": 256
+        },
+        {
+          "physical_lod": 4,
+          "logical_lod": 3,
+          "quality": "Mobile",
+          "file": "Universal Male Buzzed - LOD4 Mobile.glb",
+          "sha256": "e36e258abd687a109ea8116be7e2562b9b5b241a3f97821294110be39f9b9840",
+          "bytes": 401276,
+          "triangles": 57,
+          "vertices": 65,
+          "texture_max_dimension": 128
+        }
+      ]
+    },
+    {
+      "familyId": "base_male_equipment_slots",
+      "displayName": "Base Male EquipmentSlots",
+      "physical_lods_available": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "logical_lods": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explicit_equipment_slots": true,
+      "meshes": 3,
+      "nodes": 78,
+      "materials": 3,
+      "images": 7,
+      "rig_joints": 65,
+      "animation_count": 7,
+      "channels_per_clip": 195,
+      "rig_structure_sha256": "011365232617fe814763e25a15351a659b800c45c4c4bff749fe79fee69b551d",
+      "animation_stream_sha256": "071aeacd2761f24ec4fa981173b43a884f2601bb96660304cb2323a252a1b8fe",
+      "quality_warning": "MOBILE_UNDERARM_INFLUENCES_ABSENT_IN_ATTACK",
+      "lods": [
+        {
+          "physical_lod": 1,
+          "logical_lod": 0,
+          "quality": "High",
+          "file": "Base Male EquipmentSlots - LOD1 High.glb",
+          "sha256": "e2f0daabd2c6103ec74ee659f0007e00738b347252497abf2f10c88044bc621b",
+          "bytes": 851004,
+          "triangles": 417,
+          "vertices": 393,
+          "texture_max_dimension": 1024
+        },
+        {
+          "physical_lod": 2,
+          "logical_lod": 1,
+          "quality": "Medium",
+          "file": "Base Male EquipmentSlots - LOD2 Medium.glb",
+          "sha256": "2bd5ec0ac16583c8aa8f7fce39c33af75ecbc22805c5217bc8e546fbe7369bfe",
+          "bytes": 551296,
+          "triangles": 242,
+          "vertices": 248,
+          "texture_max_dimension": 512
+        },
+        {
+          "physical_lod": 3,
+          "logical_lod": 2,
+          "quality": "Low",
+          "file": "Base Male EquipmentSlots - LOD3 Low.glb",
+          "sha256": "6a38f83a3ab6d0e9d0d2b984e7970c34015c708585fdafaacf0c2895ddf7050f",
+          "bytes": 441212,
+          "triangles": 114,
+          "vertices": 129,
+          "texture_max_dimension": 256
+        },
+        {
+          "physical_lod": 4,
+          "logical_lod": 3,
+          "quality": "Mobile",
+          "file": "Base Male EquipmentSlots - LOD4 Mobile.glb",
+          "sha256": "e10c7df5e62127f4866aa635a446a4f9e13271e9743f05865382d75f8d5edcea",
+          "bytes": 398532,
+          "triangles": 53,
+          "vertices": 60,
+          "texture_max_dimension": 128
+        }
+      ]
+    }
+  ],
+  "known_warnings": [
+    "Physical filenames start at 1; Aurion runtime catalog expects logical levels 0..3; planning-only mapping, no automatic server changes.",
+    "Mobile lowerarm_l/lowerarm_r joint weights are zero in both families despite Attack 2 rotation channels; visual quality requires an Aurion renderer check.",
+    "These files are confirmed original input assets by owner, but active production deployment has not been evidenced by runtime catalog readback."
+  ]
+}
