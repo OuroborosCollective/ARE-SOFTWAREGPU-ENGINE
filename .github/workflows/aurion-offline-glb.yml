@@ -35,7 +35,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install "numpy>=1.20,<3"
       - name: Real CPU rendering and security tests
-        run: python -m unittest software_gpu.tests.test_aurion_offline_lod software_gpu.tests.test_aurion_original_batch2 software_gpu.tests.test_aurion_npc_fallback -v
+        run: python -m unittest software_gpu.tests.test_aurion_offline_lod software_gpu.tests.test_aurion_original_batch2 software_gpu.tests.test_aurion_npc_fallback software_gpu.tests.test_aurion_production_male -v
       - name: Offline worker CLI import
         run: python -m software_gpu.integrations.aurion.offline_lod_worker --help
       - name: NPC original verification CLI import
