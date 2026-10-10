@@ -67,12 +67,12 @@ def collect_hits():
     monitor = sys.monitoring
     monitor.use_tool_id(monitor.COVERAGE_ID, "coverage-gate")
     monitor.register_callback(monitor.COVERAGE_ID, monitor.events.LINE, on_line)
-    monitor.set_events(mon.COVERAGE_ID, monitor.events.LINE)
+    monitor.set_events(monitor.COVERAGE_ID, monitor.events.LINE)
     try:
         suite = unittest.TestLoader().discover(os.path.join(REPO_ROOT, "software_gpu", "tests"))
         result = unittest.TextTestRunner(verbosity=0).run(suite)
     finally:
-        monitor.set_events(mon.COVERAGE_ID, 0)
+        monitor.set_events(monitor.COVERAGE_ID, 0)
         monitor.free_tool_id(monitor.COVERAGE_ID)
     return hits, result
 
