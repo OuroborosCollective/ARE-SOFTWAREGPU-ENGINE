@@ -8,6 +8,7 @@ handles coverage/depth masks; arbitrary Python fragment shaders remain scalar.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections import Counter
 from concurrent.futures import Executor
 from typing import Any
 
@@ -16,13 +17,18 @@ from .geometry import edge_covered
 
 
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
-                    executor: Executor, workers: int, compiled: bool = False) -> None:
+                    executor: Executor, workers: int, compiled: bool = False,
+                    planned: bool = False):
     """Bin triangles by 2-D tiles, then shade each independent tile in order.
 
     This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
     execution. Workers can safely write separate tiles of the same framebuffer.
     """
+    if planned and compiled:
+        raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
+    requested_plan = planned
     bins = defaultdict(list)
+    bbox_samples = 0
     frame_w, frame_h = fb.width, fb.height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
@@ -32,13 +38,28 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
         if x0 > x1 or y0 > y1:
             continue
+        if planned:
+            bbox_samples += (x1 - x0 + 1) * (y1 - y0 + 1)
         # Row-major deterministic tile iteration; no per-pixel bin storage.
         for ty in range(y0 // tile_size, y1 // tile_size + 1):
             for tx in range(x0 // tile_size, x1 // tile_size + 1):
                 bins[(ty, tx)].append((tri, x0, x1, y0, y1))
 
+    trace = None
+    batch = None
+    if planned:
+        from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
+                                   checked_batch_rgba, MIN_SCAN_SAMPLES, MIN_BATCH_SAMPLES,
+                                   MIN_DRAW_SAMPLES_PER_TRIANGLE)
+        reason = None
+        if bins and bbox_samples < MIN_DRAW_SAMPLES_PER_TRIANGLE * len(triangles):
+            reason = "small-primitive-cost-threshold"
+            planned = False
+        trace = PlanTrace(bins, reason, bbox_samples, len(triangles))
+        if planned:
+            batch = equivalent_batch(shader)
     if not bins:
-        return
+        return trace.receipt() if trace is not None else None
 
     # Lazy optional native kernel, intentionally never loaded by the default
     # NumPy backend. Fragment shader callbacks stay outside the JIT boundary.
@@ -49,6 +70,7 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
 
     def draw_tile(task):
         (ty, tx), candidates = task
+        counts = Counter() if planned else None
         tile_x0, tile_y0 = tx * tile_size, ty * tile_size
         tile_x1 = min(frame_w - 1, tile_x0 + tile_size - 1)
         tile_y1 = min(frame_h - 1, tile_y0 + tile_size - 1)
@@ -58,6 +80,19 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             if left > right or top > bottom:
                 continue
             (s0, s1, s2, iw0, iw1, iw2, v0, v1, v2, area) = tri
+            mode = "boundary"
+            if planned:
+                samples = (right - left + 1) * (bottom - top + 1)
+                if samples >= MIN_SCAN_SAMPLES:
+                    mode = classify_tile(s0, s1, s2, left, right, top, bottom)
+                    counts["corner_edge_evaluations"] += 12
+                    counts[mode] += 1
+                    if mode == "outside":
+                        counts["skipped_samples"] += samples
+                        continue
+                else:
+                    counts["scan_bypassed"] += 1
+                counts["dense_edge_evaluations"] += 3 * samples
             inv_area = 1.0 / area
             depth_tile = fb.depth_buffer[top:bottom+1, left:right+1]
             if kernel is not None:
@@ -73,9 +108,12 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 w0 = (px - s1[0]) * (s2[1] - s1[1]) - (py - s1[1]) * (s2[0] - s1[0])
                 w1 = (px - s2[0]) * (s0[1] - s2[1]) - (py - s2[1]) * (s0[0] - s2[0])
                 w2 = (px - s0[0]) * (s1[1] - s0[1]) - (py - s0[1]) * (s1[0] - s0[0])
-                covered = edge_covered(w0, s1, s2) & edge_covered(w1, s2, s0) & edge_covered(w2, s0, s1)
-                if not covered.any():
-                    continue
+                if planned and mode == "inside":
+                    covered = True
+                else:
+                    covered = edge_covered(w0, s1, s2) & edge_covered(w1, s2, s0) & edge_covered(w2, s0, s1)
+                    if not covered.any():
+                        continue
                 alpha = w0 * inv_area
                 beta = w1 * inv_area
                 gamma = w2 * inv_area
@@ -88,6 +126,8 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             # factor), evaluated as whole arrays. Per-pixel results are
             # bit-identical; only the scalar per-pixel dict/interpolation
             # overhead is removed. Measured 1.27-1.93x on the phase-4 scenes.
+            if planned and len(rows) == 0:
+                continue
             iw_all = aa * iw0 + bb * iw1 + cc * iw2
             factor_all = np.divide(1.0, iw_all, out=np.ones_like(iw_all),
                                    where=iw_all > 1e-9)
@@ -96,6 +136,16 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             for key in v0:
                 va, vb, vc = v0[key], v1[key], v2[key]
                 if isinstance(va, np.ndarray):
+                    if requested_plan:
+                        # A sample axis plus the original varying shape,
+                        # including scalar ndarrays and matrix/tensor varyings.
+                        shape = (-1,) + (1,) * va.ndim
+                        array_varyings[key] = (
+                            aa.reshape(shape) * (va * iw0)
+                            + bb.reshape(shape) * (vb * iw1)
+                            + cc.reshape(shape) * (vc * iw2)
+                        ) * factor_all.reshape(shape)
+                        continue
                     array_varyings[key] = (
                         aa[:, None] * (va * iw0)
                         + bb[:, None] * (vb * iw1)
@@ -103,6 +153,18 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     ) * factor_all[:, None]
                 else:
                     flat_varyings[key] = va
+            if planned:
+                counts["shaded_samples"] += len(rows)
+            if planned and batch is not None and len(rows) >= MIN_BATCH_SAMPLES:
+                varyings = dict(flat_varyings)
+                varyings.update(array_varyings)
+                rgba = checked_batch_rgba(batch, varyings, len(rows))
+                fb.depth_buffer[rows + top, cols + left] = zz
+                fb.color_buffer[rows + top, cols + left, :] = rgba
+                counts["batch_fragment_calls"] += 1
+                continue
+            if planned:
+                counts["scalar_fragment_calls"] += len(rows)
             for i in range(len(rows)):
                 varyings = dict(flat_varyings)
                 for key, values in array_varyings.items():
@@ -111,6 +173,8 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 rgba = shader.fragment_shader(varyings)
                 fb.depth_buffer[iy, ix] = zz[i]
                 fb.color_buffer[iy, ix, :] = rgba
+        if trace is not None and planned:
+            trace.record((ty, tx), counts)
 
     tasks = sorted(bins.items())
     if workers == 1 or len(tasks) == 1:
@@ -129,3 +193,4 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         futures = [executor.submit(draw_group, group) for group in groups]
         for future in futures:
             future.result()
+    return trace.receipt() if trace is not None else None

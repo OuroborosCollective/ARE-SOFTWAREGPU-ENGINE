@@ -1,0 +1,13 @@
+{
+  "protocol": "are.wolfram-surface-oracle.v1",
+  "oracle": "Wolfram Language exact rational computation",
+  "authority": "none",
+  "affineCornerIdentity": true,
+  "weightsSumToOne": true,
+  "tileCounts": {"inside": 1, "boundary": 5, "outside": 10},
+  "coveredPixels": 210,
+  "sameCoverage": true,
+  "referenceEdgeEvaluations": 1024,
+  "optimizedEdgeEvaluations": 384,
+  "ruleBoundary": "real-affine-rectangular-domain; float32 implementation tested separately"
+}

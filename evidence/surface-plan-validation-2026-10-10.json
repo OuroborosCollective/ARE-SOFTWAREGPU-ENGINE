@@ -1,0 +1,952 @@
+{
+  "activation": "EXPLICIT_OPT_IN_ONLY",
+  "base_revision": "435eec811713f442234fba9140837354efa990fc",
+  "benchmarks": [
+    {
+      "activation": "EXPLICIT_OPT_IN_ONLY",
+      "numpy": "2.4.6",
+      "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "protocol": "are.surface-plan-benchmark.v1",
+      "python": "3.12.14",
+      "results": [
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "dab714c512c2f885aad3941884ca655a0ed1cfac617790482ef40fae10d314c7",
+          "median_frame_ms": {
+            "plan-batch": 0.309566,
+            "plan-scalar": 0.262365,
+            "tiles": 0.276847
+          },
+          "pixels": 128,
+          "plans": {
+            "plan-batch": {
+              "counts": null,
+              "decision": "tiles-reference",
+              "estimated_bbox_samples": 30,
+              "plan_sha256": "8bf30875916bc8bb524aa8085a5f9da68e6f89492da7b9195ba2397a002bd8cc",
+              "reason": "small-primitive-cost-threshold",
+              "tile_count": 1,
+              "trace_truncated": false,
+              "triangle_count": 1
+            },
+            "plan-scalar": {
+              "counts": null,
+              "decision": "tiles-reference",
+              "estimated_bbox_samples": 30,
+              "plan_sha256": "8bf30875916bc8bb524aa8085a5f9da68e6f89492da7b9195ba2397a002bd8cc",
+              "reason": "small-primitive-cost-threshold",
+              "tile_count": 1,
+              "trace_truncated": false,
+              "triangle_count": 1
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              0.415856,
+              0.205459,
+              0.190627,
+              0.309566,
+              0.480453
+            ],
+            "plan-scalar": [
+              0.375505,
+              0.21256,
+              0.18564,
+              0.597219,
+              0.262365
+            ],
+            "tiles": [
+              0.202565,
+              0.390588,
+              0.163446,
+              0.335846,
+              0.276847
+            ]
+          },
+          "scene": "tiny",
+          "speedup_vs_tiles": {
+            "plan-batch": 0.8943068683253329,
+            "plan-scalar": 1.0551979113067673,
+            "tiles": 1.0
+          },
+          "triangles": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "f913a7a6597c9c867e0303bec4845eecc95eb82930958eb7d4bf04d461aef6b9",
+          "median_frame_ms": {
+            "plan-batch": 29.33262,
+            "plan-scalar": 47.33056,
+            "tiles": 41.069345
+          },
+          "pixels": 128,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 163,
+                "boundary": 122,
+                "corner_edge_evaluations": 1464,
+                "dense_edge_evaluations": 33732,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 83,
+                "scan_bypassed": 79,
+                "shaded_samples": 3155,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 11244,
+              "plan_sha256": "50689a9949eaaf8ffdfbb67494c7083f3c665aa5239a30158f053a27d5236c3c",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 160
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 122,
+                "corner_edge_evaluations": 1464,
+                "dense_edge_evaluations": 33732,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 3155,
+                "scan_bypassed": 79,
+                "shaded_samples": 3155,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 11244,
+              "plan_sha256": "bf749fde2f9ea9f2431c449144c2212395a52a07c61948cd070f9c0342516a70",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 160
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              42.799993,
+              38.383839,
+              29.33262,
+              26.527922,
+              28.622753
+            ],
+            "plan-scalar": [
+              48.734542,
+              46.125988,
+              69.560866,
+              47.33056,
+              44.747894
+            ],
+            "tiles": [
+              44.687118,
+              41.069345,
+              44.882491,
+              29.038258,
+              30.493939
+            ]
+          },
+          "scene": "small-triangles",
+          "speedup_vs_tiles": {
+            "plan-batch": 1.4001253553211408,
+            "plan-scalar": 0.867713058962328,
+            "tiles": 1.0
+          },
+          "triangles": 160,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "01f45127ab252c68d31948d0eea6ea2dd28a8c33b12d8b86b94d551a3aecc974",
+          "median_frame_ms": {
+            "plan-batch": 15.63956,
+            "plan-scalar": 107.733767,
+            "tiles": 111.552393
+          },
+          "pixels": 128,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 68,
+                "boundary": 86,
+                "corner_edge_evaluations": 1356,
+                "dense_edge_evaluations": 194640,
+                "inside": 1,
+                "outside": 26,
+                "scalar_fragment_calls": 11,
+                "scan_bypassed": 4,
+                "shaded_samples": 18758,
+                "skipped_samples": 11351
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 76231,
+              "plan_sha256": "f33d7bb328b66633e820fc266a5468e91e647e3073b81e3bdebe643389f7abc5",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 19
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 86,
+                "corner_edge_evaluations": 1356,
+                "dense_edge_evaluations": 194640,
+                "inside": 1,
+                "outside": 26,
+                "scalar_fragment_calls": 18758,
+                "scan_bypassed": 4,
+                "shaded_samples": 18758,
+                "skipped_samples": 11351
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 76231,
+              "plan_sha256": "965a66b1562f9ab2a6dc81545135c69f2d04042e5cf0fc5b93f385f1814547c3",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 19
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              15.6265,
+              18.802839,
+              15.63956,
+              17.257685,
+              15.594912
+            ],
+            "plan-scalar": [
+              105.54231,
+              112.393237,
+              111.644862,
+              107.090669,
+              107.733767
+            ],
+            "tiles": [
+              111.990541,
+              111.65021,
+              111.552393,
+              104.578881,
+              99.603645
+            ]
+          },
+          "scene": "large-surfaces",
+          "speedup_vs_tiles": {
+            "plan-batch": 7.132706610671911,
+            "plan-scalar": 1.0354450243998243,
+            "tiles": 1.0
+          },
+          "triangles": 8,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "58d58eb28b1c8cab92f52af5000384de15212b7f3f18559e6a5346a6f79c7ad1",
+          "median_frame_ms": {
+            "plan-batch": 57.617727,
+            "plan-scalar": 58.947327,
+            "tiles": 50.140457
+          },
+          "pixels": 128,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 238,
+                "boundary": 163,
+                "corner_edge_evaluations": 1956,
+                "dense_edge_evaluations": 79218,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 489,
+                "scan_bypassed": 375,
+                "shaded_samples": 4753,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 26406,
+              "plan_sha256": "3e4df803dfd0069103fcdc99599d83a35c64de83a224c89c86c392660e31f0bd",
+              "reason": null,
+              "tile_count": 4,
+              "trace_truncated": false,
+              "triangle_count": 400
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 163,
+                "corner_edge_evaluations": 1956,
+                "dense_edge_evaluations": 79218,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 4753,
+                "scan_bypassed": 375,
+                "shaded_samples": 4753,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 26406,
+              "plan_sha256": "ed45e1b13d6bbefb219a85911f5c5511d225c7f11ecff275f67291fdc72075b1",
+              "reason": null,
+              "tile_count": 4,
+              "trace_truncated": false,
+              "triangle_count": 400
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              41.196951,
+              57.617727,
+              66.537266,
+              71.145129,
+              45.02403
+            ],
+            "plan-scalar": [
+              55.807353,
+              56.273325,
+              73.104677,
+              61.256798,
+              58.947327
+            ],
+            "tiles": [
+              49.342707,
+              50.140457,
+              50.116231,
+              59.344114,
+              52.145734
+            ]
+          },
+          "scene": "procedural400",
+          "speedup_vs_tiles": {
+            "plan-batch": 0.8702262239536106,
+            "plan-scalar": 0.8505976360895888,
+            "tiles": 1.0
+          },
+          "triangles": 400,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "abf1847ff8c96a384c0f4a8271af113b45c98fb6bc26a8f7ef4fb1b3bacd5a13",
+          "median_frame_ms": {
+            "plan-batch": 384.439413,
+            "plan-scalar": 392.919608,
+            "tiles": 383.14985
+          },
+          "pixels": 128,
+          "plans": {
+            "plan-batch": {
+              "counts": null,
+              "decision": "tiles-reference",
+              "estimated_bbox_samples": 168533,
+              "plan_sha256": "8834861c4a76df48bba8acf91937a26f1c4ad55d1252004519b88083d82c8960",
+              "reason": "small-primitive-cost-threshold",
+              "tile_count": 4,
+              "trace_truncated": false,
+              "triangle_count": 5120
+            },
+            "plan-scalar": {
+              "counts": null,
+              "decision": "tiles-reference",
+              "estimated_bbox_samples": 168533,
+              "plan_sha256": "8834861c4a76df48bba8acf91937a26f1c4ad55d1252004519b88083d82c8960",
+              "reason": "small-primitive-cost-threshold",
+              "tile_count": 4,
+              "trace_truncated": false,
+              "triangle_count": 5120
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              384.439413,
+              391.46848,
+              372.467048,
+              387.672705,
+              381.044013
+            ],
+            "plan-scalar": [
+              392.919608,
+              410.82011,
+              371.645232,
+              378.378543,
+              406.906051
+            ],
+            "tiles": [
+              379.706552,
+              373.998553,
+              383.14985,
+              384.150997,
+              402.807255
+            ]
+          },
+          "scene": "procedural5k",
+          "speedup_vs_tiles": {
+            "plan-batch": 0.9966456014747895,
+            "plan-scalar": 0.975135478604061,
+            "tiles": 1.0
+          },
+          "triangles": 5120,
+          "workers": 1
+        }
+      ],
+      "source_sha256": {
+        "batch_shader.py": "c762fb1663d969266fcc10f61aa9493e79a94f3cf24369a717be7257b04bbc53",
+        "geometry.py": "f46297821749b4ab54db63427c44fdd293cb1ecb64475c1c4bd80f69d03500e1",
+        "rasterizer.py": "1c6be3dbfef6d8e5dda03e7534e1bef3126905f95cb311a678062011b5c144b7",
+        "shader.py": "a930c120c37ec1706c4fce6f42bc6c71ca09d21cc46b358c70a22d132ae79595",
+        "surface_plan.py": "27a561e2b72730cc018638179b1d9929ec3a6108bdac9633716e504ac914744e",
+        "tile_backend.py": "56473a3e2bb61594ac77e39e0bcacccbe43861ad33a0a6694d20108899462c3d"
+      }
+    },
+    {
+      "activation": "EXPLICIT_OPT_IN_ONLY",
+      "numpy": "2.4.6",
+      "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "protocol": "are.surface-plan-benchmark.v1",
+      "python": "3.12.14",
+      "results": [
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "9363779024369aa15b2e7eeb73219b03d1b106eec7517c2e6c64232dbfd1b1fe",
+          "median_frame_ms": {
+            "plan-batch": 0.366421,
+            "plan-scalar": 0.410939,
+            "tiles": 0.39169
+          },
+          "pixels": 256,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 2,
+                "boundary": 0,
+                "corner_edge_evaluations": 0,
+                "dense_edge_evaluations": 243,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 0,
+                "scan_bypassed": 2,
+                "shaded_samples": 32,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 81,
+              "plan_sha256": "8d4e53c9fac8f975a2f0cd270b825d8ae5ab9a169ce6ed9c5ee4559e907b6843",
+              "reason": null,
+              "tile_count": 2,
+              "trace_truncated": false,
+              "triangle_count": 1
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 0,
+                "corner_edge_evaluations": 0,
+                "dense_edge_evaluations": 243,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 32,
+                "scan_bypassed": 2,
+                "shaded_samples": 32,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 81,
+              "plan_sha256": "f7b7ad08ecd0f587703dda404d5b74aefbec842b2d7233cdc1eafdf986958125",
+              "reason": null,
+              "tile_count": 2,
+              "trace_truncated": false,
+              "triangle_count": 1
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              0.366421,
+              0.319911,
+              0.388355,
+              0.331148,
+              0.376677
+            ],
+            "plan-scalar": [
+              0.49158,
+              0.410939,
+              0.398891,
+              0.400823,
+              0.494193
+            ],
+            "tiles": [
+              0.402686,
+              0.426532,
+              0.377057,
+              0.39169,
+              0.348704
+            ]
+          },
+          "scene": "tiny",
+          "speedup_vs_tiles": {
+            "plan-batch": 1.0689616588568887,
+            "plan-scalar": 0.9531584979765853,
+            "tiles": 1.0
+          },
+          "triangles": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "010309c765aeb778eb59adb34b5dbf83051cb97188d8d871ed87b917cf53e8ed",
+          "median_frame_ms": {
+            "plan-batch": 37.434761,
+            "plan-scalar": 95.187912,
+            "tiles": 84.852332
+          },
+          "pixels": 256,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 228,
+                "boundary": 203,
+                "corner_edge_evaluations": 2436,
+                "dense_edge_evaluations": 105447,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 127,
+                "scan_bypassed": 95,
+                "shaded_samples": 12376,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 35149,
+              "plan_sha256": "e861d8072eb96dc19fb19be0336cd1fb7553462c364dd40bf0d34d9fb31da77f",
+              "reason": null,
+              "tile_count": 64,
+              "trace_truncated": false,
+              "triangle_count": 160
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 203,
+                "corner_edge_evaluations": 2436,
+                "dense_edge_evaluations": 105447,
+                "inside": 0,
+                "outside": 0,
+                "scalar_fragment_calls": 12376,
+                "scan_bypassed": 95,
+                "shaded_samples": 12376,
+                "skipped_samples": 0
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 35149,
+              "plan_sha256": "c77d738d749d745f9eb9afaa2cb83b271a0ff4125f1f424380a9b32eb566bad2",
+              "reason": null,
+              "tile_count": 64,
+              "trace_truncated": false,
+              "triangle_count": 160
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              35.962115,
+              40.213492,
+              37.434761,
+              37.544376,
+              37.105786
+            ],
+            "plan-scalar": [
+              87.811314,
+              94.240436,
+              95.517929,
+              95.187912,
+              95.856228
+            ],
+            "tiles": [
+              98.655419,
+              81.904687,
+              79.749054,
+              84.992072,
+              84.852332
+            ]
+          },
+          "scene": "small-triangles",
+          "speedup_vs_tiles": {
+            "plan-batch": 2.266672198067459,
+            "plan-scalar": 0.8914191961685219,
+            "tiles": 1.0
+          },
+          "triangles": 160,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "3cc79cc6b9e1e0997eb42df49a6be9cb2ee919af406bd1e333d40987538c7efb",
+          "median_frame_ms": {
+            "plan-batch": 49.665753,
+            "plan-scalar": 443.108735,
+            "tiles": 433.49514
+          },
+          "pixels": 256,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 161,
+                "boundary": 200,
+                "corner_edge_evaluations": 4284,
+                "dense_edge_evaluations": 609180,
+                "inside": 29,
+                "outside": 128,
+                "scalar_fragment_calls": 7,
+                "scan_bypassed": 1,
+                "shaded_samples": 75248,
+                "skipped_samples": 96018
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 299078,
+              "plan_sha256": "6952cff36056753b98564f7d978da35c03463abde3ecd3391fca777825a90043",
+              "reason": null,
+              "tile_count": 64,
+              "trace_truncated": false,
+              "triangle_count": 19
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 200,
+                "corner_edge_evaluations": 4284,
+                "dense_edge_evaluations": 609180,
+                "inside": 29,
+                "outside": 128,
+                "scalar_fragment_calls": 75248,
+                "scan_bypassed": 1,
+                "shaded_samples": 75248,
+                "skipped_samples": 96018
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 299078,
+              "plan_sha256": "88ec27664c9e3b127b30775f215efe3a9ea9e70c15d057b80f42d4fcb9aa1836",
+              "reason": null,
+              "tile_count": 64,
+              "trace_truncated": false,
+              "triangle_count": 19
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              51.938582,
+              41.988653,
+              39.322939,
+              50.589272,
+              49.665753
+            ],
+            "plan-scalar": [
+              458.449877,
+              443.108735,
+              455.645225,
+              377.002893,
+              427.093818
+            ],
+            "tiles": [
+              378.383806,
+              383.219231,
+              438.295525,
+              433.49514,
+              434.443707
+            ]
+          },
+          "scene": "large-surfaces",
+          "speedup_vs_tiles": {
+            "plan-batch": 8.7282506317784,
+            "plan-scalar": 0.9783042078825189,
+            "tiles": 1.0
+          },
+          "triangles": 8,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "816d7126a5f6f8ae427667d30895a539d506b98c392a6c9c9b6a388adeaae570",
+          "median_frame_ms": {
+            "plan-batch": 99.985104,
+            "plan-scalar": 196.443001,
+            "tiles": 170.333745
+          },
+          "pixels": 256,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 416,
+                "boundary": 464,
+                "corner_edge_evaluations": 5652,
+                "dense_edge_evaluations": 245070,
+                "inside": 0,
+                "outside": 7,
+                "scalar_fragment_calls": 512,
+                "scan_bypassed": 349,
+                "shaded_samples": 19061,
+                "skipped_samples": 595
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 82285,
+              "plan_sha256": "f232c12359eb4882a1f8e4cbbe6af0794a1fa3d15055e8bc6138877ffbc101b9",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 400
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 464,
+                "corner_edge_evaluations": 5652,
+                "dense_edge_evaluations": 245070,
+                "inside": 0,
+                "outside": 7,
+                "scalar_fragment_calls": 19061,
+                "scan_bypassed": 349,
+                "shaded_samples": 19061,
+                "skipped_samples": 595
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 82285,
+              "plan_sha256": "9ba7d462d8c9ed06d9b83ca0cdb057e7c1441b46397cd2aaac1af3669c68412d",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 400
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              86.534843,
+              102.94994,
+              99.08796,
+              99.985104,
+              103.516341
+            ],
+            "plan-scalar": [
+              177.004766,
+              234.632948,
+              197.826658,
+              196.443001,
+              172.011825
+            ],
+            "tiles": [
+              170.333745,
+              158.370421,
+              174.925268,
+              179.818905,
+              148.882616
+            ]
+          },
+          "scene": "procedural400",
+          "speedup_vs_tiles": {
+            "plan-batch": 1.7035912169476763,
+            "plan-scalar": 0.8670899147992551,
+            "tiles": 1.0
+          },
+          "triangles": 400,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "gpu_parity_established": false,
+          "image_sha256": "e0344f0c035ee6532c230a54a6447c3f9bce98e239feb2472275b7ffbd76bc59",
+          "median_frame_ms": {
+            "plan-batch": 715.775883,
+            "plan-scalar": 864.849554,
+            "tiles": 736.337487
+          },
+          "pixels": 256,
+          "plans": {
+            "plan-batch": {
+              "counts": {
+                "batch_fragment_calls": 2250,
+                "boundary": 2642,
+                "corner_edge_evaluations": 31752,
+                "dense_edge_evaluations": 1371012,
+                "inside": 0,
+                "outside": 4,
+                "scalar_fragment_calls": 9560,
+                "scan_bypassed": 6060,
+                "shaded_samples": 47212,
+                "skipped_samples": 309
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 457313,
+              "plan_sha256": "510f3c06c1f836e32d6207c3c6e1b12bcd1bb48b54c8a956f6c2227afb5e2948",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 5120
+            },
+            "plan-scalar": {
+              "counts": {
+                "batch_fragment_calls": 0,
+                "boundary": 2642,
+                "corner_edge_evaluations": 31752,
+                "dense_edge_evaluations": 1371012,
+                "inside": 0,
+                "outside": 4,
+                "scalar_fragment_calls": 47212,
+                "scan_bypassed": 6060,
+                "shaded_samples": 47212,
+                "skipped_samples": 309
+              },
+              "decision": "planned",
+              "estimated_bbox_samples": 457313,
+              "plan_sha256": "7fce306e8aef7b225b3e939bd5fff52d95a6f0d5e3209bf81f9c1043aecd2d7e",
+              "reason": null,
+              "tile_count": 16,
+              "trace_truncated": false,
+              "triangle_count": 5120
+            }
+          },
+          "repeats": 5,
+          "samples_ms": {
+            "plan-batch": [
+              750.392316,
+              703.574212,
+              803.310879,
+              715.775883,
+              703.339776
+            ],
+            "plan-scalar": [
+              881.661532,
+              942.479521,
+              846.729722,
+              864.849554,
+              817.034348
+            ],
+            "tiles": [
+              726.900613,
+              785.217646,
+              711.095128,
+              882.399466,
+              736.337487
+            ]
+          },
+          "scene": "procedural5k",
+          "speedup_vs_tiles": {
+            "plan-batch": 1.0287263157202517,
+            "plan-scalar": 0.8514052919312716,
+            "tiles": 1.0
+          },
+          "triangles": 5120,
+          "workers": 1
+        }
+      ],
+      "source_sha256": {
+        "batch_shader.py": "c762fb1663d969266fcc10f61aa9493e79a94f3cf24369a717be7257b04bbc53",
+        "geometry.py": "f46297821749b4ab54db63427c44fdd293cb1ecb64475c1c4bd80f69d03500e1",
+        "rasterizer.py": "1c6be3dbfef6d8e5dda03e7534e1bef3126905f95cb311a678062011b5c144b7",
+        "shader.py": "a930c120c37ec1706c4fce6f42bc6c71ca09d21cc46b358c70a22d132ae79595",
+        "surface_plan.py": "27a561e2b72730cc018638179b1d9929ec3a6108bdac9633716e504ac914744e",
+        "tile_backend.py": "56473a3e2bb61594ac77e39e0bcacccbe43861ad33a0a6694d20108899462c3d"
+      }
+    }
+  ],
+  "gpu_parity_established": false,
+  "local_validation": {
+    "branch_coverage": "not measured by project sys.monitoring gate",
+    "coverage_floors_pass": true,
+    "errors": 0,
+    "excluded": {
+      "test_coverage_gate.TestCoverageGate.test_coverage_floors_hold": "Canonical full-suite subprocess includes the unsupported AF_UNIX test; equivalent local floors measured separately.",
+      "test_gaming_and_mobile.TestGamingAndMobile.test_android_unix_domain_socket_ipc": "Host forbids AF_UNIX socket creation (EPERM); canonical CI must run this test."
+    },
+    "failures": 0,
+    "floor_failures": [],
+    "overall_line_coverage": 64.2545009613704,
+    "per_file_line_coverage": {
+      "main.py": 56.2043795620438,
+      "software_gpu/__init__.py": 100.0,
+      "software_gpu/benchmarks/__init__.py": 100.0,
+      "software_gpu/benchmarks/compare_surface_plans.py": 83.87096774193549,
+      "software_gpu/benchmarks/compare_tile_backends.py": 36.170212765957444,
+      "software_gpu/benchmarks/external_cpu_benchmark.py": 22.82608695652174,
+      "software_gpu/benchmarks/load_stress_benchmark.py": 0.0,
+      "software_gpu/benchmarks/run_benchmarks.py": 0.0,
+      "software_gpu/clients/__init__.py": 100.0,
+      "software_gpu/clients/python_client.py": 85.0,
+      "software_gpu/compute/__init__.py": 100.0,
+      "software_gpu/compute/compiler.py": 87.09677419354838,
+      "software_gpu/compute/executor.py": 94.96402877697842,
+      "software_gpu/compute/kernels.py": 85.41666666666667,
+      "software_gpu/core/__init__.py": 100.0,
+      "software_gpu/core/device.py": 78.78787878787878,
+      "software_gpu/core/memory.py": 71.60493827160494,
+      "software_gpu/core/output.py": 100.0,
+      "software_gpu/core/types.py": 80.0,
+      "software_gpu/core/vps_governor.py": 59.23076923076923,
+      "software_gpu/directx/__init__.py": 100.0,
+      "software_gpu/directx/d3d11.py": 92.12121212121212,
+      "software_gpu/directx/directx_demo.py": 0.0,
+      "software_gpu/examples/__init__.py": 100.0,
+      "software_gpu/examples/cuda_dropin_demo.py": 0.0,
+      "software_gpu/examples/gaming_pc_demo.py": 0.0,
+      "software_gpu/examples/render_3d_scene.py": 98.52941176470588,
+      "software_gpu/graphics/__init__.py": 100.0,
+      "software_gpu/graphics/batch_shader.py": 100.0,
+      "software_gpu/graphics/compiled_tile.py": 19.148936170212767,
+      "software_gpu/graphics/framebuffer.py": 100.0,
+      "software_gpu/graphics/geometry.py": 97.41935483870968,
+      "software_gpu/graphics/postprocess.py": 98.9247311827957,
+      "software_gpu/graphics/rasterizer.py": 100.0,
+      "software_gpu/graphics/shader.py": 94.30379746835443,
+      "software_gpu/graphics/surface_plan.py": 100.0,
+      "software_gpu/graphics/tile_backend.py": 98.69281045751634,
+      "software_gpu/integrations/__init__.py": 100.0,
+      "software_gpu/integrations/aurion/_offline_child.py": 0.0,
+      "software_gpu/integrations/aurion/npc_fallback_audit.py": 20.901639344262296,
+      "software_gpu/integrations/aurion/offline_lod_worker.py": 73.56948228882834,
+      "software_gpu/integrations/aurion/offline_render_worker.py": 79.9498746867168,
+      "software_gpu/integrations/blender/__init__.py": 85.71428571428571,
+      "software_gpu/integrations/blender/blender_render_engine.py": 54.95495495495496,
+      "software_gpu/integrations/image_editor/__init__.py": 100.0,
+      "software_gpu/integrations/image_editor/image_filter_endpoint.py": 44.53781512605042,
+      "software_gpu/integrations/mmorpg/__init__.py": 100.0,
+      "software_gpu/integrations/mmorpg/game_compute_adapter.py": 89.28571428571429,
+      "software_gpu/integrations/mmorpg/mmorpg_server_demo.py": 0.0,
+      "software_gpu/mobile/__init__.py": 100.0,
+      "software_gpu/mobile/android_server.py": 21.839080459770116,
+      "software_gpu/mobile/opengles.py": 79.48717948717949,
+      "software_gpu/network/__init__.py": 100.0,
+      "software_gpu/network/dispatcher.py": 15.068493150684931,
+      "software_gpu/network/isolated_worker.py": 68.29268292682927,
+      "software_gpu/network/protocol.py": 93.75,
+      "software_gpu/network/security.py": 98.1981981981982,
+      "software_gpu/network/server.py": 86.60287081339713,
+      "software_gpu/redirector/__init__.py": 100.0,
+      "software_gpu/redirector/cuda_runtime.py": 87.87878787878788,
+      "software_gpu/redirector/interceptor.py": 65.38461538461539,
+      "software_gpu/research/__init__.py": 100.0,
+      "software_gpu/research/wolfram_cag_oracle.py": 71.23287671232876,
+      "software_gpu/training/__init__.py": 100.0,
+      "software_gpu/training/metrics.py": 92.85714285714286
+    },
+    "scope": "local-eligible-tests; canonical full-suite CI pending",
+    "tests_pass": true,
+    "tests_run": 170
+  },
+  "measurement_date_utc": "2026-10-10",
+  "protocol": "are.surface-plan-validation.v1",
+  "scope": "same-host CPU; one worker; five repeats after warmup; source hashes included"
+}

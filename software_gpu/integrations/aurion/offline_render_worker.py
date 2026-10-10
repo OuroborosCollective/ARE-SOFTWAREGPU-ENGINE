@@ -56,7 +56,7 @@ MEMORY_MIN_MB, MEMORY_MAX_MB = 32, 4096
 CPU_MIN_S, CPU_MAX_S = 0.05, 600.0
 RINGS_MIN, RINGS_MAX = 2, 64
 SEGMENTS_MIN, SEGMENTS_MAX = 3, 128
-BACKENDS = ("tiles", "tiles-jit", "bands")
+BACKENDS = ("tiles", "tiles-jit", "tiles-plan", "bands")
 FIXTURE_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}\Z")
 GLB_NAME_RE = re.compile(r"[A-Za-z0-9_()]+\.glb\Z")
 FLAT_COLOR = np.asarray([0.80, 0.70, 0.45], dtype=np.float32)
@@ -237,10 +237,11 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
     from software_gpu.graphics.framebuffer import Framebuffer
     from software_gpu.graphics.rasterizer import SoftwareRasterizer
     from software_gpu.graphics.shader import Vertex
+    from software_gpu.graphics.batch_shader import VertexColorShader
 
     clip = _camera_transform(vertices, camera)
     faces = _orient_double_sided(clip, faces)
-    shader = _FlatShader()
+    shader = VertexColorShader() if backend == "tiles-plan" else _FlatShader()
     mesh = [Vertex(v, color=FLAT_COLOR) for v in clip]
     fb = Framebuffer(pixels, pixels)
     # tile_size=32: measured optimum of the 8/16/32/64 matrix (Slice B);
@@ -271,7 +272,7 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
     if sys.platform.startswith("linux"):
         import resource
         peak_rss_bytes = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
-    return {
+    result = {
         "replay_hash_sha256": digests[0], "repeat_byte_identical": True,
         "covered_pixels": covered[0], "pixels": pixels, "repeats": repeats,
         "median_wall_ms": round(statistics.median(x["wall_ms"] for x in samples), 3),
@@ -281,6 +282,9 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
         "pipeline": "ARE %s CPU / flat color / geometry only" % backend,
         "texture_pbr_equivalence": False,
     }
+    if render.last_plan_receipt is not None:
+        result["surface_plan"] = render.last_plan_receipt
+    return result
 
 
 def _load_fixture_mesh(fixture, model_dir):

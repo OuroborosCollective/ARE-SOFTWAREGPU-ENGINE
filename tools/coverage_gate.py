@@ -42,6 +42,8 @@ FLOORS = {
     "software_gpu/graphics/rasterizer.py": 98.0,
     "software_gpu/graphics/tile_backend.py": 88.0,
     "software_gpu/graphics/shader.py": 88.0,
+    "software_gpu/graphics/surface_plan.py": 95.0,
+    "software_gpu/graphics/batch_shader.py": 95.0,
     "software_gpu/graphics/postprocess.py": 95.0,
     "software_gpu/network/security.py": 88.0,
     "software_gpu/integrations/aurion/offline_render_worker.py": 75.0,
