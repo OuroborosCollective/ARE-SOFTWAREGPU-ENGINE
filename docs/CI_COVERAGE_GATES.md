@@ -32,6 +32,15 @@ Die Floors sind **Mindestwerte**, bei Unterschreitung schlägt der Gate fehl
 (Test `test_coverage_gate.py` läuft als Teil der Suite, kein Workflow-Eingriff
 nötig; Python-3.11-Lanes überspringen ihn, dort gilt die Suite selbst).
 
+**Kanonische Gate-Lane:** Der Monitoring-Subprozess läuft auf der kanonischen
+Lane **Linux + Python 3.12**. Grund: Teile des Codes sind plattformbedingt nur
+unter Linux ausführbar (`import resource`, der RSS-Receipt-Block im Worker,
+der Linux-only Memory-Budget-Test) — Windows/macOS messen strukturell ~3
+Punkte weniger und würden kalibrierte Floors ohne echten Abdeckungsverlust
+reißen. Auf allen anderen Lanes läuft weiterhin die **volle funktionale
+Suite** (150 Tests) unmonitored; nur die Floor-Prüfung ist gepinnt. Die
+schnelle Negativkontrolle des Gates läuft überall.
+
 | Datei | Abdeckung | Floor |
 |---|---|---|
 | `graphics/framebuffer.py` | 100.0 % | 95 % |
@@ -41,9 +50,9 @@ nötig; Python-3.11-Lanes überspringen ihn, dort gilt die Suite selbst).
 | `network/security.py` | 98.2 % | 88 % |
 | `graphics/shader.py` | 94.3 % | 88 % |
 | `graphics/tile_backend.py` | 92.6 % | 88 % |
-| `integrations/aurion/offline_render_worker.py` | 79.7 % | 78 % |
+| `integrations/aurion/offline_render_worker.py` | 79.7 % | 75 % |
 | `main.py` (CLI) | 56.2 % | 35 % |
-| **Gesamt (inkl. Demos/Benchmarks)** | **63.5 %** | **63 %** |
+| **Gesamt (inkl. Demos/Benchmarks)** | **63.5 %** | **62 %** |
 
 Die LLVM-JIT-Lane (numba installiert) deckt zusätzlich
 `graphics/compiled_tile.py` ab; sie trägt hier keinen Floor, weil die CPU-Lane
