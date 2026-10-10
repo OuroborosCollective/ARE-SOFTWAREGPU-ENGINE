@@ -4,8 +4,17 @@ Runs tools/coverage_gate.py as a subprocess; that tool re-runs the whole suite
 under sys.monitoring and fails when any floor in it is violated. The inner run
 sets COVERAGE_GATE_INNER so this test skips itself there (no recursion).
 
+Gate lane: the floors are calibrated on the canonical lane Linux + CPython
+>= 3.12, because some code paths are platform-conditional (``import
+resource``, the Linux RSS receipt block, the Linux-only memory-budget test).
+On Windows/macOS those lines are not executable, so the monitored subprocess
+check would measure structurally less and fail the calibrated floors. Those
+lanes still run the full functional suite unmonitored; only the coverage-floor
+subprocess check is pinned to Linux. The fast negative-control test below
+runs on every lane.
+
 Needs Python >= 3.12 (sys.monitoring); older CI lanes skip. This keeps the
-gate working without any workflow-file change, on every lane that can run it.
+gate working without any workflow-file change.
 """
 import os
 import subprocess
@@ -18,6 +27,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class TestCoverageGate(unittest.TestCase):
     @unittest.skipUnless(sys.version_info >= (3, 12), "sys.monitoring requires Python 3.12")
+    @unittest.skipUnless(sys.platform.startswith("linux"),
+                         "coverage floors are calibrated on the canonical Linux lane")
     @unittest.skipIf(os.environ.get("COVERAGE_GATE_INNER") == "1",
                      "inner monitored run: gate must not recurse")
     def test_coverage_floors_hold(self):
