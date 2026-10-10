@@ -127,7 +127,10 @@ class TestIsolatedRun(unittest.TestCase):
         self.assertEqual(len(out["replay_hash_sha256"]), 64)
         self.assertGreater(out["covered_pixels"], 50)
         self.assertEqual(len(out["samples"]), 2)
-        self.assertGreater(out["peak_rss_bytes"], 0)
+        if sys.platform.startswith("linux"):
+            self.assertGreater(out["peak_rss_bytes"], 0)
+        else:
+            self.assertIsNone(out["peak_rss_bytes"])  # no rusage off Linux
         self.assertGreater(out["cpu_seconds_total"], 0)
         self.assertEqual(receipt["budget_compliance"],
                          {"deadline_ok": True, "memory_ok": True, "cpu_ok": True})
