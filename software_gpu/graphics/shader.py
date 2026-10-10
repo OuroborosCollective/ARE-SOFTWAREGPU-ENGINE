@@ -163,6 +163,21 @@ class BlinnPhongShader(Shader):
         self.shininess = shininess
         self.texture = texture
 
+        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        half_dir = (self.light_dir + view_dir)
+        half_len = np.linalg.norm(half_dir)
+        if half_len > 1e-6:
+            self.half_dir = half_dir / half_len
+        else:
+            self.half_dir = np.zeros(3, dtype=np.float32)
+
+        self.lx, self.ly, self.lz = float(self.light_dir[0]), float(self.light_dir[1]), float(self.light_dir[2])
+        self.hx, self.hy, self.hz = float(self.half_dir[0]), float(self.half_dir[1]), float(self.half_dir[2])
+
+        self.ambient = self.diffuse_color * self.ambient_color
+        self.diff_base = self.diffuse_color * self.light_color
+        self.spec_base = self.specular_color * self.light_color
+
     def vertex_shader(self, vertex: Vertex) -> Tuple[np.ndarray, dict]:
         # Clip-space position
         clip_pos = self.mvp @ vertex.position
@@ -181,40 +196,48 @@ class BlinnPhongShader(Shader):
         return clip_pos, varyings
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
+        import math
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
-        if n_len > 1e-6:
-            normal = normal / n_len
+        nx, ny, nz = float(normal[0]), float(normal[1]), float(normal[2])
+        n_sq = nx*nx + ny*ny + nz*nz
+        if n_sq > 1e-12:
+            inv_len = 1.0 / math.sqrt(n_sq)
+            nx *= inv_len
+            ny *= inv_len
+            nz *= inv_len
 
         # Base surface color (either from texture or vertex/material diffuse)
-        base_color = self.diffuse_color
+        diff_base = self.diff_base
+        ambient = self.ambient
+
         if self.texture is not None:
             u, v = varyings['uv'][0], varyings['uv'][1]
-            u = max(0.0, min(1.0, u))
-            v = max(0.0, min(1.0, v))
+            u = u if u > 0.0 else 0.0
+            u = u if u < 1.0 else 1.0
+            v = v if v > 0.0 else 0.0
+            v = v if v < 1.0 else 1.0
             th, tw = self.texture.shape[0], self.texture.shape[1]
             tx = int(u * (tw - 1))
             ty = int(v * (th - 1))
             tex_sample = self.texture[ty, tx, :3] / 255.0
-            base_color = tex_sample
+            ambient = tex_sample * self.ambient_color
+            diff_base = tex_sample * self.light_color
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
-
-        # Ambient component
-        ambient = base_color * self.ambient_color
+        diff = nx * self.lx + ny * self.ly + nz * self.lz
+        if diff < 0.0: diff = 0.0
 
         # Specular component (Blinn-Phong halfway vector)
-        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # In camera space looking towards +z
-        half_dir = (self.light_dir + view_dir)
-        half_len = np.linalg.norm(half_dir)
-        if half_len > 1e-6:
-            half_dir /= half_len
-            spec = max(0.0, float(np.dot(normal, half_dir))) ** self.shininess
-        else:
-            spec = 0.0
-        specular = self.specular_color * self.light_color * spec
+        spec_dot = nx * self.hx + ny * self.hy + nz * self.hz
+        if spec_dot < 0.0: spec_dot = 0.0
+        spec = spec_dot ** self.shininess
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        r = ambient[0] + diff_base[0] * diff + self.spec_base[0] * spec
+        g = ambient[1] + diff_base[1] * diff + self.spec_base[1] * spec
+        b = ambient[2] + diff_base[2] * diff + self.spec_base[2] * spec
+
+        r = 1.0 if r > 1.0 else (0.0 if r < 0.0 else r)
+        g = 1.0 if g > 1.0 else (0.0 if g < 0.0 else g)
+        b = 1.0 if b > 1.0 else (0.0 if b < 0.0 else b)
+
+        return int(r * 255.0), int(g * 255.0), int(b * 255.0), 255
