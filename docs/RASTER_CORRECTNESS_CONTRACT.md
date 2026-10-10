@@ -21,8 +21,17 @@ This change addresses the documented clipping/coverage discrepancies in the CPU 
 4. MSAA near-clipped geometry must produce real covered subpixel samples and finite resolved depth.
 5. Existing tile/band/JIT/FXAA/postprocess regressions and runtime demo tests must remain green in the Linux/Windows matrix.
 
+`software_gpu/tests/test_raster_correctness_contract.py` pins the remaining contract points with analytic (not mock-based) expectations on both CPU backends (bands reference and tiles):
+
+6. **Perspective interpolation:** a receding quad (w = 1 → 4) must reproduce the analytic inverse-W ramp `t = (ndc_y + 0.5) / (2.5 − 3·ndc_y)` per screen row, measurably distinct from the affine midpoint (0.5); both backends must be byte-identical on this scene.
+7. **Depth ordering:** a nearer triangle wins regardless of submission order; equal-depth fragments keep the first submission because the depth compare is strictly `<`.
+8. **Numeric fail-closed behavior:** NaN vertices and infinite varyings discard only the affected primitive (neighboring valid geometry renders normally); extreme clip coordinates (±1e9) survive clipping without corrupting buffers; out-of-range or malformed indices raise programming errors (`IndexError`/`ValueError`) instead of corrupting state.
+9. **Alpha channel:** shader-written alpha is stored verbatim in the color buffer but never participates in composition — see Explicit limits.
+
 ## Explicit limits
 
 The implementation is a **CPU-only experimental rasterizer**. It does **not** establish complete Direct3D conformance, clipping against user-defined planes, derivative-dependent shader semantics, order-independent transparency, native fixed-point GPU rasterization rules, or bit-identical floating-point results across arbitrary CPUs. Do not publish benchmark speedup claims for these changes without new results on the revised renderer.
+
+**No alpha blending exists.** A fragment's alpha byte is written unchanged to the color buffer and is ignored for both color composition and depth decisions: a "fully transparent" fragment (alpha = 0) is still a full opaque depth writer and occludes later geometry. Order-independent transparency, alpha-to-coverage and blend-state semantics remain out of scope; consumers must not interpret the alpha channel as coverage.
 
 No public HTTP/TCP service or Aurion live-physics/100-ms-tick integration is part of Issue #3.
