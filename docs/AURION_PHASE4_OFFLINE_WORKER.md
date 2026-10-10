@@ -22,12 +22,16 @@ service. Isolation is a killable child process, not a container requirement.
 | `fixture.file` / `fixture.entry` (glb) | filename allowlist; entry pins `bytes`, `source_sha256`, `vertices`, `triangles`, `meshes`, `materials`, `images` |
 | `camera` | `yaw_degrees ±180`, `pitch_degrees ±85`, `center_y ±100`, half extents `0.001..200`; NaN/inf rejected |
 | `render.pixels` / `render.repeats` | `32..256` / `2..5` |
-| `render.backend` | `tiles`, `tiles-jit`, `bands` |
+| `render.backend` | `tiles`, `tiles-jit`, `tiles-plan`, `bands` |
 | `budget.deadline_seconds` | `0.02..300` wall-clock, parent-enforced |
 | `budget.memory_mb` | `32..4096` |
 | `budget.cpu_seconds` | `0.05..600` |
 
 Example: `fixtures/aurion/phase4_offline/job.example.json`.
+The two shipped procedural jobs explicitly select `tiles-plan`, whose known
+vertex-color shader uses the measured immutable `batch-first-v1` profile.
+The generic rasterizer default remains `tiles`. See [surface-plan contracts,
+ablation and evidence](SURFACE_PLANNER.md).
 
 ## Output receipt: `are.aurion.offline-render-receipt.v2`
 

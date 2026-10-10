@@ -10,8 +10,10 @@ Er ist kein allgemeiner Shader-Compiler und kein Nachweis von Gaming-GPU-Paritä
 ```python
 from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
+from software_gpu.graphics.surface_plan import BATCH_FIRST_POLICY
 
-renderer = SoftwareRasterizer(framebuffer, backend="tiles-plan", num_threads=1)
+renderer = SoftwareRasterizer(framebuffer, backend="tiles-plan", num_threads=1,
+                              plan_policy=BATCH_FIRST_POLICY)
 try:
     renderer.draw_mesh(vertices, indices, VertexColorShader())
     receipt = renderer.last_plan_receipt
@@ -22,9 +24,16 @@ finally:
 Der bestehende isolierte Offline-Worker akzeptiert ebenfalls
 `render.backend = "tiles-plan"`. Sein Ergebnis enthält dann `surface_plan`.
 Die Autorität bleibt `offline-read-only`; das ist keine Aurion-Liveintegration.
+Für seinen bekannten `VertexColorShader` verwendet dieser Worker das Profil
+`batch-first-v1`: Batch ab acht sichtbaren Samples, kein Eckscan und der
+bestehende 64-Bbox-Samples/Dreieck-Fallback. Er schützt kleine Arbeit;
+er ist kein neu kalibriertes universelles Kostenmodell.
+Der generische Renderer ohne Profil verwendet weiterhin
+`corner-scan-v1` mit den unten beschriebenen Regeln. Profile sind eingefroren
+und pro Renderer gespeichert; parallele Ablationen ändern keine Modulkonstanten.
 
 ```bash
-python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-plan-results --repeats 5 --pixels 128 --workers 1
+python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-plan-results --repeats 15 --pixels 256 --workers 1 --ablation --max-seconds 1800
 python -m unittest software_gpu.tests.test_surface_plan -v
 ```
 
@@ -33,6 +42,17 @@ eine lokale HTML-Ansicht mit aufklappbaren farbigen Flächen. Er vergleicht
 `tiles`, geplante skalare Shader und geplante Batch-Shader. Alle Ausgaben
 einschließlich Float32-Tiefen werden in jedem Lauf byteweise verglichen.
 Planung und Receipt-Erstellung liegen innerhalb der gemessenen Draw-Zeit.
+Die vier Ablationen erzwingen Planung und trennen Scan an/aus von Batch an/aus.
+Ein achter Modus `batch-first` misst zusätzlich das tatsächlich aktivierte
+Profil einschließlich seines bestehenden Draw-Fallbacks.
+Der Standardlauf behält seine drei Modi. Alle Wiederholungen werden interleaved
+gemessen, mit Median, IQR, unskaliertem MAD, Rohsamples und gepaarten Verhältnissen.
+CPU, Compiler, NumPy-Build, Thread-Umgebung und Seeds gehören zum JSON.
+Zehn Quellhashes binden Benchmark, Fixture, Szenengenerator und Rasterkern.
+Der positive Zeitdeckel wird in einem überwachten Unterprozess durchgesetzt;
+bei Abbruch werden keine neuen Teilberichte veröffentlicht. `0` deaktiviert
+den Deckel ausdrücklich. NaN/Inf sind ungültig. Grenzen: 1–30 Wiederholungen,
+32–1024 px und 1–16 Worker; unter 15 Wiederholungen erscheint eine Warnung.
 
 ## Laufende Regeln und Kostenmodell
 
@@ -84,6 +104,23 @@ Der Graph enthält höchstens 128 Kachelzusammenfassungen mit je vier Knoten.
 Alle Operationen werden gezählt; nur die detaillierten Knoten sind begrenzt.
 Beim Referenz-Fallback sind `counts = null`, weil kein zusätzlicher Zähler
 im Referenz-Hotpath aktiviert wird. Vier Draw-Knoten erläutern dann den Fallback.
+Die additive Schema-Revision 2 enthält `binned_pairs`, `small_pairs`, das
+tatsächlich verwendete Profil und maschinenlesbare `counter_units`. Die beiden
+Pair-Merkmale werden vor Ausführung in konstantem Aufwand pro Dreiecks-Bbox
+gezählt und stehen auch im Fallback zur Verfügung. Ausführungscounter fehlen
+dort weiterhin. Bei geplanter Ausführung gilt:
+
+```text
+binned_pairs = inside + outside + boundary + scan_bypassed
+small_pairs = scan_bypassed
+shaded_samples = batch_fragment_samples + scalar_fragment_calls
+```
+
+`scalar_fragment_calls` zählt reale Shader-Aufrufe (hier einer pro Sample),
+`batch_fragment_calls` reale Batch-Aufrufe, `batch_fragment_samples` deren
+Sample-Anzahl. `shaded_samples` zählt Shader-Arbeit einschließlich Overdraw,
+nicht die Anzahl einzigartiger Bildpixel. Neue Receipt-Felder verändern den
+Plan-Digest; der Protokollname bleibt `are.surface-plan.v1`.
 Worker-Reihenfolge beeinflusst den Plan-Digest nicht. Dieser Digest identifiziert
 den Plan-Nachweis, nicht Mesh, Programmversion, Host oder vollständiges Bild;
 diese Provenienz gehört in das umgebende Worker-/Benchmark-Receipt.
@@ -122,6 +159,17 @@ Batch-Fehler, deterministische Worker, begrenzte Trace-Größe und einen echten
 isolierten Offline-Job samt Receipt-Readback. Neue Kernmodule tragen jeweils
 einen 95-%-Zeilen-Floor im vorhandenen Coverage-Gate. Branch-/Funktionsabdeckung
 wird von diesem Projekt-Gate nicht ausgewiesen.
+Zusätzliche Regressionen prüfen 500 unabhängig enumerierte Pair-Rechtecke,
+echte Shader-Aufrufzähler, konkurrierende Profile, beide Ablationsrichtungen,
+Zeitdeckel und negative Artifact-/Quellhash-Prüfungen. Der Benchmark selbst
+hat jetzt einen 85-%-Zeilen-Floor im kanonischen Linux-Gate.
+
+## Wiederverwendbare Workbench
+
+[Plugin-Quellen und Bedienung](../plugins/softwaregpu-workbench/README.md)
+bündeln Inventar, reale Regressionen, begrenzte Benchmarks, Receipt-Audit,
+Ablationsanalyse, Kalibrierungshinweise und den vorhandenen CPU-Trainings-Preflight.
+Ein Audit prüft gespeicherte Daten; es ersetzt keinen Rerender oder Head-CI.
 
 ## Lokaler Messstand vom 10. Oktober 2026
 
@@ -154,3 +202,35 @@ Gesamtabdeckung 64,25 % und alle bestehenden/neuen Floors PASS. Der Host verbiet
 AF_UNIX-Sockets; der bestehende Android-Unix-Socket-Test und sein vollständiger
 Coverage-Unterlauf sind hier ausgenommen. Die kanonische vollständige Linux-/
 Windows-/JIT-/Mesa-CI muss den vorgeschlagenen Commit separat prüfen.
+
+## Batch-Profil und Kalibrierung, Oktober 2026
+
+Der finale Lauf misst acht Modi bei 128 und 256 px, je 15 Repeats plus Warmup,
+einen Worker und rotierende Reihenfolge auf AMD EPYC 9V74. Alle 1.280 Draws
+liefern je Szene identische Farb- und Tiefenbytes. Der achte Modus misst genau
+`batch-first-v1` mit seinem bestehenden Draw-Fallback. Die vier erzwungenen
+Ablationen behalten den Fallback ausgeschaltet.
+
+| Szene | 128 px: Batch-Profil / Tiles, gepaart | Entscheidung | 256 px: gepaart | Entscheidung |
+| --- | ---: | --- | ---: | --- |
+| tiny | 0.76× | tiles-reference | 1.11× | planned |
+| small-triangles | 1.48× | planned | 2.87× | planned |
+| large-surfaces | 8.25× | planned | 11.52× | planned |
+| procedural400 | 1.38× | planned | 2.33× | planned |
+| procedural5k | 1.00× | tiles-reference | 1.22× | planned |
+
+Die 128-px-5k-Szene und winzige Arbeit behalten den Referenz-Fallback.
+Die 5k-Fallback-Differenz ist kein Beschleunigungsnachweis. Der winzige
+128-px-Draw ist hier langsamer (0,76×); sein Receipt-Mehraufwand ist im
+Sub-Millisekunden-Bereich relevant. Für solche Jobs bleibt `tiles` geeignet.
+Scan auf Batch liegt in den vier größeren Szenen unter 1; Batch-Bündelung ist
+der gemessene Hebel. Dies ist kein universell kalibriertes Kostenmodell.
+[Nachweisprojektion](../evidence/surface-plan-calibration-v2.json) enthält
+Rohsamples, Median/IQR/MAD, gepaarte Kennzahlen, Counter und vollständige
+Quellhashes sowie SHA-256 der vollständigen Graph-Artefakte.
+Die ursprünglichen Messungen oben bleiben als historischer Stand erhalten.
+
+Final lokal: 191 ausführbare Tests PASS; Oberfläche 100 %, Tile 98,88 %,
+Benchmark 91,96 %, Gesamt 65,56 %. Alle Floors PASS. Die beiden oben
+genannten AF_UNIX-/Coverage-Ausnahmen bleiben explizit; vollständige
+kanonische Head-CI ist vor dem Merge erforderlich.

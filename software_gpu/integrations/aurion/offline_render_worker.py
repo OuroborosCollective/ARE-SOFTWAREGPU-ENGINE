@@ -238,6 +238,7 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
     from software_gpu.graphics.rasterizer import SoftwareRasterizer
     from software_gpu.graphics.shader import Vertex
     from software_gpu.graphics.batch_shader import VertexColorShader
+    from software_gpu.graphics.surface_plan import BATCH_FIRST_POLICY
 
     clip = _camera_transform(vertices, camera)
     faces = _orient_double_sided(clip, faces)
@@ -246,7 +247,8 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
     fb = Framebuffer(pixels, pixels)
     # tile_size=32: measured optimum of the 8/16/32/64 matrix (Slice B);
     # output is byte-identical at every size, 16->32 saves 1.09-1.16x wall.
-    render = SoftwareRasterizer(fb, backend=backend, num_threads=1, tile_size=32)
+    render = SoftwareRasterizer(fb, backend=backend, num_threads=1, tile_size=32,
+                                plan_policy=BATCH_FIRST_POLICY if backend == "tiles-plan" else None)
     samples, digests, covered = [], [], []
     try:
         for _ in range(repeats):

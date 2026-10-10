@@ -97,5 +97,9 @@ Standard bleibt `tiles`; kleine Primitive können auf den Referenzpfad zurückfa
 [Bedienung, Verträge und Grenzen](docs/SURFACE_PLANNER.md).
 
 ```bash
-python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-plan-results --repeats 5
+python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-plan-results --repeats 15 --pixels 256 --ablation
 ```
+
+Die [SoftwareGPU Workbench](plugins/softwaregpu-workbench/README.md) enthält
+das wiederverwendbare Plugin für echte Regressionen, begrenzte Benchmarks,
+Quellhash-Audit, Ablationsanalyse, Renderer-Kalibrierung und CPU-Finetuning-Preflight.

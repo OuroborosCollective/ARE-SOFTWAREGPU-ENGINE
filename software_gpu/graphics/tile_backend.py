@@ -16,9 +16,29 @@ import numpy as np
 from .geometry import edge_covered
 
 
+def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
+    """Count bounded rectangles in O(1), without a second pass over every bin."""
+    nx, ny = x1 // tile_size - x0 // tile_size + 1, y1 // tile_size - y0 // tile_size + 1
+    pairs = nx * ny
+    if min(x1 - x0 + 1, tile_size) * min(y1 - y0 + 1, tile_size) < scan_min_samples:
+        return pairs, pairs
+
+    def extents(start, end, count):
+        if count == 1:
+            return {end - start + 1: 1}
+        values = Counter((tile_size - start % tile_size, end % tile_size + 1))
+        if count > 2:
+            values[tile_size] += count - 2
+        return values
+
+    widths, heights = extents(x0, x1, nx), extents(y0, y1, ny)
+    return pairs, sum(nw * nh for w, nw in widths.items() for h, nh in heights.items()
+                      if w * h < scan_min_samples)
+
+
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     executor: Executor, workers: int, compiled: bool = False,
-                    planned: bool = False):
+                    planned: bool = False, plan_policy=None):
     """Bin triangles by 2-D tiles, then shade each independent tile in order.
 
     This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
@@ -27,8 +47,16 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     if planned and compiled:
         raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
     requested_plan = planned
+    if planned:
+        from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
+                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY)
+        policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
+        if not isinstance(policy, SurfacePlanPolicy):
+            raise ValueError("SURFACE_PLAN_POLICY_INVALID")
     bins = defaultdict(list)
     bbox_samples = 0
+    binned_pairs = 0
+    small_pairs = 0
     frame_w, frame_h = fb.width, fb.height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
@@ -40,6 +68,11 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             continue
         if planned:
             bbox_samples += (x1 - x0 + 1) * (y1 - y0 + 1)
+            # Pre-execution gate features: pair count and pairs below the scan
+            # threshold, using the same clipped bounds draw_tile derives.
+            pairs, small = _pair_features(x0, x1, y0, y1, tile_size, policy.scan_min_samples)
+            binned_pairs += pairs
+            small_pairs += small
         # Row-major deterministic tile iteration; no per-pixel bin storage.
         for ty in range(y0 // tile_size, y1 // tile_size + 1):
             for tx in range(x0 // tile_size, x1 // tile_size + 1):
@@ -48,14 +81,12 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     trace = None
     batch = None
     if planned:
-        from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
-                                   checked_batch_rgba, MIN_SCAN_SAMPLES, MIN_BATCH_SAMPLES,
-                                   MIN_DRAW_SAMPLES_PER_TRIANGLE)
         reason = None
-        if bins and bbox_samples < MIN_DRAW_SAMPLES_PER_TRIANGLE * len(triangles):
+        if bins and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
             reason = "small-primitive-cost-threshold"
             planned = False
-        trace = PlanTrace(bins, reason, bbox_samples, len(triangles))
+        trace = PlanTrace(bins, reason, bbox_samples, len(triangles),
+                          binned_pairs, small_pairs, policy=policy)
         if planned:
             batch = equivalent_batch(shader)
     if not bins:
@@ -83,7 +114,7 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             mode = "boundary"
             if planned:
                 samples = (right - left + 1) * (bottom - top + 1)
-                if samples >= MIN_SCAN_SAMPLES:
+                if samples >= policy.scan_min_samples:
                     mode = classify_tile(s0, s1, s2, left, right, top, bottom)
                     counts["corner_edge_evaluations"] += 12
                     counts[mode] += 1
@@ -155,13 +186,14 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     flat_varyings[key] = va
             if planned:
                 counts["shaded_samples"] += len(rows)
-            if planned and batch is not None and len(rows) >= MIN_BATCH_SAMPLES:
+            if planned and batch is not None and len(rows) >= policy.batch_min_samples:
                 varyings = dict(flat_varyings)
                 varyings.update(array_varyings)
                 rgba = checked_batch_rgba(batch, varyings, len(rows))
                 fb.depth_buffer[rows + top, cols + left] = zz
                 fb.color_buffer[rows + top, cols + left, :] = rgba
                 counts["batch_fragment_calls"] += 1
+                counts["batch_fragment_samples"] += len(rows)
                 continue
             if planned:
                 counts["scalar_fragment_calls"] += len(rows)

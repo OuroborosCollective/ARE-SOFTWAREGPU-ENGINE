@@ -1,7 +1,7 @@
 {
   "protocol": "are.aurion.offline-render-job.v1",
   "authority": "offline-read-only",
-  "description": "Phase-4 Slice-C fixture: 5120-triangle seeded mesh (AeroRaster-scale scene) for setup/raster breakdown benchmarks",
+  "description": "Phase-4 Slice-C fixture: 5120-triangle seeded mesh (AeroRaster-scale scene) for setup/raster breakdown benchmarks; batch-first-v1 profile",
   "fixture": {
     "kind": "procedural",
     "fixture_id": "aurion_phase4_scene5k",
@@ -19,7 +19,7 @@
   "render": {
     "pixels": 128,
     "repeats": 3,
-    "backend": "tiles"
+    "backend": "tiles-plan"
   },
   "budget": {
     "deadline_seconds": 300,

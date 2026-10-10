@@ -7,8 +7,10 @@ uses the *same float32 operation order and top-left rule* as dense coverage.
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import dataclass
 import hashlib
 import json
+import sys
 from threading import Lock
 
 import numpy as np
@@ -20,10 +22,46 @@ MIN_SCAN_SAMPLES = 64
 MIN_BATCH_SAMPLES = 8
 MIN_DRAW_SAMPLES_PER_TRIANGLE = 64
 MAX_TRACE_TILES = 128
+# Counter units (integers, summed over the whole draw):
+#   inside / outside / boundary / scan_bypassed: tile-triangle PAIRS.
+#       Non-rejected pairs = inside + boundary + scan_bypassed; some shade nothing.
+#   corner_edge_evaluations / dense_edge_evaluations: edge-function evaluations.
+#   skipped_samples: SAMPLES dropped by outside pairs.
+#   shaded_samples: SAMPLES passing each pair's coverage/depth test, incl. overdraw.
+#   batch_fragment_calls: batched shader invocations (at most one per pair).
+#   batch_fragment_samples: SAMPLES shaded by those batch invocations.
+#   scalar_fragment_calls: per-SAMPLE scalar shader invocations (historical name).
+#   Invariant: shaded_samples == batch_fragment_samples + scalar_fragment_calls.
 COUNTERS = ("inside", "outside", "boundary", "scan_bypassed",
             "corner_edge_evaluations", "dense_edge_evaluations",
             "skipped_samples", "shaded_samples", "scalar_fragment_calls",
-            "batch_fragment_calls")
+            "batch_fragment_calls", "batch_fragment_samples")
+COUNTER_UNITS = {key: ("pair" if key in ("inside", "outside", "boundary", "scan_bypassed")
+                       else "edge-evaluation" if key.endswith("edge_evaluations")
+                       else "invocation" if key.endswith("fragment_calls") else "sample")
+                 for key in COUNTERS}
+
+
+@dataclass(frozen=True)
+class SurfacePlanPolicy:
+    """Immutable, renderer-local thresholds; no global benchmark overrides."""
+    scan_min_samples: int = MIN_SCAN_SAMPLES
+    batch_min_samples: int = MIN_BATCH_SAMPLES
+    draw_min_bbox_samples_per_triangle: int = MIN_DRAW_SAMPLES_PER_TRIANGLE
+    name: str = "corner-scan-v1"
+
+    def __post_init__(self):
+        for value, minimum in ((self.scan_min_samples, 1), (self.batch_min_samples, 1),
+                               (self.draw_min_bbox_samples_per_triangle, 0)):
+            if type(value) is not int or value < minimum:
+                raise ValueError("SURFACE_PLAN_POLICY_INVALID")
+        if not isinstance(self.name, str) or not self.name or len(self.name) > 64:
+            raise ValueError("SURFACE_PLAN_POLICY_INVALID")
+
+
+DEFAULT_PLAN_POLICY = SurfacePlanPolicy()
+BATCH_FIRST_POLICY = SurfacePlanPolicy(scan_min_samples=sys.maxsize,
+                                      name="batch-first-v1")
 
 
 def classify_tile(s0, s1, s2, left, right, top, bottom):
@@ -85,7 +123,8 @@ class PlanTrace:
     Counters and selected coordinates are independent of worker completion
     order. No per-pixel nodes, timings or shader payloads enter the graph.
     """
-    def __init__(self, coordinates, reference_reason=None, bbox_samples=0, triangle_count=0):
+    def __init__(self, coordinates, reference_reason=None, bbox_samples=0, triangle_count=0,
+                 binned_pairs=0, small_pairs=0, policy=None):
         self.selected = frozenset(sorted(coordinates)[:MAX_TRACE_TILES])
         self.counts = Counter({key: 0 for key in COUNTERS})
         self.tiles = {}
@@ -94,6 +133,9 @@ class PlanTrace:
         self.reference_reason = reference_reason
         self.bbox_samples = bbox_samples
         self.triangle_count = triangle_count
+        self.binned_pairs = binned_pairs
+        self.small_pairs = small_pairs
+        self.policy = policy or DEFAULT_PLAN_POLICY
 
     def record(self, coordinate, counts):
         with self.lock:
@@ -128,9 +170,12 @@ class PlanTrace:
                 edges.append([prefix + ":" + source, prefix + ":execution"])
         body = {"protocol": PROTOCOL, "authority": "derived-render-only",
                 "provider_calls": 0, "timing_model": "fixed-thresholds-not-runtime-autotuning",
-                "scan_min_samples": MIN_SCAN_SAMPLES, "batch_min_samples": MIN_BATCH_SAMPLES,
-                "draw_min_bbox_samples_per_triangle": MIN_DRAW_SAMPLES_PER_TRIANGLE,
+                "schema_revision": 2, "policy": self.policy.name, "counter_units": COUNTER_UNITS,
+                "scan_min_samples": self.policy.scan_min_samples,
+                "batch_min_samples": self.policy.batch_min_samples,
+                "draw_min_bbox_samples_per_triangle": self.policy.draw_min_bbox_samples_per_triangle,
                 "estimated_bbox_samples": self.bbox_samples, "triangle_count": self.triangle_count,
+                "binned_pairs": self.binned_pairs, "small_pairs": self.small_pairs,
                 "decision": "tiles-reference" if self.reference_reason else "planned",
                 "reason": self.reference_reason,
                 "tile_count": self.tile_count, "trace_tile_limit": MAX_TRACE_TILES,

@@ -269,6 +269,9 @@ class TestSurfacePlan(unittest.TestCase):
             new = _render_mesh(vertices, faces, camera, "tiles-plan", 32, 2, 600, Path(folder), "new")
             self.assertEqual(old["replay_hash_sha256"], new["replay_hash_sha256"])
             self.assertIn("surface_plan", new)
+            self.assertEqual(new["surface_plan"]["policy"], "batch-first-v1")
+            if new["surface_plan"]["counts"] is not None:
+                self.assertEqual(new["surface_plan"]["counts"]["corner_edge_evaluations"], 0)
             self.assertNotIn("surface_plan", old)
 
     def test_isolated_job_receipt_readback(self):
@@ -280,6 +283,7 @@ class TestSurfacePlan(unittest.TestCase):
             self.assertEqual(disk, receipt)
             self.assertEqual(receipt["authority"], "offline-read-only")
             self.assertEqual(receipt["outcome"]["surface_plan"]["provider_calls"], 0)
+            self.assertEqual(receipt["outcome"]["surface_plan"]["policy"], "batch-first-v1")
 
     def test_wolfram_golden_has_independent_exact_readback(self):
         path = Path(__file__).resolve().parents[1] / "evidence" / "wolfram-surface-plan.v1.json"
