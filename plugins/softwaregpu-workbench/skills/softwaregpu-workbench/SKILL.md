@@ -1,0 +1,17 @@
+---
+name: softwaregpu-workbench
+description: Prüfe, benchmarke und optimiere CPU-SoftwareGPU-Renderer mit echten Runtime-Nachweisen. Verwende bei ARE-SOFTWAREGPU-ENGINE, Raster-/Batch-/Coverage-Regressionen, Flächenplan-Receipts, Shader-Batching, Kostenmodell-Kalibrierung, SoftwareGPU-Finetuning und CPU-LoRA-Renderer-Integration.
+---
+
+# SoftwareGPU Workbench
+
+Arbeite standardmäßig mit `OuroborosCollective/ARE-SOFTWAREGPU-ENGINE`. Nutze vorhandene GitHub-, Wolfram- und Ausführungswerkzeuge; dieses Plugin stellt keine eigene GPU oder neue Server-Verbindung bereit.
+
+1. Lies `Memory.md`, zutreffende `AGENTS.md`, Git-Status und genaue Basis-/Head-SHAs. Arbeite isoliert. Nutze `scripts/workbench.py inspect --root REPO --output inventory.json` für die sechs Flächen und Quellcode-Prüfsummen. Behandle die Karte als statische Orientierung, nicht als Aktivitätsbeweis. Nutze vorhandene Architektur-Snapshot-/Drift-Werkzeuge nur, wenn sie tatsächlich verfügbar sind.
+2. Lies [contracts.md](references/contracts.md). Reproduziere das Problem mit echter Geometrie, Framebuffer und Shadern. Bewahre Raster-, Float32-, Depth-, Submission- und Batch-Verträge. Zeige negative Fälle; benutze keine Stub-Zeiten als Leistungsnachweis.
+3. Implementiere den kleinsten begründeten Slice und ergänze Regressionen für neue Regeln/behobene Fehler. Führe `scripts/workbench.py verify --root REPO --output test-evidence` aus. Respektiere Projekt-Coverage-Floors. Bei hostbedingt blockierten Tests dokumentiere genaue Ausnahmen und fordere den vollständigen kanonischen Head-CI-Nachweis, bevor du integrierst; senke keine Floors und erfinde keine Coverage.
+4. Messe mit `scripts/workbench.py benchmark --root REPO --output bench-evidence --pixels 256 --repeats 15 --ablation --seconds 1800`. Nutze nur ein Budget je Lauf, keine gleichzeitigen CPU-Leistungsproben. Prüfe `audit ARTIFACT --root REPO --output audit.json`, dann `analyze ARTIFACT... --root REPO --output effects.json`. Mit `--root` müssen alle zehn Benchmark-Quellhashes zum Checkout passen; ohne diesen Abgleich gelten Zahlen nur für die deklarierte Artifact-Version. Artifact-Audit bedeutet Konsistenzprüfung, keinen unabhängigen Rerender. CPU-vs.-CPU ist keine Hardware-GPU-Parität.
+5. Lies [tuning-and-training.md](references/tuning-and-training.md) für Kostenmodelle, Sweep/Holdout oder CPU-LoRA. Trenne Renderer-Kalibrierung von Modelltraining. Verwende `train-preflight --root REPO --output preflight` vor einem vom Nutzer beauftragten Trainingslauf. Starte keine kostenpflichtigen, externen oder langen Trainings-/Upload-Läufe allein durch eine Analyseanfrage.
+6. Speichere nach Integration/Fehlerbehebung genau einen kurzen append-only `Memory.md`-Eintrag mit Änderung, Erkenntnis und konkreter Evidence; erhalte frühere Bytes. Publiziere nur den geprüften Tree. Verifiziere vollständige CI auf dem genauen finalen Head und den Readback nach einer vom aktuellen Auftrag autorisierten Integration/Merge. Melde Commit, Runtime-Nachweise und Grenzen klar; behaupte keinen Deployment-Erfolg aus einem grünen Test allein.
+
+Führe das gebündelte Python-Skript mit dem Interpreter der echten Projektumgebung aus. Es nutzt sichere Argumentlisten, feste Projektbefehle und keine Secrets-/Provider-Aufrufe. `inspect`, `audit` und `analyze` sind lesend bis auf ihren Ergebnisexport; `verify`, `benchmark` und `train-preflight` führen die realen Projektprozesse aus. Resultate/Logs enthalten SHA-Bindung und tatsächliche Exit-Codes. Das Skript committet, merged, trainiert oder veröffentlicht nichts selbständig.

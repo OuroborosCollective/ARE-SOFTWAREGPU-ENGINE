@@ -23,16 +23,22 @@ class SoftwareRasterizer:
     reference. Neither backend is a physical GPU or hardware GPU driver.
     """
     def __init__(self, framebuffer: Framebuffer, tile_size: int = 32,
-                 num_threads: Optional[int] = None, backend: str = "tiles"):
+                 num_threads: Optional[int] = None, backend: str = "tiles", plan_policy=None):
         if not isinstance(tile_size, int) or not 1 <= tile_size <= 256:
             raise ValueError("tile_size must be between 1 and 256 pixels")
-        if backend not in ("tiles", "tiles-jit", "bands"):
-            raise ValueError("backend must be tiles, tiles-jit or bands")
+        if backend not in ("tiles", "tiles-jit", "tiles-plan", "bands"):
+            raise ValueError("backend must be tiles, tiles-jit, tiles-plan or bands")
         if num_threads is not None and (not isinstance(num_threads, int) or num_threads < 1):
             raise ValueError("num_threads must be positive")
+        if plan_policy is not None:
+            from .surface_plan import SurfacePlanPolicy
+            if backend != "tiles-plan" or not isinstance(plan_policy, SurfacePlanPolicy):
+                raise ValueError("plan_policy requires tiles-plan and SurfacePlanPolicy")
         self.fb = framebuffer
         self.tile_size = tile_size
         self.backend = backend
+        self.plan_policy = plan_policy
+        self.last_plan_receipt = None
         self.num_threads = num_threads or VirtualGPU.get_current_device().num_sms
         self.executor = ThreadPoolExecutor(max_workers=self.num_threads, thread_name_prefix="SoftGPU_RasterTile")
 
@@ -41,14 +47,16 @@ class SoftwareRasterizer:
         device = VirtualGPU.get_current_device()
         device.total_draw_calls += 1
 
+        self.last_plan_receipt = None
         triangles = prepare_triangles(vertices, indices, shader, self.fb.width, self.fb.height)
-
-        if not triangles:
+        if self.backend in ("tiles", "tiles-jit", "tiles-plan"):
+            self.last_plan_receipt = rasterize_tiles(
+                self.fb, triangles, shader, self.tile_size, self.executor,
+                self.num_threads, compiled=self.backend == "tiles-jit",
+                planned=self.backend == "tiles-plan", plan_policy=self.plan_policy)
             return
 
-        if self.backend in ("tiles", "tiles-jit"):
-            rasterize_tiles(self.fb, triangles, shader, self.tile_size, self.executor,
-                            self.num_threads, compiled=self.backend == "tiles-jit")
+        if not triangles:
             return
 
         # Historical horizontal-band reference renderer (not actual tile binning).

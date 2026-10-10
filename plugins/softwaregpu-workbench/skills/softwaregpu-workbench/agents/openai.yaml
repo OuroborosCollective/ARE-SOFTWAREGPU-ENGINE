@@ -1,0 +1,4 @@
+interface:
+  display_name: "SoftwareGPU Workbench"
+  short_description: "CPU-Renderer testen, messen und abstimmen"
+  default_prompt: "Nutze $softwaregpu-workbench für echte Tests und reproduzierbare CPU-Benchmarks dieses SoftwareGPU-Projekts."

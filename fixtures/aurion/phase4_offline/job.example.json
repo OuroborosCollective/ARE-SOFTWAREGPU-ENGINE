@@ -1,7 +1,7 @@
 {
   "protocol": "are.aurion.offline-render-job.v1",
   "authority": "offline-read-only",
-  "description": "Phase-4 CI fixture: seeded procedural mesh, tiles backend, bands comparison",
+  "description": "Phase-4 CI fixture: seeded procedural mesh, batch-first-v1 tiles-plan backend, bands/tiles comparisons",
   "fixture": {
     "kind": "procedural",
     "fixture_id": "aurion_phase4_seedmesh",
@@ -19,7 +19,7 @@
   "render": {
     "pixels": 128,
     "repeats": 3,
-    "backend": "tiles"
+    "backend": "tiles-plan"
   },
   "budget": {
     "deadline_seconds": 120,

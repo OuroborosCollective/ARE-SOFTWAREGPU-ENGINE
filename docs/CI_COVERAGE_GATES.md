@@ -104,3 +104,10 @@ ohne numba läuft.
   Verletzungen nachweisbar.
 
 Lokal ausführen: `python tools/coverage_gate.py --verbose` (Python ≥ 3.12).
+
+## Opt-in Flächenplaner
+
+`test_surface_plan.py` ergänzt reale Render-, Oracle-, Fehler- und
+Offline-Subprozess-Prüfungen. `graphics/surface_plan.py` und
+`graphics/batch_shader.py` haben jeweils einen 95-%-Zeilen-Floor. Bestehende
+Floors wurden nicht abgesenkt. Details: [SURFACE_PLANNER.md](SURFACE_PLANNER.md).

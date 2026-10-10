@@ -88,3 +88,18 @@ Eine eventuelle Verwendung bei Echoes of Aurion ist nur als **read-only Offline-
 ## MIHA CPU training integration
 
 [Workflow, runner requirements and outputs](docs/MIHA_CPU_TRAINING.md): pinned Hugging Face CPU-LoRA training with canonical/Atomic readback, unchanged 16-GiB and longest-example gates, real training-loss charts, checkpoints and optional candidate upload. Open the generated `training_metrics.html` for a readable chart and exact observations. ARE SoftwareGPU renders metrics on CPU; tensor training remains in CPU PyTorch.
+
+## Experimenteller Flächenplaner
+
+Der ausdrücklich wählbare Backend-Pfad `tiles-plan` ergänzt Flächenklassifikation,
+deklarierte Vertex-Color-Batch-Shader und einen vierfarbigen Graph-Nachweis.
+Standard bleibt `tiles`; kleine Primitive können auf den Referenzpfad zurückfallen.
+[Bedienung, Verträge und Grenzen](docs/SURFACE_PLANNER.md).
+
+```bash
+python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-plan-results --repeats 15 --pixels 256 --ablation
+```
+
+Die [SoftwareGPU Workbench](plugins/softwaregpu-workbench/README.md) enthält
+das wiederverwendbare Plugin für echte Regressionen, begrenzte Benchmarks,
+Quellhash-Audit, Ablationsanalyse, Renderer-Kalibrierung und CPU-Finetuning-Preflight.

@@ -11,7 +11,7 @@ covers software_gpu/graphics/compiled_tile.py additionally, so that file
 carries no floor here.
 
 Deliberately excluded from per-file floors (still counted in the overall
-number): demos, benchmarks and example scripts. They run as CI steps but are
+number): demos, other benchmarks and example scripts. They run as CI steps but are
 not unit-test targets. software_gpu/integrations/aurion/_offline_child.py
 executes in the isolation subprocess by design; its behaviour is asserted via
 worker receipts, so it carries no floor either.
@@ -42,9 +42,12 @@ FLOORS = {
     "software_gpu/graphics/rasterizer.py": 98.0,
     "software_gpu/graphics/tile_backend.py": 88.0,
     "software_gpu/graphics/shader.py": 88.0,
+    "software_gpu/graphics/surface_plan.py": 95.0,
+    "software_gpu/graphics/batch_shader.py": 95.0,
     "software_gpu/graphics/postprocess.py": 95.0,
     "software_gpu/network/security.py": 88.0,
     "software_gpu/integrations/aurion/offline_render_worker.py": 75.0,
+    "software_gpu/benchmarks/compare_surface_plans.py": 85.0,
     "main.py": 35.0,
 }
 OVERALL_FLOOR = 62.0  # percent of all package lines (incl. demos/benchmarks)

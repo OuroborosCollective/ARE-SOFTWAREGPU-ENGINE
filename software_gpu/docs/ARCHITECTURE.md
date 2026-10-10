@@ -34,6 +34,7 @@ Die primären Pfade liegen in `graphics/rasterizer.py`, `graphics/tile_backend.p
 - **Tile-Ownership:** Jede Kachel hat disjunkte Farb-/Tiefenregionen, erhält nur überlappende Dreiecke und bearbeitet diese in ursprünglicher Einreichungsreihenfolge. Mehrere Worker bearbeiten voneinander unabhängige Kacheln.
 - **Vektorisierung:** NumPy führt Coverage und Tiefentest auf CPU-Arrays aus. Das allein belegt **nicht**, welche AVX-/NEON-Maschineninstruktionen die konkrete CPU benutzt.
 - **Opt-in JIT:** Numba/LLVM beschleunigt CPU-Inner-Loops (`nogil=True`, `fastmath=False`), während frei definierbare Python-Fragmentshader im Python-Interpreter bleiben. Es gibt keinen HLSL-/GLSL-/CUDA-Compiler.
+- **Opt-in Flächenplan:** `tiles-plan` ergänzt affine Eckklassifikation, eine Kosten-Schwelle, ausdrücklich deklarierte Batch-Shader und einen begrenzten vierfarbigen Graph-Nachweis. Der CPU-Standard bleibt `tiles`; Wolfram validiert Regeln offline. [Vertrag und Grenzen](../../docs/SURFACE_PLANNER.md).
 - **MSAA:** Der `MSAAFramebuffer` speichert 4 Subpixel-Samples und kann diese mit `uint16`-Akkumulation ohne Float32-Vollkopie auflösen. Das ist nicht mit Direct3D-Konformität gleichzusetzen.
 - **Grenze:** Eine „deterministische“ Tile-Reihenfolge bedeutet nicht automatisch bitgleiche Ausgabe auf *jeder* CPU, Floating-Point-Plattform und Library-Version. CI vergleicht definierte lokale Szenen.
 

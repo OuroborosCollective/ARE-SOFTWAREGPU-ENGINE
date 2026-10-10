@@ -1,0 +1,27 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "softwaregpu-workbench",
+  "version": "1.0.0",
+  "description": "Echte CPU-Raster-Regressionen, reproduzierbare Ablationen und sichere SoftwareGPU-Kalibrierung sowie CPU-LoRA-Preflight.",
+  "author": {
+    "name": "OuroborosCollective"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "SoftwareGPU Workbench",
+        "shortDescription": "CPU testen, messen, abstimmen",
+        "longDescription": "Prüft Raster-Verträge, Counters und SHA-Receipts, führt echte Tests und budgetierte CPU-Benchmarks aus und begleitet Renderer-Kalibrierung und CPU-Finetuning.",
+        "developerName": "OuroborosCollective",
+        "category": "Productivity",
+        "logo": "./assets/icon.svg",
+        "composerIcon": "./assets/icon.svg",
+        "defaultPrompt": [
+          "Prüfe dieses SoftwareGPU-Projekt mit echten Regressionen und Evidence.",
+          "Messe die vier CPU-Ablationen und analysiere Batch- und Scan-Gewinn.",
+          "Bereite Renderer-Kalibrierung oder CPU-Finetuning mit den realen Gates vor."
+        ]
+      }
+    }
+  }
+}
