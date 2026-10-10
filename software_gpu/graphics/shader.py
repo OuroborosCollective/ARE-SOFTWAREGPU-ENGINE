@@ -6,7 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
-
+import math
 
 @dataclass
 class Vertex:
@@ -163,6 +163,22 @@ class BlinnPhongShader(Shader):
         self.shininess = shininess
         self.texture = texture
 
+        # Precompute loop-invariant lighting direction variables
+        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # In camera space looking towards +z
+        half_dir = (self.light_dir + view_dir)
+        half_len = np.linalg.norm(half_dir)
+        if half_len > 1e-6:
+            self.half_dir = half_dir / half_len
+        else:
+            self.half_dir = np.zeros(3, dtype=np.float32)
+
+        # Precompute colors if texture is not used
+        if self.texture is None:
+            self.base_amb_color = self.diffuse_color * self.ambient_color
+            self.base_diff_light_color = self.diffuse_color * self.light_color
+
+        self.spec_light_color = self.specular_color * self.light_color
+
     def vertex_shader(self, vertex: Vertex) -> Tuple[np.ndarray, dict]:
         # Clip-space position
         clip_pos = self.mvp @ vertex.position
@@ -182,12 +198,14 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
-        if n_len > 1e-6:
-            normal = normal / n_len
+        # scalar math is faster than np.linalg.norm for small arrays in a loop
+        n_len_sq = normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]
+        if n_len_sq > 1e-12:
+            n_inv_len = 1.0 / math.sqrt(n_len_sq)
+            nx, ny, nz = normal[0]*n_inv_len, normal[1]*n_inv_len, normal[2]*n_inv_len
+        else:
+            nx, ny, nz = normal[0], normal[1], normal[2]
 
-        # Base surface color (either from texture or vertex/material diffuse)
-        base_color = self.diffuse_color
         if self.texture is not None:
             u, v = varyings['uv'][0], varyings['uv'][1]
             u = max(0.0, min(1.0, u))
@@ -195,26 +213,20 @@ class BlinnPhongShader(Shader):
             th, tw = self.texture.shape[0], self.texture.shape[1]
             tx = int(u * (tw - 1))
             ty = int(v * (th - 1))
-            tex_sample = self.texture[ty, tx, :3] / 255.0
-            base_color = tex_sample
-
-        # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
-
-        # Ambient component
-        ambient = base_color * self.ambient_color
-
-        # Specular component (Blinn-Phong halfway vector)
-        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # In camera space looking towards +z
-        half_dir = (self.light_dir + view_dir)
-        half_len = np.linalg.norm(half_dir)
-        if half_len > 1e-6:
-            half_dir /= half_len
-            spec = max(0.0, float(np.dot(normal, half_dir))) ** self.shininess
+            base_color = self.texture[ty, tx, :3] / 255.0
+            amb_color = base_color * self.ambient_color
+            diff_light_color = base_color * self.light_color
         else:
-            spec = 0.0
-        specular = self.specular_color * self.light_color * spec
+            amb_color = self.base_amb_color
+            diff_light_color = self.base_diff_light_color
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        # scalar math dot products
+        diff = max(0.0, nx*self.light_dir[0] + ny*self.light_dir[1] + nz*self.light_dir[2])
+        spec_dot = max(0.0, nx*self.half_dir[0] + ny*self.half_dir[1] + nz*self.half_dir[2])
+        spec = spec_dot ** self.shininess if spec_dot > 0 else 0.0
+
+        r = amb_color[0] + diff_light_color[0] * diff + self.spec_light_color[0] * spec
+        g = amb_color[1] + diff_light_color[1] * diff + self.spec_light_color[1] * spec
+        b = amb_color[2] + diff_light_color[2] * diff + self.spec_light_color[2] * spec
+
+        return min(255, max(0, int(r * 255.0))), min(255, max(0, int(g * 255.0))), min(255, max(0, int(b * 255.0))), 255
