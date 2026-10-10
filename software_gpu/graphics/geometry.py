@@ -29,7 +29,7 @@ def is_top_left(a: np.ndarray, b: np.ndarray) -> bool:
 
 def edge_covered(value, a: np.ndarray, b: np.ndarray):
     """Top-left rule avoids double shading and cracks on shared edges."""
-    return (value > 0) | ((value == 0) & is_top_left(a, b))
+    return (value >= 0) if is_top_left(a, b) else (value > 0)
 
 
 def _distance(position: np.ndarray, plane: int) -> float:
