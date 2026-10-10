@@ -243,7 +243,9 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
     shader = _FlatShader()
     mesh = [Vertex(v, color=FLAT_COLOR) for v in clip]
     fb = Framebuffer(pixels, pixels)
-    render = SoftwareRasterizer(fb, backend=backend, num_threads=1, tile_size=16)
+    # tile_size=32: measured optimum of the 8/16/32/64 matrix (Slice B);
+    # output is byte-identical at every size, 16->32 saves 1.09-1.16x wall.
+    render = SoftwareRasterizer(fb, backend=backend, num_threads=1, tile_size=32)
     samples, digests, covered = [], [], []
     try:
         for _ in range(repeats):
