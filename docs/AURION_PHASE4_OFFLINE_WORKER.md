@@ -83,16 +83,31 @@ speedup meets the threshold (default 1.10×); otherwise `hold` — per the
 issue contract, no benefit means no activation.
 
 Measured on this development container (Python 3.12.12, numpy 2.2.5,
-single worker, fixture `aurion_phase4_seedmesh`, 128 px, 3 repeats):
+single worker, fixture `aurion_phase4_seedmesh`, 128 px, 3 repeats),
+after the Slice-B vectorized varying interpolation and tile-size update:
 
 | Backend | Median wall | Result |
 | --- | --- | --- |
-| bands (existing CPU path) | 305.376 ms | reference |
-| tiles | 157.613 ms | **1.9375× faster, byte-identical image** |
+| bands (existing CPU path) | 375.705 ms | reference |
+| tiles | 143.327 ms | **2.6213× faster, byte-identical image** |
 
-Decision in receipt: `activate` (`REAL_BENEFIT_ON_IDENTICAL_IMAGES:1.94x`).
-Bounded single-host sample, not a hardware-independent promise; CI reruns the
-same gate via `aurion-offline-glb.yml` on Linux+Windows.
+Decision in receipt: `activate` (`REAL_BENEFIT_ON_IDENTICAL_IMAGES:2.62x`,
+receipt `19bf8fe7…`, identical `replay_hash_sha256 75663a5e…` and BMP SHA for
+both backends). Bounded single-host sample, not a hardware-independent
+promise; CI reruns the same gate via `aurion-offline-glb.yml` on
+Linux+Windows. Pre-Slice-B baseline was 1.9375× (157.613 ms tiles).
+
+## Slice B: measured tile-backend experiments (2026-10-10)
+
+Three candidates from the roadmap were measured against the byte-identity +
+1.10× gate (fixture scenes: 400-triangle sphere, zoomed big-triangle sphere,
+screen-filling quads; 128/256 px, single-threaded deterministic):
+
+| Candidate | Result | Verdict |
+| --- | --- | --- |
+| **Vectorized varying interpolation** (iw-weighting + perspective factor as whole-array ops instead of per-pixel Python) | 1.27–1.93× wall, byte-identical on every scene | **integrated** into `tile_backend.py` (shared tail of NumPy and LLVM-kernel paths) |
+| **Tile-size matrix 8/16/32/64** | byte-identical at every size; 32 ≥ 64 > 16 > 8 once varyings are vectorized (16→32: 1.09–1.16×) | **integrated**: worker renders at `tile_size=32`; rasterizer default unchanged |
+| **Early coverage culling** (OpenSWR-style full-tile skip of edge masks) | full tiles occur in ≤1 % of bins even on big-triangle scenes; net 0.98–1.01× — pure probe overhead | **not integrated** (gate: no benefit ⇒ no activation). Rationale: in this architecture >95 % of time is the per-pixel scalar fragment loop, so removing edge-mask vector ops is noise; the idea only pays inside SIMD/compiled kernels |
 
 ## Research-backed optimization roadmap (next slices)
 
@@ -102,9 +117,9 @@ Grounded in current software-rasterization practice and 2024–2026 work:
    early step does perspective divide, fixed-point snapping, bbox and
    back-face/degenerate culling; bins store packet IDs + coverage masks
    instead of per-triangle pointers — much lower binning overhead.
-2. **Early coverage culling**: OpenSWR culls >90 % of triangles with a quick
-   pre-rasterization coverage-mask pass before binning; directly applicable
-   to `tile_backend.py`.
+2. ~~**Early coverage culling**~~: measured in Slice B — **negative result**
+   (0.98–1.01×, full tiles ≤1 % of bins); not integrated, see table above.
+   Revisit only inside a SIMD/compiled coverage kernel.
 3. **L2-resident tile depth buffers** (ryg's rasterizer series): size tiles
    so the tile depth buffer stays in L2; combine with 2×2-quad SIMD setup
    (SSE/AVX batches of 4+ triangles). Measured 30–50 % from AVX in
