@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -163,6 +164,15 @@ class BlinnPhongShader(Shader):
         self.shininess = shininess
         self.texture = texture
 
+        # Precompute half_dir for specular lighting
+        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        half_dir = self.light_dir + view_dir
+        half_len = np.linalg.norm(half_dir)
+        if half_len > 1e-6:
+            self.half_dir = half_dir / half_len
+        else:
+            self.half_dir = np.zeros(3, dtype=np.float32)
+
     def vertex_shader(self, vertex: Vertex) -> Tuple[np.ndarray, dict]:
         # Clip-space position
         clip_pos = self.mvp @ vertex.position
@@ -182,9 +192,12 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        nx, ny, nz = float(normal[0]), float(normal[1]), float(normal[2])
+        n_len = math.sqrt(nx*nx + ny*ny + nz*nz)
         if n_len > 1e-6:
-            normal = normal / n_len
+            nx /= n_len
+            ny /= n_len
+            nz /= n_len
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
@@ -199,22 +212,25 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
+        ldx, ldy, ldz = float(self.light_dir[0]), float(self.light_dir[1]), float(self.light_dir[2])
+        ndotl = nx*ldx + ny*ldy + nz*ldz
+        diff = max(0.0, ndotl)
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
         ambient = base_color * self.ambient_color
 
         # Specular component (Blinn-Phong halfway vector)
-        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # In camera space looking towards +z
-        half_dir = (self.light_dir + view_dir)
-        half_len = np.linalg.norm(half_dir)
-        if half_len > 1e-6:
-            half_dir /= half_len
-            spec = max(0.0, float(np.dot(normal, half_dir))) ** self.shininess
+        hdx, hdy, hdz = float(self.half_dir[0]), float(self.half_dir[1]), float(self.half_dir[2])
+        ndoth = nx*hdx + ny*hdy + nz*hdz
+        if ndoth > 0.0:
+            spec = ndoth ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        final_color = ambient + diffuse + specular
+        r = min(255, max(0, int(final_color[0] * 255.0)))
+        g = min(255, max(0, int(final_color[1] * 255.0)))
+        b = min(255, max(0, int(final_color[2] * 255.0)))
+        return r, g, b, 255

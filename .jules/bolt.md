@@ -1,0 +1,3 @@
+## 2024-05-24 - [Avoid numpy linalg.norm in tight loops]
+**Learning:** Found significant CPU time spent in `np.linalg.norm` inside the `fragment_shader` of `BlinnPhongShader`. When executed hundreds of thousands of times during rasterization, standard linear algebra operations from numpy become a massive bottleneck due to function call overhead and array creation.
+**Action:** Replace `np.linalg.norm(v)` with manual fast math (e.g. `math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])`) or avoid normalization inside the tightest loops where possible. In shaders, avoid unnecessary normalizations per pixel if the interpolated normals are already close to unit length, or normalize manually without numpy.
