@@ -44,7 +44,7 @@ def main():
             frames=[a,b];payload=encode_frames(ir,frames)
             expected=[oracle(v) if family=='edge' else room_oracle(v) for v in frames]
             # Independent numerical comparison precedes every performance claim.
-            for mode in ('fused','incremental'):
+            for mode in ('fused','incremental','direct'):
                 result=subprocess.run([str(exe),'run',mode],input=payload,capture_output=True,check=True,timeout=30)
                 actual=json.loads(result.stdout)['frames']
                 assert len(actual)==2
@@ -81,6 +81,9 @@ def main():
                           'native':native,'stats_ns':stats,'numpy_samples_ns':python_ns,
                           'speedup_ratio_of_medians':{name:statistics.median(python_ns)/statistics.median(values)
                               for name,values in native['samples_ns'].items()},
+                          'native_paired_speedup_vs_fused_checked':summarize([
+                              old/new for old,new in zip(native['samples_ns']['fused-checked'],
+                                                         native['samples_ns']['direct-checked'])]),
                           'native_process_wall_ms_including_protocol_and_all_repeats':process_ms,
                           'wire_sha256':hashlib.sha256(payload).hexdigest(),
                           'output_sha256':[hashlib.sha256(v.tobytes()).hexdigest() for v in expected],
@@ -95,10 +98,11 @@ def main():
             'scopes':{'fused-kernel':'prevalidated inputs, preallocated outputs, intermediate finite checks; full recompute',
                       'fused-checked':'size/environment checks + exact content scan + changed input finite checks/copies + fused kernel + transactional output commit',
                       'incremental-checked':'same input checks/scan + dirty propagation + only changed nodes + transactional buffer swaps',
+                      'direct-checked':'synchronous borrowed inputs; size/environment + every input/intermediate finite check in arithmetic pass + owned transactional outputs; no change scan/copies',
                       'numpy-reference':'preassembled inputs, direct edge or fixed pairwise room operations, allocates outputs'},
             'limitations':['one host; no render FPS or GPU comparison','startup, protocol parsing and compilation excluded from per-frame kernel times',
                            'no input-transport comparison','native output is owned read-only memory until next successful frame; NumPy allocates output',
-                           'repeat samples average repeated frames; ratio of medians is not a paired speedup',
+                           'repeat samples average repeated frames; NumPy ratio of medians is not paired; native paired ratio uses rotated batches within each repeat',
                            'IR/generation remain offline Python tools; runtime is C++ only']}
     (target/'benchmark.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 

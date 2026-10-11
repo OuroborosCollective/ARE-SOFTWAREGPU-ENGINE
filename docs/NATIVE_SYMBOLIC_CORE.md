@@ -6,6 +6,10 @@ aufgerufen. Wolfram liest die begrenzte Aufgabensprache vorab; der vorhandene
 Python-Code dient zur einmaligen IR-Prüfung/Codeerzeugung sowie als unabhängige
 numerische Testreferenz. Der bisherige NumPy-Forschungsprototyp bleibt als Referenz.
 
+Der zusätzliche [geprüfte Direktpfad](NATIVE_DIRECT_INPUTS.md) reduziert nun
+Eingabeübernahme und Validierungsdurchläufe; die ursprünglichen Messungen unten
+bleiben als historische Ausgangsbasis erhalten.
+
 ## Ausführung
 
 `native/symbolic/core.hpp` verwaltet Eingaben, Abhängigkeiten, Ergebniszustände und
@@ -18,10 +22,11 @@ noch Wolfram. Seine Graphstruktur und Formen stehen beim Kompilieren fest.
 | Pfad | Arbeit je Frame | Datenbesitz |
 | --- | --- | --- |
 | `run fused` | Alle elementweisen Operatoren in einem gemeinsamen Durchlauf pro Form; lokale Float32-Zwischenwerte statt Tensorstapel | Geprüfte Eingaben und Ausgaben gehören dem C++-Kern |
+| `run direct` | Eingaben und Zwischenwerte im Rechendurchlauf prüfen; vollständige Neuberechnung, kein Änderungsvergleich | Eingaben synchron geliehen, nur Ausgabepuffer im Kern |
 | `run incremental` | Exakter Eingabevergleich und Neuberechnung nur abhängiger geänderter Knoten | Unveränderte Knoten werden wiederverwendet |
 | Benchmark `fused-kernel` | Rechenkern auf zuvor geprüften Eingaben mit vorab reservierten Ausgaben | Nur ein gesonderter Messpfad, keine ungeprüfte Frame-Freigabe |
 
-Der Modus wird beim Erstellen einer Engine festgelegt. Änderungen werden über
+Der Modus wird beim Erstellen einer Engine festgelegt. In `fused` und `incremental` werden Änderungen über
 vollständige Bitvergleiche erkannt; damit bleiben `+0` und `-0` unterscheidbar.
 Nur neue/geänderte Eingaben werden erneut auf Endlichkeit geprüft, zusammen mit
 dem Kopieren in den Staging-Puffer. Bereits identische Eingaben sind zuvor geprüft.

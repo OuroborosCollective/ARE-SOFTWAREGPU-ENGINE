@@ -34,8 +34,9 @@ def emit_cpp(ir):
     outputs = {name: i for i, name in enumerate(plan.outputs)}
     lines = ['// Generated from validated ordered-f32-v1 IR. No algebraic rewrites.',
              '#pragma once', '#include "core.hpp"',
-             'ARE_NOINLINE inline bool generated_fused(const float* const* in, float* const* out) {',
-             '    std::uint32_t invalid = 0;']
+             'template<bool CheckInputs>',
+             'ARE_NOINLINE inline std::uint32_t generated_compute(const float* const* in, float* const* out) {',
+             '    std::uint32_t input_invalid = 0, result_invalid = 0;']
     groups = {}
     for name in order:
         groups.setdefault(by_id[name].shape, []).append(name)
@@ -49,19 +50,24 @@ def emit_cpp(ir):
                 symbol = {'add': '+', 'sub': '-', 'mul': '*'}[n.op]
                 expr = f'v{ids[n.deps[0]]} {symbol} v{ids[n.deps[1]]}'
             lines.append(f'        const float v{ids[name]} = {expr};')
-            if n.op != 'input':
-                lines.append(f'        invalid |= are::nonfinite(v{ids[name]});')
+            if n.op == 'input':
+                lines.append(f'        if constexpr (CheckInputs) input_invalid |= are::nonfinite(v{ids[name]});')
+            else:
+                lines.append(f'        result_invalid |= are::nonfinite(v{ids[name]});')
             if name in outputs:
                 lines.append(f'        out[{outputs[name]}][k] = v{ids[name]};')
         lines.append('    }')
-    lines += ['    return invalid == 0;', '}', 'inline const are::Graph generated_graph{', '    {']
+    lines += ['    return input_invalid * are::invalid_input | result_invalid * are::invalid_result;', '}',
+              'inline bool generated_fused(const float* const* in, float* const* out) {',
+              '    return generated_compute<false>(in, out) == 0;', '}',
+              'inline const are::Graph generated_graph{', '    {']
     for name in order:
         n = by_id[name]
         a, b = [ids[x] for x in n.deps] if n.deps else (0, 0)
         lines.append(f'        {{are::Op::{n.op}, {a}, {b}, {math.prod(n.shape)}}},')
     lines += ['    },', '    {' + ','.join(str(ids[x]) for x in plan.inputs) + '},',
               '    {' + ','.join(str(ids[x]) for x in plan.outputs) + '},',
-              f'    generated_fused, "{plan.sha256}"', '};', '']
+              f'    generated_fused, "{plan.sha256}", generated_compute<true>', '};', '']
     return '\n'.join(lines)
 
 
