@@ -1,15 +1,26 @@
-# PassMark V11 Linux CPU and memory evidence
+# PassMark V11: SHA-pinned CPU/Memory benchmark evidence
 
-Scope: CPU Mark and Memory Mark, never a GPU/GTX/Radeon graphics benchmark. Proprietary PassMark binaries are not redistributed in the repository.
+This lane measures **PassMark CPU Mark and Memory Mark**, not graphics performance. It cannot establish GeForce/GTX/Radeon equivalence. The owner-uploaded three vendor archives are proprietary and must **never** be redistributed via GitHub repository, public release, workflow artifacts, or logs.
 
-The Python runner pins the exact user-supplied 2025-11-12 V11 Build 1004 archives for x86-64, ARM32 and ARM64. It verifies archive SHA-256, executable SHA-256, ELF architecture, the expected three archive entries and vendor README before launching. Vendor version changes or downloads with new hashes must fail closed until reviewed.
+## Trusted packages
 
-Use Actions > PassMark V11 CPU and memory evidence > Run workflow. Select CPU, memory or all. The GitHub runner is Ubuntu 22.04 with ncurses5 dependencies. PRs run a short CPU profile. Results come from temporary, restricted working directories without inherited credentials. Raw vendor reports are not made public. Receipts record hashes and executed durations; they do NOT invent CPU Mark or Memory Mark numbers. Exit failure, timeout or missing generated vendor result file must block.
+The runner supports verified x86-64, ARM64 and ARM32 (native Linux execution only), with fixed archive and ELF hashes and a V11 Build 1004 readme check. The exact uploaded x86-64 ZIP SHA-256 is `dab991f957373a5cfaa1e1b212a882bbb4d0fb85abaa22fc7694e8bd9dc070ad`. A changed upstream archive is rejected until separately verified.
 
-VPS (dedicated, non-root, offline and only after assessing the uploaded executable):
-python tools/passmark_v11.py audit --arch x86_64 --archive /path/PerformanceTest_Linux_x86-64.zip
-python tools/passmark_v11.py run --archive /path/PerformanceTest_Linux_x86-64.zip --output-dir /tmp/are-passmark-results --profile all --iterations 2
+## GitHub and host separation
 
-The -r 1, -r 2 and -r 3 vendor modes select CPU, memory and both. Wrapper process/duration input fields are bounded metadata until optional vendor CLI flag compatibility is proven; do not treat them as confirmed vendor thread controls.
+PR jobs run the wrapper and negative-contract tests without executing vendor binaries. A green PR **does not mean a PassMark measurement succeeded**. A manual GitHub workflow may attempt the official download; on 2026-10-11 it returned **HTTP 403** from a GitHub-hosted runner, so the actual benchmark is BLOCKED there. Do not bypass HTTP controls or replace the archive with an unknown binary.
 
-GitHub runners vary in host CPUs and contention. They verify compatibility, but a stable VPS with fixed hardware, low background load and pinned OS is preferable for comparing repeatable CPU scores. PassMark numbers do not establish graphics-card equivalence; that requires a separate equivalent-scene benchmark executed against real hardware GPU outputs. GitHub Actions workflow files may require credentials with workflow write scope to modify, and a downloaded vendor archive may have a new build not matching pins.
+On an authorized, isolated, non-root **Linux VPS**, install the genuine ncurses5 runtime (do not replace it with an unvalidated ncurses6 symlink), provide the uploaded archive using a private authorized file channel and run:
+
+```sh
+python tools/passmark_v11.py audit --arch x86_64 --archive /secure/path/PerformanceTest_Linux_x86-64.zip
+ARE_BENCH_SOURCE_SHA="$(git rev-parse HEAD)" python tools/passmark_v11.py run --archive /secure/path/PerformanceTest_Linux_x86-64.zip --output-dir /tmp/are-passmark-001 --profile all --processes 1 --iterations 1 --duration 1 --samples 1 --timeout-seconds 900
+```
+
+For ARM64 choose `--arch aarch64` at audit time, or `armv7l` on ARM32. The launcher invokes real PassMark vendor flags `-p`, `-i`, `-d`, `-r` and requires exit 0 **and** the corresponding `results_cpu.yml`, `results_memory.yml` or `results_all.yml` with `Results Complete: true`, version 11.0.1004, matching process count and positive required CPU/Memory Mark fields. It emits a JSON receipt with scores, hashes and environment boundaries; vendor YAML is deleted from the ephemeral work directory. Bounded wall times and one test job per host avoid uncontrolled load.
+
+## Real diagnostic evidence, not host normalization
+
+The uploaded x86-64 V11 archive was executed as user `nobody` in an ephemeral Debian-13 container on 2026-10-11, with a **temporary ncurses6-to-ncurses5 diagnostic shim**; this shim is not an approved deployment dependency. A short CPU run produced `results_cpu.yml`, complete with CPU Mark `2645.3099441056506` (SHA-256 `29a597e3489801976e726c1c6ff29af7e155ea53139a807f912979c1216e6d9f`). A short all-suite run produced `results_all.yml`, complete with CPU Mark `2595.5417928140437` and Memory Mark `1809.6752230812042` (SHA-256 `b0def0f26b8e227b1711d98dc282f621a159a2ab66fc4f7287da084ec02a3aa4`). Container resources, shared CPU time and shim prevent comparison to a dedicated VPS baseline. These observations prove that this exact binary genuinely computes results; they do not establish GPU parity, a target-VPS result or the final-head integrated launcher execution.
+
+A PR merge requires green full-head CI, evidence documentation and a final immutable readback. VPS deployment must be separately authorized and actually verified.
