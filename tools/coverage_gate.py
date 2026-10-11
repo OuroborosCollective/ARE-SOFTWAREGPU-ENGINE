@@ -45,6 +45,7 @@ FLOORS = {
     "software_gpu/graphics/surface_plan.py": 95.0,
     "software_gpu/graphics/batch_shader.py": 95.0,
     "software_gpu/research/symbolic_wave.py": 95.0,
+    "software_gpu/research/native_symbolic.py": 90.0,
     "software_gpu/research/pre_delivery_scan.py": 95.0,
     "software_gpu/benchmarks/compare_symbolic_waves.py": 95.0,
     "software_gpu/graphics/postprocess.py": 95.0,

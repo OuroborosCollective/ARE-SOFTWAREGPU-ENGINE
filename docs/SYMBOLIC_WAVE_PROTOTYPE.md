@@ -1,5 +1,9 @@
 # Wolfram-Scanner und symbolische Berechnungswellen
 
+Ergänzung: Der aktuelle Testzweig enthält außerdem einen eigenständigen
+[C++17-Berechnungskern](NATIVE_SYMBOLIC_CORE.md). Die folgenden früheren
+NumPy-Messungen bleiben als dokumentierte Ausgangsbasis erhalten.
+
 Forschungszweig auf Basis von `339dd8dd703971612839fb95db7e4b84c53d81a9`.
 Der Renderer importiert diese Forschungsbausteine nicht. Der Vorbereitungs-Cache
 aus PR #31 ist ein eigenständiger Versuch und wird hier nicht vorausgesetzt.
@@ -14,7 +18,7 @@ aus PR #31 ist ein eigenständiger Versuch und wird hier nicht vorausgesetzt.
 | Farbige Gruppen | Grau: Eingabe; Grün: Addition; Blau: Subtraktion; Orange: Multiplikation | Gruppiert wird nach Operator, Typ, Form und Rechenvertrag; Farbe allein reicht nicht |
 | Berechnungswellen | Nur Knoten mit erledigten Vorgängern werden gebündelt | Reiner DAG, keine Zyklen oder globales Weltwissen |
 | Änderungsscan | Inhalts-Hash aller Eingaben, danach nur abhängige Rechenknoten neu auswerten | Vollständiger Eingabescann kostet Zeit; derzeit ein Worker |
-| Codeausgabe | Python/NumPy und JavaScript mit `Math.fround` nach jedem Operator | Kein allgemeiner Übersetzer nach C++, Rust oder beliebigen Zielsprachen |
+| Codeausgabe | Python/NumPy und JavaScript mit `Math.fround` nach jedem Operator | C++17 ist zusätzlich als begrenzter Offline-Generator verfügbar; kein allgemeiner Wolfram-Übersetzer |
 | Prüfstufe vor Auslieferung | Exakt generierten Zielcode gegen mitgelieferte unabhängige Orakelfälle ausführen; Quellhashes im Receipt | Fehlende Zielruntime, Zeitüberschreitung oder Abweichung blockiert die Ausgabe |
 
 Der Graph hat höchstens 128 Knoten und insgesamt höchstens 1.048.576
