@@ -1,0 +1,2340 @@
+{
+  "protocol": "are.native-symbolic-comparison.v1",
+  "status": "PASS",
+  "git_head": "b719938f524483f451bace306d0abf8d886832b2",
+  "source_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12",
+    "software_gpu/research/native_symbolic.py": "4384743fa550212a243ac09d30f1fea5fc6fdeb73f1a329d6b373b5c2c3fd85b",
+    "software_gpu/research/symbolic_wave.py": "c02dab644f7ba33f29b08d06fa440f924c1fff1961f02f1f84fa90692e08a70d",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/tests/test_symbolic_wave.py": "93507596ba5bf710eb9a1c3bbd3847af68951efdd8dd83de7107e939146c0f85",
+    "software_gpu/tests/fixtures/symbolic-edge.ir.json": "d1e9b81ba2b07ea9113f8006f9e45b6bbaf36667e5383357fcd354063dd8b55e",
+    "tools/benchmark_native_symbolic.py": "ae7066fef3f138e694c082921248853977f4277200eb116c8483405378c46b03",
+    "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f"
+  },
+  "source_after_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12",
+    "software_gpu/research/native_symbolic.py": "4384743fa550212a243ac09d30f1fea5fc6fdeb73f1a329d6b373b5c2c3fd85b",
+    "software_gpu/research/symbolic_wave.py": "c02dab644f7ba33f29b08d06fa440f924c1fff1961f02f1f84fa90692e08a70d",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/tests/test_symbolic_wave.py": "93507596ba5bf710eb9a1c3bbd3847af68951efdd8dd83de7107e939146c0f85",
+    "software_gpu/tests/fixtures/symbolic-edge.ir.json": "d1e9b81ba2b07ea9113f8006f9e45b6bbaf36667e5383357fcd354063dd8b55e",
+    "tools/benchmark_native_symbolic.py": "ae7066fef3f138e694c082921248853977f4277200eb116c8483405378c46b03",
+    "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f"
+  },
+  "builds": [
+    {
+      "case": "edge-2x2x3",
+      "protocol": "are.native-build.v1",
+      "graph_sha256": "a2c89b208896bd70fab1ce612f3a1a122c6a86decabc59cde41c003435c7151e",
+      "compiler": "/usr/bin/g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "flags": [
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Wall",
+        "-Wextra"
+      ],
+      "compile_ms": 1664.018503,
+      "source_sha256": {
+        "generated.hpp": "487d1cbbbd1876202affa29807fbf3a59dd37f227d1841b48d4326b7a65ad0fb",
+        "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+        "main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12"
+      },
+      "binary_sha256": "dbc385037d3be4e87198be0b918a251a437ca3faa4a3df2936b8760c6e7d1032",
+      "compiler_diagnostics": "",
+      "python_in_runtime": false,
+      "workers": 1
+    },
+    {
+      "case": "edge-16x16",
+      "protocol": "are.native-build.v1",
+      "graph_sha256": "579c85dd4eb63a57845fcc609ee0251a7008c123d7caab845916351acf69a299",
+      "compiler": "/usr/bin/g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "flags": [
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Wall",
+        "-Wextra"
+      ],
+      "compile_ms": 1863.236576,
+      "source_sha256": {
+        "generated.hpp": "ced0b747b4a0b36ad7216c2a69e003482f35402e11d19fd33ac2a42d9befb0a2",
+        "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+        "main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12"
+      },
+      "binary_sha256": "56dde3cdcc9b64ee512f19a14540bf66e2cbcde6ee0e9ce9eb243b3d60bb9392",
+      "compiler_diagnostics": "",
+      "python_in_runtime": false,
+      "workers": 1
+    },
+    {
+      "case": "edge-64x64",
+      "protocol": "are.native-build.v1",
+      "graph_sha256": "3a34b840c70a2f8d3002195216f0431efec11f41d049d24598d60d075b0c6774",
+      "compiler": "/usr/bin/g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "flags": [
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Wall",
+        "-Wextra"
+      ],
+      "compile_ms": 1673.833021,
+      "source_sha256": {
+        "generated.hpp": "8f07a6ccf1f129483801dc66031291856af840bb44f803b03367989245d75868",
+        "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+        "main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12"
+      },
+      "binary_sha256": "ee76eca90ecba3fccc47cc056a54631152d5607e984d7e191351d2ca8a8de8b7",
+      "compiler_diagnostics": "",
+      "python_in_runtime": false,
+      "workers": 1
+    },
+    {
+      "case": "edge-256x256",
+      "protocol": "are.native-build.v1",
+      "graph_sha256": "55b736df4abf1db2017a820ee6026278b74ff46cf3ea224b4cb9d04b3aac7b93",
+      "compiler": "/usr/bin/g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "flags": [
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Wall",
+        "-Wextra"
+      ],
+      "compile_ms": 1508.086747,
+      "source_sha256": {
+        "generated.hpp": "dac6f57e84695cb72a3c84e5da90782037b9da38b7f509d63252c77c5f7ea652",
+        "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+        "main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12"
+      },
+      "binary_sha256": "a92442d6116f67d12b02fae22328e15e3aed012ce7e5213689553f7295b58911",
+      "compiler_diagnostics": "",
+      "python_in_runtime": false,
+      "workers": 1
+    },
+    {
+      "case": "rooms-32-1",
+      "protocol": "are.native-build.v1",
+      "graph_sha256": "ae42f0022bdaeb73b6746b821fad8579e2dc798a13561d27ce6e9c4640a2d2b0",
+      "compiler": "/usr/bin/g++",
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+      "flags": [
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-Wall",
+        "-Wextra"
+      ],
+      "compile_ms": 1649.408132,
+      "source_sha256": {
+        "generated.hpp": "54ec6ef7a8b50c3e656b3e72c157e4c4c8b3203a175c50298d02cbef0965e3e6",
+        "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+        "main.cpp": "61d3f71be67da520c11f44dffeda10d97af3aafeaeb0c47d95a1f0cdbbb56b12"
+      },
+      "binary_sha256": "caf125b585c5a9d11c2a50f848d3246fa73a711b0b2b05b7a288eb1c1f3d567e",
+      "compiler_diagnostics": "",
+      "python_in_runtime": false,
+      "workers": 1
+    }
+  ],
+  "cases": [
+    {
+      "family": "edge",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "scenario": "static",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "a2c89b208896bd70fab1ce612f3a1a122c6a86decabc59cde41c003435c7151e",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            19.18,
+            12.92,
+            12.82,
+            12.87,
+            12.87,
+            12.87,
+            12.87,
+            21.685,
+            12.82,
+            12.87,
+            12.87,
+            12.82,
+            12.87,
+            12.82,
+            12.82
+          ],
+          "fused-checked": [
+            302.355,
+            78.92,
+            56.385,
+            55.83,
+            56.085,
+            56.135,
+            56.135,
+            54.78,
+            55.08,
+            54.585,
+            56.235,
+            55.885,
+            55.485,
+            56.685,
+            55.985
+          ],
+          "incremental-checked": [
+            55.735,
+            243.765,
+            55.635,
+            55.685,
+            55.685,
+            55.53,
+            85.78,
+            197.445,
+            55.13,
+            144.315,
+            53.83,
+            53.83,
+            53.98,
+            53.93,
+            53.88
+          ]
+        },
+        "last_incremental_executed_nodes": 0,
+        "last_incremental_changed_inputs": 0
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 12.87,
+          "iqr": 0.049999999999998934,
+          "mad": 0.049999999999998934,
+          "min": 12.82,
+          "max": 21.685
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 56.085,
+          "iqr": 0.6525000000000034,
+          "mad": 0.29999999999999716,
+          "min": 54.585,
+          "max": 302.355
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 55.635,
+          "iqr": 16.802499999999995,
+          "mad": 1.7049999999999983,
+          "min": 53.83,
+          "max": 243.765
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 5066.44,
+          "iqr": 5977.8575,
+          "mad": 2096.4399999999996,
+          "min": 2970.0,
+          "max": 21591.1
+        }
+      },
+      "numpy_samples_ns": [
+        3227.435,
+        2973.255,
+        9457.47,
+        3249.12,
+        2970.0,
+        14398.15,
+        5066.44,
+        4743.155,
+        8879.655,
+        8060.33,
+        21591.1,
+        8729.975,
+        3153.975,
+        11541.695,
+        2973.155
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 393.66278166278164,
+        "fused-checked": 90.33502719087099,
+        "incremental-checked": 91.06569605464186
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 4.637484,
+      "wire_sha256": "b6ad1b0cf6fd24194607c44bc68d16493b5949d3fb99c0598fb5ea01ab257549",
+      "output_sha256": [
+        "2417427dc837d261f7ca06cbf5dec7bff14fcafefe6d94537015d3fc55149500",
+        "2417427dc837d261f7ca06cbf5dec7bff14fcafefe6d94537015d3fc55149500"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "scenario": "one-input",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "a2c89b208896bd70fab1ce612f3a1a122c6a86decabc59cde41c003435c7151e",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            12.87,
+            12.87,
+            12.87,
+            12.82,
+            12.87,
+            12.815,
+            12.915,
+            12.82,
+            12.87,
+            12.82,
+            12.87,
+            12.87,
+            12.82,
+            12.87,
+            12.865
+          ],
+          "fused-checked": [
+            57.79,
+            58.335,
+            57.885,
+            57.785,
+            58.04,
+            116.88,
+            59.19,
+            59.54,
+            59.39,
+            58.035,
+            58.035,
+            57.79,
+            57.785,
+            413.27,
+            59.44
+          ],
+          "incremental-checked": [
+            76.365,
+            76.665,
+            76.615,
+            76.465,
+            76.265,
+            76.015,
+            76.715,
+            75.815,
+            75.715,
+            128.24,
+            75.915,
+            75.86,
+            102.955,
+            74.96,
+            74.71
+          ]
+        },
+        "last_incremental_executed_nodes": 3,
+        "last_incremental_changed_inputs": 1
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 12.87,
+          "iqr": 0.049999999999998934,
+          "mad": 0.0,
+          "min": 12.815,
+          "max": 12.915
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 58.04,
+          "iqr": 1.5775000000000006,
+          "mad": 0.25500000000000256,
+          "min": 57.785,
+          "max": 413.27
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 76.265,
+          "iqr": 0.8024999999999949,
+          "mad": 0.40500000000000114,
+          "min": 74.71,
+          "max": 128.24
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 3206.705,
+          "iqr": 644.3425000000002,
+          "mad": 247.7199999999998,
+          "min": 2958.985,
+          "max": 12330.22
+        }
+      },
+      "numpy_samples_ns": [
+        3113.115,
+        3763.94,
+        2971.3,
+        12330.22,
+        2961.34,
+        3093.285,
+        3661.285,
+        4267.095,
+        3206.705,
+        3059.38,
+        3498.54,
+        3677.41,
+        3965.54,
+        3121.525,
+        2958.985
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 249.16122766122768,
+        "fused-checked": 55.249913852515505,
+        "incremental-checked": 42.046876024388645
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 2.534558,
+      "wire_sha256": "09d1de3a741dbe29c3cbc8f63d05aa8dea88f172b47432317e97d30354bb97ab",
+      "output_sha256": [
+        "2417427dc837d261f7ca06cbf5dec7bff14fcafefe6d94537015d3fc55149500",
+        "28bc7eaec7ab6da040f076131e4b6ad6c457d632171b1295a5dd05961d84af8b"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "scenario": "all-inputs",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "a2c89b208896bd70fab1ce612f3a1a122c6a86decabc59cde41c003435c7151e",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            13.47,
+            13.02,
+            12.87,
+            12.82,
+            12.87,
+            12.87,
+            12.82,
+            12.97,
+            12.865,
+            12.92,
+            12.87,
+            12.82,
+            12.865,
+            12.82,
+            12.87
+          ],
+          "fused-checked": [
+            74.56,
+            490.535,
+            74.065,
+            73.86,
+            73.81,
+            73.91,
+            73.96,
+            73.81,
+            74.51,
+            74.11,
+            74.36,
+            74.21,
+            74.215,
+            74.36,
+            74.06
+          ],
+          "incremental-checked": [
+            148.525,
+            112.52,
+            112.265,
+            111.615,
+            112.52,
+            112.17,
+            112.02,
+            563.395,
+            114.97,
+            115.475,
+            115.575,
+            115.07,
+            114.12,
+            114.675,
+            114.37
+          ]
+        },
+        "last_incremental_executed_nodes": 7,
+        "last_incremental_changed_inputs": 6
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 12.87,
+          "iqr": 0.05249999999999844,
+          "mad": 0.049999999999998934,
+          "min": 12.82,
+          "max": 13.47
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 74.11,
+          "iqr": 0.42499999999999716,
+          "mad": 0.25,
+          "min": 73.81,
+          "max": 490.535
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 114.37,
+          "iqr": 2.8799999999999955,
+          "mad": 1.8500000000000085,
+          "min": 111.615,
+          "max": 563.395
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 3699.595,
+          "iqr": 792.5874999999996,
+          "mad": 455.8349999999996,
+          "min": 2989.63,
+          "max": 18255.35
+        }
+      },
+      "numpy_samples_ns": [
+        3550.42,
+        3971.15,
+        4120.42,
+        2989.63,
+        3109.46,
+        4164.54,
+        5020.67,
+        3699.595,
+        3456.025,
+        3628.235,
+        3969.295,
+        3243.76,
+        3013.515,
+        18255.35,
+        4460.185
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 287.45881895881894,
+        "fused-checked": 49.92032114424504,
+        "incremental-checked": 32.34759989507738
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 2.942489,
+      "wire_sha256": "9de7aa2b1b8a0bae775f45f51124589161d2366c53462c52fb3860e4e48e2e37",
+      "output_sha256": [
+        "2417427dc837d261f7ca06cbf5dec7bff14fcafefe6d94537015d3fc55149500",
+        "2417427dc837d261f7ca06cbf5dec7bff14fcafefe6d94537015d3fc55149500"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        16,
+        16
+      ],
+      "scenario": "static",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "579c85dd4eb63a57845fcc609ee0251a7008c123d7caab845916351acf69a299",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            203,
+            203.3,
+            203.555,
+            203.055,
+            251.225,
+            536.1,
+            203.705,
+            203.955,
+            204.01,
+            478.67,
+            202.855,
+            203.155,
+            202.755,
+            203.455,
+            203.155
+          ],
+          "fused-checked": [
+            704.205,
+            588.135,
+            312.965,
+            362.04,
+            313.97,
+            311.315,
+            308.06,
+            433.3,
+            311.565,
+            313.82,
+            314.47,
+            313.27,
+            312.02,
+            312.47,
+            456.935
+          ],
+          "incremental-checked": [
+            334.7,
+            118.175,
+            166.645,
+            118.88,
+            118.03,
+            118.43,
+            118.78,
+            119.18,
+            117.575,
+            118.525,
+            118.475,
+            117.725,
+            117.725,
+            118.025,
+            117.875
+          ]
+        },
+        "last_incremental_executed_nodes": 0,
+        "last_incremental_changed_inputs": 0
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 203.455,
+          "iqr": 0.8774999999999977,
+          "mad": 0.4550000000000125,
+          "min": 202.755,
+          "max": 536.1
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 313.82,
+          "iqr": 85.42500000000001,
+          "mad": 2.2549999999999955,
+          "min": 308.06,
+          "max": 704.205
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 118.43,
+          "iqr": 0.8799999999999955,
+          "mad": 0.44999999999998863,
+          "min": 117.575,
+          "max": 334.7
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 3519.725,
+          "iqr": 424.0125000000003,
+          "mad": 233.6500000000001,
+          "min": 3170.955,
+          "max": 5809.455
+        }
+      },
+      "numpy_samples_ns": [
+        3519.725,
+        3648.87,
+        3574.655,
+        3235.145,
+        3204.25,
+        3720.375,
+        5809.455,
+        3560.785,
+        3171.45,
+        3313.165,
+        3755.625,
+        3170.955,
+        3286.075,
+        4037.85,
+        3372.955
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 17.299771448231795,
+        "fused-checked": 11.215744694410809,
+        "incremental-checked": 29.719876720425564
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 4.277799,
+      "wire_sha256": "794afab6de1b3f2a02c2ba9bd727716c814cfc7a84bb9ca91877244dadd2447d",
+      "output_sha256": [
+        "119d5cc234ecb755a6fb19821e8408ca1e95c2b8b121c2e824a9d4a4925c4b4d",
+        "119d5cc234ecb755a6fb19821e8408ca1e95c2b8b121c2e824a9d4a4925c4b4d"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        16,
+        16
+      ],
+      "scenario": "one-input",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "579c85dd4eb63a57845fcc609ee0251a7008c123d7caab845916351acf69a299",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            202.805,
+            203.005,
+            203.405,
+            203.105,
+            209.36,
+            203.555,
+            203.405,
+            203.905,
+            203.355,
+            257.435,
+            203.2,
+            203.205,
+            204.055,
+            202.955,
+            203.155
+          ],
+          "fused-checked": [
+            344.215,
+            345.62,
+            342.16,
+            339.91,
+            341.91,
+            342.115,
+            356.735,
+            345.765,
+            342.36,
+            342.31,
+            344.17,
+            541.115,
+            393.49,
+            342.865,
+            490.135
+          ],
+          "incremental-checked": [
+            319.68,
+            316.275,
+            315.375,
+            317.575,
+            477.915,
+            313.27,
+            787.13,
+            315.375,
+            316.675,
+            610.465,
+            313.67,
+            313.265,
+            315.37,
+            314.42,
+            313.42
+          ]
+        },
+        "last_incremental_executed_nodes": 3,
+        "last_incremental_changed_inputs": 1
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 203.355,
+          "iqr": 0.6000000000000227,
+          "mad": 0.25,
+          "min": 202.805,
+          "max": 257.435
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 344.17,
+          "iqr": 9.014999999999986,
+          "mad": 2.009999999999991,
+          "min": 339.91,
+          "max": 541.115
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 315.375,
+          "iqr": 4.582499999999982,
+          "mad": 1.954999999999984,
+          "min": 313.265,
+          "max": 787.13
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 3508.61,
+          "iqr": 461.8175000000001,
+          "mad": 207.05999999999995,
+          "min": 3237.85,
+          "max": 4427.435
+        }
+      },
+      "numpy_samples_ns": [
+        3256.63,
+        3741.755,
+        3602.495,
+        3301.55,
+        3357.13,
+        4098.39,
+        4026.235,
+        4427.435,
+        3508.61,
+        3698.84,
+        3364.79,
+        3237.85,
+        3375.205,
+        3847.165,
+        3308.155
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 17.253620515846674,
+        "fused-checked": 10.194409739372984,
+        "incremental-checked": 11.12520015854142
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 4.908279,
+      "wire_sha256": "c8767226ff74ce9aca7594d76663683d8b7edc1f18e6e6d5f90808c9c0ac5049",
+      "output_sha256": [
+        "119d5cc234ecb755a6fb19821e8408ca1e95c2b8b121c2e824a9d4a4925c4b4d",
+        "9f73f93e63604e5c5eda0bb46faca86117912dba63e46934bf7ca14c0fcc7079"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        16,
+        16
+      ],
+      "scenario": "all-inputs",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "579c85dd4eb63a57845fcc609ee0251a7008c123d7caab845916351acf69a299",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            719.38,
+            203.805,
+            202.105,
+            203.205,
+            203.705,
+            203.305,
+            203.1,
+            254.635,
+            203.505,
+            203.505,
+            203.405,
+            203.405,
+            223.085,
+            204.155,
+            203.605
+          ],
+          "fused-checked": [
+            477.015,
+            722.38,
+            471.705,
+            471.105,
+            473.16,
+            519.63,
+            472.755,
+            472.51,
+            472.21,
+            472.205,
+            472.055,
+            471.31,
+            761.54,
+            471.905,
+            730.395
+          ],
+          "incremental-checked": [
+            672.96,
+            670.955,
+            945.87,
+            670.05,
+            840.71,
+            716.425,
+            669.705,
+            669.35,
+            671.255,
+            668.45,
+            684.325,
+            1137.505,
+            669.25,
+            669.605,
+            667.6
+          ]
+        },
+        "last_incremental_executed_nodes": 7,
+        "last_incremental_changed_inputs": 6
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 203.505,
+          "iqr": 0.625,
+          "mad": 0.29999999999998295,
+          "min": 202.105,
+          "max": 719.38
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 472.51,
+          "iqr": 26.342499999999973,
+          "mad": 0.8050000000000068,
+          "min": 471.105,
+          "max": 761.54
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 670.955,
+          "iqr": 30.897500000000036,
+          "mad": 2.0049999999999955,
+          "min": 667.6,
+          "max": 1137.505
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 3375.16,
+          "iqr": 245.0675000000001,
+          "mad": 88.18000000000029,
+          "min": 3282.62,
+          "max": 4219.02
+        }
+      },
+      "numpy_samples_ns": [
+        3375.16,
+        3383.97,
+        4219.02,
+        3716.215,
+        3293.135,
+        3356.68,
+        3339.455,
+        3282.62,
+        3356.28,
+        3976.91,
+        3285.77,
+        3605.355,
+        3463.34,
+        3348.465,
+        3572.7
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 16.585145328124614,
+        "fused-checked": 7.143044591648854,
+        "incremental-checked": 5.030382067351759
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 6.756703,
+      "wire_sha256": "b558791ae7ccdb1ba268937ab5b1f07a2a416727c09a765bc0d22558c991ba02",
+      "output_sha256": [
+        "119d5cc234ecb755a6fb19821e8408ca1e95c2b8b121c2e824a9d4a4925c4b4d",
+        "119d5cc234ecb755a6fb19821e8408ca1e95c2b8b121c2e824a9d4a4925c4b4d"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        64,
+        64
+      ],
+      "scenario": "static",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "3a34b840c70a2f8d3002195216f0431efec11f41d049d24598d60d075b0c6774",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            4252.07,
+            3211.26,
+            4432.84,
+            3611.31,
+            4699.09,
+            4859.23,
+            5381.51,
+            4620.02,
+            3930.835,
+            3824.73,
+            6161.93,
+            3480.815,
+            3268.145,
+            3939.005,
+            3359.43
+          ],
+          "fused-checked": [
+            6300.285,
+            5604.995,
+            6266.185,
+            6871.445,
+            6457.175,
+            6534.99,
+            6930.685,
+            7574.195,
+            6536.94,
+            7421.77,
+            6327.58,
+            5320.22,
+            6098.31,
+            5234.545,
+            5254.775
+          ],
+          "incremental-checked": [
+            1811.615,
+            2118.97,
+            2556.33,
+            2343.815,
+            2105.455,
+            3644.66,
+            1795.64,
+            2523.68,
+            2258.335,
+            2602.05,
+            2353.33,
+            1894.89,
+            1944.165,
+            2344.31,
+            2158.835
+          ]
+        },
+        "last_incremental_executed_nodes": 0,
+        "last_incremental_changed_inputs": 0
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 3939.005,
+          "iqr": 1113.4925000000003,
+          "mad": 579.5750000000003,
+          "min": 3211.26,
+          "max": 6161.93
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 6327.58,
+          "iqr": 852.539999999999,
+          "mad": 543.8649999999998,
+          "min": 5234.545,
+          "max": 7574.195
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 2258.335,
+          "iqr": 413.69500000000016,
+          "mad": 265.3449999999998,
+          "min": 1795.64,
+          "max": 3644.66
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 7587.915,
+          "iqr": 520.8049999999994,
+          "mad": 322.22999999999956,
+          "min": 7110.255,
+          "max": 8986.315
+        }
+      },
+      "numpy_samples_ns": [
+        7371.095,
+        7524.425,
+        7707.895,
+        7127.13,
+        7407.045,
+        7587.915,
+        8343.65,
+        8986.315,
+        7668.285,
+        7939.095,
+        7265.685,
+        7181.26,
+        8487.965,
+        7739.295,
+        7110.255
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 1.9263532287976277,
+        "fused-checked": 1.199181203556494,
+        "incremental-checked": 3.3599598819484267
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 46.653956,
+      "wire_sha256": "40923a8f273bab8273a2c8e5ccbaa215e0db1a075cb4b77e36e2d3b8f31dcc2c",
+      "output_sha256": [
+        "d4b9847b66d3549687b4e5df303db6fe3b3d4492471a7f642dce02fe03c5ab0a",
+        "d4b9847b66d3549687b4e5df303db6fe3b3d4492471a7f642dce02fe03c5ab0a"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        64,
+        64
+      ],
+      "scenario": "one-input",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "3a34b840c70a2f8d3002195216f0431efec11f41d049d24598d60d075b0c6774",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            3268.245,
+            3617.92,
+            3509.655,
+            3474.755,
+            3287.525,
+            3731.29,
+            3301.95,
+            4649.415,
+            3186.025,
+            3213.965,
+            3750.17,
+            3608.755,
+            3331.895,
+            3349.62,
+            3725.43
+          ],
+          "fused-checked": [
+            6877.35,
+            5995.985,
+            5611.355,
+            5961.18,
+            5909.255,
+            5871.395,
+            5588.22,
+            7093.325,
+            6747.26,
+            6614.565,
+            5706.95,
+            5857.925,
+            5694.93,
+            6254.37,
+            6849.91
+          ],
+          "incremental-checked": [
+            5304.895,
+            5864.085,
+            5517.415,
+            5695.835,
+            6010.905,
+            5948.51,
+            5978.06,
+            5890.075,
+            6151.715,
+            6537.495,
+            5882.01,
+            5415.065,
+            6259.33,
+            5271.55,
+            5696.385
+          ]
+        },
+        "last_incremental_executed_nodes": 3,
+        "last_incremental_changed_inputs": 1
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 3474.755,
+          "iqr": 376.9375,
+          "mad": 187.23000000000002,
+          "min": 3186.025,
+          "max": 4649.415
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 5961.18,
+          "iqr": 898.4750000000004,
+          "mad": 293.1899999999996,
+          "min": 5588.22,
+          "max": 7093.325
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 5882.01,
+          "iqr": 387.8575000000001,
+          "mad": 186.17500000000018,
+          "min": 5271.55,
+          "max": 6537.495
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 7351.61,
+          "iqr": 184.82750000000033,
+          "mad": 105.55499999999938,
+          "min": 7207.05,
+          "max": 7735.79
+        }
+      },
+      "numpy_samples_ns": [
+        7400.84,
+        7463.935,
+        7350.365,
+        7243.85,
+        7569.94,
+        7351.61,
+        7312.755,
+        7555.12,
+        7320.465,
+        7359.525,
+        7735.79,
+        7284.315,
+        7502.79,
+        7246.055,
+        7207.05
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 2.1157203889195064,
+        "fused-checked": 1.2332474442979409,
+        "incremental-checked": 1.2498465660548008
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 54.8396,
+      "wire_sha256": "f4bd326c4d62fa9a55a58741354fd177961cda33247b47ec8f55eaa157b88a5d",
+      "output_sha256": [
+        "d4b9847b66d3549687b4e5df303db6fe3b3d4492471a7f642dce02fe03c5ab0a",
+        "f639a38096ace1691ad812b39271f91327622e573adab132d2e15f25234f94e5"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        64,
+        64
+      ],
+      "scenario": "all-inputs",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "3a34b840c70a2f8d3002195216f0431efec11f41d049d24598d60d075b0c6774",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            3851.87,
+            3450.52,
+            3418.57,
+            4026.38,
+            3363.29,
+            3650.07,
+            3353.47,
+            3614.565,
+            3653.025,
+            3775.66,
+            3717.72,
+            3563.44,
+            4258.78,
+            4356.78,
+            3582.77
+          ],
+          "fused-checked": [
+            10113.605,
+            8386.065,
+            7547.16,
+            7281.96,
+            7900.085,
+            7390.17,
+            7547.91,
+            8245.5,
+            7559.975,
+            8328.525,
+            7678.605,
+            8711.6,
+            8274.45,
+            7835.34,
+            7560.625
+          ],
+          "incremental-checked": [
+            12670.33,
+            12020.205,
+            12274.84,
+            11839.89,
+            13051.555,
+            11542.64,
+            12477.195,
+            11685.76,
+            12238.635,
+            13296.47,
+            12702.08,
+            15980.09,
+            13538.985,
+            13237.18,
+            13671.28
+          ]
+        },
+        "last_incremental_executed_nodes": 7,
+        "last_incremental_changed_inputs": 6
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 3650.07,
+          "iqr": 306.78499999999985,
+          "mad": 199.55000000000018,
+          "min": 3353.47,
+          "max": 4356.78
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 7835.34,
+          "iqr": 747.5449999999992,
+          "mad": 410.15999999999985,
+          "min": 7281.96,
+          "max": 10113.605
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 12670.33,
+          "iqr": 1137.4050000000007,
+          "mad": 626.1399999999994,
+          "min": 11542.64,
+          "max": 15980.09
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 11221.16,
+          "iqr": 2667.920000000002,
+          "mad": 2036.25,
+          "min": 8052.565,
+          "max": 34938.795
+        }
+      },
+      "numpy_samples_ns": [
+        9158.275,
+        8078.405,
+        8451.51,
+        9184.91,
+        8052.565,
+        9704.19,
+        19042.63,
+        20728.03,
+        34938.795,
+        11911.445,
+        11505.985,
+        11221.16,
+        11401.035,
+        11767.58,
+        11218.355
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 3.07423145309542,
+        "fused-checked": 1.4321216437321163,
+        "incremental-checked": 0.885624920582179
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 83.186318,
+      "wire_sha256": "9e311d3bb4edba518e3d11d62385fbd54a18d24863704b3091bcaeb9d3010f76",
+      "output_sha256": [
+        "d4b9847b66d3549687b4e5df303db6fe3b3d4492471a7f642dce02fe03c5ab0a",
+        "158b9641148c8ef0f4ff74cabebbc85facc300b6fd15fe54efb74a71290a80f4"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        256,
+        256
+      ],
+      "scenario": "static",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "55b736df4abf1db2017a820ee6026278b74ff46cf3ea224b4cb9d04b3aac7b93",
+        "repeats": 15,
+        "frames_per_sample": 20,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            52355.45,
+            52121.6,
+            52696.95,
+            52018.4,
+            52856.65,
+            55224.2,
+            52100.55,
+            51942.8,
+            51949.35,
+            52828.6,
+            51769.55,
+            52904.25,
+            79312.3,
+            60270.75,
+            70812.6
+          ],
+          "fused-checked": [
+            93071.95,
+            88061.45,
+            104170.55,
+            91636.3,
+            88028.9,
+            91196.6,
+            88335.85,
+            88233.7,
+            87662.8,
+            88016.35,
+            88126,
+            252813,
+            136003.25,
+            114198.1,
+            115759.9
+          ],
+          "incremental-checked": [
+            37952.35,
+            40608.35,
+            38261.8,
+            38079.05,
+            36682.95,
+            36834.2,
+            42401.55,
+            36792.65,
+            37738.55,
+            40051,
+            37022.5,
+            37387.05,
+            51046.45,
+            51747.5,
+            46021.9
+          ]
+        },
+        "last_incremental_executed_nodes": 0,
+        "last_incremental_changed_inputs": 0
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 52696.95,
+          "iqr": 2004.7499999999927,
+          "mad": 678.5499999999956,
+          "min": 51769.55,
+          "max": 79312.3
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 91196.6,
+          "iqr": 21090.600000000006,
+          "mad": 3167.7000000000116,
+          "min": 87662.8,
+          "max": 252813.0
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 38079.05,
+          "iqr": 4300.174999999996,
+          "mad": 1286.4000000000015,
+          "min": 36682.95,
+          "max": 51747.5
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 67809.6,
+          "iqr": 8858.774999999994,
+          "mad": 5056.600000000006,
+          "min": 62161.1,
+          "max": 86937.25
+        }
+      },
+      "numpy_samples_ns": [
+        86937.25,
+        83480.6,
+        72102.05,
+        74362.4,
+        67397.95,
+        74474.6,
+        62161.1,
+        64948.8,
+        73525.65,
+        62753.0,
+        64510.65,
+        75720.95,
+        67264.3,
+        67809.6,
+        66170.65
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 1.286784149746807,
+        "fused-checked": 0.7435540360057283,
+        "incremental-checked": 1.7807587111548213
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 131.84602,
+      "wire_sha256": "d2b3d195b45e4ff2040a41c1b6b5f2160b08a5cca218576bcbfa99d2b1ac2637",
+      "output_sha256": [
+        "e52989c36089ab406740dda055a6765a1f9fa7f269d101aad22a8c2eef5d787f",
+        "e52989c36089ab406740dda055a6765a1f9fa7f269d101aad22a8c2eef5d787f"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        256,
+        256
+      ],
+      "scenario": "one-input",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "55b736df4abf1db2017a820ee6026278b74ff46cf3ea224b4cb9d04b3aac7b93",
+        "repeats": 15,
+        "frames_per_sample": 20,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            51928.8,
+            55528.65,
+            75063.95,
+            54980.85,
+            53246.8,
+            52125.6,
+            52216.75,
+            53209.7,
+            52242.75,
+            52261.8,
+            52164.15,
+            52242.75,
+            113353.3,
+            57448.1,
+            51778.6
+          ],
+          "fused-checked": [
+            92926.7,
+            95029.9,
+            107141.55,
+            95470.5,
+            97889.65,
+            98461.5,
+            105907.65,
+            101944.7,
+            107142.5,
+            99064.9,
+            97030.85,
+            97978.8,
+            130926.15,
+            104143.05,
+            102684.85
+          ],
+          "incremental-checked": [
+            98410.45,
+            100751.45,
+            97764.45,
+            114038.9,
+            99409.9,
+            97038.9,
+            109806.05,
+            99706.9,
+            95912.2,
+            110354.3,
+            98431,
+            97458,
+            118876.6,
+            103190.6,
+            97061.4
+          ]
+        },
+        "last_incremental_executed_nodes": 3,
+        "last_incremental_changed_inputs": 1
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 52261.8,
+          "iqr": 3064.300000000003,
+          "mad": 483.20000000000437,
+          "min": 51778.6,
+          "max": 113353.3
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 99064.9,
+          "iqr": 7565.100000000006,
+          "mad": 3619.9500000000116,
+          "min": 92926.7,
+          "max": 130926.15
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 99409.9,
+          "iqr": 8887.100000000006,
+          "mad": 2348.5,
+          "min": 95912.2,
+          "max": 118876.6
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 76420.5,
+          "iqr": 7938.625,
+          "mad": 3619.899999999994,
+          "min": 65321.85,
+          "max": 90685.35
+        }
+      },
+      "numpy_samples_ns": [
+        71193.7,
+        72800.6,
+        69273.3,
+        73411.45,
+        84208.15,
+        78111.0,
+        74331.85,
+        65321.85,
+        75487.6,
+        76420.5,
+        79958.8,
+        82130.5,
+        90685.35,
+        88794.5,
+        78338.4
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 1.462263067862186,
+        "fused-checked": 0.7714185347181495,
+        "incremental-checked": 0.7687413426630547
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 150.914342,
+      "wire_sha256": "8a67540157b4e3b9be29d149fed3542f49b2a7920f73e956c44cf58a8221442f",
+      "output_sha256": [
+        "e52989c36089ab406740dda055a6765a1f9fa7f269d101aad22a8c2eef5d787f",
+        "f7b7beab914b3dfed86219159584c8978a9a9752f7bee1ff031db0cb4cb27abd"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "edge",
+      "shape": [
+        256,
+        256
+      ],
+      "scenario": "all-inputs",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "55b736df4abf1db2017a820ee6026278b74ff46cf3ea224b4cb9d04b3aac7b93",
+        "repeats": 15,
+        "frames_per_sample": 20,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            74742.45,
+            65912.25,
+            84506.1,
+            54648.4,
+            55755.5,
+            53534.2,
+            53340.9,
+            55854.2,
+            66908,
+            58444.05,
+            69868.2,
+            133708.35,
+            61475.1,
+            57104.05,
+            105848.15
+          ],
+          "fused-checked": [
+            117437.45,
+            113016.85,
+            124164.55,
+            125995.75,
+            119125,
+            123635.25,
+            115886.15,
+            132705.3,
+            165017.75,
+            134996.25,
+            161436.35,
+            122887.1,
+            121267.2,
+            121095.4,
+            195479.85
+          ],
+          "incremental-checked": [
+            227900.9,
+            203258.05,
+            204429.25,
+            213785.75,
+            216972.05,
+            210494.35,
+            218691.15,
+            216408.75,
+            323806.35,
+            237730.65,
+            254983.5,
+            251257.4,
+            248625,
+            229463.3,
+            224118.8
+          ]
+        },
+        "last_incremental_executed_nodes": 7,
+        "last_incremental_changed_inputs": 6
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 61475.1,
+          "iqr": 16500.475,
+          "mad": 6826.699999999997,
+          "min": 53340.9,
+          "max": 133708.35
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 123635.25,
+          "iqr": 13740.574999999997,
+          "mad": 6197.800000000003,
+          "min": 113016.85,
+          "max": 195479.85
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 224118.8,
+          "iqr": 28080.57500000001,
+          "mad": 13611.850000000006,
+          "min": 203258.05,
+          "max": 323806.35
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 77902.75,
+          "iqr": 9658.199999999983,
+          "mad": 5505.75,
+          "min": 64889.75,
+          "max": 168458.85
+        }
+      },
+      "numpy_samples_ns": [
+        81901.7,
+        76671.35,
+        109347.3,
+        83409.45,
+        79715.9,
+        71853.7,
+        72397.0,
+        82542.65,
+        168458.85,
+        135559.05,
+        69211.7,
+        64889.75,
+        75313.35,
+        77902.75,
+        74238.7
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 1.2672244534779122,
+        "fused-checked": 0.6301014476049509,
+        "incremental-checked": 0.3475957840216885
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 194.80141,
+      "wire_sha256": "a189573890db76e887bdc3aa0d2d5e155be0f2484bfe294e0011d7b935bce60c",
+      "output_sha256": [
+        "e52989c36089ab406740dda055a6765a1f9fa7f269d101aad22a8c2eef5d787f",
+        "91c577fef84c4643138dccf87446590910c6bd7bebbffc00ff4e70dc02d86f8d"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "rooms-32",
+      "shape": [
+        1
+      ],
+      "scenario": "static",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "ae42f0022bdaeb73b6746b821fad8579e2dc798a13561d27ce6e9c4640a2d2b0",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            49.225,
+            48.875,
+            48.575,
+            49.425,
+            49.42,
+            62.295,
+            48.87,
+            49.025,
+            48.875,
+            49.02,
+            49.475,
+            340.81,
+            49.275,
+            48.12,
+            48.925
+          ],
+          "fused-checked": [
+            1667.95,
+            577.715,
+            512.065,
+            349.52,
+            365.495,
+            593.09,
+            421.935,
+            618.525,
+            657.185,
+            349.625,
+            349.925,
+            1810.315,
+            348.82,
+            349.625,
+            349.52
+          ],
+          "incremental-checked": [
+            636.305,
+            399.4,
+            398.195,
+            398.345,
+            709.26,
+            779.315,
+            802.755,
+            399.75,
+            397.795,
+            400.3,
+            399.9,
+            435.35,
+            403.005,
+            399.55,
+            856.535
+          ]
+        },
+        "last_incremental_executed_nodes": 0,
+        "last_incremental_changed_inputs": 0
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 49.025,
+          "iqr": 0.5474999999999994,
+          "mad": 0.25,
+          "min": 48.12,
+          "max": 340.81
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 421.935,
+          "iqr": 256.1825,
+          "mad": 73.11500000000001,
+          "min": 348.82,
+          "max": 1810.315
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 400.3,
+          "iqr": 273.3075,
+          "mad": 2.5049999999999955,
+          "min": 397.795,
+          "max": 856.535
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 33835.145,
+          "iqr": 1618.5999999999985,
+          "mad": 809.064999999995,
+          "min": 31956.63,
+          "max": 37605.995
+        }
+      },
+      "numpy_samples_ns": [
+        33835.145,
+        36372.045,
+        33919.595,
+        37605.995,
+        34307.5,
+        34953.52,
+        33664.085,
+        31956.63,
+        34601.54,
+        35059.48,
+        33026.08,
+        33763.135,
+        33291.78,
+        32224.38,
+        32253.175
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 690.1610402855686,
+        "fused-checked": 80.19042032540557,
+        "incremental-checked": 84.52446914813889
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 6.199499,
+      "wire_sha256": "8b3ef3c6ef42502d0f2ebad6125478d0c7c9a6839d2e0f6b29ed28bb056bd62b",
+      "output_sha256": [
+        "287792c6794a86e71a336a2878798a2dbd7d4094182e8898935d82bc48179d07",
+        "287792c6794a86e71a336a2878798a2dbd7d4094182e8898935d82bc48179d07"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "rooms-32",
+      "shape": [
+        1
+      ],
+      "scenario": "one-input",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "ae42f0022bdaeb73b6746b821fad8579e2dc798a13561d27ce6e9c4640a2d2b0",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            49.52,
+            49.975,
+            49.175,
+            50.075,
+            49.725,
+            49.325,
+            49.37,
+            51.275,
+            51.025,
+            49.72,
+            50.575,
+            50.525,
+            49.025,
+            49.575,
+            49.575
+          ],
+          "fused-checked": [
+            369.3,
+            468.75,
+            370.205,
+            368.755,
+            369.505,
+            479.97,
+            369.6,
+            1254.53,
+            593.74,
+            368.855,
+            476.315,
+            369.8,
+            369.305,
+            369.1,
+            369.355
+          ],
+          "incremental-checked": [
+            741.36,
+            436.905,
+            435.25,
+            439.005,
+            434.805,
+            434.85,
+            438.36,
+            437.455,
+            431.85,
+            437.505,
+            435.5,
+            435.75,
+            436.105,
+            435.905,
+            435.25
+          ]
+        },
+        "last_incremental_executed_nodes": 6,
+        "last_incremental_changed_inputs": 1
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 49.72,
+          "iqr": 0.8549999999999969,
+          "mad": 0.355000000000004,
+          "min": 49.025,
+          "max": 51.275
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 369.6,
+          "iqr": 103.23000000000002,
+          "mad": 0.6049999999999613,
+          "min": 368.755,
+          "max": 1254.53
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 435.905,
+          "iqr": 2.230000000000018,
+          "mad": 1.05499999999995,
+          "min": 431.85,
+          "max": 741.36
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 32043.56,
+          "iqr": 804.8574999999983,
+          "mad": 345.7649999999994,
+          "min": 31095.69,
+          "max": 34329.485
+        }
+      },
+      "numpy_samples_ns": [
+        32863.99,
+        32389.325,
+        32268.45,
+        31097.545,
+        32043.56,
+        32182.365,
+        33751.015,
+        32775.91,
+        34329.485,
+        31731.29,
+        31886.975,
+        31659.785,
+        31095.69,
+        31824.23,
+        31926.735
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 644.4802896218825,
+        "fused-checked": 86.69794372294372,
+        "incremental-checked": 73.5104208485794
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 5.130076,
+      "wire_sha256": "53c65cb444d75307398bc9685b851382309c533a12a6d32efbccc077b3f3965a",
+      "output_sha256": [
+        "287792c6794a86e71a336a2878798a2dbd7d4094182e8898935d82bc48179d07",
+        "d807ae30b5ca358816921cbb2711470f417d9b7c64fb62661df99b48a7cc0a24"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    },
+    {
+      "family": "rooms-32",
+      "shape": [
+        1
+      ],
+      "scenario": "all-inputs",
+      "seed": 991,
+      "native": {
+        "protocol": "are.native-benchmark.v1",
+        "graph_sha256": "ae42f0022bdaeb73b6746b821fad8579e2dc798a13561d27ce6e9c4640a2d2b0",
+        "repeats": 15,
+        "frames_per_sample": 200,
+        "warmup_batches": 1,
+        "workers": 1,
+        "native_parity": true,
+        "samples_ns": {
+          "fused-kernel": [
+            48.57,
+            50.475,
+            50.425,
+            49.725,
+            49.175,
+            50.475,
+            47.77,
+            49.32,
+            48.075,
+            49.225,
+            50.175,
+            50.925,
+            49.725,
+            49.425,
+            49.775
+          ],
+          "fused-checked": [
+            426.035,
+            738.455,
+            690.485,
+            428.595,
+            428.19,
+            430.7,
+            721.63,
+            997.845,
+            430.295,
+            428.19,
+            443.665,
+            432.25,
+            430.695,
+            431.145,
+            430.295
+          ],
+          "incremental-checked": [
+            969.255,
+            1012.565,
+            938.455,
+            862.14,
+            1005.555,
+            764.045,
+            756.035,
+            1019.575,
+            757.535,
+            760.19,
+            837.855,
+            777.415,
+            750.625,
+            753.93,
+            1338.755
+          ]
+        },
+        "last_incremental_executed_nodes": 63,
+        "last_incremental_changed_inputs": 64
+      },
+      "stats_ns": {
+        "fused-kernel": {
+          "n": 15,
+          "median": 49.725,
+          "iqr": 1.0999999999999943,
+          "mad": 0.5500000000000043,
+          "min": 47.77,
+          "max": 50.925
+        },
+        "fused-checked": {
+          "n": 15,
+          "median": 430.7,
+          "iqr": 137.63,
+          "mad": 2.509999999999991,
+          "min": 426.035,
+          "max": 997.845
+        },
+        "incremental-checked": {
+          "n": 15,
+          "median": 837.855,
+          "iqr": 228.54250000000002,
+          "mad": 83.92500000000007,
+          "min": 750.625,
+          "max": 1338.755
+        },
+        "numpy-reference": {
+          "n": 15,
+          "median": 30631.745,
+          "iqr": 1712.564999999995,
+          "mad": 1107.0099999999984,
+          "min": 29202.6,
+          "max": 32376.11
+        }
+      },
+      "numpy_samples_ns": [
+        32376.11,
+        31896.29,
+        29460.39,
+        29786.68,
+        29506.855,
+        30705.355,
+        30950.12,
+        29202.6,
+        31758.88,
+        32139.805,
+        30631.745,
+        30967.35,
+        29524.735,
+        29776.365,
+        30343.065
+      ],
+      "speedup_ratio_of_medians": {
+        "fused-kernel": 616.023026646556,
+        "fused-checked": 71.12083817042024,
+        "incremental-checked": 36.559720954103035
+      },
+      "native_process_wall_ms_including_protocol_and_all_repeats": 7.115952,
+      "wire_sha256": "03483e37425085fdaf39cf4fd46b457a1fd38a351856df769769bf74b1284735",
+      "output_sha256": [
+        "287792c6794a86e71a336a2878798a2dbd7d4094182e8898935d82bc48179d07",
+        "18f3cc6213140e77ee445c84e6668ec040f8330f71d7571d3336f128152606c2"
+      ],
+      "parity": "all-output-f32-bits-identical"
+    }
+  ],
+  "environment": {
+    "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+    "logical_cpus": 9,
+    "affinity_cpus": 9,
+    "python_compiler": "Clang 22.1.3 ",
+    "thread_env": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "NUMEXPR_NUM_THREADS": null,
+      "VECLIB_MAXIMUM_THREADS": null
+    },
+    "numpy_build": {
+      "SIMD Extensions": {
+        "baseline": [
+          "SSE",
+          "SSE2",
+          "SSE3"
+        ],
+        "found": [
+          "SSSE3",
+          "SSE41",
+          "POPCNT",
+          "SSE42",
+          "AVX",
+          "F16C",
+          "FMA3",
+          "AVX2",
+          "AVX512F",
+          "AVX512CD",
+          "AVX512_SKX",
+          "AVX512_CLX",
+          "AVX512_CNL",
+          "AVX512_ICL"
+        ],
+        "not found": [
+          "AVX512_KNL",
+          "AVX512_KNM",
+          "AVX512_SPR"
+        ]
+      },
+      "Build Dependencies": {
+        "blas": {
+          "name": "scipy-openblas",
+          "found": true,
+          "version": "0.3.30",
+          "detection method": "pkgconfig",
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas"
+        },
+        "lapack": {
+          "name": "scipy-openblas",
+          "found": true,
+          "version": "0.3.30",
+          "detection method": "pkgconfig",
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas"
+        }
+      }
+    }
+  },
+  "repeats": 15,
+  "workers": 1,
+  "measurement": "C++ steady_clock batches; no Python calls inside native sample loops; NumPy adjacent independent batches",
+  "scopes": {
+    "fused-kernel": "prevalidated inputs, preallocated outputs, intermediate finite checks; full recompute",
+    "fused-checked": "size/environment checks + exact content scan + changed input finite checks/copies + fused kernel + transactional output commit",
+    "incremental-checked": "same input checks/scan + dirty propagation + only changed nodes + transactional buffer swaps",
+    "numpy-reference": "preassembled inputs, direct edge or fixed pairwise room operations, allocates outputs"
+  },
+  "limitations": [
+    "one host; no render FPS or GPU comparison",
+    "startup, protocol parsing and compilation excluded from per-frame kernel times",
+    "no input-transport comparison",
+    "native output is owned read-only memory until next successful frame; NumPy allocates output",
+    "repeat samples average repeated frames; ratio of medians is not a paired speedup",
+    "IR/generation remain offline Python tools; runtime is C++ only"
+  ],
+  "source_binding": "git_head is the base commit; the measured working-tree candidate is bound by source_sha256 and source_after_sha256. Publication must match these source bytes.",
+  "validation": {
+    "local_tests": 225,
+    "new_native_tests": 9,
+    "local_success": true,
+    "python_native_codegen_line_coverage": 99.0,
+    "overall_python_line_coverage": 68.05663606659405,
+    "host_exclusions": [
+      "AF_UNIX test: host EPERM",
+      "nested full-suite coverage wrapper; floors measured directly"
+    ],
+    "optional_skips": [
+      "2 LLVM tests without optional jit extra"
+    ],
+    "cpp_core_coverage": {
+      "file": "native/symbolic/core.hpp",
+      "executable_lines": 85,
+      "hit_lines": 85,
+      "missed": [],
+      "method": "GCC gcov O0, real standalone invariants and generated edge runner",
+      "percent": 100.0
+    },
+    "sanitizers": "ASan + UBSan native invariants pass with detect_leaks=0; LeakSanitizer blocked by host /proc task visibility",
+    "standalone": {
+      "status": "PASS",
+      "binary_sha256": "dbc385037d3be4e87198be0b918a251a437ca3faa4a3df2936b8760c6e7d1032",
+      "environment": {
+        "PATH": "/no-python-runtime",
+        "PYTHONHOME": "/missing",
+        "PYTHONPATH": "/missing"
+      },
+      "linked_libraries": "\tlinux-vdso.so.1 (0x00007f633e475000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f633e1d9000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f633e0f0000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f633e0c2000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f633deb0000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007f633e477000)\n",
+      "result": {
+        "protocol": "are.native-frames.v1",
+        "graph_sha256": "a2c89b208896bd70fab1ce612f3a1a122c6a86decabc59cde41c003435c7151e",
+        "frames": [
+          {
+            "status": "PASS",
+            "changed_inputs": 6,
+            "executed_nodes": 7,
+            "bits": [
+              [
+                3358221700,
+                3364441814,
+                3368714498,
+                3374290518,
+                3371626844,
+                3363726470,
+                3323976792,
+                3382229951,
+                3383070414,
+                3374178396,
+                3378790158,
+                3358329616
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "ci": "must be verified separately on final published head"
+  }
+}
