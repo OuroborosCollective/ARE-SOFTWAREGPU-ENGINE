@@ -1,0 +1,733 @@
+{
+  "protocol": "are.bio-workrooms.measurement-summary.v2",
+  "series": [
+    {
+      "path": "bio-workrooms-ablation-series1-v1.json",
+      "sha256": "50696834acc90c984cf4f3269fe1dbb865900a6ee8562b9997c1f5b42b2540a1"
+    },
+    {
+      "path": "bio-workrooms-ablation-series2-v1.json",
+      "sha256": "887f5fa54f768fc1e0e8c0908cf4de499cd580ee0b877251b8e9a0041a608d9c"
+    },
+    {
+      "path": "bio-workrooms-ablation-series3-v1.json",
+      "sha256": "02e21df79a2ed314b5b793328a0f1df699bc4075115d14824309b24e32d45f14"
+    }
+  ],
+  "same_native_sources_and_binary": true,
+  "total_timed_frames": 2880,
+  "cases_per_series": 32,
+  "paired_frames_per_case": 15,
+  "selection": "all predeclared cases retained, no tuning after measurement",
+  "primary_combined_cases": [
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 63.878933,
+        "iqr": 15.770716499999999,
+        "mad": 7.858362,
+        "min": 35.849278,
+        "max": 74.704833,
+        "p95": 74.0435696
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 171.44888,
+        "iqr": 34.234273,
+        "mad": 21.228465,
+        "min": 76.787216,
+        "max": 201.536877,
+        "p95": 200.295987
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 227.824,
+        "iqr": 53.60200000000003,
+        "mad": 36.158000000000015,
+        "min": 120.075,
+        "max": 275.438,
+        "p95": 274.2172
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 671.682,
+        "iqr": 139.34749999999997,
+        "mad": 89.18600000000004,
+        "min": 293.291,
+        "max": 790.777,
+        "p95": 786.2746000000001
+      },
+      "speedup_ratio_of_medians": 0.3725829705040943,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.3879729381321753,
+        "iqr": 0.08041174345109303,
+        "mad": 0.039790015041767934,
+        "min": 0.17787949547317833,
+        "max": 0.7779852703606288,
+        "p95": 0.5425471936784079
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 4069.010702,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.863873,
+        "candidate_construction_ms": 10.312363,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          72.913096,
+          56.092299,
+          71.381089,
+          35.849278,
+          71.737295,
+          55.484652,
+          48.282113,
+          59.739323,
+          40.440043,
+          63.878933,
+          71.315392,
+          73.760171,
+          69.14717,
+          60.088348,
+          74.704833
+        ],
+        "baseline_cpu_samples_ms": [
+          273.694,
+          208.706,
+          264.314,
+          120.075,
+          263.982,
+          212.386,
+          170.598,
+          214.454,
+          144.175,
+          227.824,
+          259.865,
+          269.857,
+          247.168,
+          221.433,
+          275.438
+        ],
+        "samples_ms": [
+          198.797211,
+          199.764177,
+          199.32814,
+          201.536877,
+          184.902832,
+          180.760663,
+          138.668814,
+          76.787216,
+          97.209202,
+          150.220415,
+          165.011082,
+          167.012293,
+          171.44888,
+          172.462615,
+          171.118132
+        ],
+        "cpu_samples_ms": [
+          780.543,
+          784.345,
+          783,
+          790.777,
+          725.724,
+          707.928,
+          542.012,
+          293.291,
+          375.523,
+          582.496,
+          645.076,
+          653.328,
+          671.682,
+          673.949,
+          671.591
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.103276,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 166.881036,
+            "worker_jobs": [
+              93632,
+              106848,
+              98080,
+              111040
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 166.881036,
+            "worker_jobs": [
+              93632,
+              106848,
+              98080,
+              111040
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 166.881036,
+            "worker_jobs": [
+              93754,
+              106720,
+              98164,
+              110962
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "c86009b93735342e8991075881e92d64103e21c248044f3fc437f3d1ff5be0c5",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 12.88281,
+        "iqr": 0.9142270000000003,
+        "mad": 0.4208740000000013,
+        "min": 11.28879,
+        "max": 14.536951,
+        "p95": 14.1993788
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 11.478726,
+        "iqr": 1.1520395000000008,
+        "mad": 0.555396,
+        "min": 10.110496,
+        "max": 14.635129,
+        "p95": 13.344576799999997
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 33.999,
+        "iqr": 5.320999999999998,
+        "mad": 2.3049999999999997,
+        "min": 28.368,
+        "max": 41.742,
+        "p95": 40.552
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 44.36,
+        "iqr": 4.890000000000001,
+        "mad": 2.448999999999998,
+        "min": 39.857,
+        "max": 56.925,
+        "p95": 51.72749999999999
+      },
+      "speedup_ratio_of_medians": 1.1223205432379864,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.1091480632866102,
+        "iqr": 0.14181084640384078,
+        "mad": 0.0852493578968776,
+        "min": 0.9037336445904663,
+        "max": 1.2701432254164386,
+        "p95": 1.2675407984817706
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 538.172787,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.542096,
+        "candidate_construction_ms": 5.403567,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          13.409634,
+          11.28879,
+          12.537801,
+          14.054705,
+          13.831499,
+          13.274931,
+          11.615162,
+          13.303684,
+          12.579143,
+          13.614703,
+          12.88281,
+          12.87583,
+          14.536951,
+          12.61674,
+          12.841778
+        ],
+        "baseline_cpu_samples_ms": [
+          36.304,
+          32.101,
+          31.712,
+          32.66,
+          28.795,
+          36.065,
+          33.999,
+          31.699,
+          28.368,
+          40.042,
+          29.548,
+          37.749,
+          41.742,
+          34.461,
+          38.075
+        ],
+        "samples_ms": [
+          12.419703,
+          12.49128,
+          12.791483,
+          12.671622,
+          14.635129,
+          11.429452,
+          11.579738,
+          11.351364,
+          11.368149,
+          11.25554,
+          10.786033,
+          11.914372,
+          11.478726,
+          10.92333,
+          10.110496
+        ],
+        "cpu_samples_ms": [
+          48.646,
+          47.951,
+          49.431,
+          49.5,
+          56.925,
+          44.679,
+          44.052,
+          43.626,
+          43.191,
+          44.039,
+          41.629,
+          46.809,
+          44.36,
+          42.994,
+          39.857
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.065289,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 10.022843,
+            "worker_jobs": [
+              416,
+              448,
+              352,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.022843,
+            "worker_jobs": [
+              416,
+              448,
+              352,
+              384
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.022843,
+            "worker_jobs": [
+              393,
+              377,
+              369,
+              461
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "53ddbae2221ef07003a3bf13e9cda427448a475ef1c737d1ffb2d113efe94395",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 9.144981,
+        "iqr": 0.9833955000000003,
+        "mad": 0.5791820000000012,
+        "min": 7.965616,
+        "max": 10.622577,
+        "p95": 10.1871224
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.772113,
+        "iqr": 1.3992229999999992,
+        "mad": 0.8872549999999997,
+        "min": 6.598116,
+        "max": 9.210019,
+        "p95": 8.9623513
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 20.136,
+        "iqr": 6.671499999999998,
+        "mad": 3.251999999999999,
+        "min": 14.636,
+        "max": 28.637,
+        "p95": 27.679399999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 28.361,
+        "iqr": 4.733499999999999,
+        "mad": 2.5749999999999993,
+        "min": 25.188,
+        "max": 35.508,
+        "p95": 34.0044
+      },
+      "speedup_ratio_of_medians": 1.1766402521424997,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.2408507925721934,
+        "iqr": 0.21518040431572039,
+        "mad": 0.0963849707380997,
+        "min": 0.8648859464893611,
+        "max": 1.5105669287306003,
+        "p95": 1.4623213593768523
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 370.343688,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.610619,
+        "candidate_construction_ms": 5.765483,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.896547,
+          9.567728,
+          9.006793,
+          9.144981,
+          10.622577,
+          8.90531,
+          8.428452,
+          8.674624,
+          10.000499,
+          7.965616,
+          9.969423,
+          9.321967,
+          8.258516,
+          9.813799,
+          9.724163
+        ],
+        "baseline_cpu_samples_ms": [
+          20.381,
+          27.269,
+          15.708,
+          20.376,
+          28.637,
+          19.012,
+          16.884,
+          20.136,
+          14.636,
+          22.991,
+          17.231,
+          15.339,
+          17.06,
+          25.95,
+          24.296
+        ],
+        "samples_ms": [
+          6.798888,
+          7.913547,
+          8.856208,
+          7.369928,
+          7.943683,
+          7.772113,
+          8.701693,
+          8.110144,
+          8.372048,
+          9.210019,
+          6.599789,
+          7.4503,
+          6.598116,
+          6.884858,
+          6.745187
+        ],
+        "cpu_samples_ms": [
+          25.756,
+          26.087,
+          30.936,
+          28.361,
+          29.879,
+          28.642,
+          33.36,
+          31.297,
+          30.127,
+          35.508,
+          25.188,
+          27.381,
+          25.549,
+          25.355,
+          25.84
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.066049,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 6.658106,
+            "worker_jobs": [
+              416,
+              384,
+              384,
+              416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.658106,
+            "worker_jobs": [
+              416,
+              384,
+              384,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.658106,
+            "worker_jobs": [
+              342,
+              420,
+              421,
+              417
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "3094a589d521963688acca365fc5cb2a5cd98c380881e48e870160fa9b771b5d",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    }
+  ],
+  "exact_final_source_audit": "PASS",
+  "gpu_comparison": false,
+  "temperature_measured": false,
+  "third_series_reason": "Platform diagnostic text test fixed; C++ sources, input scene bytes and executable are unchanged."
+}

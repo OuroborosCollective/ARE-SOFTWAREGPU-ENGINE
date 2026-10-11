@@ -1,0 +1,15 @@
+{
+  "protocol": "are.bio-workrooms.windows-text-failure.v1",
+  "head": "17aadf434af1b9ba68a5439a638bc6e61840363b",
+  "jobs": [
+    114520251679,
+    114520251756
+  ],
+  "failure": "Only the diagnostic probe's text line ending differed (CRLF versus LF); binary rendering oracles passed.",
+  "excerpt": [
+    "2026-10-11T16:41:29.0915684Z FAIL: test_checkpoint_rejections_and_sleeping_worker_generation_recovery (test_bio_workrooms.TestBioWorkRooms.test_checkpoint_rejections_and_sleeping_worker_generation_recovery)\r",
+    "2026-10-11T16:41:29.0923150Z AssertionError: b'CHECKPOINTS_AND_WORKERS_OK\\r\\n' != b'CHECKPOINTS_AND_WORKERS_OK\\n'\r",
+    "2026-10-11T16:41:29.0923614Z Ran 236 tests in 45.241s\r"
+  ],
+  "fix": "Capture this diagnostic subprocess in text mode with universal newline handling; preserve exact whole-string assertion. Binary request/response checks remain byte-exact."
+}
