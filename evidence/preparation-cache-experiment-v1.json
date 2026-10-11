@@ -1,0 +1,3873 @@
+{
+  "activation": "EXPLICIT_OPT_IN_ONLY",
+  "base_commit": "339dd8dd703971612839fb95db7e4b84c53d81a9",
+  "benchmarks": [
+    {
+      "activation": "EXPLICIT_OPT_IN_ONLY",
+      "artifact_sha256": "a44e6d63c1e3f5218c2f29b06cf962faa459537cad637bf6b9f79c087d7c1cd1",
+      "audit": {
+        "cases": 15,
+        "draws_including_warmups": 720,
+        "source_verification": "checkout-match",
+        "status": "PREPARATION_CACHE_ARTIFACT_OK"
+      },
+      "budget_seconds": 900.0,
+      "cache_bytes": 33554432,
+      "environment": {
+        "affinity_cpus": 9,
+        "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+        "logical_cpus": 9,
+        "numpy_build": {
+          "Build Dependencies": {
+            "blas": {
+              "detection method": "pkgconfig",
+              "found": true,
+              "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+              "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+              "name": "scipy-openblas",
+              "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+              "pc file directory": "/project/.openblas",
+              "version": "0.3.30"
+            },
+            "lapack": {
+              "detection method": "pkgconfig",
+              "found": true,
+              "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+              "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+              "name": "scipy-openblas",
+              "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+              "pc file directory": "/project/.openblas",
+              "version": "0.3.30"
+            }
+          },
+          "SIMD Extensions": {
+            "baseline": [
+              "SSE",
+              "SSE2",
+              "SSE3"
+            ],
+            "found": [
+              "SSSE3",
+              "SSE41",
+              "POPCNT",
+              "SSE42",
+              "AVX",
+              "F16C",
+              "FMA3",
+              "AVX2",
+              "AVX512F",
+              "AVX512CD",
+              "AVX512_SKX",
+              "AVX512_CLX",
+              "AVX512_CNL",
+              "AVX512_ICL"
+            ],
+            "not found": [
+              "AVX512_KNL",
+              "AVX512_KNM",
+              "AVX512_SPR"
+            ]
+          }
+        },
+        "python_compiler": "Clang 22.1.3 ",
+        "thread_env": {
+          "MKL_NUM_THREADS": null,
+          "NUMEXPR_NUM_THREADS": null,
+          "OMP_NUM_THREADS": null,
+          "OPENBLAS_NUM_THREADS": null,
+          "VECLIB_MAXIMUM_THREADS": null
+        }
+      },
+      "numpy": "2.3.5",
+      "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "pixels": 128,
+      "protocol": "are.preparation-cache-benchmark.v1",
+      "python": "3.12.14",
+      "results": [
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4636,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 4668,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "d1edb1d38f409b1db4aa03f0793eb96296ce5f5e842a63c9ec0e718f3a11a20c",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.317796,
+              0.37332,
+              0.304156,
+              0.295874,
+              0.323305,
+              0.316174,
+              0.391787,
+              0.308943,
+              0.283766,
+              0.270686,
+              0.2736,
+              0.324326,
+              0.285829,
+              0.282303,
+              0.272349
+            ],
+            "cache-warm": [
+              0.192308,
+              0.14027,
+              0.151167,
+              0.195413,
+              0.134402,
+              0.139609,
+              0.136855,
+              0.138818,
+              0.152939,
+              0.132128,
+              0.231127,
+              0.135083,
+              0.154161,
+              0.167681,
+              0.129193
+            ],
+            "uncached": [
+              0.220961,
+              0.222473,
+              0.307762,
+              0.207231,
+              0.201523,
+              0.221932,
+              0.22011,
+              0.206359,
+              0.202133,
+              0.211017,
+              0.195623,
+              0.211397,
+              0.232589,
+              0.237466,
+              0.208463
+            ]
+          },
+          "scenario": "static",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7019299499642602,
+            "cache-warm": 1.5087408618262725,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.037515999999999994,
+              "mad": 0.02017000000000002,
+              "max": 0.391787,
+              "median": 0.304156,
+              "min": 0.270686,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.024951999999999974,
+              "mad": 0.01089699999999999,
+              "max": 0.231127,
+              "median": 0.14027,
+              "min": 0.129193,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.01540749999999999,
+              "mad": 0.00956399999999999,
+              "max": 0.307762,
+              "median": 0.211397,
+              "min": 0.195623,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4364,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 34720,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "032a8719b7e01a0b75ddbc844e94bc8513bf12a1f19dba812cbf25c13be3b74d",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.315062,
+              0.299529,
+              0.357986,
+              0.295903,
+              0.322764,
+              0.365298,
+              0.430476,
+              0.341052,
+              0.272268,
+              0.319209,
+              0.297336,
+              0.308793,
+              0.2665,
+              0.281452,
+              0.311837
+            ],
+            "cache-warm": [
+              0.354642,
+              0.309454,
+              0.359679,
+              0.344968,
+              0.558588,
+              0.351357,
+              0.329544,
+              0.289384,
+              0.28026,
+              0.341351,
+              0.301973,
+              0.339399,
+              0.285578,
+              0.324156,
+              0.310856
+            ],
+            "uncached": [
+              0.252949,
+              0.267582,
+              0.215022,
+              0.238097,
+              0.203264,
+              0.24699,
+              0.27333,
+              0.209985,
+              0.236394,
+              0.255814,
+              0.197977,
+              0.204296,
+              0.276966,
+              0.197046,
+              0.214181
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.6868363920894571,
+            "cache-warm": 0.7029602370238817,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.035288499999999945,
+              "mad": 0.015933999999999948,
+              "max": 0.430476,
+              "median": 0.311837,
+              "min": 0.2665,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.042449000000000014,
+              "mad": 0.02181299999999997,
+              "max": 0.558588,
+              "median": 0.329544,
+              "min": 0.28026,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.04724099999999998,
+              "mad": 0.026408999999999988,
+              "max": 0.276966,
+              "median": 0.236394,
+              "min": 0.197046,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4316,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 34528,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "e414cc6dcf0d79a7ec6ea9833df110e7e6df3279bb675b798e1a306dbd16b23c",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.32691,
+              0.282884,
+              0.275673,
+              0.357196,
+              0.338278,
+              0.287601,
+              0.327141,
+              0.321702,
+              0.294091,
+              0.311858,
+              0.279178,
+              0.947872,
+              0.343916,
+              0.330625,
+              0.345738
+            ],
+            "cache-warm": [
+              0.293811,
+              0.277326,
+              0.298728,
+              0.331036,
+              0.290576,
+              0.318738,
+              0.344917,
+              0.361101,
+              0.33338,
+              0.288924,
+              0.290145,
+              0.321021,
+              0.402444,
+              0.491557,
+              0.341271
+            ],
+            "uncached": [
+              0.217326,
+              0.228002,
+              0.201292,
+              0.211507,
+              0.212419,
+              0.240301,
+              0.261261,
+              0.215613,
+              0.270716,
+              0.212208,
+              0.275724,
+              0.210085,
+              0.2264,
+              0.231197,
+              0.249044
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.6992725897920605,
+            "cache-warm": 0.7310273388029294,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.05025099999999999,
+              "mad": 0.01882800000000001,
+              "max": 0.947872,
+              "median": 0.32691,
+              "min": 0.275673,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.050900500000000015,
+              "mad": 0.027210000000000012,
+              "max": 0.491557,
+              "median": 0.321021,
+              "min": 0.277326,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.032359,
+              "mad": 0.014191999999999982,
+              "max": 0.275724,
+              "median": 0.2264,
+              "min": 0.201292,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 426766,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 426766,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "1bcd92bcf4f398a086df9c651cbbd2c28940d1390a9109189612d25d33bf3e35",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              28.319212,
+              27.848176,
+              24.121238,
+              29.839157,
+              25.640966,
+              43.052924,
+              35.162764,
+              39.4485,
+              39.010167,
+              38.326567,
+              39.409911,
+              38.956081,
+              40.383241,
+              39.452936,
+              24.535569
+            ],
+            "cache-warm": [
+              20.019717,
+              16.088874,
+              16.000161,
+              17.085568,
+              18.220209,
+              15.298989,
+              17.997085,
+              27.165031,
+              27.606914,
+              26.819834,
+              27.800805,
+              26.265252,
+              27.326274,
+              26.91696,
+              24.229169
+            ],
+            "uncached": [
+              20.781029,
+              19.850144,
+              18.572678,
+              19.269412,
+              23.293722,
+              17.310275,
+              31.184649,
+              30.23835,
+              31.245861,
+              28.723549,
+              31.596427,
+              30.789155,
+              31.496406,
+              31.628405,
+              32.787342
+            ]
+          },
+          "scenario": "static",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7799375488460671,
+            "cache-warm": 1.1526052179671475,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 11.3455115,
+              "mad": 3.1638029999999944,
+              "max": 43.052924,
+              "median": 38.326567,
+              "min": 24.121238,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 9.499669000000004,
+              "mad": 3.5716360000000016,
+              "max": 27.800805,
+              "median": 24.229169,
+              "min": 15.298989,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 11.055546999999997,
+              "mad": 1.514801000000002,
+              "max": 32.787342,
+              "median": 30.23835,
+              "min": 17.310275,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 426766,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 3414128,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "960775c28719d4508674ebec388df0ebb78043b07c99464f462fa50b29b7be4c",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              25.937331,
+              28.436292,
+              26.618742,
+              25.552123,
+              25.265093,
+              25.300526,
+              30.287989,
+              28.262998,
+              27.47122,
+              27.567775,
+              25.83682,
+              28.620925,
+              30.947823,
+              27.869487,
+              24.281218
+            ],
+            "cache-warm": [
+              28.413093,
+              26.51723,
+              25.577641,
+              28.514885,
+              24.434647,
+              24.923561,
+              25.168668,
+              34.131637,
+              27.566924,
+              28.419303,
+              27.204295,
+              31.187367,
+              30.968905,
+              25.314046,
+              30.964689
+            ],
+            "uncached": [
+              21.072576,
+              22.037694,
+              19.178516,
+              20.138416,
+              19.164906,
+              19.478066,
+              22.990712,
+              35.537516,
+              21.115611,
+              20.845255,
+              20.796663,
+              21.20841,
+              21.809402,
+              22.954759,
+              21.728379
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7698680256687153,
+            "cache-warm": 0.76446248653016,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 2.6551735000000036,
+              "mad": 1.5338889999999985,
+              "max": 30.947823,
+              "median": 27.47122,
+              "min": 24.281218,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 4.2939434999999975,
+              "mad": 2.252877999999999,
+              "max": 34.131637,
+              "median": 27.566924,
+              "min": 24.434647,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.4560084999999958,
+              "mad": 0.9220829999999971,
+              "max": 35.537516,
+              "median": 21.115611,
+              "min": 19.164906,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 430274,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 3430240,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "cd4a670e6c45869d3a7a042ce47b10f367a51c91ad32903122abb28516e31186",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              24.375999,
+              24.117001,
+              27.496338,
+              24.679524,
+              30.289376,
+              31.990367,
+              24.333235,
+              26.932473,
+              28.386032,
+              27.449758,
+              30.076046,
+              37.177574,
+              28.877179,
+              26.121667,
+              27.664019
+            ],
+            "cache-warm": [
+              23.430252,
+              23.437973,
+              23.919866,
+              25.031403,
+              27.799663,
+              28.441706,
+              25.894237,
+              26.81763,
+              26.532203,
+              28.228446,
+              33.389485,
+              28.397079,
+              30.483908,
+              27.743699,
+              28.934044
+            ],
+            "uncached": [
+              18.596385,
+              19.362713,
+              18.802954,
+              22.082431,
+              21.753757,
+              22.792736,
+              20.363944,
+              20.970774,
+              20.742692,
+              25.0165,
+              22.781288,
+              21.436862,
+              21.434459,
+              22.118966,
+              21.912065
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7628973483302162,
+            "cache-warm": 0.7860810758722478,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 4.076017,
+              "mad": 2.579708,
+              "max": 37.177574,
+              "median": 27.496338,
+              "min": 24.117001,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 2.9565725,
+              "mad": 1.2114960000000004,
+              "max": 33.389485,
+              "median": 27.743699,
+              "min": 23.430252,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.5473804999999992,
+              "mad": 0.6941699999999997,
+              "max": 25.0165,
+              "median": 21.436862,
+              "min": 18.596385,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 52102,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 52102,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "416a615cf0b26e5fe3cc8db59a463a786964137a1ca39e3d722bc13c001ce3e5",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              11.246984,
+              12.616757,
+              11.888125,
+              11.71826,
+              12.309557,
+              11.483759,
+              12.519922,
+              11.385662,
+              11.948156,
+              11.82489,
+              15.736876,
+              14.221294,
+              13.908805,
+              13.264999,
+              14.634393
+            ],
+            "cache-warm": [
+              10.202868,
+              12.243848,
+              10.591271,
+              9.55728,
+              10.095317,
+              11.356588,
+              9.741005,
+              10.542527,
+              11.279673,
+              9.489538,
+              12.615586,
+              10.512994,
+              12.253994,
+              11.641246,
+              12.197479
+            ],
+            "uncached": [
+              10.434506,
+              11.742086,
+              12.130498,
+              11.878601,
+              13.301975,
+              11.34453,
+              12.349978,
+              10.986443,
+              11.33827,
+              12.636032,
+              14.77279,
+              12.400013,
+              12.891811,
+              13.104259,
+              13.408625
+            ]
+          },
+          "scenario": "static",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9649366896716238,
+            "cache-warm": 1.1256749492279434,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 1.8153269999999981,
+              "mad": 0.8257980000000007,
+              "max": 15.736876,
+              "median": 12.309557,
+              "min": 11.246984,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 1.77027,
+              "mad": 0.8502660000000013,
+              "max": 12.615586,
+              "median": 10.591271,
+              "min": 9.489538,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.4547270000000019,
+              "mad": 0.7542810000000006,
+              "max": 14.77279,
+              "median": 12.349978,
+              "min": 10.434506,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 52130,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 416928,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "6291fb4f77cc69012b14c29ceeafc429f7d9cc5d2451c22970b34c3788a5f0b1",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              12.753583,
+              13.068675,
+              13.222236,
+              12.888085,
+              12.070348,
+              11.530539,
+              10.699662,
+              10.673024,
+              10.940053,
+              10.782327,
+              11.009698,
+              11.558761,
+              10.752683,
+              10.792092,
+              11.15159
+            ],
+            "cache-warm": [
+              13.279412,
+              12.655946,
+              14.045379,
+              12.978429,
+              13.41187,
+              11.180799,
+              10.761046,
+              10.946883,
+              10.900535,
+              10.987074,
+              11.385943,
+              10.95098,
+              11.062988,
+              11.445101,
+              10.734616
+            ],
+            "uncached": [
+              12.260333,
+              12.986192,
+              11.790388,
+              11.146403,
+              11.88411,
+              11.951049,
+              10.117881,
+              10.177199,
+              10.108107,
+              10.188196,
+              10.255537,
+              10.114726,
+              10.567144,
+              10.45766,
+              10.118192
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9456262263237849,
+            "cache-warm": 0.9272892855732108,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 1.6247560000000014,
+              "mad": 0.40717099999999995,
+              "max": 13.222236,
+              "median": 11.15159,
+              "min": 10.673024,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 1.8682559999999988,
+              "mad": 0.28026400000000073,
+              "max": 14.045379,
+              "median": 11.180799,
+              "min": 10.734616,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.6895534999999988,
+              "mad": 0.3429340000000014,
+              "max": 12.986192,
+              "median": 10.45766,
+              "min": 10.108107,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 52186,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 417292,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "01ca41a0a8d242f9f3620fab80070172479cc7df60d69148dc15a1afb1770953",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              10.931601,
+              10.786323,
+              10.821346,
+              11.092793,
+              10.738421,
+              10.774325,
+              10.701887,
+              12.17777,
+              12.171349,
+              11.40465,
+              11.473994,
+              12.001524,
+              10.769849,
+              11.548877,
+              11.808346
+            ],
+            "cache-warm": [
+              11.212843,
+              10.698441,
+              10.831561,
+              10.747605,
+              10.636989,
+              10.748957,
+              10.758892,
+              12.081125,
+              12.431119,
+              11.767465,
+              11.284921,
+              12.717439,
+              10.734626,
+              11.790699,
+              11.299662
+            ],
+            "uncached": [
+              10.478691,
+              10.603118,
+              10.459924,
+              10.134016,
+              10.509537,
+              10.473354,
+              10.538381,
+              11.700124,
+              11.645572,
+              10.786613,
+              10.964891,
+              10.784961,
+              10.442037,
+              10.108416,
+              10.562137
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9585687402970524,
+            "cache-warm": 0.965689432945076,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.8982874999999986,
+              "mad": 0.3543719999999997,
+              "max": 12.17777,
+              "median": 11.092793,
+              "min": 10.701887,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 1.0308009999999985,
+              "mad": 0.478216999999999,
+              "max": 12.717439,
+              "median": 11.212843,
+              "min": 10.636989,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.31914799999999843,
+              "mad": 0.09634400000000021,
+              "max": 11.700124,
+              "median": 10.538381,
+              "min": 10.108416,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 571886,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 571886,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "f7c9bd566172ed6a586955e707f1eb3f81c6a29209f98e1c09280641aa89841d",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              49.235325,
+              47.679331,
+              47.184789,
+              54.769583,
+              47.050879,
+              59.44316,
+              62.877008,
+              63.876357,
+              49.412248,
+              46.840333,
+              43.665021,
+              47.634915,
+              45.607444,
+              45.39774,
+              61.127445
+            ],
+            "cache-warm": [
+              35.071145,
+              36.118226,
+              38.162651,
+              37.124936,
+              40.813406,
+              44.854285,
+              46.634294,
+              44.73746,
+              37.227089,
+              34.674231,
+              36.967169,
+              34.669063,
+              35.164235,
+              45.653623,
+              42.216089
+            ],
+            "uncached": [
+              39.673237,
+              42.162168,
+              39.972956,
+              43.481266,
+              42.288017,
+              50.963545,
+              54.0014,
+              44.602097,
+              44.001306,
+              38.025105,
+              37.962051,
+              38.684974,
+              39.321399,
+              38.994549,
+              46.105801
+            ]
+          },
+          "scenario": "static",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8573491887039654,
+            "cache-warm": 1.115835579404035,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 10.160765499999997,
+              "mad": 2.0718869999999967,
+              "max": 63.876357,
+              "median": 47.679331,
+              "min": 43.665021,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 7.835543999999999,
+              "mad": 2.5528580000000005,
+              "max": 46.634294,
+              "median": 37.227089,
+              "min": 34.669063,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 5.143727500000004,
+              "mad": 2.8407690000000017,
+              "max": 54.0014,
+              "median": 42.162168,
+              "min": 37.962051,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 571886,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 4575088,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "f7c9bd566172ed6a586955e707f1eb3f81c6a29209f98e1c09280641aa89841d",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              58.578213,
+              48.151376,
+              52.351954,
+              50.952325,
+              48.12032,
+              47.05002,
+              45.402535,
+              45.044327,
+              53.277842,
+              50.103503,
+              51.573577,
+              55.115718,
+              43.442566,
+              45.187462,
+              51.677213
+            ],
+            "cache-warm": [
+              75.81972,
+              52.691233,
+              60.891076,
+              48.828161,
+              48.075923,
+              48.663374,
+              47.176745,
+              47.186058,
+              49.478786,
+              51.379215,
+              51.059497,
+              53.332875,
+              60.193682,
+              43.871529,
+              43.077218
+            ],
+            "uncached": [
+              48.631318,
+              43.066948,
+              43.183277,
+              43.21803,
+              40.899002,
+              45.53306,
+              36.918824,
+              39.013715,
+              40.394436,
+              42.249357,
+              43.000183,
+              46.7532,
+              36.515951,
+              36.420547,
+              37.031072
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8405569551301367,
+            "cache-warm": 0.8268059815464982,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 5.788305999999999,
+              "mad": 3.053483,
+              "max": 58.578213,
+              "median": 50.103503,
+              "min": 43.442566,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 5.381063499999996,
+              "mad": 2.3020410000000027,
+              "max": 75.81972,
+              "median": 49.478786,
+              "min": 43.077218,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 5.178260000000002,
+              "mad": 3.2356420000000057,
+              "max": 48.631318,
+              "median": 42.249357,
+              "min": 36.420547,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 572150,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 4576320,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "a44455fee14635965b50869352cb1d3f155ef14788fff3518252877e21bfec3d",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              42.525871,
+              42.874945,
+              46.55961,
+              45.625109,
+              47.399799,
+              49.777554,
+              51.592295,
+              57.595577,
+              48.478146,
+              52.298383,
+              50.018485,
+              47.876644,
+              49.775461,
+              47.503644,
+              52.048048
+            ],
+            "cache-warm": [
+              49.496593,
+              43.407763,
+              45.74591,
+              44.417267,
+              44.596496,
+              58.770818,
+              49.743113,
+              51.366466,
+              50.709692,
+              61.55287,
+              60.684193,
+              48.237355,
+              58.857268,
+              48.466609,
+              49.316593
+            ],
+            "uncached": [
+              38.880486,
+              35.745455,
+              41.405311,
+              40.591271,
+              38.918803,
+              45.676926,
+              43.83897,
+              46.440851,
+              41.298881,
+              43.145841,
+              45.094102,
+              50.325456,
+              46.188943,
+              42.103468,
+              40.30412
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8863208051997021,
+            "cache-warm": 0.8234806986022293,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 3.825685500000006,
+              "mad": 1.9185360000000031,
+              "max": 57.595577,
+              "median": 48.478146,
+              "min": 42.525871,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 8.077009499999996,
+              "mad": 3.750682999999995,
+              "max": 61.55287,
+              "median": 49.496593,
+              "min": 43.407763,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 4.937818500000006,
+              "mad": 2.990634,
+              "max": 50.325456,
+              "median": 42.103468,
+              "min": 35.745455,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7099686,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 7099686,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "3bfa0e62e20d93d69bd6d9a39c8150b35ac369e6bf72de02ba871d4eff178e25",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              477.415121,
+              518.082383,
+              486.542769,
+              487.046314,
+              444.688703,
+              550.228966,
+              454.652998,
+              591.616217,
+              474.138107,
+              511.653246,
+              494.37235,
+              454.341487,
+              480.637775,
+              511.180075,
+              474.010347
+            ],
+            "cache-warm": [
+              320.179601,
+              343.51297,
+              342.555292,
+              323.763496,
+              320.799302,
+              348.448443,
+              321.0711,
+              378.747028,
+              338.852145,
+              337.738637,
+              360.013336,
+              343.444931,
+              328.945117,
+              351.260117,
+              356.622307
+            ],
+            "uncached": [
+              369.15851,
+              426.778416,
+              449.738193,
+              374.777464,
+              386.888871,
+              360.854701,
+              374.396491,
+              451.961923,
+              397.165288,
+              395.071438,
+              419.571753,
+              436.695028,
+              375.33867,
+              428.226991,
+              423.532772
+            ]
+          },
+          "scenario": "static",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8237655438671806,
+            "cache-warm": 1.1720902283206736,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 37.34243350000003,
+              "mad": 24.637305999999967,
+              "max": 591.616217,
+              "median": 486.542769,
+              "min": 444.688703,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 23.49997350000001,
+              "mad": 13.610175000000027,
+              "max": 378.747028,
+              "median": 342.555292,
+              "min": 320.179601,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 52.4446365,
+              "mad": 26.367484000000047,
+              "max": 451.961923,
+              "median": 397.165288,
+              "min": 360.854701,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7099686,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 4,
+              "max_retained_bytes": 28398744,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 12
+            }
+          },
+          "frames_sha256": "3bfa0e62e20d93d69bd6d9a39c8150b35ac369e6bf72de02ba871d4eff178e25",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              500.708704,
+              474.697014,
+              485.131693,
+              535.923146,
+              466.939264,
+              473.45507,
+              526.317499,
+              503.532635,
+              544.191088,
+              549.818852,
+              490.262159,
+              484.838803,
+              455.811542,
+              500.734738,
+              467.9356
+            ],
+            "cache-warm": [
+              472.863415,
+              493.253253,
+              478.292264,
+              527.314184,
+              480.251647,
+              483.430301,
+              529.598588,
+              496.438482,
+              536.700672,
+              553.145422,
+              477.897533,
+              466.772224,
+              448.701639,
+              456.840804,
+              504.24729
+            ],
+            "uncached": [
+              366.596477,
+              466.386486,
+              392.56689,
+              392.472749,
+              370.346504,
+              386.455646,
+              419.846323,
+              439.223634,
+              467.309299,
+              365.092472,
+              367.705434,
+              394.730125,
+              381.057991,
+              386.885241,
+              393.982665
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8091965453182627,
+            "cache-warm": 0.7994030270766995,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 40.84902499999998,
+              "mad": 16.80708900000002,
+              "max": 549.818852,
+              "median": 490.262159,
+              "min": 455.811542,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 40.40026300000005,
+              "mad": 16.65807699999999,
+              "max": 553.145422,
+              "median": 483.430301,
+              "min": 448.701639,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 31.585976500000015,
+              "mad": 22.12624500000004,
+              "max": 467.309299,
+              "median": 392.472749,
+              "min": 365.092472,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7101094,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 4,
+              "max_retained_bytes": 28404200,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 12
+            }
+          },
+          "frames_sha256": "6724f92e8284d4fe76a89e85c39a2148b4aa84c8efaa763c3461ba90d47105f2",
+          "pixels": 128,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              479.008913,
+              529.08569,
+              486.826852,
+              538.080703,
+              473.93022,
+              464.489137,
+              560.8425,
+              516.640354,
+              544.534892,
+              495.750953,
+              463.683434,
+              505.889167,
+              474.466192,
+              559.982547,
+              540.707802
+            ],
+            "cache-warm": [
+              560.037253,
+              490.20661,
+              504.424892,
+              499.608518,
+              507.834493,
+              504.960342,
+              533.246142,
+              557.557069,
+              480.004688,
+              531.335257,
+              502.428494,
+              513.259402,
+              509.965753,
+              530.174644,
+              535.333307
+            ],
+            "uncached": [
+              391.350523,
+              392.693349,
+              385.929224,
+              421.494615,
+              395.725251,
+              464.129636,
+              404.983288,
+              405.287444,
+              434.595429,
+              372.841329,
+              437.835532,
+              374.675302,
+              377.991061,
+              437.144798,
+              393.077275
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7844672621140237,
+            "cache-warm": 0.7650875881041969,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 62.6567,
+              "mad": 31.958946999999966,
+              "max": 560.8425,
+              "median": 505.889167,
+              "min": 463.683434,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 28.86400649999996,
+              "mad": 19.759142999999995,
+              "max": 560.037253,
+              "median": 509.965753,
+              "min": 480.004688,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 39.405148499999996,
+              "mad": 17.734190000000012,
+              "max": 464.129636,
+              "median": 395.725251,
+              "min": 372.841329,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        }
+      ],
+      "returncode": 0,
+      "source_paths_sha256": {
+        "software_gpu/benchmarks/compare_preparation_cache.py": "e33a806726569db873f677327d6233ede5f96ab6dc8c5c36d7fff8c08a101784",
+        "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f",
+        "software_gpu/benchmarks/compare_tile_backends.py": "fd48642eb805cb9a0dbbbc0d86b0e487ab1faeb7a198e1b199ca514731ec6dd9",
+        "software_gpu/graphics/batch_shader.py": "0c7d226e447c7214661de5fb0021bffef5632d1585a4915ce020e3eeaa9dbfbb",
+        "software_gpu/graphics/framebuffer.py": "b60b0ab569686304efbe62938f086b2e427b6111ab2a5b919c8e835c4676954d",
+        "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+        "software_gpu/graphics/preparation_cache.py": "00c2dc8eeb44a5736d376c3cc76938a3455edf955ff389933e3290b14afdcf23",
+        "software_gpu/graphics/rasterizer.py": "237c4b18df7f4711e64ea1169ffe956b6d4c6d604522d74c06797ae749950b5a",
+        "software_gpu/graphics/shader.py": "5e6851a94821ce278f906b614b94d8cfdfd9e37ad5442c5bf0d19d8962631046",
+        "software_gpu/graphics/surface_plan.py": "a82a10109dd448553835e371d7bb673091bb703015669d25267b94d8ae870b4c",
+        "software_gpu/graphics/tile_backend.py": "15f751bcd507f89e0855787d7d96f5c5d46ffc3fdd83e28027bb9586994102d4",
+        "software_gpu/integrations/aurion/offline_render_worker.py": "6db8e0089f799d949bd188a8619e3934551e186517d82c6bd4595620f2567a65"
+      },
+      "workbench_head": "f4ef0f99919b1875ad68d5903598bb8b5b13e9ed",
+      "workbench_head_after": "f4ef0f99919b1875ad68d5903598bb8b5b13e9ed",
+      "workbench_source_unchanged": true
+    },
+    {
+      "activation": "EXPLICIT_OPT_IN_ONLY",
+      "artifact_sha256": "003496f91454e58c39b8c9452000ffc406d2968caa0badf7b5a7d8793eee5f17",
+      "audit": {
+        "cases": 15,
+        "draws_including_warmups": 720,
+        "source_verification": "checkout-match",
+        "status": "PREPARATION_CACHE_ARTIFACT_OK"
+      },
+      "budget_seconds": 900.0,
+      "cache_bytes": 33554432,
+      "environment": {
+        "affinity_cpus": 9,
+        "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+        "logical_cpus": 9,
+        "numpy_build": {
+          "Build Dependencies": {
+            "blas": {
+              "detection method": "pkgconfig",
+              "found": true,
+              "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+              "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+              "name": "scipy-openblas",
+              "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+              "pc file directory": "/project/.openblas",
+              "version": "0.3.30"
+            },
+            "lapack": {
+              "detection method": "pkgconfig",
+              "found": true,
+              "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+              "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+              "name": "scipy-openblas",
+              "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+              "pc file directory": "/project/.openblas",
+              "version": "0.3.30"
+            }
+          },
+          "SIMD Extensions": {
+            "baseline": [
+              "SSE",
+              "SSE2",
+              "SSE3"
+            ],
+            "found": [
+              "SSSE3",
+              "SSE41",
+              "POPCNT",
+              "SSE42",
+              "AVX",
+              "F16C",
+              "FMA3",
+              "AVX2",
+              "AVX512F",
+              "AVX512CD",
+              "AVX512_SKX",
+              "AVX512_CLX",
+              "AVX512_CNL",
+              "AVX512_ICL"
+            ],
+            "not found": [
+              "AVX512_KNL",
+              "AVX512_KNM",
+              "AVX512_SPR"
+            ]
+          }
+        },
+        "python_compiler": "Clang 22.1.3 ",
+        "thread_env": {
+          "MKL_NUM_THREADS": null,
+          "NUMEXPR_NUM_THREADS": null,
+          "OMP_NUM_THREADS": null,
+          "OPENBLAS_NUM_THREADS": null,
+          "VECLIB_MAXIMUM_THREADS": null
+        }
+      },
+      "numpy": "2.3.5",
+      "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+      "pixels": 256,
+      "protocol": "are.preparation-cache-benchmark.v1",
+      "python": "3.12.14",
+      "results": [
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4912,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 4944,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "99201f843f4e8247ed0a01351fb3dc54f62a7cab6f3c16978b221654d9c3f90c",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.936533,
+              0.563825,
+              0.444647,
+              0.494441,
+              0.473991,
+              0.475453,
+              0.470164,
+              0.741622,
+              0.501101,
+              0.533399,
+              0.55348,
+              0.460571,
+              0.483876,
+              0.570685,
+              0.578187
+            ],
+            "cache-warm": [
+              0.357686,
+              0.384266,
+              0.272438,
+              0.306529,
+              0.263535,
+              0.275202,
+              0.365768,
+              0.305949,
+              0.357666,
+              0.390065,
+              0.314972,
+              0.276264,
+              0.284697,
+              0.276645,
+              0.334351
+            ],
+            "uncached": [
+              2.44292,
+              0.84701,
+              0.366229,
+              0.496554,
+              0.381341,
+              0.498106,
+              0.383825,
+              0.589744,
+              0.482082,
+              0.57375,
+              0.621651,
+              0.436424,
+              0.343906,
+              0.351627,
+              0.384296
+            ]
+          },
+          "scenario": "static",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9475716013383386,
+            "cache-warm": 1.4709086947047287,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.09253300000000009,
+              "mad": 0.04053000000000001,
+              "max": 0.936533,
+              "median": 0.501101,
+              "min": 0.444647,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.0812215,
+              "mad": 0.031326999999999994,
+              "max": 0.390065,
+              "median": 0.306529,
+              "min": 0.263535,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.199164,
+              "mad": 0.10074100000000002,
+              "max": 2.44292,
+              "median": 0.482082,
+              "min": 0.343906,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4640,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 36928,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "022d9895d80cc2a4b569185992e3acceb1891c310a9bb0fdb3db5c39527c62ee",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.573209,
+              0.474691,
+              0.459468,
+              0.493229,
+              0.46056,
+              0.446059,
+              0.475863,
+              0.492257,
+              0.476174,
+              0.570555,
+              0.484717,
+              0.486199,
+              0.465447,
+              0.623604,
+              0.775712
+            ],
+            "cache-warm": [
+              0.462383,
+              0.528562,
+              0.475592,
+              0.59357,
+              0.472928,
+              0.512719,
+              0.595132,
+              0.670394,
+              0.510555,
+              0.68764,
+              0.488252,
+              0.476814,
+              0.4806,
+              0.488312,
+              0.646919
+            ],
+            "uncached": [
+              0.460751,
+              0.551547,
+              0.460661,
+              0.375162,
+              0.389924,
+              0.423985,
+              0.368162,
+              0.378257,
+              0.393049,
+              0.358818,
+              0.430816,
+              0.443946,
+              0.37349,
+              0.467821,
+              0.424155
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8038097796789654,
+            "cache-warm": 0.8244891399959401,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.06182300000000007,
+              "mad": 0.01927000000000001,
+              "max": 0.775712,
+              "median": 0.484717,
+              "min": 0.446059,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.11564400000000008,
+              "mad": 0.034962999999999966,
+              "max": 0.68764,
+              "median": 0.510555,
+              "min": 0.462383,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.07559399999999994,
+              "mad": 0.03676600000000002,
+              "max": 0.551547,
+              "median": 0.423985,
+              "min": 0.358818,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 4592,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 36736,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "630cd077dd212fd919469c9c38472656812b42da054d4dd54257b6da32b28dff",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              0.551827,
+              0.461461,
+              0.635993,
+              0.503685,
+              0.491206,
+              0.58718,
+              0.625117,
+              0.553088,
+              0.579709,
+              0.525557,
+              0.539768,
+              0.696694,
+              0.486679,
+              0.463605,
+              1.077925
+            ],
+            "cache-warm": [
+              0.623214,
+              0.606739,
+              0.517906,
+              0.515583,
+              0.597245,
+              0.756283,
+              0.508482,
+              0.550034,
+              0.508161,
+              0.47362,
+              0.487891,
+              0.471186,
+              0.710094,
+              0.622814,
+              0.509964
+            ],
+            "uncached": [
+              0.357155,
+              0.430966,
+              0.405958,
+              0.542423,
+              0.428312,
+              0.389253,
+              0.530295,
+              0.544246,
+              0.404066,
+              0.357446,
+              0.366969,
+              0.44745,
+              0.371336,
+              0.366189,
+              0.504896
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "tiny",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.03,
+            "triangles": 1
+          },
+          "speedup_paired": {
+            "cache-cold": 0.6970152266050724,
+            "cache-warm": 0.7547105274270512,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 0.108703,
+              "mad": 0.06062099999999998,
+              "max": 1.077925,
+              "median": 0.551827,
+              "min": 0.461461,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 0.10645500000000008,
+              "mad": 0.04428599999999999,
+              "max": 0.756283,
+              "median": 0.517906,
+              "min": 0.471186,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 0.10702050000000002,
+              "mad": 0.039769,
+              "max": 0.544246,
+              "median": 0.405958,
+              "min": 0.357155,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 446006,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 446006,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "71ae24c22a9033dfbcf9f2b87e8e526ccee6f417fd8c89d95041ea0e6724b9d4",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              37.454089,
+              43.823379,
+              34.402477,
+              44.27496,
+              48.502946,
+              37.072117,
+              36.160681,
+              39.64316,
+              37.904705,
+              39.561067,
+              40.456003,
+              36.383746,
+              33.570761,
+              37.368752,
+              41.809266
+            ],
+            "cache-warm": [
+              36.57381,
+              27.85071,
+              29.931599,
+              28.583768,
+              38.738981,
+              30.466871,
+              31.578547,
+              26.164754,
+              31.559858,
+              27.711812,
+              25.996922,
+              30.032199,
+              25.012438,
+              29.05197,
+              29.822219
+            ],
+            "uncached": [
+              35.076432,
+              36.992193,
+              38.47873,
+              32.051094,
+              35.526786,
+              38.090148,
+              28.944339,
+              36.233901,
+              28.953814,
+              30.679349,
+              27.325213,
+              26.287548,
+              27.78315,
+              30.131228,
+              29.950958
+            ]
+          },
+          "scenario": "static",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8004367782785949,
+            "cache-warm": 1.0510941641475864,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 4.404703000000005,
+              "mad": 1.7440240000000031,
+              "max": 48.502946,
+              "median": 37.904705,
+              "min": 33.570761,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 3.232103500000001,
+              "mad": 1.756328,
+              "max": 38.738981,
+              "median": 29.822219,
+              "min": 25.012438,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 6.931267000000002,
+              "mad": 3.354135999999997,
+              "max": 38.47873,
+              "median": 30.679349,
+              "min": 26.287548,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 446006,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 3568048,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "d7e6350d6edbc1f7bd402ea036b23cb9d75c8adcaf4702a6bf44ad94e5a9fd00",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              52.480485,
+              46.055443,
+              36.136166,
+              34.752582,
+              54.409686,
+              45.858232,
+              34.694384,
+              34.380825,
+              34.602306,
+              42.951613,
+              41.989636,
+              39.261507,
+              55.855696,
+              43.081772,
+              38.550235
+            ],
+            "cache-warm": [
+              35.471669,
+              46.48069,
+              36.883114,
+              38.876401,
+              53.063068,
+              30.061833,
+              41.458009,
+              36.031397,
+              33.182599,
+              35.94547,
+              43.016204,
+              38.123953,
+              36.759719,
+              39.788748,
+              38.648825
+            ],
+            "uncached": [
+              31.223513,
+              32.888369,
+              31.496163,
+              27.181678,
+              43.451266,
+              25.855561,
+              26.721699,
+              29.195641,
+              29.579881,
+              35.773472,
+              31.508321,
+              33.727466,
+              44.267268,
+              38.290834,
+              34.127736
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.798594316460492,
+            "cache-warm": 0.8600793238389689,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 10.512463500000003,
+              "mad": 5.853469999999994,
+              "max": 55.855696,
+              "median": 41.989636,
+              "min": 34.380825,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 4.634945000000002,
+              "mad": 2.178483,
+              "max": 53.063068,
+              "median": 38.123953,
+              "min": 30.061833,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 5.562843000000001,
+              "mad": 2.619415,
+              "max": 44.267268,
+              "median": 31.508321,
+              "min": 25.855561,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 449010,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 3581784,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "802c6781f7299ef721fbcfc99422cedfe84d26079908e8508461108463c5bdcc",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              37.303072,
+              45.015836,
+              52.144672,
+              37.438288,
+              61.108443,
+              40.270226,
+              38.48669,
+              44.742425,
+              45.049126,
+              34.902703,
+              36.285478,
+              66.273017,
+              43.167372,
+              35.411717,
+              34.927931
+            ],
+            "cache-warm": [
+              43.022684,
+              50.398286,
+              46.242331,
+              49.42447,
+              48.33774,
+              39.611558,
+              36.724216,
+              39.096566,
+              37.408001,
+              33.01449,
+              47.811705,
+              45.68562,
+              49.533129,
+              36.621652,
+              36.367902
+            ],
+            "uncached": [
+              34.862961,
+              47.408355,
+              36.856039,
+              28.570473,
+              36.871217,
+              31.981171,
+              30.771866,
+              36.451336,
+              33.395332,
+              30.006237,
+              34.17356,
+              40.079115,
+              30.593038,
+              31.124986,
+              30.48102
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "small-triangles",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.05,
+            "triangles": 160
+          },
+          "speedup_paired": {
+            "cache-cold": 0.7995456611103734,
+            "cache-warm": 0.8379175746052686,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 8.238206000000005,
+              "mad": 4.745609999999999,
+              "max": 66.273017,
+              "median": 40.270226,
+              "min": 34.902703,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 11.008614000000001,
+              "mad": 5.614682999999999,
+              "max": 50.398286,
+              "median": 43.022684,
+              "min": 33.01449,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 5.971235500000006,
+              "mad": 2.9143120000000025,
+              "max": 47.408355,
+              "median": 33.395332,
+              "min": 28.570473,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 81214,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 81214,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "58f0be357a371dc9b1b0dffd69ad642c9e67310d5b7cb97650049f2a759598f0",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              35.362103,
+              40.316195,
+              31.885648,
+              34.609725,
+              31.216213,
+              33.615292,
+              34.663715,
+              33.295402,
+              38.962693,
+              33.791906,
+              35.485674,
+              32.011498,
+              32.558268,
+              30.761396,
+              35.853915
+            ],
+            "cache-warm": [
+              32.671305,
+              29.210894,
+              30.644916,
+              30.115651,
+              33.203183,
+              31.718116,
+              28.885607,
+              29.560949,
+              44.442787,
+              32.375584,
+              31.2446,
+              31.414394,
+              28.966837,
+              31.904789,
+              36.968966
+            ],
+            "uncached": [
+              32.058746,
+              30.86091,
+              32.604906,
+              29.633158,
+              33.391962,
+              34.9674,
+              29.963023,
+              32.209914,
+              34.071637,
+              33.402863,
+              33.502252,
+              32.240702,
+              29.594858,
+              33.365518,
+              39.413884
+            ]
+          },
+          "scenario": "static",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.967398261177324,
+            "cache-warm": 1.0372994065868166,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 3.1390055000000032,
+              "mad": 1.6937680000000057,
+              "max": 40.316195,
+              "median": 33.791906,
+              "min": 30.761396,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 2.6851444999999963,
+              "mad": 1.2987430000000018,
+              "max": 44.442787,
+              "median": 31.414394,
+              "min": 28.885607,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.9927294999999958,
+              "mad": 0.8973459999999989,
+              "max": 39.413884,
+              "median": 32.604906,
+              "min": 29.594858,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 81214,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 649712,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "d7246428fbbca9564439c2014e98017f5e291dae6c4d2c875aad2c96878ed0b9",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              38.404888,
+              42.096733,
+              35.152685,
+              37.235215,
+              33.694651,
+              34.020009,
+              34.423452,
+              31.867453,
+              32.113702,
+              35.327717,
+              43.173661,
+              30.021657,
+              37.53972,
+              30.154636,
+              35.863229
+            ],
+            "cache-warm": [
+              36.932672,
+              36.990969,
+              34.968018,
+              35.795398,
+              34.11468,
+              33.114551,
+              31.112893,
+              32.080221,
+              30.527085,
+              32.146651,
+              29.266816,
+              33.654,
+              36.035151,
+              36.6414,
+              45.553447
+            ],
+            "uncached": [
+              33.671466,
+              34.894528,
+              36.445411,
+              35.18938,
+              32.173872,
+              34.164534,
+              33.304566,
+              31.221755,
+              29.292465,
+              32.785538,
+              37.987021,
+              28.709862,
+              31.112322,
+              29.18937,
+              33.263534
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9450564472368429,
+            "cache-warm": 0.959556570828823,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 4.483290999999994,
+              "mad": 2.3870350000000045,
+              "max": 43.173661,
+              "median": 35.152685,
+              "min": 30.021657,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 4.2248394999999945,
+              "mad": 2.0344589999999982,
+              "max": 45.553447,
+              "median": 34.11468,
+              "min": 29.266816,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 3.3624925000000054,
+              "mad": 1.925846,
+              "max": 37.987021,
+              "median": 33.263534,
+              "min": 28.709862,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 82002,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 653680,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "5f8d8a4adc9f1e0bd5e1ad2c4de05573bb29c32d61dff67ffa32c556693ed14d",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              34.745595,
+              30.759643,
+              35.79069,
+              34.377043,
+              36.820915,
+              32.543916,
+              41.062985,
+              37.609636,
+              33.389814,
+              34.311164,
+              31.772381,
+              34.503693,
+              35.690461,
+              34.08177,
+              41.768757
+            ],
+            "cache-warm": [
+              31.063738,
+              32.496835,
+              36.568846,
+              35.185754,
+              33.621691,
+              32.63326,
+              52.002333,
+              34.172496,
+              32.066341,
+              34.205616,
+              34.44879,
+              35.740415,
+              36.47136,
+              35.412814,
+              40.047037
+            ],
+            "uncached": [
+              30.635888,
+              31.813862,
+              30.681886,
+              34.065066,
+              34.79613,
+              34.793292,
+              37.160733,
+              36.946603,
+              31.018912,
+              30.326795,
+              32.832248,
+              33.430735,
+              32.936815,
+              34.14842,
+              33.96171
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "large-surfaces",
+          "scene_spec": {
+            "kind": "fixture",
+            "seed": 1234,
+            "size": 0.8,
+            "triangles": 8
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9450099216708764,
+            "cache-warm": 0.9642955795605512,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 2.570010499999995,
+              "mad": 1.2869969999999995,
+              "max": 41.768757,
+              "median": 34.503693,
+              "min": 30.759643,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 2.9784119999999916,
+              "mad": 1.8155300000000025,
+              "max": 52.002333,
+              "median": 34.44879,
+              "min": 31.063738,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 3.0544689999999974,
+              "mad": 1.3653949999999995,
+              "max": 37.160733,
+              "median": 33.430735,
+              "min": 30.326795,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 600078,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 600078,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "f19cacbe8870a0505a85210acdfae16cabc69bf931ba50d898081da1f5ab7443",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              78.816581,
+              85.475537,
+              88.209683,
+              74.927605,
+              84.352955,
+              77.103089,
+              84.513306,
+              76.224652,
+              85.422449,
+              72.592918,
+              66.297361,
+              83.219067,
+              69.110819,
+              74.584574,
+              65.363972
+            ],
+            "cache-warm": [
+              77.531171,
+              59.93982,
+              73.304262,
+              66.728271,
+              55.219268,
+              59.322545,
+              68.912231,
+              70.279961,
+              63.788596,
+              60.215048,
+              56.642308,
+              61.277141,
+              59.840332,
+              68.857479,
+              50.652269
+            ],
+            "uncached": [
+              69.126494,
+              69.513833,
+              67.849732,
+              76.966023,
+              65.544476,
+              61.996383,
+              89.447283,
+              66.171833,
+              61.568022,
+              55.604832,
+              60.332119,
+              67.910479,
+              63.116883,
+              62.244446,
+              59.469986
+            ]
+          },
+          "scenario": "static",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8345485220576576,
+            "cache-warm": 1.0547548934053375,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 10.844384500000004,
+              "mad": 7.249865999999997,
+              "max": 88.209683,
+              "median": 77.103089,
+              "min": 65.363972,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 9.303416500000004,
+              "mad": 5.451130000000006,
+              "max": 77.531171,
+              "median": 61.277141,
+              "min": 50.652269,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 6.736283999999998,
+              "mad": 3.582017999999991,
+              "max": 89.447283,
+              "median": 65.544476,
+              "min": 55.604832,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 600078,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 4800624,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "f19cacbe8870a0505a85210acdfae16cabc69bf931ba50d898081da1f5ab7443",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              64.737673,
+              65.313315,
+              71.764246,
+              67.523088,
+              66.871722,
+              85.919009,
+              74.906744,
+              67.497773,
+              71.118158,
+              63.577029,
+              64.321294,
+              65.14621,
+              64.817718,
+              64.16513,
+              64.41214
+            ],
+            "cache-warm": [
+              63.520138,
+              68.906432,
+              69.61248,
+              69.312641,
+              66.080145,
+              71.236619,
+              86.207738,
+              65.76004,
+              64.003478,
+              66.624185,
+              69.595142,
+              65.863866,
+              66.691936,
+              60.542803,
+              63.747294
+            ],
+            "uncached": [
+              60.500231,
+              56.387566,
+              59.849266,
+              59.923056,
+              57.990228,
+              58.112982,
+              62.808307,
+              56.646915,
+              59.488103,
+              55.987107,
+              55.572866,
+              58.874693,
+              57.632993,
+              57.279894,
+              54.692638
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8639886193831859,
+            "cache-warm": 0.861418499745438,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 4.7457165,
+              "mad": 1.5584070000000025,
+              "max": 85.919009,
+              "median": 65.313315,
+              "min": 63.577029,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 4.572132499999995,
+              "mad": 2.688456000000002,
+              "max": 86.207738,
+              "median": 66.624185,
+              "min": 60.542803,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 3.151443999999998,
+              "mad": 1.6026620000000023,
+              "max": 62.808307,
+              "median": 57.990228,
+              "min": 54.692638,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 600694,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 8,
+              "max_retained_bytes": 4803352,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 8
+            }
+          },
+          "frames_sha256": "3a3768b65d782fe110b7fdd95b4f0c2deae2e29f4871d8213da9f349a9f98a93",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              64.395645,
+              64.432661,
+              68.059065,
+              68.029159,
+              63.093675,
+              60.873329,
+              62.733384,
+              62.690901,
+              66.585486,
+              63.75752,
+              67.828739,
+              66.168111,
+              64.667873,
+              67.463572,
+              66.093698
+            ],
+            "cache-warm": [
+              63.401256,
+              66.900329,
+              64.475385,
+              65.614172,
+              64.177208,
+              64.460763,
+              60.637515,
+              67.272075,
+              66.212278,
+              67.070143,
+              65.717226,
+              62.971713,
+              63.509037,
+              63.619993,
+              63.490899
+            ],
+            "uncached": [
+              57.404301,
+              58.469566,
+              63.198582,
+              61.229332,
+              55.355561,
+              56.541057,
+              57.085562,
+              57.401646,
+              58.156417,
+              57.499062,
+              58.877338,
+              56.752493,
+              60.181421,
+              57.853693,
+              56.948065
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "procedural400",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 10,
+            "seed": 991,
+            "segments": 20
+          },
+          "speedup_paired": {
+            "cache-cold": 0.9000454055297081,
+            "cache-warm": 0.896948474457733,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 3.598931500000006,
+              "mad": 1.917613000000003,
+              "max": 68.059065,
+              "median": 64.667873,
+              "min": 60.873329,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 2.4647840000000087,
+              "mad": 1.1534089999999964,
+              "max": 67.272075,
+              "median": 64.460763,
+              "min": 60.637515,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 1.6566384999999997,
+              "mad": 0.7465690000000009,
+              "max": 63.198582,
+              "median": 57.499062,
+              "min": 55.355561,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7353678,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 1,
+              "max_retained_bytes": 7353678,
+              "statuses": [
+                "hit"
+              ],
+              "total_evictions": 0
+            }
+          },
+          "frames_sha256": "cb58c88eeee961bc993fb2f5a854d226a688661225da93af20702e5500764dd2",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              637.196972,
+              687.806328,
+              695.318536,
+              623.167886,
+              606.088476,
+              639.994276,
+              696.693905,
+              665.892957,
+              603.365713,
+              689.308716,
+              645.607789,
+              665.461545,
+              624.595489,
+              650.600196,
+              720.884684
+            ],
+            "cache-warm": [
+              517.51391,
+              524.813328,
+              545.89941,
+              484.300878,
+              471.263804,
+              466.346629,
+              559.660112,
+              509.112364,
+              521.332753,
+              489.180579,
+              514.204233,
+              548.344896,
+              481.718303,
+              510.512421,
+              490.576256
+            ],
+            "uncached": [
+              547.400198,
+              570.447055,
+              594.663995,
+              509.818557,
+              515.793719,
+              506.763622,
+              591.597981,
+              540.945736,
+              535.010163,
+              517.809344,
+              526.598171,
+              617.564696,
+              596.532629,
+              559.5499,
+              587.072672
+            ]
+          },
+          "scenario": "static",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8491505046251266,
+            "cache-warm": 1.0866672781288615,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 57.66129150000006,
+              "mad": 27.43231000000003,
+              "max": 720.884684,
+              "median": 650.600196,
+              "min": 603.365713,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 36.33231199999989,
+              "mad": 21.331841999999995,
+              "max": 559.660112,
+              "median": 510.512421,
+              "min": 466.346629,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 67.13156900000013,
+              "mad": 31.606479000000036,
+              "max": 617.564696,
+              "median": 547.400198,
+              "min": 506.763622,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7353678,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 4,
+              "max_retained_bytes": 29414712,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 12
+            }
+          },
+          "frames_sha256": "f82d57e4f3512b7aeaa49e957347d3c3f279b0cc6a2b5446c55089f9675e1c73",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              669.793228,
+              726.995769,
+              758.900877,
+              714.277141,
+              746.656285,
+              675.567938,
+              592.807357,
+              634.854855,
+              817.915812,
+              840.462221,
+              817.870593,
+              728.397726,
+              650.512953,
+              841.879893,
+              710.299534
+            ],
+            "cache-warm": [
+              693.06983,
+              725.033957,
+              671.444649,
+              768.259752,
+              776.495825,
+              734.325513,
+              685.542031,
+              779.823546,
+              759.77114,
+              789.544204,
+              837.525158,
+              722.708386,
+              631.404473,
+              667.00437,
+              733.758647
+            ],
+            "uncached": [
+              527.230808,
+              585.10215,
+              536.716558,
+              581.246334,
+              653.346575,
+              609.384153,
+              568.410569,
+              532.204143,
+              685.449544,
+              644.37216,
+              740.938236,
+              641.66108,
+              595.894778,
+              663.701528,
+              613.220399
+            ]
+          },
+          "scenario": "one-vertex",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8383083768021274,
+            "cache-warm": 0.8298556188119259,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 115.705152,
+              "mad": 57.202541,
+              "max": 841.879893,
+              "median": 726.995769,
+              "min": 592.807357,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 83.07185800000002,
+              "mad": 42.73717799999997,
+              "max": 837.525158,
+              "median": 733.758647,
+              "min": 631.404473,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 74.03091599999993,
+              "mad": 40.97358399999996,
+              "max": 740.938236,
+              "median": 609.384153,
+              "min": 527.230808,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        },
+        {
+          "byte_identical": true,
+          "cache_state_summary": {
+            "cache-cold": {
+              "max_entries": 1,
+              "max_retained_bytes": 7355262,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 0
+            },
+            "cache-warm": {
+              "max_entries": 4,
+              "max_retained_bytes": 29420608,
+              "statuses": [
+                "miss"
+              ],
+              "total_evictions": 12
+            }
+          },
+          "frames_sha256": "47d666318ab3c16ca1187f95e7f4641c60c4d78c4e9936f993da15bb51b4561e",
+          "pixels": 256,
+          "repeats": 15,
+          "samples_ms": {
+            "cache-cold": [
+              643.803834,
+              671.473446,
+              760.251194,
+              651.925304,
+              675.950545,
+              645.13848,
+              782.386674,
+              759.491848,
+              707.184912,
+              735.769929,
+              731.035394,
+              654.839607,
+              757.796262,
+              757.616305,
+              757.113748
+            ],
+            "cache-warm": [
+              595.909657,
+              698.226619,
+              690.609388,
+              639.391951,
+              743.318759,
+              717.050544,
+              627.40967,
+              736.212545,
+              717.471187,
+              665.937409,
+              703.556989,
+              752.368929,
+              710.038037,
+              680.983872,
+              704.491233
+            ],
+            "uncached": [
+              537.538094,
+              553.522442,
+              616.835607,
+              517.294788,
+              547.855697,
+              608.823113,
+              586.833658,
+              630.755031,
+              564.829685,
+              600.975177,
+              618.6227,
+              551.897179,
+              660.03058,
+              606.173572,
+              617.679782
+            ]
+          },
+          "scenario": "all-vertices",
+          "scene": "procedural5k",
+          "scene_spec": {
+            "kind": "procedural",
+            "rings": 32,
+            "seed": 991,
+            "segments": 80
+          },
+          "speedup_paired": {
+            "cache-cold": 0.8167976881262294,
+            "cache-warm": 0.8767742635627661,
+            "uncached": 1.0
+          },
+          "stats_ms": {
+            "cache-cold": {
+              "iqr": 94.549757,
+              "mad": 29.21580000000006,
+              "max": 782.386674,
+              "median": 731.035394,
+              "min": 643.803834,
+              "n": 15
+            },
+            "cache-warm": {
+              "iqr": 43.800224999999955,
+              "mad": 22.573117000000025,
+              "max": 752.368929,
+              "median": 703.556989,
+              "min": 595.909657,
+              "n": 15
+            },
+            "uncached": {
+              "iqr": 64.54788400000007,
+              "mad": 29.779854,
+              "max": 660.03058,
+              "median": 600.975177,
+              "min": 517.294788,
+              "n": 15
+            }
+          },
+          "warmups": 1,
+          "workers": 1
+        }
+      ],
+      "returncode": 0,
+      "source_paths_sha256": {
+        "software_gpu/benchmarks/compare_preparation_cache.py": "e33a806726569db873f677327d6233ede5f96ab6dc8c5c36d7fff8c08a101784",
+        "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f",
+        "software_gpu/benchmarks/compare_tile_backends.py": "fd48642eb805cb9a0dbbbc0d86b0e487ab1faeb7a198e1b199ca514731ec6dd9",
+        "software_gpu/graphics/batch_shader.py": "0c7d226e447c7214661de5fb0021bffef5632d1585a4915ce020e3eeaa9dbfbb",
+        "software_gpu/graphics/framebuffer.py": "b60b0ab569686304efbe62938f086b2e427b6111ab2a5b919c8e835c4676954d",
+        "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+        "software_gpu/graphics/preparation_cache.py": "00c2dc8eeb44a5736d376c3cc76938a3455edf955ff389933e3290b14afdcf23",
+        "software_gpu/graphics/rasterizer.py": "237c4b18df7f4711e64ea1169ffe956b6d4c6d604522d74c06797ae749950b5a",
+        "software_gpu/graphics/shader.py": "5e6851a94821ce278f906b614b94d8cfdfd9e37ad5442c5bf0d19d8962631046",
+        "software_gpu/graphics/surface_plan.py": "a82a10109dd448553835e371d7bb673091bb703015669d25267b94d8ae870b4c",
+        "software_gpu/graphics/tile_backend.py": "15f751bcd507f89e0855787d7d96f5c5d46ffc3fdd83e28027bb9586994102d4",
+        "software_gpu/integrations/aurion/offline_render_worker.py": "6db8e0089f799d949bd188a8619e3934551e186517d82c6bd4595620f2567a65"
+      },
+      "workbench_head": "f4ef0f99919b1875ad68d5903598bb8b5b13e9ed",
+      "workbench_head_after": "f4ef0f99919b1875ad68d5903598bb8b5b13e9ed",
+      "workbench_source_unchanged": true
+    }
+  ],
+  "branch": "test/preparation-cache-20261011",
+  "date_utc": "2026-10-11",
+  "draws_including_warmups": 1440,
+  "limitations": [
+    "synthetic and seeded procedural CPU scenes only",
+    "no original GLB, textured gameplay, partial update or hardware GPU parity measurement",
+    "one changed vertex invalidates the entire draw; every changing case lost time",
+    "retained-byte accounting is not a process RSS or transient-allocation bound",
+    "final PR-head CI is a separate complete-suite gate"
+  ],
+  "local_suite": {
+    "errors": [],
+    "floor_failures": [],
+    "floors": {
+      "main.py": 35.0,
+      "software_gpu/benchmarks/compare_preparation_cache.py": 95.0,
+      "software_gpu/benchmarks/compare_surface_plans.py": 85.0,
+      "software_gpu/graphics/batch_shader.py": 95.0,
+      "software_gpu/graphics/framebuffer.py": 95.0,
+      "software_gpu/graphics/geometry.py": 94.0,
+      "software_gpu/graphics/postprocess.py": 95.0,
+      "software_gpu/graphics/preparation_cache.py": 95.0,
+      "software_gpu/graphics/rasterizer.py": 98.0,
+      "software_gpu/graphics/shader.py": 88.0,
+      "software_gpu/graphics/surface_plan.py": 95.0,
+      "software_gpu/graphics/tile_backend.py": 88.0,
+      "software_gpu/integrations/aurion/offline_render_worker.py": 75.0,
+      "software_gpu/network/security.py": 88.0
+    },
+    "host_exclusions": {
+      "test_coverage_gate.TestCoverageGate.test_coverage_floors_hold": "full nested gate contains the same blocked socket test; floors measured here",
+      "test_gaming_and_mobile.TestGamingAndMobile.test_android_unix_domain_socket_ipc": "AF_UNIX creation EPERM on host"
+    },
+    "overall": 67.53860699653325,
+    "per_file": {
+      "main.py": 56.2043795620438,
+      "software_gpu/__init__.py": 100.0,
+      "software_gpu/benchmarks/__init__.py": 100.0,
+      "software_gpu/benchmarks/compare_preparation_cache.py": 96.05911330049261,
+      "software_gpu/benchmarks/compare_surface_plans.py": 91.95804195804196,
+      "software_gpu/benchmarks/compare_tile_backends.py": 36.170212765957444,
+      "software_gpu/benchmarks/external_cpu_benchmark.py": 22.82608695652174,
+      "software_gpu/benchmarks/load_stress_benchmark.py": 0.0,
+      "software_gpu/benchmarks/run_benchmarks.py": 0.0,
+      "software_gpu/clients/__init__.py": 100.0,
+      "software_gpu/clients/python_client.py": 85.0,
+      "software_gpu/compute/__init__.py": 100.0,
+      "software_gpu/compute/compiler.py": 87.09677419354838,
+      "software_gpu/compute/executor.py": 94.96402877697842,
+      "software_gpu/compute/kernels.py": 85.41666666666667,
+      "software_gpu/core/__init__.py": 100.0,
+      "software_gpu/core/device.py": 78.78787878787878,
+      "software_gpu/core/memory.py": 71.60493827160494,
+      "software_gpu/core/output.py": 100.0,
+      "software_gpu/core/types.py": 80.0,
+      "software_gpu/core/vps_governor.py": 59.23076923076923,
+      "software_gpu/directx/__init__.py": 100.0,
+      "software_gpu/directx/d3d11.py": 92.12121212121212,
+      "software_gpu/directx/directx_demo.py": 0.0,
+      "software_gpu/examples/__init__.py": 100.0,
+      "software_gpu/examples/cuda_dropin_demo.py": 0.0,
+      "software_gpu/examples/gaming_pc_demo.py": 0.0,
+      "software_gpu/examples/render_3d_scene.py": 98.52941176470588,
+      "software_gpu/graphics/__init__.py": 100.0,
+      "software_gpu/graphics/batch_shader.py": 100.0,
+      "software_gpu/graphics/compiled_tile.py": 0.0,
+      "software_gpu/graphics/framebuffer.py": 100.0,
+      "software_gpu/graphics/geometry.py": 97.41935483870968,
+      "software_gpu/graphics/postprocess.py": 98.9247311827957,
+      "software_gpu/graphics/preparation_cache.py": 100.0,
+      "software_gpu/graphics/rasterizer.py": 100.0,
+      "software_gpu/graphics/shader.py": 100.0,
+      "software_gpu/graphics/surface_plan.py": 100.0,
+      "software_gpu/graphics/tile_backend.py": 97.10144927536231,
+      "software_gpu/integrations/__init__.py": 100.0,
+      "software_gpu/integrations/aurion/_offline_child.py": 0.0,
+      "software_gpu/integrations/aurion/npc_fallback_audit.py": 20.901639344262296,
+      "software_gpu/integrations/aurion/offline_lod_worker.py": 73.56948228882834,
+      "software_gpu/integrations/aurion/offline_render_worker.py": 80.0498753117207,
+      "software_gpu/integrations/blender/__init__.py": 85.71428571428571,
+      "software_gpu/integrations/blender/blender_render_engine.py": 54.95495495495496,
+      "software_gpu/integrations/image_editor/__init__.py": 100.0,
+      "software_gpu/integrations/image_editor/image_filter_endpoint.py": 44.53781512605042,
+      "software_gpu/integrations/mmorpg/__init__.py": 100.0,
+      "software_gpu/integrations/mmorpg/game_compute_adapter.py": 89.28571428571429,
+      "software_gpu/integrations/mmorpg/mmorpg_server_demo.py": 0.0,
+      "software_gpu/mobile/__init__.py": 100.0,
+      "software_gpu/mobile/android_server.py": 21.839080459770116,
+      "software_gpu/mobile/opengles.py": 79.48717948717949,
+      "software_gpu/network/__init__.py": 100.0,
+      "software_gpu/network/dispatcher.py": 15.068493150684931,
+      "software_gpu/network/isolated_worker.py": 68.29268292682927,
+      "software_gpu/network/protocol.py": 93.75,
+      "software_gpu/network/security.py": 98.1981981981982,
+      "software_gpu/network/server.py": 86.60287081339713,
+      "software_gpu/redirector/__init__.py": 100.0,
+      "software_gpu/redirector/cuda_runtime.py": 87.87878787878788,
+      "software_gpu/redirector/interceptor.py": 65.38461538461539,
+      "software_gpu/research/__init__.py": 100.0,
+      "software_gpu/research/wolfram_cag_oracle.py": 71.23287671232876,
+      "software_gpu/training/__init__.py": 100.0,
+      "software_gpu/training/metrics.py": 92.85714285714286
+    },
+    "skipped": [
+      [
+        "test_compiled_tiles.TestLLVMCompiledTiles.test_compiled_cpu_matches_numpy_coverage",
+        "optional jit extra not installed"
+      ],
+      [
+        "test_compiled_tiles.TestLLVMCompiledTiles.test_compiled_cpu_multiworker_repeatable",
+        "optional jit extra not installed"
+      ]
+    ],
+    "test_failures": [],
+    "test_success": true,
+    "testsRun": 223
+  },
+  "measured_draws": 1350,
+  "overall_floor": 62.0,
+  "protocol": "are.preparation-cache-experiment.v1",
+  "repository": "OuroborosCollective/ARE-SOFTWAREGPU-ENGINE",
+  "runtime_source_commit": "f4ef0f99919b1875ad68d5903598bb8b5b13e9ed",
+  "scope": "whole-draw pure vertex setup and ordered tile candidates; current coverage/depth/shading reexecute"
+}
