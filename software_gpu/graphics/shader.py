@@ -1,3 +1,4 @@
+import math
 """
 Programmable Vertex and Fragment Shaders and 3D Matrix Math for SoftwareGPU.
 Implements standard GPU pipeline shading stages.
@@ -186,7 +187,7 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        n_len = math.sqrt(float(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]))
         if n_len > 1e-6:
             normal = normal / n_len
 
@@ -203,7 +204,7 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
+        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -217,17 +218,17 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            half_len = math.sqrt(float(half_dir[0]*half_dir[0] + half_dir[1]*half_dir[1] + half_dir[2]*half_dir[2]))
             valid = bool(half_len > 1e-6)
             if valid:
                 half_dir /= half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
+            c1 = cache[1]; spec = max(0.0, float(normal[0]*c1[0] + normal[1]*c1[1] + normal[2]*c1[2])) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
+        fc = ambient + diffuse + specular; final_rgb = (max(0.0, min(1.0, float(fc[0]))) * 255.0, max(0.0, min(1.0, float(fc[1]))) * 255.0, max(0.0, min(1.0, float(fc[2]))) * 255.0)
         return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
