@@ -1,4 +1,4 @@
-name: PassMark V11 CPU and memory evidence
+name: PassMark V11 CPU and memory contract
 
 on:
   pull_request:
@@ -8,37 +8,22 @@ on:
       - "tools/passmark_v11.py"
       - "software_gpu/tests/test_passmark_v11.py"
       - "docs/PASSMARK_V11.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/passmark-v11.yml"
+      - "tools/passmark_v11.py"
+      - "software_gpu/tests/test_passmark_v11.py"
   workflow_dispatch:
-    inputs:
-      profile:
-        description: "CPU, memory, or both (no GPU/video-card score)"
-        type: choice
-        required: true
-        default: all
-        options: [all, cpu, memory]
-      iterations:
-        description: "Iterations (1-5)"
-        type: number
-        required: true
-        default: 2
-      processes:
-        description: "CPU benchmark processes (1-8)"
-        type: number
-        required: true
-        default: 2
 
 permissions:
   contents: read
 
-concurrency:
-  group: passmark-v11-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  passmark-cpu-memory:
-    name: Verified V11 x86-64 / Ubuntu 22.04
+  passmark-contract:
+    name: PassMark V11 pinned archive and receipt contract (no vendor execution)
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 5
     steps:
       - name: Checkout pinned source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -50,46 +35,7 @@ jobs:
           python-version: "3.12"
       - name: Install project test dependency
         run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
-      - name: Test the manifest and fail-closed wrapper
+      - name: Verify fail-closed archive and result contracts
         run: python -m unittest software_gpu.tests.test_passmark_v11 -v
-      - name: Install supported terminal runtime from Ubuntu repositories
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install --no-install-recommends -y libncurses5 libtinfo5 libcurl4
-      # Manual runs are fail-closed: vendor responds HTTP 403 on public GitHub runners.
-      # Never claim PassMark capacity evidence from PR-contract success.
-      - name: Download vendor V11 archive (no binaries committed)
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          DESTINATION: ${{ runner.temp }}/passmark-v11.zip
-        run: |
-          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location \
-            --retry 2 --connect-timeout 20 --max-time 180 \
-            --output "$DESTINATION" \
-            https://www.passmark.com/downloads/PerformanceTest_Linux_x86-64.zip
-          python tools/passmark_v11.py audit --arch x86_64 --archive "$DESTINATION"
-      - name: Run CPU/memory suite and produce SHA-bound receipt
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PASSMARK_ARCHIVE: ${{ runner.temp }}/passmark-v11.zip
-          OUTPUT_DIR: ${{ runner.temp }}/passmark-v11-results
-          PROFILE: ${{ github.event_name == 'pull_request' && 'cpu' || inputs.profile }}
-          ITERATIONS: ${{ github.event_name == 'pull_request' && '1' || inputs.iterations }}
-          PROCESSES: ${{ github.event_name == 'pull_request' && '2' || inputs.processes }}
-          ARE_BENCH_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          python tools/passmark_v11.py run --archive "$PASSMARK_ARCHIVE" \
-            --output-dir "$OUTPUT_DIR" --profile "$PROFILE" --duration 1 \
-            --iterations "$ITERATIONS" --processes "$PROCESSES" --samples 1 \
-            --timeout-seconds 1000
-      - name: Publish only sanitized receipt (not raw host metadata)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: passmark-v11-cpu-memory-receipt
-          path: |
-            ${{ runner.temp }}/passmark-v11-results/receipt.json
-            ${{ runner.temp }}/passmark-v11-results/failure.json
-          if-no-files-found: warn
-          retention-days: 14
+      - name: Compile PassMark host runner
+        run: python -m py_compile tools/passmark_v11.py
