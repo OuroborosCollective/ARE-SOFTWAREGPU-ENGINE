@@ -28,3 +28,7 @@ class VertexColorShader(Shader):
         rgba[:, :3] = rgb
         rgba[:, 3] = 255
         return rgba
+
+
+# Captured implementation identity for the opt-in native specialization.
+_NATIVE_VERTEX_COLOR_METHODS = (VertexColorShader.vertex_shader, VertexColorShader.fragment_shader)

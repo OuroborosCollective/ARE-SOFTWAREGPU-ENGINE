@@ -23,13 +23,21 @@ class SoftwareRasterizer:
     reference. Neither backend is a physical GPU or hardware GPU driver.
     """
     def __init__(self, framebuffer: Framebuffer, tile_size: int = 32,
-                 num_threads: Optional[int] = None, backend: str = "tiles", plan_policy=None):
+                 num_threads: Optional[int] = None, backend: str = "tiles", plan_policy=None,
+                 native_kernel=None):
         if not isinstance(tile_size, int) or not 1 <= tile_size <= 256:
             raise ValueError("tile_size must be between 1 and 256 pixels")
-        if backend not in ("tiles", "tiles-jit", "tiles-plan", "bands"):
-            raise ValueError("backend must be tiles, tiles-jit, tiles-plan or bands")
+        if backend not in ("tiles", "tiles-jit", "tiles-plan", "bands", "native-cpp"):
+            raise ValueError("backend must be tiles, tiles-jit, tiles-plan, bands or native-cpp")
         if num_threads is not None and (not isinstance(num_threads, int) or num_threads < 1):
             raise ValueError("num_threads must be positive")
+        if backend == "native-cpp":
+            from .native_raster import NativeRasterKernel
+            if type(native_kernel) is not NativeRasterKernel or num_threads not in (None, 1):
+                raise ValueError("native-cpp requires NativeRasterKernel and one worker")
+            num_threads = 1
+        elif native_kernel is not None:
+            raise ValueError("native_kernel requires native-cpp")
         if plan_policy is not None:
             from .surface_plan import SurfacePlanPolicy
             if backend != "tiles-plan" or not isinstance(plan_policy, SurfacePlanPolicy):
@@ -39,6 +47,8 @@ class SoftwareRasterizer:
         self.backend = backend
         self.plan_policy = plan_policy
         self.last_plan_receipt = None
+        self.native_kernel = native_kernel
+        self.last_native_receipt = None
         self.num_threads = num_threads or VirtualGPU.get_current_device().num_sms
         self.executor = ThreadPoolExecutor(max_workers=self.num_threads, thread_name_prefix="SoftGPU_RasterTile")
 
@@ -48,7 +58,13 @@ class SoftwareRasterizer:
         device.total_draw_calls += 1
 
         self.last_plan_receipt = None
+        self.last_native_receipt = None
+        if self.native_kernel is not None:
+            self.native_kernel.validate_shader(shader)
         triangles = prepare_triangles(vertices, indices, shader, self.fb.width, self.fb.height)
+        if self.native_kernel is not None:
+            self.last_native_receipt = self.native_kernel.draw(self.fb, triangles, shader)
+            return
         if self.backend in ("tiles", "tiles-jit", "tiles-plan"):
             self.last_plan_receipt = rasterize_tiles(
                 self.fb, triangles, shader, self.tile_size, self.executor,

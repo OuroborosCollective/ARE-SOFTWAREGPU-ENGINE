@@ -1,0 +1,2440 @@
+{
+  "protocol": "are.native-raster-benchmark.v1",
+  "timing_scope": "whole draw_mesh; excludes clear/build/byte check",
+  "python_preparation": true,
+  "python_pixel_loop": false,
+  "workers": 1,
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "environment": {
+    "cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "logical_cpus": 9,
+    "affinity_cpus": 9,
+    "python_compiler": "Clang 22.1.3 ",
+    "thread_env": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "NUMEXPR_NUM_THREADS": null,
+      "VECLIB_MAXIMUM_THREADS": null
+    },
+    "numpy_build": {
+      "SIMD Extensions": {
+        "baseline": [
+          "SSE",
+          "SSE2",
+          "SSE3"
+        ],
+        "found": [
+          "SSSE3",
+          "SSE41",
+          "POPCNT",
+          "SSE42",
+          "AVX",
+          "F16C",
+          "FMA3",
+          "AVX2",
+          "AVX512F",
+          "AVX512CD",
+          "AVX512_SKX",
+          "AVX512_CLX",
+          "AVX512_CNL",
+          "AVX512_ICL",
+          "AVX512_SPR"
+        ],
+        "not found": [
+          "AVX512_KNL",
+          "AVX512_KNM"
+        ]
+      },
+      "Build Dependencies": {
+        "blas": {
+          "name": "scipy-openblas",
+          "found": true,
+          "version": "0.3.30",
+          "detection method": "pkgconfig",
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas"
+        },
+        "lapack": {
+          "name": "scipy-openblas",
+          "found": true,
+          "version": "0.3.30",
+          "detection method": "pkgconfig",
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas"
+        }
+      }
+    }
+  },
+  "source_sha256": {
+    "native/raster/core.hpp": "ad4626c711df86e75a0633c0eda51c8c12778ee2f8dda75f6514b4789c73e795",
+    "native/raster/library.cpp": "29e622b89bccd2a0c7cdefc039c9cf75485181280bb785e06d1cb815a78ad8cf",
+    "native/symbolic/core.hpp": "6728fedbef7f48f9db8e02d3ee082136c89f18ce83195b1bbcd1a4af348ac649",
+    "software_gpu/graphics/native_raster.py": "a04085fc3b9acd931a58c50cd31c20985bbcd0341c89e101943847b6e28901b8",
+    "software_gpu/graphics/rasterizer.py": "50c30adecf8f5c10f70c181f7f6077fc0cbced82d741ba9ae66bc1fca9cd61b9",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/graphics/tile_backend.py": "0c98aff9c07c88a9ef6b646573611fe0b053a36531536d3b600504166fb5233c",
+    "software_gpu/graphics/framebuffer.py": "b60b0ab569686304efbe62938f086b2e427b6111ab2a5b919c8e835c4676954d",
+    "software_gpu/graphics/batch_shader.py": "8427b4f0738c049bd5754ef5d4eae1041f2c642d91a8a885b4946a65ff07f791",
+    "software_gpu/graphics/surface_plan.py": "a82a10109dd448553835e371d7bb673091bb703015669d25267b94d8ae870b4c",
+    "software_gpu/graphics/shader.py": "7f1b198ff94aa5a7b75f243d0d2dc2615c3a27e6abcc6256de4c347f8a645527",
+    "software_gpu/benchmarks/compare_native_raster.py": "5b07638a34a68a23ece29d8f016db68c51700bb33c112d311ecf6ff35bb1ea9d",
+    "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f",
+    "software_gpu/benchmarks/compare_tile_backends.py": "fd48642eb805cb9a0dbbbc0d86b0e487ab1faeb7a198e1b199ca514731ec6dd9",
+    "software_gpu/integrations/aurion/offline_render_worker.py": "6db8e0089f799d949bd188a8619e3934551e186517d82c6bd4595620f2567a65",
+    "software_gpu/research/native_symbolic.py": "a0579696268f99e28ae6d23e9864a32b0eab778bb6327cedd72725cf48880517"
+  },
+  "build": {
+    "protocol": "are.native-raster-build.v1",
+    "compiler": "/usr/bin/g++",
+    "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "flags": [
+      "-std=c++17",
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-Wall",
+      "-Wextra",
+      "-shared",
+      "-fPIC"
+    ],
+    "compile_ms": 740.1998,
+    "source_sha256": {
+      "raster/core.hpp": "ad4626c711df86e75a0633c0eda51c8c12778ee2f8dda75f6514b4789c73e795",
+      "raster/library.cpp": "29e622b89bccd2a0c7cdefc039c9cf75485181280bb785e06d1cb815a78ad8cf",
+      "symbolic/core.hpp": "6728fedbef7f48f9db8e02d3ee082136c89f18ce83195b1bbcd1a4af348ac649"
+    },
+    "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+    "compiler_diagnostics": ""
+  },
+  "base_commit": "eec34bd0ebe1f4cbe438dc63585fb75fd0bbc4ee",
+  "rows": [
+    {
+      "scene": "tiny",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 1,
+        "size": 0.03
+      },
+      "pixels": 128,
+      "submitted_triangles": 1,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "390363150a73aea15e0e7a497ac1588245c2a74028e34bb3ff50e2d6f2a9fe96",
+      "depth_sha256": "b30a8454bf52ea98630b75bbfaf848f839cb310d1735c0f90d55b89ae1c0aab2",
+      "combined_sha256": "e10b6bdaf3bab2e19bf89d14d649791d9c13309537204278a960237625727ee7",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 1,
+        "candidate_samples": 30,
+        "covered_samples": 4,
+        "shaded_samples": 4,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            0.216455,
+            0.211947,
+            0.267699,
+            0.229724,
+            0.581894,
+            0.253142,
+            0.234801,
+            0.242319,
+            0.173736,
+            0.353097,
+            0.190763,
+            0.207838,
+            0.250028,
+            0.180381,
+            0.169053
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.229724,
+            "iqr": 0.052284499999999956,
+            "mad": 0.023417999999999967,
+            "min": 0.169053,
+            "max": 0.581894
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            0.320538,
+            0.705024,
+            0.258259,
+            0.265803,
+            0.232488,
+            0.435174,
+            0.326968,
+            0.247575,
+            0.276061,
+            0.372048,
+            0.257524,
+            0.256287,
+            0.251603,
+            0.244984,
+            0.236717
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.258259,
+            "iqr": 0.07416399999999995,
+            "mad": 0.017801999999999985,
+            "min": 0.232488,
+            "max": 0.705024
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            0.151638,
+            0.170936,
+            0.12085,
+            0.141447,
+            0.117501,
+            0.17129,
+            0.156725,
+            0.123114,
+            0.118914,
+            0.188732,
+            0.123289,
+            0.522371,
+            0.147099,
+            0.167966,
+            0.107462
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.147099,
+            "iqr": 0.04746900000000001,
+            "mad": 0.023985000000000006,
+            "min": 0.107462,
+            "max": 0.522371
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 1.547283212614264,
+          "iqr": 0.34107457763174565,
+          "mad": 0.15244282223301542,
+          "min": 0.39787430772382076,
+          "max": 4.95224721491732
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 2.086252990907641,
+          "iqr": 0.24467242742934836,
+          "mad": 0.11654427696379299,
+          "min": 0.4906225651883431,
+          "max": 4.124491037581317
+        }
+      }
+    },
+    {
+      "scene": "small-triangles",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 160,
+        "size": 0.05
+      },
+      "pixels": 128,
+      "submitted_triangles": 160,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "95a4df441c836cbcff3c3612c96b8a5f648942da3b33f9dc0939e93760c0e38f",
+      "depth_sha256": "8cba5bf4a82b6b8abfd8fb77d9baae47707445c00fca2e8e2a73f0470c41dc57",
+      "combined_sha256": "95402284eba8f84e491324c8b8438b1af6ca1beae0b5418110a5b8de7161cea8",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 160,
+        "candidate_samples": 11244,
+        "covered_samples": 3320,
+        "shaded_samples": 3155,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            36.494087,
+            32.17598,
+            39.826306,
+            33.596963,
+            32.374761,
+            38.795031,
+            39.736883,
+            30.747239,
+            35.832472,
+            33.103847,
+            32.277879,
+            33.140378,
+            34.138092,
+            34.600429,
+            36.698885
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 34.138092,
+            "iqr": 3.8571819999999946,
+            "mad": 1.8602130000000017,
+            "min": 30.747239,
+            "max": 39.826306
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            25.840279,
+            23.39339,
+            22.817953,
+            22.026074,
+            21.738606,
+            27.299319,
+            19.895974,
+            21.869567,
+            24.209346,
+            24.916937,
+            30.41999,
+            23.627896,
+            21.687069,
+            21.823533,
+            21.009589
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 22.817953,
+            "iqr": 2.7820719999999994,
+            "mad": 1.1308839999999982,
+            "min": 19.895974,
+            "max": 30.41999
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            4.93648,
+            4.141773,
+            4.245575,
+            4.472936,
+            4.67577,
+            4.282493,
+            5.126335,
+            4.281813,
+            3.848593,
+            4.715256,
+            4.546918,
+            4.200372,
+            4.919157,
+            5.393586,
+            4.052308
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 4.472936,
+            "iqr": 0.594233,
+            "mad": 0.27256400000000003,
+            "min": 3.848593,
+            "max": 5.393586
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 7.511165596824995,
+          "iqr": 1.4133642344128718,
+          "mad": 0.4905824089768691,
+          "min": 6.415106572881196,
+          "max": 9.380662454437857
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 5.2345555942696,
+          "iqr": 0.8499236580547986,
+          "mad": 0.41360281518451547,
+          "min": 3.881130281185291,
+          "max": 6.6902438091032215
+        }
+      }
+    },
+    {
+      "scene": "large-surfaces",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 8,
+        "size": 0.8
+      },
+      "pixels": 128,
+      "submitted_triangles": 8,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "fd16781869df84f9550e49f9296da8ac7bc5c8ede68c1e226db4e2b65ba0f584",
+      "depth_sha256": "f66267945027ee92c97f75d1bfab8dadff7e2aac0dc181a2246623932bfd557f",
+      "combined_sha256": "ebcfd7bfc7123df9de6dabf6502f34983a76131129302b47e5470954a9620a64",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 19,
+        "candidate_samples": 76231,
+        "covered_samples": 28875,
+        "shaded_samples": 18758,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            121.367625,
+            119.3441,
+            124.547858,
+            115.682105,
+            118.708832,
+            117.621671,
+            117.240803,
+            110.484371,
+            118.928264,
+            113.718413,
+            114.34071,
+            120.480898,
+            112.880823,
+            119.476213,
+            120.555847
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 118.708832,
+            "iqr": 4.967147999999995,
+            "mad": 1.847014999999999,
+            "min": 110.484371,
+            "max": 124.547858
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            12.231585,
+            16.061352,
+            12.260336,
+            13.993818,
+            12.717546,
+            13.356837,
+            13.31473,
+            12.571217,
+            12.863323,
+            19.369355,
+            15.702378,
+            13.086472,
+            14.174651,
+            14.35268,
+            17.77894
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 13.356837,
+            "iqr": 2.2370944999999995,
+            "mad": 0.8178140000000003,
+            "min": 12.231585,
+            "max": 19.369355
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            1.803063,
+            1.860299,
+            1.93063,
+            2.319703,
+            1.752739,
+            1.909945,
+            1.906459,
+            1.690706,
+            2.684282,
+            2.079981,
+            2.276973,
+            2.109865,
+            2.024123,
+            2.225648,
+            2.070972
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 2.024123,
+            "iqr": 0.2843775000000004,
+            "mad": 0.16382399999999997,
+            "min": 1.690706,
+            "max": 2.684282
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 58.21220518674323,
+          "iqr": 10.155169416415319,
+          "mad": 5.940976640479164,
+          "min": 44.30542841623942,
+          "max": 67.72761489303313
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 6.984010671092324,
+          "iqr": 0.9460495855133964,
+          "mad": 0.5352460865758157,
+          "min": 4.792090771386911,
+          "max": 9.312274967896341
+        }
+      }
+    },
+    {
+      "scene": "procedural400",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 10,
+        "segments": 20
+      },
+      "pixels": 128,
+      "submitted_triangles": 400,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "04f4c03316ebcd07ea7b6fc414d7cc4105ba3d39a3f62836f3ab9124e6e959a0",
+      "depth_sha256": "a6efad1d436a30d0c6a071761edf108ca31ba14916eba6a2a14aee370e3e4fa4",
+      "combined_sha256": "ba4847f26bd1b7ee8e7603ff4698edf892b27702a66c92d7c3a1296d3de27d9a",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 400,
+        "candidate_samples": 26406,
+        "covered_samples": 5378,
+        "shaded_samples": 4753,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            58.438699,
+            64.122838,
+            57.621662,
+            60.544144,
+            57.20657,
+            58.186724,
+            64.401036,
+            80.01557,
+            76.835051,
+            56.988374,
+            58.257135,
+            58.281559,
+            66.012529,
+            55.457919,
+            61.519524
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 58.438699,
+            "iqr": 6.357744000000004,
+            "mad": 2.105445000000003,
+            "min": 55.457919,
+            "max": 80.01557
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            49.108728,
+            46.879341,
+            46.442985,
+            54.111134,
+            40.260586,
+            44.721442,
+            42.387881,
+            41.256414,
+            44.477102,
+            44.646348,
+            50.304689,
+            45.756232,
+            43.013161,
+            42.144697,
+            47.65662
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 44.721442,
+            "iqr": 4.567459499999998,
+            "mad": 2.333561000000003,
+            "min": 40.260586,
+            "max": 54.111134
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            6.315774,
+            6.087074,
+            8.324475,
+            5.936394,
+            6.296533,
+            6.08828,
+            7.017904,
+            7.025541,
+            6.742592,
+            6.84588,
+            6.034909,
+            6.277283,
+            5.886868,
+            5.968826,
+            6.404702
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 6.296533,
+            "iqr": 0.7332444999999996,
+            "mad": 0.3277070000000002,
+            "min": 5.886868,
+            "max": 8.324475
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 9.557169512571695,
+          "iqr": 1.1517889018188505,
+          "mad": 0.47176171752003704,
+          "min": 6.921957480802093,
+          "max": 11.39547684332672
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 7.289177817855273,
+          "iqr": 1.1133060061972824,
+          "mad": 0.6927380510712231,
+          "min": 5.57908877136396,
+          "max": 9.115152060324837
+        }
+      }
+    },
+    {
+      "scene": "procedural5k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 32,
+        "segments": 80
+      },
+      "pixels": 128,
+      "submitted_triangles": 5120,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "2c950a4a2fbb369e535b9a9d3ad4f1561ec5efd4316462a25dfb26496a529902",
+      "depth_sha256": "e67ad505d866ab4ebb59336e1f964be6423ce12d21be76f289bbe40edf3dac29",
+      "combined_sha256": "9d5e4c0fec5c515aeee12535a32ab90fa9c9e22d2a53c0f19ec79a6e32a9d267",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 5120,
+        "candidate_samples": 168533,
+        "covered_samples": 16892,
+        "shaded_samples": 11872,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            401.577222,
+            436.107774,
+            411.988113,
+            469.769757,
+            412.613303,
+            412.892568,
+            407.640412,
+            448.791568,
+            661.722476,
+            409.689088,
+            541.991028,
+            430.605353,
+            410.768048,
+            426.85235,
+            418.508925
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 418.508925,
+            "iqr": 31.071590499999957,
+            "mad": 10.86851299999995,
+            "min": 401.577222,
+            "max": 661.722476
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            421.009487,
+            422.063078,
+            484.202701,
+            504.953659,
+            504.381352,
+            422.594266,
+            421.228347,
+            427.57368,
+            445.928372,
+            417.353472,
+            442.673472,
+            434.30316,
+            438.737511,
+            433.736844,
+            437.973722
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 434.30316,
+            "iqr": 21.97225000000003,
+            "mad": 11.708893999999987,
+            "min": 417.353472,
+            "max": 504.953659
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            72.298829,
+            79.95534,
+            73.378442,
+            75.954983,
+            89.664964,
+            75.263749,
+            76.142769,
+            84.77784,
+            88.958269,
+            75.994183,
+            77.958818,
+            105.561516,
+            76.398304,
+            72.220845,
+            74.869949
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 76.142769,
+            "iqr": 7.299740999999997,
+            "mad": 2.7643269999999944,
+            "min": 72.220845,
+            "max": 105.561516
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 5.485942083485636,
+          "iqr": 0.39732250323410234,
+          "mad": 0.13230946211353878,
+          "min": 4.079188792627798,
+          "max": 7.438571854405126
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 5.625177655789836,
+          "iqr": 0.4511649687630648,
+          "mad": 0.22461559036290257,
+          "min": 4.114218670372259,
+          "max": 6.648064933409307
+        }
+      }
+    },
+    {
+      "scene": "procedural13k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 64,
+        "segments": 104
+      },
+      "pixels": 128,
+      "submitted_triangles": 13312,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "f82884b6a15e46233545cc63a18f1cf2224ea3a95acb198a27ba452b0439ec79",
+      "depth_sha256": "d52a1c34656ac19f9744d0dfa3a5c6bc8786e54de564d6e7ea2d6c8be421ca4e",
+      "combined_sha256": "a3ae04d377b552a9f5256e884cbdda9ae70858dabbd6a075c360bee07b2116d8",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 13312,
+        "candidate_samples": 397945,
+        "covered_samples": 23450,
+        "shaded_samples": 16247,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            1358.287494,
+            1437.655165,
+            997.632162,
+            1052.75737,
+            1065.511903,
+            1001.421811,
+            1025.848653,
+            1070.870298,
+            1118.742655,
+            1008.110457,
+            987.789459,
+            956.418601,
+            1000.203928,
+            964.783943,
+            994.216529
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1008.110457,
+            "iqr": 72.2667550000001,
+            "mad": 43.326513999999975,
+            "min": 956.418601,
+            "max": 1437.655165
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            1014.106029,
+            1006.001548,
+            1036.046862,
+            1014.5061,
+            1038.998873,
+            1037.149274,
+            1128.397313,
+            1018.479743,
+            1023.104156,
+            1045.280147,
+            975.810843,
+            993.875586,
+            988.041927,
+            993.915665,
+            1026.01038
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1018.479743,
+            "iqr": 36.63946150000004,
+            "mad": 18.66953100000012,
+            "min": 975.810843,
+            "max": 1128.397313
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            230.631091,
+            226.005587,
+            223.802751,
+            229.376479,
+            207.467248,
+            222.856493,
+            215.755116,
+            219.927643,
+            219.666014,
+            228.942505,
+            224.474566,
+            235.878101,
+            222.192604,
+            218.067051,
+            205.071201
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 222.856493,
+            "iqr": 8.607513499999982,
+            "mad": 4.789442000000008,
+            "min": 205.071201,
+            "max": 235.878101
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 4.589648313504717,
+          "iqr": 0.5401126671592626,
+          "mad": 0.18919673183198515,
+          "min": 4.0547155371578985,
+          "max": 6.361148784343991
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 4.565688433434412,
+          "iqr": 0.2208824754400993,
+          "mad": 0.11890708602286537,
+          "min": 4.213513597856208,
+          "max": 5.229990991268082
+        }
+      }
+    },
+    {
+      "scene": "tiny",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 1,
+        "size": 0.03
+      },
+      "pixels": 256,
+      "submitted_triangles": 1,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "d615ddb01de1d8a16ca7967037a9422d0ff48c94ca238d5bf281f16909217af5",
+      "depth_sha256": "52fb38b167dcd79db02b2bcf5a34b7f2b8a4773ee9aff67f5f9f1624ba141ae9",
+      "combined_sha256": "66e59feb61c5437ed12fc775163b675420787c6d41ca85390be450a7eef72c40",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 1,
+        "candidate_samples": 81,
+        "covered_samples": 32,
+        "shaded_samples": 32,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            0.533766,
+            0.523167,
+            2.368061,
+            0.471285,
+            0.508991,
+            0.507024,
+            0.455362,
+            0.442628,
+            0.435848,
+            0.50585,
+            0.41711,
+            0.416824,
+            0.522727,
+            0.536348,
+            0.587938
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.507024,
+            "iqr": 0.07947149999999992,
+            "mad": 0.03573900000000002,
+            "min": 0.416824,
+            "max": 2.368061
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            2.334126,
+            0.682634,
+            0.612715,
+            2.903187,
+            0.475982,
+            0.560306,
+            0.48918,
+            0.725851,
+            0.715471,
+            0.454803,
+            0.418711,
+            0.68479,
+            0.491486,
+            0.418729,
+            0.454794
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.560306,
+            "iqr": 0.234738,
+            "mad": 0.12232799999999999,
+            "min": 0.418711,
+            "max": 2.903187
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            0.228219,
+            0.218026,
+            0.555843,
+            0.363828,
+            0.222405,
+            0.299284,
+            0.177615,
+            0.255902,
+            0.198544,
+            0.18262,
+            0.175864,
+            0.21165,
+            0.189293,
+            0.171063,
+            0.187206
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.21165,
+            "iqr": 0.05714750000000002,
+            "mad": 0.02903,
+            "min": 0.171063,
+            "max": 0.555843
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 2.3717759177546287,
+          "iqr": 0.6834031331811747,
+          "mad": 0.3981835609443092,
+          "min": 1.2953510999703157,
+          "max": 4.260305517925025
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 2.5964298732652553,
+          "iqr": 0.7781007534328057,
+          "mad": 0.45627115381200545,
+          "min": 1.1023166613594126,
+          "max": 10.227570885859635
+        }
+      }
+    },
+    {
+      "scene": "small-triangles",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 160,
+        "size": 0.05
+      },
+      "pixels": 256,
+      "submitted_triangles": 160,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "d0c9dff0dbe822a7edd1e542ec9c588b12bb727b3b9ab98504f45a76537a9ea9",
+      "depth_sha256": "05d48109df46fab4a46c2b3707cdf5c3856a2706acfb150289e4896ccb851033",
+      "combined_sha256": "a0fd5f1994e6d98f8eb90462cc244706e24bbfddcefc8cd4f648ecff852d90b8",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 160,
+        "candidate_samples": 35149,
+        "covered_samples": 13061,
+        "shaded_samples": 12376,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            147.448601,
+            105.551116,
+            98.615727,
+            95.084177,
+            96.502451,
+            94.511464,
+            99.821011,
+            101.735691,
+            96.168438,
+            101.742183,
+            95.938504,
+            101.889374,
+            91.45607,
+            99.312832,
+            98.382934
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 98.615727,
+            "iqr": 5.685465999999991,
+            "mad": 3.119963999999996,
+            "min": 91.45607,
+            "max": 147.448601
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            58.775808,
+            32.647154,
+            37.207105,
+            40.332221,
+            31.550982,
+            39.662271,
+            31.766696,
+            43.162557,
+            32.844629,
+            40.013331,
+            36.824916,
+            31.494546,
+            41.882092,
+            36.827841,
+            38.284677
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 37.207105,
+            "iqr": 7.4268845,
+            "mad": 4.362476000000001,
+            "min": 31.494546,
+            "max": 58.775808
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            5.329866,
+            4.709264,
+            5.974851,
+            5.384854,
+            5.606305,
+            6.655591,
+            4.56311,
+            5.126555,
+            5.869255,
+            6.751588,
+            4.695117,
+            5.997625,
+            5.369814,
+            4.74755,
+            4.797964
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 5.369814,
+            "iqr": 1.1492959999999997,
+            "mad": 0.6050370000000003,
+            "min": 4.56311,
+            "max": 6.751588
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 17.657707525589366,
+          "iqr": 3.9652369229180024,
+          "mad": 2.5883367345991584,
+          "min": 14.200311287156918,
+          "max": 27.6645981343621
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 6.961632746087647,
+          "iqr": 1.8785159399851716,
+          "mad": 1.0023917109939946,
+          "min": 5.251169587961901,
+          "max": 11.027633340125249
+        }
+      }
+    },
+    {
+      "scene": "large-surfaces",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 8,
+        "size": 0.8
+      },
+      "pixels": 256,
+      "submitted_triangles": 8,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "9a3b6d3b4a52a158a8caf1933b8de1e059d934d673ad03123a2940b2110993d6",
+      "depth_sha256": "47efb4d93a6f814a49abe34c746d1a44c2752fcbaaee8ef2180fd5b54ab4eceb",
+      "combined_sha256": "0f100d3023cc155d68db92256e4de845849c5c26384213eb7c286ae40aaf4877",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 19,
+        "candidate_samples": 299078,
+        "covered_samples": 115895,
+        "shaded_samples": 75248,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            509.862814,
+            540.230659,
+            465.346641,
+            468.699476,
+            468.57698,
+            556.782762,
+            464.581184,
+            636.397968,
+            479.64374,
+            489.26798,
+            492.923732,
+            556.623989,
+            474.75564,
+            475.734927,
+            556.792264
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 489.26798,
+            "iqr": 76.69976599999995,
+            "mad": 20.69100000000003,
+            "min": 464.581184,
+            "max": 636.397968
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            37.875281,
+            42.9511,
+            36.282435,
+            36.319199,
+            37.887429,
+            47.211294,
+            44.290815,
+            52.677725,
+            39.720099,
+            40.709254,
+            38.917854,
+            38.098912,
+            41.077639,
+            36.031594,
+            38.883531
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 38.917854,
+            "iqr": 4.133014500000002,
+            "mad": 2.1597849999999994,
+            "min": 36.031594,
+            "max": 52.677725
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            3.354334,
+            3.151542,
+            3.303416,
+            3.997759,
+            3.768073,
+            4.356023,
+            3.918188,
+            5.279049,
+            5.043235,
+            3.302185,
+            3.388116,
+            3.482144,
+            4.053939,
+            3.784368,
+            3.614401
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 3.768073,
+            "iqr": 0.6546240000000001,
+            "mad": 0.37995699999999966,
+            "min": 3.151542,
+            "max": 5.279049
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 127.81905926575686,
+          "iqr": 30.52203969901737,
+          "mad": 13.04925432235919,
+          "min": 95.10636327674597,
+          "max": 171.4178833726474
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 10.838164536780452,
+          "iqr": 1.2809269473497231,
+          "mad": 0.7053926820485472,
+          "min": 7.875916747881072,
+          "max": 13.62859831790279
+        }
+      }
+    },
+    {
+      "scene": "procedural400",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 10,
+        "segments": 20
+      },
+      "pixels": 256,
+      "submitted_triangles": 400,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "9e63d15fff1571a625102432658b7fe464a3cca29691698c9d23281db5a3e4c0",
+      "depth_sha256": "d3475f167a9d7c8ede9c918e6a974eb81c21d842ddf328db32c8f1ce583fabf8",
+      "combined_sha256": "18f6e6bddae717d081e2012df40de53431b4901b0f48981046b60d642a408529",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 400,
+        "candidate_samples": 82285,
+        "covered_samples": 21544,
+        "shaded_samples": 19061,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            183.273818,
+            165.159721,
+            164.993331,
+            178.253401,
+            193.580709,
+            181.955504,
+            163.987345,
+            227.294276,
+            187.006927,
+            174.423486,
+            177.126617,
+            165.5968,
+            170.621798,
+            173.690403,
+            170.487804
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 174.423486,
+            "iqr": 14.572359000000006,
+            "mad": 8.826685999999995,
+            "min": 163.987345,
+            "max": 227.294276
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            74.847821,
+            77.112283,
+            84.964406,
+            68.06918,
+            67.142287,
+            70.750202,
+            72.404333,
+            105.972333,
+            74.779117,
+            70.729256,
+            76.987132,
+            74.705919,
+            81.885971,
+            80.730117,
+            79.161256
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 74.847821,
+            "iqr": 8.368418999999989,
+            "mad": 4.11856499999999,
+            "min": 67.142287,
+            "max": 105.972333
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            6.847174,
+            8.487514,
+            6.90015,
+            7.567208,
+            8.642963,
+            9.22074,
+            8.241951,
+            12.666539,
+            7.101327,
+            7.955404,
+            6.517366,
+            8.317136,
+            7.218576,
+            14.024256,
+            7.735724
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 7.955404,
+            "iqr": 1.4052869999999995,
+            "mad": 0.736828,
+            "min": 6.517366,
+            "max": 14.024256
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 22.039023625972177,
+          "iqr": 3.9590473041392045,
+          "mad": 2.1423577758597467,
+          "min": 12.38499946093397,
+          "max": 27.17763848155835
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 8.995283333033795,
+          "iqr": 2.155163018397241,
+          "mad": 1.2379225052303404,
+          "min": 5.756463444477911,
+          "max": 12.31341434606494
+        }
+      }
+    },
+    {
+      "scene": "procedural5k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 32,
+        "segments": 80
+      },
+      "pixels": 256,
+      "submitted_triangles": 5120,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "1ebb40d06c04791bea550eb157512b093d585551947e9af90895311a6a09bcc1",
+      "depth_sha256": "6394411882828b0c3d852e2689313e2ecb3f99d4c2ad233d1e385d95d2de3c78",
+      "combined_sha256": "5c5ab25975fcf07f1048b0d449406a96629721a6dc416e74d755d52ff4f2dd75",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 5120,
+        "candidate_samples": 457313,
+        "covered_samples": 67320,
+        "shaded_samples": 47212,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            854.287877,
+            881.122899,
+            855.371584,
+            839.921687,
+            837.39578,
+            855.396838,
+            789.114579,
+            916.934172,
+            1640.039676,
+            846.858783,
+            840.474568,
+            831.433461,
+            836.776639,
+            912.466073,
+            817.936327
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 846.858783,
+            "iqr": 31.173659000000043,
+            "mad": 10.082143999999971,
+            "min": 789.114579,
+            "max": 1640.039676
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            696.776234,
+            687.485352,
+            688.053204,
+            677.787255,
+            678.965579,
+            677.304383,
+            636.583295,
+            754.320386,
+            969.788862,
+            676.196428,
+            671.577269,
+            658.079856,
+            667.506189,
+            691.682294,
+            687.956741
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 678.965579,
+            "iqr": 15.980900499999962,
+            "mad": 9.087625000000003,
+            "min": 636.583295,
+            "max": 969.788862
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            84.631,
+            88.511216,
+            84.686557,
+            104.720842,
+            85.198252,
+            95.896871,
+            81.811513,
+            102.521219,
+            160.577313,
+            88.207362,
+            89.164025,
+            85.485571,
+            111.119492,
+            81.51607,
+            87.745529
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 88.207362,
+            "iqr": 14.266640500000008,
+            "mad": 3.576362000000003,
+            "min": 81.51607,
+            "max": 160.577313
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 9.645519928228195,
+          "iqr": 0.8918307655302229,
+          "mad": 0.4487466762075325,
+          "min": 7.530421746348518,
+          "max": 11.193695586649357
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 7.698139560885661,
+          "iqr": 0.6945319792070199,
+          "mad": 0.34043943443671587,
+          "min": 6.007102597265293,
+          "max": 8.485226213677867
+        }
+      }
+    },
+    {
+      "scene": "procedural13k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 64,
+        "segments": 104
+      },
+      "pixels": 256,
+      "submitted_triangles": 13312,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "55ec22e804d0e3501deafb9a891dda3615c990320afd2d9becf4e1b96462670a",
+      "depth_sha256": "e10d91ea964a720b3e2fc2d8ce9004c0c2345a570677b4d34b7681dcb53aa53d",
+      "combined_sha256": "fa9514dcc66a40c21af73b99f6ae463c4e1878ad92350fa7b839457eb849b908",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 13312,
+        "candidate_samples": 1056055,
+        "covered_samples": 93494,
+        "shaded_samples": 64988,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            2178.564902,
+            2210.028029,
+            2540.941404,
+            3025.263035,
+            1874.893636,
+            1950.651991,
+            1728.562673,
+            1829.176495,
+            2101.140007,
+            1706.137048,
+            1815.45493,
+            1698.335552,
+            1801.54107,
+            1804.637381,
+            1695.489607
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1829.176495,
+            "iqr": 374.8005830000002,
+            "mad": 123.03944699999988,
+            "min": 1695.489607,
+            "max": 3025.263035
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            1579.29646,
+            2074.369345,
+            2315.185954,
+            2104.550611,
+            1810.706652,
+            1626.175624,
+            1629.358907,
+            1586.973553,
+            1631.688826,
+            1643.968036,
+            1547.82705,
+            1556.944129,
+            1566.608393,
+            1561.914564,
+            1590.078851
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1626.175624,
+            "iqr": 154.38491750000003,
+            "mad": 59.56723099999999,
+            "min": 1547.82705,
+            "max": 2315.185954
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            226.286758,
+            247.415668,
+            303.447987,
+            275.002914,
+            260.884855,
+            213.162777,
+            287.850693,
+            257.193293,
+            255.530993,
+            235.015369,
+            239.278783,
+            243.271702,
+            217.125771,
+            216.164647,
+            216.723239
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 243.271702,
+            "iqr": 37.33280950000005,
+            "mad": 17.61315300000001,
+            "min": 213.162777,
+            "max": 303.447987
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 8.222642515227106,
+          "iqr": 1.4298303637306553,
+          "mad": 0.9283547576222713,
+          "min": 6.00506691502042,
+          "max": 11.000839922008973
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 6.995151180942554,
+          "iqr": 1.0484836252058596,
+          "mad": 0.5951296568608102,
+          "min": 5.660430725452518,
+          "max": 8.38414705814023
+        }
+      }
+    },
+    {
+      "scene": "tiny",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 1,
+        "size": 0.03
+      },
+      "pixels": 512,
+      "submitted_triangles": 1,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "a8be0383efa5977e9bd83a2a3d8cd9b8a418e9eeddcf8d082861a5a05f8e4fd2",
+      "depth_sha256": "0555b05ac892c1d40b4644986a2044a2d0696d356dbe2d74d5a41c86e4a77f43",
+      "combined_sha256": "e9d047ea9c89dc59e64e31fe1532bfbede9184f56b9ac0ba65315feb2554cb54",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 1,
+        "candidate_samples": 289,
+        "covered_samples": 120,
+        "shaded_samples": 120,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            1.255404,
+            0.988293,
+            0.980089,
+            0.973248,
+            1.362693,
+            1.360564,
+            0.982216,
+            0.935689,
+            0.954839,
+            1.334353,
+            1.07993,
+            1.417129,
+            1.003208,
+            0.932683,
+            0.972114
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.988293,
+            "iqr": 0.3221974999999998,
+            "mad": 0.052603999999999984,
+            "min": 0.932683,
+            "max": 1.417129
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            0.577904,
+            0.504219,
+            0.510552,
+            0.502173,
+            0.568437,
+            0.670709,
+            0.665931,
+            0.571381,
+            0.557594,
+            0.526618,
+            2.089213,
+            0.556056,
+            0.607066,
+            0.807878,
+            0.541925
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.568437,
+            "iqr": 0.10222700000000007,
+            "mad": 0.04181899999999994,
+            "min": 0.502173,
+            "max": 2.089213
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            0.23663,
+            0.216283,
+            0.208058,
+            0.456258,
+            0.24615,
+            0.228861,
+            0.331911,
+            0.206631,
+            0.329964,
+            0.457412,
+            0.253011,
+            0.253838,
+            0.343458,
+            0.283296,
+            0.359997
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 0.253838,
+            "iqr": 0.104939,
+            "mad": 0.045780000000000015,
+            "min": 0.206631,
+            "max": 0.457412
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 4.268312444913462,
+          "iqr": 2.0889572755793147,
+          "mad": 1.309037217518167,
+          "min": 2.1331088989124574,
+          "max": 5.944936009193353
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 2.309311395490554,
+          "iqr": 0.8808709618564616,
+          "mad": 0.5417997929074145,
+          "min": 1.100633851899583,
+          "max": 8.257399875894725
+        }
+      }
+    },
+    {
+      "scene": "small-triangles",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 160,
+        "size": 0.05
+      },
+      "pixels": 512,
+      "submitted_triangles": 160,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "e3cd123e9e7643535a4f6cc8435bc9da840e57090b4218855ff792201e81cde0",
+      "depth_sha256": "60c0d3123b5a911a49bd16cf2f4330d942f555943f572c2d57731b9f330050a8",
+      "combined_sha256": "3cf118121c398273126b2d583d6a006d7baee282200c217bc1671f8f26b7cea6",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 160,
+        "candidate_samples": 121992,
+        "covered_samples": 52328,
+        "shaded_samples": 49591,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            347.801528,
+            330.876719,
+            419.818222,
+            334.222343,
+            357.888887,
+            355.247604,
+            346.953782,
+            385.383607,
+            341.583249,
+            347.007009,
+            354.843071,
+            364.137789,
+            352.033389,
+            345.566125,
+            360.974447
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 352.033389,
+            "iqr": 13.17171350000001,
+            "mad": 6.467264,
+            "min": 330.876719,
+            "max": 419.818222
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            64.728954,
+            64.292431,
+            72.734421,
+            79.078487,
+            72.118934,
+            66.940093,
+            63.221273,
+            65.725356,
+            72.780508,
+            64.64734,
+            75.491091,
+            69.363746,
+            61.981038,
+            70.314077,
+            67.617281
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 67.617281,
+            "iqr": 7.738530499999996,
+            "mad": 3.324850000000012,
+            "min": 61.981038,
+            "max": 79.078487
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            7.08614,
+            5.593534,
+            6.455737,
+            6.343979,
+            6.260843,
+            6.848025,
+            6.163475,
+            5.990775,
+            6.338403,
+            7.037713,
+            8.671296,
+            6.380396,
+            6.535002,
+            8.199921,
+            6.410284
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 6.410284,
+            "iqr": 0.6432459999999995,
+            "mad": 0.24680899999999983,
+            "min": 5.593534,
+            "max": 8.671296
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 53.89105883611377,
+          "iqr": 6.52584502280645,
+          "mad": 3.2719920501646413,
+          "min": 40.921572853700305,
+          "max": 65.03025479507606
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 10.548250436330123,
+          "iqr": 2.039392461518508,
+          "mad": 0.9458123511670102,
+          "min": 8.57497005154074,
+          "max": 12.46512433285167
+        }
+      }
+    },
+    {
+      "scene": "large-surfaces",
+      "scene_spec": {
+        "kind": "fixture",
+        "seed": 1234,
+        "triangles": 8,
+        "size": 0.8
+      },
+      "pixels": 512,
+      "submitted_triangles": 8,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "ee09f5f5ed5b750f540249dce639959717adf65f8c447ef8aae0a4b59eee1fc8",
+      "depth_sha256": "889dee67175e1e4969e17d86307e239187357b91d3bbc6b6d482ab02887b4e0c",
+      "combined_sha256": "300037537a91591fe31af378effac3bc1f6eb09a09ab80ba31d0118280dafbc2",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 19,
+        "candidate_samples": 1184321,
+        "covered_samples": 463307,
+        "shaded_samples": 300961,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            1958.38432,
+            1882.718152,
+            2161.353496,
+            1957.716688,
+            1913.527732,
+            1943.213425,
+            1958.430772,
+            2014.699776,
+            2151.284428,
+            1936.623,
+            2192.097607,
+            1894.065372,
+            1895.778308,
+            1963.624685,
+            1904.783134
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1957.716688,
+            "iqr": 80.00679750000018,
+            "mad": 52.93355399999996,
+            "min": 1882.718152,
+            "max": 2192.097607
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            127.688731,
+            123.013105,
+            152.924337,
+            126.479474,
+            139.314861,
+            140.162135,
+            155.247466,
+            127.50921,
+            128.039627,
+            129.154415,
+            152.197906,
+            127.725091,
+            130.490622,
+            125.809255,
+            130.965249
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 129.154415,
+            "iqr": 12.139527499999986,
+            "mad": 2.674941000000004,
+            "min": 123.013105,
+            "max": 155.247466
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            9.334114,
+            8.799422,
+            8.436874,
+            9.14352,
+            8.735292,
+            9.459922,
+            9.56242,
+            9.30307,
+            8.373619,
+            9.123032,
+            10.52976,
+            9.479217,
+            8.830791,
+            8.676196,
+            9.250775
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 9.14352,
+            "iqr": 0.6296609999999987,
+            "mad": 0.3356969999999997,
+            "min": 8.373619,
+            "max": 10.52976
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 213.9592977811497,
+          "iqr": 10.76679504854286,
+          "mad": 5.778141990324428,
+          "min": 199.812428811367,
+          "max": 256.9121461103019
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 14.454071697740499,
+          "iqr": 1.1474404129120614,
+          "mad": 0.6213820989864107,
+          "min": 13.474223767638192,
+          "max": 18.125710660133127
+        }
+      }
+    },
+    {
+      "scene": "procedural400",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 10,
+        "segments": 20
+      },
+      "pixels": 512,
+      "submitted_triangles": 400,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "786a42ae1be8da49922a0ec1b68e7b0ff5d744d7000c4986dcfaeaeb9a8d28f8",
+      "depth_sha256": "1177d9ab2f3e34d3b24fad50188be0d4a84b42c30e94e7bf02d6a6f5573d6622",
+      "combined_sha256": "13f2262ad553edc8bc65d4391548afcee3411d1177b160c4c06f9bd44d498d7c",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 400,
+        "candidate_samples": 284795,
+        "covered_samples": 86144,
+        "shaded_samples": 76220,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            550.158116,
+            551.46353,
+            534.321413,
+            544.756422,
+            557.477593,
+            550.250681,
+            529.367541,
+            580.491563,
+            583.001165,
+            575.514081,
+            558.412887,
+            584.861073,
+            567.910542,
+            625.07537,
+            591.280909
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 558.412887,
+            "iqr": 31.54196550000006,
+            "mad": 17.101194000000078,
+            "min": 529.367541,
+            "max": 625.07537
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            122.615681,
+            118.414782,
+            119.847088,
+            163.918724,
+            139.095904,
+            137.262996,
+            114.037549,
+            128.870702,
+            120.172823,
+            119.926467,
+            114.901085,
+            119.887201,
+            119.529388,
+            123.132401,
+            114.291705
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 119.926467,
+            "iqr": 7.029466500000012,
+            "mad": 3.205933999999999,
+            "min": 114.037549,
+            "max": 163.918724
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            8.701759,
+            8.655276,
+            8.296992,
+            15.015783,
+            15.184043,
+            8.67481,
+            10.378474,
+            8.768102,
+            8.731358,
+            8.863411,
+            11.097507,
+            9.32174,
+            8.944077,
+            11.226777,
+            10.685503
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 8.944077,
+            "iqr": 2.174946500000001,
+            "mad": 0.3776630000000001,
+            "min": 8.296992,
+            "max": 15.184043
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 63.223782226099345,
+          "iqr": 10.88619638623603,
+          "mad": 2.9811459328112164,
+          "min": 36.278922118147285,
+          "max": 66.77096105783316
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 13.364083068605066,
+          "iqr": 2.985048053770173,
+          "mad": 1.3335906126545716,
+          "min": 9.160663204128175,
+          "max": 15.823170305747327
+        }
+      }
+    },
+    {
+      "scene": "procedural5k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 32,
+        "segments": 80
+      },
+      "pixels": 512,
+      "submitted_triangles": 5120,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "6aa475955ea6c9ea557926a6a5bd48f8608f1ef6f632a7d4c846f3a623a0b397",
+      "depth_sha256": "8af41265cae174ec5bcb62fac507c8c714ca9741471dfd64c2ab18ed50739655",
+      "combined_sha256": "0117b0926b5e3f57bdbb7ee4c74ede25eccbfbdef4e27bf0e3326528b376613a",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 5120,
+        "candidate_samples": 1457243,
+        "covered_samples": 268828,
+        "shaded_samples": 188507,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            2030.166225,
+            1811.616535,
+            1862.472667,
+            2938.701417,
+            2523.213538,
+            2431.931486,
+            2222.137519,
+            1988.615538,
+            1998.525145,
+            1937.006842,
+            1935.102268,
+            1925.1758,
+            1958.515097,
+            1893.195588,
+            1999.798509
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 1988.615538,
+            "iqr": 196.01283799999987,
+            "mad": 63.439738000000034,
+            "min": 1811.616535,
+            "max": 2938.701417
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            950.029013,
+            924.135856,
+            2168.970153,
+            1374.020726,
+            1663.490603,
+            979.310489,
+            935.838545,
+            981.407266,
+            1019.237643,
+            953.172654,
+            963.975629,
+            969.562295,
+            981.692642,
+            951.069231,
+            1000.619373
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 979.310489,
+            "iqr": 57.80756550000001,
+            "mad": 28.241258000000016,
+            "min": 924.135856,
+            "max": 2168.970153
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            100.421641,
+            94.143026,
+            84.137219,
+            105.040086,
+            133.790353,
+            99.152676,
+            97.572953,
+            97.025487,
+            98.796027,
+            91.247959,
+            95.169032,
+            104.522646,
+            99.805904,
+            95.872338,
+            93.260069
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 97.572953,
+            "iqr": 5.457743499999992,
+            "mad": 2.8486879999999957,
+            "min": 84.137219,
+            "max": 133.790353
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 20.333318804797763,
+          "iqr": 2.1045459172963135,
+          "mad": 1.0900820832587712,
+          "min": 18.418743436709402,
+          "max": 27.97695174202352
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 10.114942953082009,
+          "iqr": 0.7614956256397711,
+          "mad": 0.3310184080921079,
+          "min": 9.276097880262235,
+          "max": 25.778961781467963
+        }
+      }
+    },
+    {
+      "scene": "procedural13k",
+      "scene_spec": {
+        "kind": "procedural",
+        "seed": 991,
+        "rings": 64,
+        "segments": 104
+      },
+      "pixels": 512,
+      "submitted_triangles": 13312,
+      "warmups_per_mode": 1,
+      "verified_draws": 48,
+      "color_sha256": "5cd639eaee67d48249c6f8fbb0f77d8d73ec572c10c0834252b6fe6092b54539",
+      "depth_sha256": "f7911d291615bf6d2e249dcd15f90b36331d7440838a6b2a3275a440991a810c",
+      "combined_sha256": "a76bc3284d8d35344f73edde1a3396a5142b5b41154cf58cff5093a7cc01948d",
+      "native_receipt": {
+        "protocol": "are.native-raster.v1",
+        "backend": "native-cpp",
+        "binary_sha256": "70691f7c2d2d8bd8b1ef2aa34d46c16fc4923c450928666dbe0d3bdc7ddbb4ef",
+        "workers": 1,
+        "prepared_triangles": 13312,
+        "candidate_samples": 3306811,
+        "covered_samples": 374494,
+        "shaded_samples": 260135,
+        "python_fragment_calls": 0,
+        "python_preparation": true
+      },
+      "modes": {
+        "tiles": {
+          "samples_ms": [
+            3527.10955,
+            3427.90588,
+            3509.959615,
+            3532.713022,
+            4427.368714,
+            4632.113122,
+            9907.449627,
+            3742.620656,
+            3828.692492,
+            3806.586514,
+            3491.606985,
+            3596.008195,
+            3601.365782,
+            3602.894282,
+            3763.763356
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 3602.894282,
+            "iqr": 287.7282170000003,
+            "mad": 139.72637399999985,
+            "min": 3427.90588,
+            "max": 9907.449627
+          }
+        },
+        "batch-first": {
+          "samples_ms": [
+            2262.83698,
+            2337.306957,
+            2458.345125,
+            2487.774687,
+            2292.389684,
+            6347.952708,
+            2617.946441,
+            2597.314552,
+            2400.32279,
+            2302.71335,
+            2284.266874,
+            2316.58369,
+            2451.144661,
+            2383.586338,
+            2557.057038
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 2400.32279,
+            "iqr": 212.76734250000027,
+            "mad": 97.60944000000018,
+            "min": 2262.83698,
+            "max": 6347.952708
+          }
+        },
+        "native-cpp": {
+          "samples_ms": [
+            253.442248,
+            250.329136,
+            251.906978,
+            246.137038,
+            238.593267,
+            370.327671,
+            287.993601,
+            254.620979,
+            322.960209,
+            282.955148,
+            249.09306,
+            258.944411,
+            232.227829,
+            231.849953,
+            245.813356
+          ],
+          "stats_ms": {
+            "n": 15,
+            "median": 251.906978,
+            "iqr": 24.974582499999997,
+            "mad": 7.037432999999993,
+            "min": 231.849953,
+            "max": 370.327671
+          }
+        }
+      },
+      "native_speedup_paired": {
+        "tiles": {
+          "n": 15,
+          "median": 14.017279265026492,
+          "iqr": 1.6192949731161033,
+          "mad": 0.6815121334623182,
+          "min": 11.85499756720804,
+          "max": 34.40163112165815
+        },
+        "batch-first": {
+          "n": 15,
+          "median": 9.607939540054163,
+          "iqr": 1.222442410048874,
+          "mad": 0.6616808389926447,
+          "min": 7.432255501172282,
+          "max": 17.141448520059413
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "protocol": "are.native-raster-validation-summary.v1",
+  "native_regressions": {
+    "tests": 9,
+    "status": "PASS",
+    "coverage_cases": [
+      "real scenes",
+      "clipping/perspective",
+      "all eight mixed color precision patterns",
+      "top-left shared edges",
+      "strict depth ties",
+      "invalid record atomicity",
+      "buffer and work budgets",
+      "unsupported callbacks",
+      "binary and ABI rejection",
+      "standalone C++ and fast-math rejection"
+    ]
+  },
+  "local_suite": {
+    "tests": 236,
+    "status": "PASS",
+    "optional_llvm_skips": 2,
+    "host_exclusions": [
+      "Unix-domain socket unavailable in this host",
+      "nested coverage wrapper includes the same unavailable socket; floors measured separately"
+    ],
+    "earlier_failure": "CPU-budget diagnostic also fails on the unchanged parent commit. With one BLAS helper thread the unchanged test and final local suite pass."
+  },
+  "coverage": {
+    "overall_percent": 67.76672694394213,
+    "native_binding_percent": 100.0,
+    "rasterizer_percent": 100.0,
+    "new_native_binding_floor_percent": 95.0,
+    "all_existing_floors_preserved": true,
+    "all_floors_passed": true
+  },
+  "sanitizers": {
+    "address_and_undefined_behavior": "PASS",
+    "leak_check": "not performed"
+  },
+  "native_benchmark": {
+    "artifact": "native-raster-v1.json",
+    "scenes": 6,
+    "sizes": [
+      128,
+      256,
+      512
+    ],
+    "repeats": 15,
+    "byte_identical_draws_including_warmups": 864,
+    "source_and_binary_binding": "PASS against measured checkout and binary",
+    "statistics_audit": "PASS: independent recomputation of medians, inclusive IQR, MAD and paired ratios"
+  },
+  "existing_renderer_ablation": {
+    "published_metrics": "native-raster-surface-plan-metrics-v1.json",
+    "scenes": 5,
+    "modes": 8,
+    "pixels": 256,
+    "repeats": 15,
+    "byte_identical_draws_including_warmups": 640,
+    "full_local_artifact_audit": "PASS, including all ten source hashes",
+    "publication_scope": "Public numeric projection omits original graph traces and host/build metadata. Audit verifies the complete locally measured artifact, not a rerender."
+  },
+  "canonical_ci": "Full final-head Linux/Windows proof is recorded on PR #35 before merge.",
+  "scope_limits": [
+    "CPU only; no hardware GPU comparison",
+    "Python preparation and packing remain",
+    "built-in VertexColor only",
+    "one worker",
+    "static procedural13k fixture; no user GLB or animation",
+    "ARM, Android and Vulkan not tested"
+  ],
+  "publication": "Public summary only. Detailed internal paths, environment metadata, full logs and opaque archives are excluded following automatic approval review."
+}
