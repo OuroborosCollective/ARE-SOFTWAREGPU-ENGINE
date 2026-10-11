@@ -65,6 +65,10 @@ class TestBlinnPhongHalfVectorCache(unittest.TestCase):
         params = dict(
             model_matrix=Matrix4.identity(), view_matrix=Matrix4.identity(),
             proj_matrix=Matrix4.identity(), light_dir=light.copy(),
+            light_color=np.array([1.0, 1.0, 1.0], dtype=np.float32),
+            ambient_color=np.array([0.2, 0.25, 0.35], dtype=np.float32),
+            diffuse_color=np.array([0.2, 0.6, 0.9], dtype=np.float32),
+            specular_color=np.array([1.0, 1.0, 1.0], dtype=np.float32),
             shininess=shininess, texture=texture)
         return BaselineShader(**params), BlinnPhongShader(**params)
 
@@ -152,6 +156,49 @@ class TestBlinnPhongHalfVectorCache(unittest.TestCase):
         }, sort_keys=True))
         if sys.platform.startswith("linux") and sys.version_info >= (3, 12):
             self.assertGreaterEqual(speedup, 1.0, "fragment time regressed on canonical CPU lane")
+
+
+
+    def test_paired_real_cpu_raster_time_and_byte_parity(self):
+        from software_gpu.benchmarks.compare_tile_backends import make_fixture
+        mesh, faces = make_fixture(8, 0.8)
+        ref, opt = self._pair()
+        frames = []
+        for shader in (ref, opt):
+            fb = Framebuffer(72, 72)
+            engine = SoftwareRasterizer(fb, backend="tiles", tile_size=16,
+                                        num_threads=1)
+            frames.append((fb, engine, shader, []))
+        try:
+            for cycle in range(16):  # one warmup, 15 interleaved measurements
+                order = (frames if cycle % 2 == 0 else list(reversed(frames)))
+                for fb, engine, shader, samples in order:
+                    fb.clear(0, 0, 0, 255, depth=1.0)
+                    start = time.perf_counter_ns()
+                    engine.draw_mesh(mesh, faces, shader)
+                    elapsed = (time.perf_counter_ns() - start) / 1e6
+                    if cycle:
+                        samples.append(elapsed)
+            np.testing.assert_array_equal(frames[0][0].color_buffer, frames[1][0].color_buffer)
+            np.testing.assert_array_equal(frames[0][0].depth_buffer, frames[1][0].depth_buffer)
+            self.assertGreater(np.count_nonzero(frames[0][0].depth_buffer < 1.0), 25)
+            before, after = frames[0][3], frames[1][3]
+            median_ratio = statistics.median(before) / statistics.median(after)
+            print("BLINN_PHONG_RASTER_CPU_EVIDENCE " + json.dumps({
+                "python": sys.version.split()[0], "numpy": np.__version__,
+                "scene": "make_fixture(8,0.8)", "pixels": 72, "repeats": 15,
+                "backend": "tiles", "workers": 1, "byte_identical": True,
+                "before_median_ms": round(statistics.median(before), 5),
+                "after_median_ms": round(statistics.median(after), 5),
+                "median_ratio": round(median_ratio, 4),
+                "scope": "full draw_mesh CPU rasterization on same host",
+            }, sort_keys=True))
+            if sys.platform.startswith("linux") and sys.version_info >= (3, 12):
+                self.assertGreaterEqual(median_ratio, 0.95,
+                                        "full CPU rasterization regressed >5%")
+        finally:
+            for _, engine, _, _ in frames:
+                engine.executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":
