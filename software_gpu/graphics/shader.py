@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -155,7 +156,9 @@ class BlinnPhongShader(Shader):
         self.model = model_matrix
         self.normal_matrix = np.linalg.inv(model_matrix[:3, :3]).T
         
-        self.light_dir = light_dir / np.linalg.norm(light_dir)
+        # Optimization: math.sqrt is ~10x faster than np.linalg.norm for 3D vectors
+        l_len = math.sqrt(float(light_dir[0])**2 + float(light_dir[1])**2 + float(light_dir[2])**2)
+        self.light_dir = light_dir / l_len if l_len > 1e-6 else light_dir
         self.light_color = light_color
         self.ambient_color = ambient_color
         self.diffuse_color = diffuse_color
@@ -173,7 +176,8 @@ class BlinnPhongShader(Shader):
 
         # World normal
         world_normal = self.normal_matrix @ vertex.normal
-        norm_len = np.linalg.norm(world_normal)
+        # Optimization: math.sqrt is ~10x faster than np.linalg.norm for 3D vectors
+        norm_len = math.sqrt(float(world_normal[0])**2 + float(world_normal[1])**2 + float(world_normal[2])**2)
         if norm_len > 1e-6:
             world_normal /= norm_len
 
@@ -186,7 +190,8 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        # Optimization: math.sqrt is ~10x faster than np.linalg.norm for 3D vectors
+        n_len = math.sqrt(float(normal[0])**2 + float(normal[1])**2 + float(normal[2])**2)
         if n_len > 1e-6:
             normal = normal / n_len
 
@@ -217,7 +222,8 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            # Optimization: math.sqrt is ~10x faster than np.linalg.norm for 3D vectors
+            half_len = math.sqrt(float(half_dir[0])**2 + float(half_dir[1])**2 + float(half_dir[2])**2)
             valid = bool(half_len > 1e-6)
             if valid:
                 half_dir /= half_len
@@ -229,5 +235,11 @@ class BlinnPhongShader(Shader):
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        final_rgb = ambient + diffuse + specular
+
+        # Optimization: scalar min/max is faster than np.clip for small arrays
+        r = max(0.0, min(1.0, float(final_rgb[0]))) * 255.0
+        g = max(0.0, min(1.0, float(final_rgb[1]))) * 255.0
+        b = max(0.0, min(1.0, float(final_rgb[2]))) * 255.0
+
+        return int(r), int(g), int(b), 255
