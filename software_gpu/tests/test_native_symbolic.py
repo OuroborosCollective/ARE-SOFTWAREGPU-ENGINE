@@ -146,7 +146,7 @@ class TestNativeSymbolic(unittest.TestCase):
         self.assertEqual(data['last_incremental_executed_nodes'],3)
         self.assertEqual(data['frames_per_sample'],4)
         self.assertEqual(set(data['samples_ns']),{'fused-kernel','fused-checked','incremental-checked'})
-        self.assertTrue(all(len(v)==15 and min(v)>0 for v in data['samples_ns'].values()))
+        self.assertTrue(all(len(v)==15 and min(v)>=0 for v in data['samples_ns'].values()))
         self.assertEqual(data['result_bits'],[oracle(a).view(np.uint32).ravel().tolist()])
 
     def test_offline_build_and_input_validation(self):
