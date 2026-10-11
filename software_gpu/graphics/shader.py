@@ -162,6 +162,10 @@ class BlinnPhongShader(Shader):
         self.specular_color = specular_color
         self.shininess = shininess
         self.texture = texture
+        # A single immutable cache record avoids mixed fields across threads.
+        # light_dir is public/mutable: check its value before every lookup.
+        self._view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+        self._half_cache = None
 
     def vertex_shader(self, vertex: Vertex) -> Tuple[np.ndarray, dict]:
         # Clip-space position
@@ -205,13 +209,22 @@ class BlinnPhongShader(Shader):
         # Ambient component
         ambient = base_color * self.ambient_color
 
-        # Specular component (Blinn-Phong halfway vector)
-        view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # In camera space looking towards +z
-        half_dir = (self.light_dir + view_dir)
-        half_len = np.linalg.norm(half_dir)
-        if half_len > 1e-6:
-            half_dir /= half_len
-            spec = max(0.0, float(np.dot(normal, half_dir))) ** self.shininess
+        # Cache only loop-invariant halfway direction, preserving the same
+        # NumPy float32 operations and dot/power/color evaluation as baseline.
+        # A mutable light_dir must invalidate the value, not leave stale light.
+        light_key = (float(self.light_dir[0]), float(self.light_dir[1]),
+                     float(self.light_dir[2]))
+        cache = self._half_cache
+        if cache is None or cache[0] != light_key:
+            half_dir = self.light_dir + self._view_dir
+            half_len = np.linalg.norm(half_dir)
+            valid = bool(half_len > 1e-6)
+            if valid:
+                half_dir /= half_len
+            cache = (light_key, half_dir, valid)
+            self._half_cache = cache
+        if cache[2]:
+            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
