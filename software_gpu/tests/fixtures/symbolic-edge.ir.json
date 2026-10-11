@@ -1,0 +1,301 @@
+{
+  "protocol": "are.symbolic-wave-ir.v1",
+  "parser": "Wolfram ToExpression InputForm HoldComplete",
+  "syntax_valid": true,
+  "held_assignment_did_not_execute": true,
+  "nodes": [
+    {
+      "id": "ax",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "ay",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "bx",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "by",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        3
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "px",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        4
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "py",
+      "op": "input",
+      "deps": [],
+      "point": [
+        0,
+        0,
+        0,
+        5
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "gray",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "dx",
+      "op": "sub",
+      "deps": [
+        "bx",
+        "ax"
+      ],
+      "point": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "blue",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "dy",
+      "op": "sub",
+      "deps": [
+        "by",
+        "ay"
+      ],
+      "point": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "blue",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "rx",
+      "op": "sub",
+      "deps": [
+        "px",
+        "ax"
+      ],
+      "point": [
+        1,
+        0,
+        0,
+        2
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "blue",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "ry",
+      "op": "sub",
+      "deps": [
+        "py",
+        "ay"
+      ],
+      "point": [
+        1,
+        0,
+        0,
+        3
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "blue",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "left",
+      "op": "mul",
+      "deps": [
+        "rx",
+        "dy"
+      ],
+      "point": [
+        2,
+        0,
+        0,
+        0
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "orange",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "right",
+      "op": "mul",
+      "deps": [
+        "ry",
+        "dx"
+      ],
+      "point": [
+        2,
+        0,
+        0,
+        1
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "orange",
+      "contract": "ordered-f32-v1"
+    },
+    {
+      "id": "edge",
+      "op": "sub",
+      "deps": [
+        "left",
+        "right"
+      ],
+      "point": [
+        3,
+        0,
+        0,
+        0
+      ],
+      "dtype": "f32",
+      "shape": [
+        2,
+        2,
+        3
+      ],
+      "color": "blue",
+      "contract": "ordered-f32-v1"
+    }
+  ],
+  "outputs": [
+    "edge"
+  ],
+  "wolfram_waves": [
+    [
+      [
+        "dx",
+        "dy",
+        "rx",
+        "ry"
+      ]
+    ],
+    [
+      [
+        "left",
+        "right"
+      ]
+    ],
+    [
+      [
+        "edge"
+      ]
+    ]
+  ],
+  "symbolic_edge_identity": true
+}
