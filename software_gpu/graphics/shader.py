@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -173,9 +174,13 @@ class BlinnPhongShader(Shader):
 
         # World normal
         world_normal = self.normal_matrix @ vertex.normal
-        norm_len = np.linalg.norm(world_normal)
+        # Unroll for performance
+        wn_x, wn_y, wn_z = world_normal[0], world_normal[1], world_normal[2]
+        norm_len = math.sqrt(wn_x*wn_x + wn_y*wn_y + wn_z*wn_z)
         if norm_len > 1e-6:
-            world_normal /= norm_len
+            world_normal[0] = wn_x / norm_len
+            world_normal[1] = wn_y / norm_len
+            world_normal[2] = wn_z / norm_len
 
         varyings = {
             'normal': world_normal,
@@ -186,9 +191,13 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        # Unroll norm calculation
+        nx, ny, nz = normal[0], normal[1], normal[2]
+        n_len = math.sqrt(nx*nx + ny*ny + nz*nz)
         if n_len > 1e-6:
-            normal = normal / n_len
+            nx = nx / n_len
+            ny = ny / n_len
+            nz = nz / n_len
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
@@ -203,7 +212,9 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
+        ld_x, ld_y, ld_z = self.light_dir[0], self.light_dir[1], self.light_dir[2]
+        dot_nl = nx*ld_x + ny*ld_y + nz*ld_z
+        diff = max(0.0, dot_nl)
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -212,22 +223,32 @@ class BlinnPhongShader(Shader):
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
         # A mutable light_dir must invalidate the value, not leave stale light.
-        light_key = (float(self.light_dir[0]), float(self.light_dir[1]),
-                     float(self.light_dir[2]))
+        light_key = (float(ld_x), float(ld_y), float(ld_z))
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            hx, hy, hz = half_dir[0], half_dir[1], half_dir[2]
+            half_len = math.sqrt(hx*hx + hy*hy + hz*hz)
             valid = bool(half_len > 1e-6)
             if valid:
-                half_dir /= half_len
+                half_dir[0] = hx / half_len
+                half_dir[1] = hy / half_len
+                half_dir[2] = hz / half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
+
         if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
+            hx, hy, hz = cache[1][0], cache[1][1], cache[1][2]
+            dot_nh = nx*hx + ny*hy + nz*hz
+            spec = max(0.0, dot_nh) ** self.shininess
         else:
             spec = 0.0
+
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        color = ambient + diffuse + specular
+        r = max(0.0, min(1.0, float(color[0]))) * 255.0
+        g = max(0.0, min(1.0, float(color[1]))) * 255.0
+        b = max(0.0, min(1.0, float(color[2]))) * 255.0
+
+        return int(r), int(g), int(b), 255
