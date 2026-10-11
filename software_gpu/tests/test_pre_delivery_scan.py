@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+from pathlib import Path
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -57,9 +58,19 @@ class TestPreDeliveryScan(unittest.TestCase):
 
     @unittest.skipUnless(NODE, "Node.js needed for cross-language release proof")
     def test_actual_cross_language_delivery_and_javascript_only(self):
-        result = scan_before_delivery(fixture(), cases())
+        executed_sources = []
+        real_run = subprocess.run
+        def capture_actual_file(command, **kwargs):
+            executed_sources.append(Path(command[1]).read_bytes())
+            return real_run(command, **kwargs)
+        with patch("subprocess.run", side_effect=capture_actual_file):
+            result = scan_before_delivery(fixture(), cases())
         self.assertEqual(set(result["sources"]), {"python", "javascript"})
         self.assertEqual(len(result["receipt"]["checks"]), 4)
+        self.assertTrue(all(source == result["sources"]["javascript"].encode("utf-8")
+                            for source in executed_sources))
+        self.assertTrue(all(hashlib.sha256(source).hexdigest() == result["receipt"]["source_sha256"]["javascript"]
+                            for source in executed_sources))
         self.assertEqual(scan_before_delivery(fixture(), cases(), ["javascript"])["status"], "PASS")
         bad = cases(); bad[0]["expected"]["edge"] = -bad[0]["expected"]["edge"]
         with self.assertRaisesRegex(ValueError, "ORACLE_MISMATCH"):
