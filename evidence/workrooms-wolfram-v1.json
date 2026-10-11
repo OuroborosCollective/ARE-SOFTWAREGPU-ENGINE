@@ -1,0 +1,58 @@
+{
+  "provider": "Wolfram Language evaluator",
+  "scope": "symbolic DSL / sparse dependency witness; no native timing",
+  "provider_warning": "Symbol::undefined2: Warning: Global symbols \"WorkRooms, ParseRoomPlan, RoomWitness, ParseRoo ... s, ParseRoomPlan, ParseRoomPlan, ParseRoomPlan\" are undefined.\nGeneral::messages: Messages were generated which may indicate errors.",
+  "result": {
+    "descriptor": {
+      "protocol": "are.workrooms.v1",
+      "width": 32,
+      "height": 32,
+      "tile": 8,
+      "frame": 0,
+      "coordinates": [
+        "slot_x",
+        "slot_y",
+        "operation",
+        "frame"
+      ],
+      "stages": [
+        {
+          "kind": "render",
+          "color": "green"
+        },
+        {
+          "kind": "raster",
+          "color": "blue"
+        },
+        {
+          "kind": "msaa",
+          "color": "orange"
+        },
+        {
+          "kind": "aa",
+          "color": "purple"
+        }
+      ]
+    },
+    "witness": {
+      "acyclic": true,
+      "matrixDimensions": [
+        17,
+        17
+      ],
+      "edgeCount": 40,
+      "waveSizes": [
+        4,
+        4,
+        4,
+        4,
+        1
+      ],
+      "workRooms": 16,
+      "handoffNodes": 1
+    },
+    "heldAssignmentRejected": true,
+    "unknownOperationRejected": true,
+    "budgetRejected": true
+  }
+}
