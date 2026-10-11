@@ -8,7 +8,7 @@ The runner supports verified x86-64, ARM64 and ARM32 (native Linux execution onl
 
 ## GitHub and host separation
 
-PR jobs run the wrapper and negative-contract tests without executing vendor binaries. A green PR **does not mean a PassMark measurement succeeded**. A manual GitHub workflow may attempt the official download; on 2026-10-11 it returned **HTTP 403** from a GitHub-hosted runner, so the actual benchmark is BLOCKED there. Do not bypass HTTP controls or replace the archive with an unknown binary.
+PR, push and manual GitHub workflow jobs run the wrapper and negative-contract tests without executing vendor binaries. A green run **does not mean a PassMark measurement succeeded**. The previous attempted direct vendor download returned **HTTP 403** on 2026-10-11; this dependency was removed from GitHub CI. Actual benchmarking runs separately on an authorized Linux host with the owner-provided local archive. Do not bypass HTTP controls or replace the archive with an unknown binary.
 
 On an authorized, isolated, non-root **Linux VPS**, install the genuine ncurses5 runtime (do not replace it with an unvalidated ncurses6 symlink), provide the uploaded archive using a private authorized file channel and run:
 
