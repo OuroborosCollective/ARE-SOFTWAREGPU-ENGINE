@@ -162,3 +162,11 @@ Its original JSON is stored as `workrooms-existing-backends-v1.json.gz`;
 decompress it before using the workbench's `audit`/`analyze` commands.
 `workrooms-measurement-context-v1.json` records the AMD EPYC 9V74 host,
 nine available logical CPUs, thread environment and native IQR/MAD statistics.
+
+The first Windows 3.12 CI run found a pre-existing symbolic microbenchmark
+test requiring positive time for only four tiny native frames. Its test batch
+now contains 2,000 real frames/sample; the 15-sample, positive-duration,
+counter and bit-parity assertions remain. No timer values are clamped or
+fabricated and no native renderer code changed in this correction. The nine
+symbolic native regressions pass locally after the correction; final-head CI
+is the cross-platform gate.

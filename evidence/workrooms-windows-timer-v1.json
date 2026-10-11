@@ -1,0 +1,14 @@
+{
+  "protocol": "are.workrooms.ci-correction.v1",
+  "initial_head": "9b0fdb3fd4f7c9ada20c14ef7be4de47767e121e",
+  "failed_job": "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38149288216/job/114499131581",
+  "platform": "windows-latest / Python 3.12",
+  "existing_test": "TestNativeSymbolic.test_benchmark_is_native_batched_and_reports_all_samples",
+  "failure": "len(samples)==15 and min(samples)>0 assertion failed for four tiny frames per sample",
+  "inference": "All native loop branches produce 15 samples; an effective clock-resolution zero is the explanation consistent with this failure and a successful native process.",
+  "new_workroom_tests": "all four passed in the same failed CI job",
+  "correction": "Increase real native test batch to 2000 frames per sample; retain 15 repeats, positive times, execution counters and exact result bits. Include samples in assertion diagnostics.",
+  "production_code_changed_by_correction": false,
+  "local_regression": {"tests": 9, "status": "PASS"},
+  "final_head_ci": "must pass before integration"
+}
