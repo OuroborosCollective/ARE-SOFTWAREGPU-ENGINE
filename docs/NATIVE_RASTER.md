@@ -111,3 +111,11 @@ Raw observations: [native-raster-v1.json](../evidence/native-raster-v1.json).
 Validation, host limitations and source binding:
 [native-raster-validation-v1.json](../evidence/native-raster-validation-v1.json).
 ARM/Android execution and a Vulkan backend are outside this experiment.
+
+The timing/source snapshot is commit `fa9095e`. A subsequent Windows-only
+linker correction uses `-shared -static` so the DLL includes MinGW runtime
+dependencies instead of requiring compiler DLLs on the loader search path.
+The Linux flags, all C++ source hashes and rebuilt Linux binary SHA256 are
+identical to the measured version; the Python per-draw code is unchanged.
+The stored benchmark source hashes intentionally remain those of the actual
+measurement. The final Windows fix is validated by the complete PR-head CI.

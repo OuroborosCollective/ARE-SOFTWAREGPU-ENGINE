@@ -70,5 +70,13 @@
     "static procedural13k fixture; no user GLB or animation",
     "ARM, Android and Vulkan not tested"
   ],
-  "publication": "Public summary only. Detailed internal paths, environment metadata, full logs and opaque archives are excluded following automatic approval review."
+  "publication": "Public summary only. Detailed internal paths, environment metadata, full logs and opaque archives are excluded following automatic approval review.",
+  "windows_link_fix": {
+    "initial_ci": "Windows jobs on fa9095e failed to load the native DLL; the native test class did not execute there.",
+    "change": "Statically include all MinGW runtime libraries when building the Windows DLL.",
+    "linux_recheck": "All 9 native tests PASS; rebuilt Linux binary, C++ sources and flags identical to measured version; Python per-draw AST unchanged.",
+    "benchmark_source_commit": "fa9095ea157c5f3ba15bc7b74fb24d8524164579",
+    "source_hash_scope": "Native benchmark records the actual measured source version. Only the subsequent Windows build branch differs. Existing SurfacePlan benchmark still matches all ten current source hashes.",
+    "final_windows_proof": "Required on the final PR head; no Windows success inferred from Linux."
+  }
 }

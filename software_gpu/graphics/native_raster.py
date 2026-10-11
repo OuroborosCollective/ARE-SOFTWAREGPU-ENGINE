@@ -30,7 +30,8 @@ def build_raster_kernel(directory):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)
     binary = target/('raster.dll' if sys.platform == 'win32' else 'raster.so')
-    shared = ['-shared', '-static-libstdc++', '-static-libgcc'] if sys.platform == 'win32' else ['-shared', '-fPIC']
+    # Include MinGW's thread runtime too; ctypes does not search PATH for DLLs.
+    shared = ['-shared', '-static'] if sys.platform == 'win32' else ['-shared', '-fPIC']
     cxx = compiler()
     start = time.perf_counter_ns()
     result = subprocess.run([cxx, *FLAGS, *shared, str(target/'raster/library.cpp'), '-o', str(binary)],
