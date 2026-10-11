@@ -1,0 +1,1 @@
+In the SoftwareGPU pipeline's hot paths (e.g., shaders), replacing Numpy vector operations with standard Python scalar math (such as math.sqrt or min/max instead of np.linalg.norm or np.clip) for small vectors is a proven pattern for significantly improving performance.
