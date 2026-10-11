@@ -76,6 +76,10 @@ Erst danach wurden die Quellen mit ihrem SHA-256 ausgegeben. CI benötigt keinen
 Wolfram-Provider: gespeicherte Parser-Ergebnisse sind Prüfbeispiele, keine
 Beglaubigung später veränderter IRs.
 
+Die temporäre JavaScript-Datei wird als exakte UTF-8-Bytes geschrieben. Ein Test
+liest die tatsächlich an Node übergebene Datei und vergleicht Bytes und SHA-256
+mit dem Receipt; damit werden auch Windows-Zeilenenden erfasst.
+
 Das Receipt hält Struktur, Abhängigkeiten, numerische Fallprüfung und externe
 Sachverhalte auseinander. Die numerische Prüfung gilt für die gelieferten Fälle;
 `external_world` bleibt `unknown`. Die gewöhnliche WaveRuntime meldet ohne

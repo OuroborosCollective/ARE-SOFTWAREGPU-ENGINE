@@ -51,7 +51,7 @@ def scan_before_delivery(ir, cases, languages=("python", "javascript"), *, secon
     with tempfile.TemporaryDirectory(prefix="are-scan-") as directory:
         js = Path(directory)/"kernel.cjs"
         if node:
-            js.write_text(sources["javascript"], encoding="utf-8")
+            js.write_bytes(sources["javascript"].encode("utf-8"))
         for index, case in enumerate(cases):
             for language in languages:
                 if language == "python":
