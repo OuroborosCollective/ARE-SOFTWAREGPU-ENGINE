@@ -1,0 +1,3 @@
+# Keep hash-admitted native headers identical in Windows/CRLF checkouts.
+native/symbolic/*.hpp text eol=lf
+software_gpu/tests/fixtures/workrooms-baseline-87ff.hpp text eol=lf

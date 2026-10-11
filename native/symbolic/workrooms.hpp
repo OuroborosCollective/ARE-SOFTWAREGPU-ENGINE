@@ -34,6 +34,7 @@ inline bool covered(float e,const Vertex& a,const Vertex& b) {
     return (dy>0 || (dy==0 && dx<0))?e>=0:e>0;
 }
 class Pipeline {
+    friend class BioPipeline; // Optional scheduler shares the exact render operations.
     Config c_; unsigned workers_; std::size_t pixels_,tiles_x_,tiles_y_,tiles_;
     std::vector<Triangle> triangles_; std::vector<Prepared> prepared_;
     std::vector<std::uint8_t> sample_color_,resolved_,final_;
@@ -53,19 +54,15 @@ class Pipeline {
                       float((1.0-double(v.y)*inv)*0.5*c_.height),float(double(v.z)*inv),1};}
         out.area=edge(out.v[0],out.v[1],out.v[2].x,out.v[2].y);
     }
-    std::uint64_t raster(std::size_t tile) {
-        const auto r=rect(tile);std::uint64_t samples=0;
+    void clear_samples(const Rect& r) {
         for(auto y=r.y0;y<r.y1;++y)for(auto x=r.x0;x<r.x1;++x){const auto p=y*c_.width+x;
             for(int s=0;s<4;++s){sample_depth_[p*4+s]=1.0f;
                 for(int k=0;k<4;++k)sample_color_[(p*4+s)*4+k]=k==3?255:0;}}
-        for(const auto& t:prepared_) {
-            if(t.area<=1e-9f)continue;
-            const auto& a=t.v[0];const auto& b=t.v[1];const auto& d=t.v[2];
-            const auto x0=std::max<int>(int(r.x0),int(std::floor(std::min({a.x,b.x,d.x}))));
-            const auto x1=std::min<int>(int(r.x1)-1,int(std::ceil(std::max({a.x,b.x,d.x}))));
-            const auto y0=std::max<int>(int(r.y0),int(std::floor(std::min({a.y,b.y,d.y}))));
-            const auto y1=std::min<int>(int(r.y1)-1,int(std::ceil(std::max({a.y,b.y,d.y}))));
-            const float inv=float(1.0/double(t.area));
+    }
+    std::uint64_t raster_samples(const Rect& r,const Prepared& t,
+            int x0,int x1,int y0,int y1,float inv) {
+        (void)r;std::uint64_t samples=0;
+        const auto& a=t.v[0];const auto& b=t.v[1];const auto& d=t.v[2];
             for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x)for(int s=0;s<4;++s) {
                 const float px=x+(s%2?0.75f:0.25f),py=y+(s/2?0.75f:0.25f);
                 const float e0=edge(b,d,px,py),e1=edge(d,a,px,py),e2=edge(a,b,px,py);
@@ -75,6 +72,19 @@ class Pipeline {
                 if(z<sample_depth_[index]){sample_depth_[index]=z;++samples;
                     for(int k=0;k<4;++k)sample_color_[index*4+k]=t.rgba[k];}
             }
+        return samples;
+    }
+    std::uint64_t raster(std::size_t tile) {
+        const auto r=rect(tile);std::uint64_t samples=0;clear_samples(r);
+        for(const auto& t:prepared_) {
+            if(t.area<=1e-9f)continue;
+            const auto& a=t.v[0];const auto& b=t.v[1];const auto& d=t.v[2];
+            const auto x0=std::max<int>(int(r.x0),int(std::floor(std::min({a.x,b.x,d.x}))));
+            const auto x1=std::min<int>(int(r.x1)-1,int(std::ceil(std::max({a.x,b.x,d.x}))));
+            const auto y0=std::max<int>(int(r.y0),int(std::floor(std::min({a.y,b.y,d.y}))));
+            const auto y1=std::min<int>(int(r.y1)-1,int(std::ceil(std::max({a.y,b.y,d.y}))));
+            const float inv=float(1.0/double(t.area));
+            samples+=raster_samples(r,t,x0,x1,y0,y1,inv);
         }
         return samples;
     }

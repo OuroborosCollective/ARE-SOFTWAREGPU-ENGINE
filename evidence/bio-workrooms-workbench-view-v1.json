@@ -1,0 +1,492 @@
+{
+  "scope": "Timing-only extraction of five original legacy cases; plans omitted. Native bio receipts were not submitted to this v1-only app.",
+  "original_artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+  "app_result": {
+    "view": {
+      "protocol": "are.workbench-view.v1",
+      "version": "1.1.0",
+      "status": "CONSISTENT_TIMINGS",
+      "authority": "supplied-artifact-timing-consistency-only",
+      "source_verification": "not-compared-to-checkout",
+      "source_binding_complete": true,
+      "independent_rerender_performed": false,
+      "plan_digest_verified": false,
+      "gpu_parity_established": false,
+      "source_paths_sha256": {
+        "software_gpu/benchmarks/compare_surface_plans.py": "68f8dfbd7a99b5df2bddfde1b49682276b2d9a53b85da454c2eec8df5fe0d73f",
+        "software_gpu/benchmarks/compare_tile_backends.py": "fd48642eb805cb9a0dbbbc0d86b0e487ab1faeb7a198e1b199ca514731ec6dd9",
+        "software_gpu/graphics/batch_shader.py": "c762fb1663d969266fcc10f61aa9493e79a94f3cf24369a717be7257b04bbc53",
+        "software_gpu/graphics/framebuffer.py": "b60b0ab569686304efbe62938f086b2e427b6111ab2a5b919c8e835c4676954d",
+        "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+        "software_gpu/graphics/rasterizer.py": "106a1373cdfd3f5ae187ac51b4ca4ce32a3c12c0cebe7321dfff74595dddd38b",
+        "software_gpu/graphics/shader.py": "7f1b198ff94aa5a7b75f243d0d2dc2615c3a27e6abcc6256de4c347f8a645527",
+        "software_gpu/graphics/surface_plan.py": "a82a10109dd448553835e371d7bb673091bb703015669d25267b94d8ae870b4c",
+        "software_gpu/graphics/tile_backend.py": "0c98aff9c07c88a9ef6b646573611fe0b053a36531536d3b600504166fb5233c",
+        "software_gpu/integrations/aurion/offline_render_worker.py": "6db8e0089f799d949bd188a8619e3934551e186517d82c6bd4595620f2567a65"
+      },
+      "environment": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+        "details": {
+          "affinity_cpus": 9,
+          "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+          "logical_cpus": 9,
+          "numpy_build": {
+            "Build Dependencies": {
+              "blas": {
+                "detection method": "pkgconfig",
+                "found": true,
+                "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+                "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+                "name": "scipy-openblas",
+                "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+                "pc file directory": "/project/.openblas",
+                "version": "0.3.30"
+              },
+              "lapack": {
+                "detection method": "pkgconfig",
+                "found": true,
+                "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+                "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+                "name": "scipy-openblas",
+                "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+                "pc file directory": "/project/.openblas",
+                "version": "0.3.30"
+              }
+            },
+            "SIMD Extensions": {
+              "baseline": [
+                "SSE",
+                "SSE2",
+                "SSE3"
+              ],
+              "found": [
+                "SSSE3",
+                "SSE41",
+                "POPCNT",
+                "SSE42",
+                "AVX",
+                "F16C",
+                "FMA3",
+                "AVX2",
+                "AVX512F",
+                "AVX512CD",
+                "AVX512_SKX",
+                "AVX512_CLX",
+                "AVX512_CNL",
+                "AVX512_ICL"
+              ],
+              "not found": [
+                "AVX512_KNL",
+                "AVX512_KNM",
+                "AVX512_SPR"
+              ]
+            }
+          },
+          "python_compiler": "Clang 22.1.3 ",
+          "thread_env": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null,
+            "VECLIB_MAXIMUM_THREADS": null
+          }
+        }
+      },
+      "cases": [
+        {
+          "scene": "tiny",
+          "pixels": 256,
+          "repeats": 15,
+          "image_sha256": "9363779024369aa15b2e7eeb73219b03d1b106eec7517c2e6c64232dbfd1b1fe",
+          "reported_byte_identical": true,
+          "modes": [
+            {
+              "name": "abl-noscan-batch",
+              "median_ms": 0.342726,
+              "iqr_ms": 0.039459500000000036,
+              "mad_ms": 0.026359999999999995,
+              "paired_speedup": 1.115512100044934,
+              "n": 15
+            },
+            {
+              "name": "abl-noscan-scalar",
+              "median_ms": 0.457288,
+              "iqr_ms": 0.07448200000000005,
+              "mad_ms": 0.03308899999999998,
+              "paired_speedup": 0.8347214675185969,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-batch",
+              "median_ms": 0.340993,
+              "iqr_ms": 0.09311050000000004,
+              "mad_ms": 0.03459200000000001,
+              "paired_speedup": 1.0538399760195916,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-scalar",
+              "median_ms": 0.430388,
+              "iqr_ms": 0.04671049999999999,
+              "mad_ms": 0.011896999999999991,
+              "paired_speedup": 0.8647836742617262,
+              "n": 15
+            },
+            {
+              "name": "batch-first",
+              "median_ms": 0.347513,
+              "iqr_ms": 0.10604399999999997,
+              "mad_ms": 0.040711,
+              "paired_speedup": 1.1499270826905026,
+              "n": 15
+            },
+            {
+              "name": "plan-batch",
+              "median_ms": 0.341484,
+              "iqr_ms": 0.11753699999999995,
+              "mad_ms": 0.025429000000000035,
+              "paired_speedup": 1.077817997646393,
+              "n": 15
+            },
+            {
+              "name": "plan-scalar",
+              "median_ms": 0.447063,
+              "iqr_ms": 0.08279999999999998,
+              "mad_ms": 0.025297999999999987,
+              "paired_speedup": 0.8343286831650485,
+              "n": 15
+            },
+            {
+              "name": "tiles",
+              "median_ms": 0.372661,
+              "iqr_ms": 0.06269400000000003,
+              "mad_ms": 0.01627500000000004,
+              "paired_speedup": 1,
+              "n": 15
+            }
+          ],
+          "effects": {
+            "batch_without_scan": 1.3621967544976654,
+            "scan_scalar": 1.0225407978491723,
+            "scan_batch": 0.9888871119872324
+          }
+        },
+        {
+          "scene": "small-triangles",
+          "pixels": 256,
+          "repeats": 15,
+          "image_sha256": "010309c765aeb778eb59adb34b5dbf83051cb97188d8d871ed87b917cf53e8ed",
+          "reported_byte_identical": true,
+          "modes": [
+            {
+              "name": "abl-noscan-batch",
+              "median_ms": 25.439011,
+              "iqr_ms": 1.3218450000000033,
+              "mad_ms": 0.8055519999999987,
+              "paired_speedup": 2.9906896280082966,
+              "n": 15
+            },
+            {
+              "name": "abl-noscan-scalar",
+              "median_ms": 78.421559,
+              "iqr_ms": 3.3814345000000117,
+              "mad_ms": 1.146924999999996,
+              "paired_speedup": 0.9680557560231419,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-batch",
+              "median_ms": 32.86144,
+              "iqr_ms": 1.2861024999999984,
+              "mad_ms": 0.6959599999999995,
+              "paired_speedup": 2.3375316336692924,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-scalar",
+              "median_ms": 86.848658,
+              "iqr_ms": 3.2868930000000063,
+              "mad_ms": 1.7707929999999976,
+              "paired_speedup": 0.8778981448401715,
+              "n": 15
+            },
+            {
+              "name": "batch-first",
+              "median_ms": 25.091918,
+              "iqr_ms": 1.332193499999999,
+              "mad_ms": 0.5664410000000011,
+              "paired_speedup": 3.0153404874192287,
+              "n": 15
+            },
+            {
+              "name": "plan-batch",
+              "median_ms": 32.955969,
+              "iqr_ms": 1.7516309999999997,
+              "mad_ms": 1.0298970000000018,
+              "paired_speedup": 2.3166587354157078,
+              "n": 15
+            },
+            {
+              "name": "plan-scalar",
+              "median_ms": 86.797591,
+              "iqr_ms": 2.300764999999984,
+              "mad_ms": 0.6387909999999977,
+              "paired_speedup": 0.8747027932019394,
+              "n": 15
+            },
+            {
+              "name": "tiles",
+              "median_ms": 76.006967,
+              "iqr_ms": 1.8314394999999877,
+              "mad_ms": 1.1834070000000025,
+              "paired_speedup": 1,
+              "n": 15
+            }
+          ],
+          "effects": {
+            "batch_without_scan": 3.0995620096728094,
+            "scan_scalar": 0.9221372795803782,
+            "scan_batch": 0.7845788049184903
+          }
+        },
+        {
+          "scene": "large-surfaces",
+          "pixels": 256,
+          "repeats": 15,
+          "image_sha256": "3cc79cc6b9e1e0997eb42df49a6be9cb2ee919af406bd1e333d40987538c7efb",
+          "reported_byte_identical": true,
+          "modes": [
+            {
+              "name": "abl-noscan-batch",
+              "median_ms": 28.580307,
+              "iqr_ms": 2.298442999999999,
+              "mad_ms": 1.1802060000000019,
+              "paired_speedup": 13.088620016066564,
+              "n": 15
+            },
+            {
+              "name": "abl-noscan-scalar",
+              "median_ms": 378.730823,
+              "iqr_ms": 8.801811499999985,
+              "mad_ms": 3.0753860000000373,
+              "paired_speedup": 0.9906629869341188,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-batch",
+              "median_ms": 37.331833,
+              "iqr_ms": 2.925757500000003,
+              "mad_ms": 1.4004270000000005,
+              "paired_speedup": 10.03206094510726,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-scalar",
+              "median_ms": 393.711359,
+              "iqr_ms": 19.95418749999999,
+              "mad_ms": 9.744103999999993,
+              "paired_speedup": 0.9529313145429406,
+              "n": 15
+            },
+            {
+              "name": "batch-first",
+              "median_ms": 27.974505,
+              "iqr_ms": 1.752561,
+              "mad_ms": 0.9304790000000018,
+              "paired_speedup": 13.320457491433567,
+              "n": 15
+            },
+            {
+              "name": "plan-batch",
+              "median_ms": 39.187856,
+              "iqr_ms": 2.477328,
+              "mad_ms": 1.379846999999998,
+              "paired_speedup": 9.400060799447665,
+              "n": 15
+            },
+            {
+              "name": "plan-scalar",
+              "median_ms": 394.985716,
+              "iqr_ms": 20.06017700000001,
+              "mad_ms": 10.176159000000041,
+              "paired_speedup": 0.9537427575746558,
+              "n": 15
+            },
+            {
+              "name": "tiles",
+              "median_ms": 373.345936,
+              "iqr_ms": 19.34439850000001,
+              "mad_ms": 7.501801,
+              "paired_speedup": 1,
+              "n": 15
+            }
+          ],
+          "effects": {
+            "batch_without_scan": 13.134750116397973,
+            "scan_scalar": 0.9629976415567,
+            "scan_batch": 0.7574943101451523
+          }
+        },
+        {
+          "scene": "procedural400",
+          "pixels": 256,
+          "repeats": 15,
+          "image_sha256": "816d7126a5f6f8ae427667d30895a539d506b98c392a6c9c9b6a388adeaae570",
+          "reported_byte_identical": true,
+          "modes": [
+            {
+              "name": "abl-noscan-batch",
+              "median_ms": 53.01086,
+              "iqr_ms": 3.2159125000000017,
+              "mad_ms": 1.7122759999999957,
+              "paired_speedup": 2.4534758373196697,
+              "n": 15
+            },
+            {
+              "name": "abl-noscan-scalar",
+              "median_ms": 134.153032,
+              "iqr_ms": 7.477283999999997,
+              "mad_ms": 3.9491920000000107,
+              "paired_speedup": 0.9690762752379484,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-batch",
+              "median_ms": 69.058433,
+              "iqr_ms": 2.4896155000000135,
+              "mad_ms": 1.0376110000000125,
+              "paired_speedup": 1.8682362184961039,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-scalar",
+              "median_ms": 148.176258,
+              "iqr_ms": 3.080948000000035,
+              "mad_ms": 1.849960999999979,
+              "paired_speedup": 0.8791327690297052,
+              "n": 15
+            },
+            {
+              "name": "batch-first",
+              "median_ms": 52.082083,
+              "iqr_ms": 1.8456060000000036,
+              "mad_ms": 0.8663519999999991,
+              "paired_speedup": 2.497919850863108,
+              "n": 15
+            },
+            {
+              "name": "plan-batch",
+              "median_ms": 69.08356,
+              "iqr_ms": 3.003068500000012,
+              "mad_ms": 0.9561070000000029,
+              "paired_speedup": 1.8672701001511791,
+              "n": 15
+            },
+            {
+              "name": "plan-scalar",
+              "median_ms": 149.214232,
+              "iqr_ms": 6.725899000000027,
+              "mad_ms": 3.079903999999999,
+              "paired_speedup": 0.8674748201232676,
+              "n": 15
+            },
+            {
+              "name": "tiles",
+              "median_ms": 128.997666,
+              "iqr_ms": 2.719961500000011,
+              "mad_ms": 1.0992029999999886,
+              "paired_speedup": 1,
+              "n": 15
+            }
+          ],
+          "effects": {
+            "batch_without_scan": 2.521440684094925,
+            "scan_scalar": 0.913557757057386,
+            "scan_batch": 0.7567782923774133
+          }
+        },
+        {
+          "scene": "procedural5k",
+          "pixels": 256,
+          "repeats": 15,
+          "image_sha256": "e0344f0c035ee6532c230a54a6447c3f9bce98e239feb2472275b7ffbd76bc59",
+          "reported_byte_identical": true,
+          "modes": [
+            {
+              "name": "abl-noscan-batch",
+              "median_ms": 509.040742,
+              "iqr_ms": 38.81608249999999,
+              "mad_ms": 20.451749999999947,
+              "paired_speedup": 1.240714339181684,
+              "n": 15
+            },
+            {
+              "name": "abl-noscan-scalar",
+              "median_ms": 640.459753,
+              "iqr_ms": 35.80974499999991,
+              "mad_ms": 18.014282999999978,
+              "paired_speedup": 1.003360932894841,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-batch",
+              "median_ms": 606.972705,
+              "iqr_ms": 33.8130020000001,
+              "mad_ms": 18.438815999999974,
+              "paired_speedup": 1.0543981590196456,
+              "n": 15
+            },
+            {
+              "name": "abl-scan-scalar",
+              "median_ms": 719.895434,
+              "iqr_ms": 31.328700000000026,
+              "mad_ms": 17.606032000000027,
+              "paired_speedup": 0.8661965392974141,
+              "n": 15
+            },
+            {
+              "name": "batch-first",
+              "median_ms": 500.303885,
+              "iqr_ms": 18.921675999999934,
+              "mad_ms": 9.287104,
+              "paired_speedup": 1.2718323884292844,
+              "n": 15
+            },
+            {
+              "name": "plan-batch",
+              "median_ms": 600.687655,
+              "iqr_ms": 29.75341800000001,
+              "mad_ms": 14.200527999999963,
+              "paired_speedup": 1.0568567193511367,
+              "n": 15
+            },
+            {
+              "name": "plan-scalar",
+              "median_ms": 736.997039,
+              "iqr_ms": 34.280192000000056,
+              "mad_ms": 20.653269000000023,
+              "paired_speedup": 0.861188269748993,
+              "n": 15
+            },
+            {
+              "name": "tiles",
+              "median_ms": 632.605012,
+              "iqr_ms": 24.44516699999997,
+              "mad_ms": 11.97947899999997,
+              "paired_speedup": 1,
+              "n": 15
+            }
+          ],
+          "effects": {
+            "batch_without_scan": 1.2599710813555645,
+            "scan_scalar": 0.8722775123275645,
+            "scan_batch": 0.8394027804822047
+          }
+        }
+      ]
+    },
+    "received_json_sha256": "f2dc4194e7510f1b5e6fc5787d47cdf68aa4ed9bcdda782145b17a7ef6da3d13"
+  }
+}

@@ -29,7 +29,7 @@ def main():
              'software_gpu/research/workrooms.py', 'software_gpu/research/workrooms.wl',
              'software_gpu/tests/test_workrooms.py', 'software_gpu/tests/fixtures/workrooms-plan.json',
              'software_gpu/graphics/geometry.py', 'software_gpu/graphics/postprocess.py',
-             'tools/benchmark_workrooms.py']
+             'tools/benchmark_workrooms.py', 'native/symbolic/workrooms_wire.hpp']
     def hashes():
         return {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths}
     before = hashes()
