@@ -77,6 +77,13 @@
     "linux_recheck": "All 9 native tests PASS; rebuilt Linux binary, C++ sources and flags identical to measured version; Python per-draw AST unchanged.",
     "benchmark_source_commit": "fa9095ea157c5f3ba15bc7b74fb24d8524164579",
     "source_hash_scope": "Native benchmark records the actual measured source version. Only the subsequent Windows build branch differs. Existing SurfacePlan benchmark still matches all ten current source hashes.",
-    "final_windows_proof": "Required on the final PR head; no Windows success inferred from Linux."
+    "final_windows_proof": "Required on the final PR head; no Windows success inferred from Linux.",
+    "windows_recheck": "All 9 native raster tests execute and PASS in Windows 3.11, Windows 3.12 and Windows LLVM-JIT jobs on ab62cd5597802bb0b62319535edc97a8bad71a8d."
+  },
+  "windows_timer_test_fix": {
+    "initial_failure": "One Windows 3.12 job on ab62cd5 failed the positive-duration assertion in the older symbolic benchmark test; its four-frame samples can report zero duration. All nine native raster tests passed.",
+    "change": "Batch 1,024 real frame pairs per test sample; keep positive-duration, raw sample count, result-bit and executed-node assertions. Native runtime and timing code unchanged.",
+    "local_recheck": "PASS in the final 236-test local suite, including the unchanged positive-duration and result-bit assertions.",
+    "canonical_proof": "Final-head full CI and job logs are linked on PR #35."
   }
 }

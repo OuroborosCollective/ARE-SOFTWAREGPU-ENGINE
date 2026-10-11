@@ -140,11 +140,14 @@ class TestNativeSymbolic(unittest.TestCase):
 
     def test_benchmark_is_native_batched_and_reports_all_samples(self):
         a=inputs(self.ir,991);b={k:v.copy() for k,v in a.items()};b['px'].flat[0]+=np.float32(.25)
-        result=subprocess.run([str(self.exe),'bench','15','2'],input=encode_frames(self.ir,[a,b]),
+        # Two tiny frame pairs can fall within one Windows clock tick. Keep
+        # the positive-time assertion and batch enough real evaluations.
+        loops = 1024
+        result=subprocess.run([str(self.exe),'bench','15',str(loops)],input=encode_frames(self.ir,[a,b]),
                               capture_output=True,check=True,timeout=20)
         data=json.loads(result.stdout)
         self.assertEqual(data['last_incremental_executed_nodes'],3)
-        self.assertEqual(data['frames_per_sample'],4)
+        self.assertEqual(data['frames_per_sample'],loops*2)
         self.assertEqual(set(data['samples_ns']),{'fused-kernel','fused-checked','incremental-checked','direct-checked'})
         self.assertTrue(all(len(v)==15 and min(v)>0 for v in data['samples_ns'].values()))
         self.assertEqual(data['result_bits'],[oracle(a).view(np.uint32).ravel().tolist()])
