@@ -53,10 +53,14 @@ jobs:
       - name: Test the manifest and fail-closed wrapper
         run: python -m unittest software_gpu.tests.test_passmark_v11 -v
       - name: Install supported terminal runtime from Ubuntu repositories
+        if: github.event_name == 'workflow_dispatch'
         run: |
           sudo apt-get update -qq
           sudo apt-get install --no-install-recommends -y libncurses5 libtinfo5 libcurl4
+      # Manual runs are fail-closed: vendor responds HTTP 403 on public GitHub runners.
+      # Never claim PassMark capacity evidence from PR-contract success.
       - name: Download vendor V11 archive (no binaries committed)
+        if: github.event_name == 'workflow_dispatch'
         env:
           DESTINATION: ${{ runner.temp }}/passmark-v11.zip
         run: |
@@ -66,6 +70,7 @@ jobs:
             https://www.passmark.com/downloads/PerformanceTest_Linux_x86-64.zip
           python tools/passmark_v11.py audit --arch x86_64 --archive "$DESTINATION"
       - name: Run CPU/memory suite and produce SHA-bound receipt
+        if: github.event_name == 'workflow_dispatch'
         env:
           PASSMARK_ARCHIVE: ${{ runner.temp }}/passmark-v11.zip
           OUTPUT_DIR: ${{ runner.temp }}/passmark-v11-results
@@ -76,10 +81,10 @@ jobs:
         run: |
           python tools/passmark_v11.py run --archive "$PASSMARK_ARCHIVE" \
             --output-dir "$OUTPUT_DIR" --profile "$PROFILE" --duration 1 \
-            --iterations "$ITERATIONS" --processes "$PROCESSES" \
+            --iterations "$ITERATIONS" --processes "$PROCESSES" --samples 1 \
             --timeout-seconds 1000
       - name: Publish only sanitized receipt (not raw host metadata)
-        if: always()
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: passmark-v11-cpu-memory-receipt
