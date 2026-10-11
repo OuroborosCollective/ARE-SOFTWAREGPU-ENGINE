@@ -76,8 +76,8 @@ class TestBioWorkRooms(unittest.TestCase):
         source = Path(__file__).parent/'fixtures/bio_checkpoint_probe.cpp'
         subprocess.run([compiler(),*FLAGS,'-pthread','-I',str(NATIVE),str(source),'-o',str(probe)],
                        check=True,capture_output=True,timeout=120)
-        result = subprocess.run([str(probe)],check=True,capture_output=True,timeout=15)
-        self.assertEqual(result.stdout,b'CHECKPOINTS_AND_WORKERS_OK\n')
+        result = subprocess.run([str(probe)],check=True,capture_output=True,text=True,timeout=15)
+        self.assertEqual(result.stdout,'CHECKPOINTS_AND_WORKERS_OK\n')
 
     def test_native_and_boundary_reject_invalid_policies_and_evidence(self):
         request = encode_request(descriptor(),scene_fixture())
