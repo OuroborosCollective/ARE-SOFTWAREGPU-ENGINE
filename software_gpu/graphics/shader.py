@@ -223,10 +223,12 @@ class BlinnPhongShader(Shader):
                 half_dir /= half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
+
         if cache[2]:
             spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
         else:
             spec = 0.0
+
         specular = self.specular_color * self.light_color * spec
 
         final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0

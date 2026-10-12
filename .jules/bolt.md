@@ -1,0 +1,5 @@
+## 2024-10-12 - Shader Math Scalarization Caution
+
+**Learning:** Replacing small NumPy vector operations (like calculating the norm of a 3D vector, scaling 3D vectors, computing vector dot products, and component-wise clipping arrays) with pure Python scalar math operations inside hot loops (`fragment_shader`) results in significant speedups (~1.23x speedup in the fragment function natively and measurable improvements in graphics FPS). However, when downstream tests assert EXACT byte parity against NumPy baseline outputs, substituting certain ops like `np.clip` and `np.linalg.norm` with pure Python equivalents can fail test assertions because of tiny precision/roundoff differences.
+
+**Action:** Whenever profiling Python bottlenecks in tight highly-iterated graphics/rendering loops, avoid creating intermediate numpy arrays and convert vector operations (`np.linalg.norm`, `np.dot`, array additions, etc) into scalar math manually written out line-by-line (e.g. `nx*nx + ny*ny + nz*nz`). BUT always preserve exact NumPy operations or explicit casts if the results undergo exact equality checks or strict clipping validation tests.
