@@ -1,5 +1,8 @@
 # Native original-model benchmark
 
+See [evidence recovery](model-evidence-recovery.md) for which historical artifacts
+survived workspace maintenance and how the fresh original-model run is identified.
+
 This is an opt-in research executable, not a general glTF engine or a replacement
 graphics driver. It extends the native work-room experiment with original indexed
 meshes and skeletal animation. The public legacy wire still admits at most 64
@@ -65,8 +68,11 @@ interval from repeated identical frames.
 ## Reproduce
 
 Keep the supplied original GLBs together in a local directory. The repository
-contains only a checksum/metadata manifest, not the originals. With Python/NumPy
-for offline preparation and a C++17 compiler installed:
+does not contain the private original-file manifest or the original assets. Place
+the separately delivered `original-model-manifest-v1.json` under `evidence/`
+before running the original-model harness. The generated-fixture unit tests do
+not require that manifest. With Python/NumPy for offline preparation and a C++17
+compiler installed:
 
 ```sh
 python tools/benchmark_models.py --assets /path/to/originals --output-dir /path/to/evidence --phase all --repeats 15 --seconds 1800
