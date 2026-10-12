@@ -129,7 +129,7 @@ class BioPipeline {
     struct Bounds {int x0,y0,x1,y1;float inv;bool active;};
     std::vector<Bounds> bounds_;
     std::vector<std::size_t> offsets_,cursor_;
-    std::vector<std::uint16_t> ids_;
+    std::vector<std::uint32_t> ids_;
     using Counts=std::array<std::uint64_t,4>;
     std::array<Counts,8> jobs_{};
     std::array<std::uint64_t,8> samples_{};
@@ -174,7 +174,7 @@ class BioPipeline {
             const auto& v=bounds_[i];if(!v.active)continue;
             for(int y=v.y0/int(base_.c_.tile);y<=v.y1/int(base_.c_.tile);++y)
                 for(int x=v.x0/int(base_.c_.tile);x<=v.x1/int(base_.c_.tile);++x) {
-                    const auto tile=std::size_t(y)*base_.tiles_x_+x;ids_[cursor_[tile]++]=std::uint16_t(i);
+                    const auto tile=std::size_t(y)*base_.tiles_x_+x;ids_[cursor_[tile]++]=std::uint32_t(i);
                 }
         }
     }
@@ -240,8 +240,9 @@ class BioPipeline {
         for(unsigned k=1;k<4;++k)summarize(k,elapsed); // shared interval, never additive
     }
 public:
-    BioPipeline(Config c,const std::vector<Triangle>& scene,unsigned workers,BioPolicy policy):
-        base_(c,scene,workers),policy_(policy) {
+    BioPipeline(Config c,const std::vector<Triangle>& scene,unsigned workers,BioPolicy policy,
+                Admission admission=Admission::legacy):
+        base_(c,scene,workers,admission),policy_(policy) {
         // Accept only the finite named policies, not arbitrary caller boolean combinations.
         const auto admitted=bio_policy(policy.name);
         if(admitted.locality!=policy.locality || admitted.reuse!=policy.reuse ||
@@ -253,6 +254,7 @@ public:
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
+    void update_scene(const std::vector<Triangle>& scene){base_.update_scene(scene);}
     void execute() {
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
         base_.delivered_=false;require_environment();

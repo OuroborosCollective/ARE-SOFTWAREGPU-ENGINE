@@ -1,0 +1,59 @@
+{
+  "protocol": "are.model-validation.v1",
+  "focused_tests": {
+    "tests": 17,
+    "status": "PASS"
+  },
+  "unmodified_host_suite": {
+    "tests": 244,
+    "status": "FAIL",
+    "causes": [
+      "AF_UNIX socket EPERM",
+      "initial CPU startup budget child killed with SIGKILL; isolated retry passes",
+      "nested coverage repeats AF_UNIX failure"
+    ]
+  },
+  "host_executable_coverage": {
+    "tests": 243,
+    "status": "PASS",
+    "explicit_omission": "TestGamingAndMobile.test_android_unix_domain_socket_ipc; AF_UNIX blocked on this host",
+    "configured_skips": 3,
+    "overall_percent": 70.3,
+    "existing_floors": 16,
+    "model_boundary_percent": 99.7,
+    "environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1"
+    },
+    "repository_tests_and_floors_unchanged": true
+  },
+  "canonical_ci": "Required on final published head; no host exception is applied to CI",
+  "pose_clips": 32,
+  "pose_samples": 160,
+  "maximum_pose_absolute_error": 1.3322676295501878e-15,
+  "timed_frames_final_series": 330,
+  "timed_pairs_final_series": 165,
+  "source_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/workrooms.hpp": "0fa1880259c24c28b5fbd184e0143feb0cfd0c6f948ed07d6cfd94e1f0fc2a38",
+    "native/symbolic/workrooms_wire.hpp": "15288833ab2a07a0128090cccfe197295b9f3b6c72e998e79393a6f589c32a23",
+    "native/symbolic/bio_workrooms.hpp": "25021b9127dcc38ad2d6a5a2f543fb03e9dfa46198010f59b0f4dcd4c99e606e",
+    "native/symbolic/model_scene.hpp": "ca1bc4096b2baed1ce1be87a07fb282dc8f0c38a9cb2800555ca4e09a0ce8b49",
+    "native/symbolic/model_main.cpp": "c0ae0439316657316a6774a06099cb2506c30d15d320e8206a17a52279e8e60e",
+    "software_gpu/research/model_probe.py": "a340d6c245b4161acdb7cb308ce7c530e60b5c6920d512bfb9e45eeb8bc0112c",
+    "tools/model_reference.py": "97ab97a8b0b1ba51d18e74ee98a969a830965a9f22f7ac04c31206cb6f9126ad",
+    "tools/benchmark_models.py": "cfce113b08c07b8ba95415b90b3bea10e1a7eab932230c153d7921936dccb18a",
+    "evidence/original-model-manifest-v1.json": "3f82b91c5263c0e28efc6f0f2f326f6952fc2ac18ce522780077842cd79f9a36",
+    "software_gpu/tests/test_model_probe.py": "cbd47fca91c5dd2d269c60a2c2006990d1cb32025b013e7716983fb14f750b25",
+    "software_gpu/tests/fixtures/model_fixture.py": "9ec456e4e660ecdf0dc0c3879298c9180f90fe48d7fb1c374d34012f7a2ba958"
+  },
+  "review": {
+    "result": "No blocking issue within documented bounded opt-in contract",
+    "default_backend_unchanged": true,
+    "raster_numeric_contract_unchanged": true,
+    "legacy_64_triangle_admission_unchanged": true,
+    "original_glbs_not_published": true,
+    "ui_e2e": "Not applicable: no interactive application UI change; actual native GLB end-to-end tests run",
+    "lint": "No configured project linter; compile/import and git diff --check used"
+  }
+}

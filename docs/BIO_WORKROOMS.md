@@ -34,7 +34,7 @@ sample arithmetic are unchanged. A stage join occurs before the final handoff.
 The combined scheduler has a primitive-setup barrier, then a local
 raster/resolve/AA frontier. It does not allocate a million-square adjacency
 matrix or an OS thread for every point. Triangle bins use sparse offsets and
-16-bit indices and preserve ascending submission order. Shared scalar sample
+32-bit indices and preserve ascending submission order. Shared scalar sample
 operations preserve top-left coverage, ordered float32 arithmetic, strict `<`
 depth and first-submission ties. Fast math and FP contraction remain disabled.
 
@@ -43,8 +43,11 @@ stale claims, incomplete predecessors, premature completion and incomplete
 handoff reject. Checkpoint storage and native worker objects are allocated once;
 no worker busy-waits between frames. A failed frame never exposes a framebuffer.
 One caller owns a pipeline; concurrent external calls on the same pipeline are
-unsupported. A pipeline's admitted scene is immutable, while every execute
-recomputes all render work and bins.
+unsupported. The legacy admitted scene is immutable, while every execute
+recomputes all render work and bins. The separate model-probe admission permits
+validated geometry replacement at fixed topology for skeletal animation; see
+`native-model-benchmark.md`. The original benchmark used 16-bit indices; the
+model extension expands them to 32 bits without changing submission order.
 
 The baseline mode retains the four global waves. The four single-feature
 modes, the combined mode and four leave-one-out modes allow observation of

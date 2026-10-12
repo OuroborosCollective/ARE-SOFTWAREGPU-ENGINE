@@ -19,11 +19,21 @@ struct Triangle { std::array<Vertex,3> v; std::array<std::uint8_t,4> rgba; };
 struct Prepared { std::array<Vertex,3> v; float area; std::array<std::uint8_t,4> rgba; };
 struct Wave { std::uint64_t executed=0, samples=0; double milliseconds=0;
     std::vector<std::uint64_t> worker_jobs; };
-inline std::size_t validate(Config c,std::size_t triangles,unsigned workers) {
+enum class Admission { legacy, model_probe };
+inline std::size_t validate(Config c,std::size_t triangles,unsigned workers,
+                            Admission admission=Admission::legacy) {
     if(c.width<2 || c.height<2 || c.width>1024 || c.height>1024 ||
-       c.tile<1 || c.tile>64 || c.frame>1000000 || triangles<1 || triangles>64 ||
-       workers<1 || workers>8 || std::uint64_t(c.width)*c.height*triangles>67108864)
+       c.tile<1 || c.tile>64 || c.frame>1000000 || triangles<1 ||
+       workers<1 || workers>8)
         throw std::runtime_error("ROOM_BUDGET");
+    if(admission==Admission::legacy) {
+        if(triangles>64 || std::uint64_t(c.width)*c.height*triangles>67108864)
+            throw std::runtime_error("ROOM_BUDGET");
+    } else if(admission==Admission::model_probe) {
+        const auto tiles=std::uint64_t((c.width+c.tile-1)/c.tile)*((c.height+c.tile-1)/c.tile);
+        if(c.width>512 || c.height>512 || c.tile<16 || triangles>8000000 ||
+           tiles*triangles>536870912)throw std::runtime_error("MODEL_RENDER_BUDGET");
+    } else throw std::runtime_error("ROOM_ADMISSION");
     return std::size_t(c.width)*c.height;
 }
 inline float edge(const Vertex& a,const Vertex& b,float x,float y) {
@@ -35,7 +45,7 @@ inline bool covered(float e,const Vertex& a,const Vertex& b) {
 }
 class Pipeline {
     friend class BioPipeline; // Optional scheduler shares the exact render operations.
-    Config c_; unsigned workers_; std::size_t pixels_,tiles_x_,tiles_y_,tiles_;
+    Config c_; unsigned workers_; Admission admission_; std::size_t pixels_,tiles_x_,tiles_y_,tiles_;
     std::vector<Triangle> triangles_; std::vector<Prepared> prepared_;
     std::vector<std::uint8_t> sample_color_,resolved_,final_;
     std::vector<float> sample_depth_,depth_;
@@ -151,17 +161,28 @@ class Pipeline {
         if(receipt.executed!=count)throw std::runtime_error("ROOM_INCOMPLETE_WAVE");
         waves_[kind]=std::move(receipt);
     }
+    static void validate_geometry(const std::vector<Triangle>& triangles) {
+        for(const auto& t:triangles)for(const auto& v:t.v)
+            if(!std::isfinite(v.x)||!std::isfinite(v.y)||!std::isfinite(v.z)||!std::isfinite(v.w)||v.w<1e-7f||
+               v.x < -v.w || v.x>v.w || v.y < -v.w || v.y>v.w || v.z < -v.w || v.z>v.w)
+                throw std::runtime_error("ROOM_REQUIRES_FINITE_CLIPPED_GEOMETRY");
+    }
 public:
-    Pipeline(Config c,const std::vector<Triangle>& triangles,unsigned workers):c_(c),workers_(workers),
-        pixels_(validate(c,triangles.size(),workers)),tiles_x_((c.width+c.tile-1)/c.tile),
+    Pipeline(Config c,const std::vector<Triangle>& triangles,unsigned workers,
+             Admission admission=Admission::legacy):c_(c),workers_(workers),admission_(admission),
+        pixels_(validate(c,triangles.size(),workers,admission)),tiles_x_((c.width+c.tile-1)/c.tile),
         tiles_y_((c.height+c.tile-1)/c.tile),tiles_(tiles_x_*tiles_y_),triangles_(triangles),prepared_(triangles.size()),
         sample_color_(pixels_*16),resolved_(pixels_*4),final_(pixels_*4),sample_depth_(pixels_*4),depth_(pixels_),
         states_(triangles.size()+3*tiles_) {
         require_environment();
-        for(const auto& t:triangles_)for(const auto& v:t.v)
-            if(!std::isfinite(v.x)||!std::isfinite(v.y)||!std::isfinite(v.z)||!std::isfinite(v.w)||v.w<1e-7f||
-               v.x < -v.w || v.x>v.w || v.y < -v.w || v.y>v.w || v.z < -v.w || v.z>v.w)
-                throw std::runtime_error("ROOM_REQUIRES_FINITE_CLIPPED_GEOMETRY");
+        validate_geometry(triangles_);
+    }
+    void update_scene(const std::vector<Triangle>& triangles) {
+        delivered_=false;
+        if(admission_!=Admission::model_probe || triangles.size()!=triangles_.size())
+            throw std::runtime_error("MODEL_TOPOLOGY_CHANGED");
+        validate_geometry(triangles);
+        std::copy(triangles.begin(),triangles.end(),triangles_.begin());
     }
     void execute() {
         delivered_=false;require_environment();std::fill(states_.begin(),states_.end(),State::waiting);

@@ -1,0 +1,86 @@
+{
+  "protocol": "are.model-repeatability.v1",
+  "native_sources_identical": true,
+  "binary_identical": true,
+  "comparisons": [
+    {
+      "name": "mage",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 1.8823422169919832,
+      "ratio_final": 1.6265370476695864
+    },
+    {
+      "name": "assassin",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 1.765951532677103,
+      "ratio_final": 1.2288339998817366
+    },
+    {
+      "name": "axe",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.044304754873813,
+      "ratio_final": 1.9507848220381128
+    },
+    {
+      "name": "sword",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 1.706361462732556,
+      "ratio_final": 1.890635025779476
+    },
+    {
+      "name": "log",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 1.6586136385597752,
+      "ratio_final": 1.7020075795140834
+    },
+    {
+      "name": "boulder",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 1.6036998599912047,
+      "ratio_final": 1.5603681411830743
+    },
+    {
+      "name": "crystal",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.1921679796534845,
+      "ratio_final": 2.857149243402579
+    },
+    {
+      "name": "armor",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.4850217089102036,
+      "ratio_final": 2.7503287889871864
+    },
+    {
+      "name": "wisteria",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.571178588657826,
+      "ratio_final": 2.4902812018779446
+    },
+    {
+      "name": "arena6",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.5463909170655707,
+      "ratio_final": 2.543228319677031
+    },
+    {
+      "name": "all9",
+      "same_input": true,
+      "same_frame_hashes": true,
+      "ratio_series1": 2.725943347976427,
+      "ratio_final": 2.7765694400232848
+    }
+  ],
+  "final_source_binding": true,
+  "first_series_note": "Historical first-series Python loader/harness hashes differ: subsequent offline key/chunk bounds and receipt validation added. Native sources and binary, all typed inputs and frame hashes remain identical. Final series binds the complete final harness."
+}
