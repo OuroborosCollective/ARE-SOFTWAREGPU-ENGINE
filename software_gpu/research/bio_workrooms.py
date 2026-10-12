@@ -19,7 +19,7 @@ def build_bio_workrooms(directory):
     target = Path(directory).resolve()
     target.mkdir(parents=True, exist_ok=True)
     sources = {name: (NATIVE/name).read_bytes() for name in
-               ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp', 'bio_workrooms_main.cpp')}
+               ('core.hpp', 'model_material.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp', 'bio_workrooms_main.cpp')}
     # A byte-exact historical test fixture also works in shallow CI checkouts.
     sources['frozen_workrooms.hpp'] = (NATIVE.parents[1]/'software_gpu/tests/fixtures/workrooms-baseline-87ff.hpp').read_bytes()
     if hashlib.sha256(sources['frozen_workrooms.hpp']).hexdigest() != BASELINE_SOURCE_SHA256:

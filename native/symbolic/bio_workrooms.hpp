@@ -190,7 +190,7 @@ class BioPipeline {
         return samples;
     }
     void visit(unsigned kind,std::size_t i,unsigned worker) {
-        const auto n=base_.triangles_.size();const auto room=kind==0?i:n+(kind-1)*base_.tiles_+i;
+        const auto n=base_.triangle_count();const auto room=kind==0?i:n+(kind-1)*base_.tiles_+i;
         if(ledger_) {
             if(kind==2)ledger_->require_done(n+i,epoch_);
             if(kind==3)neighbors(i,[&](auto tile){ledger_->require_done(n+base_.tiles_+tile,epoch_);});
@@ -213,7 +213,7 @@ class BioPipeline {
         auto& wave=base_.waves_[kind];wave.executed=0;wave.samples=0;wave.milliseconds=elapsed;
         for(unsigned w=0;w<base_.workers_;++w){wave.worker_jobs[w]=jobs_[w][kind];
             wave.executed+=jobs_[w][kind];if(kind==1)wave.samples+=samples_[w];}
-        if(wave.executed!=(kind==0?base_.triangles_.size():base_.tiles_))
+        if(wave.executed!=(kind==0?base_.triangle_count():base_.tiles_))
             throw std::runtime_error("ROOM_INCOMPLETE_WAVE");
     }
     void stage(unsigned kind,std::size_t count) {
@@ -258,13 +258,32 @@ public:
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
+    BioPipeline(Config c,const std::vector<SurfaceTriangle>& scene,unsigned workers,BioPolicy policy,
+                const std::vector<SurfaceMaterial>& materials,const std::vector<SurfaceTexture>& textures,
+                SurfaceLighting lighting,Admission admission=Admission::model_probe):
+        base_(c,scene,workers,materials,textures,lighting,admission),policy_(policy) {
+        const auto admitted=bio_policy(policy.name);
+        if(admitted.locality!=policy.locality||admitted.reuse!=policy.reuse||admitted.frontier!=policy.frontier||
+           admitted.checkpoints!=policy.checkpoints)throw std::runtime_error("ROOM_POLICY_SCHEMA");
+        if(policy.reuse)resident_=std::make_unique<ResidentWorkers>(workers);
+        if(policy.checkpoints)ledger_=std::make_unique<CheckpointLedger>(base_.room_count());
+        if(policy.frontier)pending_.reset(new std::atomic<unsigned char>[base_.tiles_]);
+        if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
+        for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
+    }
     void update_scene(const std::vector<Triangle>& scene){
-        const bool topology_changed=scene.size()!=base_.triangles_.size();
+        const bool topology_changed=scene.size()!=base_.triangle_count();
         base_.update_scene(scene);
         if(topology_changed){
             if(policy_.locality)bounds_.resize(scene.size());
             if(ledger_){ledger_=std::make_unique<CheckpointLedger>(base_.room_count());epoch_=0;}
         }
+    }
+    void update_scene(const std::vector<SurfaceTriangle>& scene){
+        const bool topology_changed=scene.size()!=base_.triangle_count();
+        base_.update_scene(scene);
+        if(topology_changed){if(policy_.locality)bounds_.resize(scene.size());
+            if(ledger_){ledger_=std::make_unique<CheckpointLedger>(base_.room_count());epoch_=0;}}
     }
     void execute() {
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
@@ -273,8 +292,8 @@ public:
         base_.operation_work_ms_={};
         binning_ms_=0;
         if(ledger_)epoch_=ledger_->begin();
-        stage(0,base_.triangles_.size());
-        if(ledger_)for(std::size_t i=0;i<base_.triangles_.size();++i)ledger_->require_done(i,epoch_);
+        stage(0,base_.triangle_count());
+        if(ledger_)for(std::size_t i=0;i<base_.triangle_count();++i)ledger_->require_done(i,epoch_);
         if(policy_.locality){const auto begin=std::chrono::steady_clock::now();make_bins();
             binning_ms_=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();} // recomputed each frame, included in timing
         if(policy_.frontier)frontier();else for(unsigned k=1;k<4;++k)stage(k,base_.tiles_);

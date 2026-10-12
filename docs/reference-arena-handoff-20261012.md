@@ -51,7 +51,7 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 
 `reference_arena/` ist eine rein visuelle Three.js-Ansicht mit WebGL, perspektivischer Kamera, GLB-Originaltexturen/-materialien, Animationen und Orbit-Steuerung. Sie ist ein visueller Referenzpfad, **kein dritter Timing-Backend**; ihr Browser-FPS-Zähler ist keine native Messung.
 
-`AREMDL02` bringt Perspektivprojektion und Clipping in den nativen C++-Pfad. Native Textur-/UV-Interpolation und originale PBR-Materialzuweisungen sind weiterhin nicht integriert; die Beleuchtung ist diagnostisch pro Fläche. Browser- und native Ausgabe sind keine pixelgleichen Renderings. Der nächste Funktionsschritt ist der explizite Attribut-/Materialvertrag aus [`docs/native-perspective-texture-pbr-plan.md`](native-perspective-texture-pbr-plan.md), während `ARERIN01`, `AREMDL01`, VertexColor- und Diagnosepfad rückwärtskompatibel bleiben. Es gibt weiterhin keine unbelegte Grundlage für LOD-, Sichtbarkeits- oder Pixelarbeitsreduktionen.
+`AREMDL02` bleibt der Perspektiv-/Diagnosepfad. Die anschließend ergänzte, getrennt aktivierte Pipeline `AREMDL03` bringt perspektivisch korrekte Attribute, Originaltexturen und begrenztes glTF-PBR nativ in C++; Browser- und native Ausgabe sind keine pixelgleichen Renderings. `ARERIN01`, `AREMDL01`, VertexColor- und Diagnosepfade bleiben rückwärtskompatibel. Messungen zeigen weiterhin keine Grundlage für eine 60-FPS-Zusage.
 
 ## Reproduktion
 
@@ -89,7 +89,7 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 
 5. Historische Orthogonal-Receipts und komprimierte Frames liegen unter `evidence/reference-arena-{before,after}-...-20261012.*`; der aktuelle Perspektivlauf liegt in `evidence/reference-arena-perspective-20261012/`. Die sechs GLB-Binaries sind nicht eingecheckt.
 
-## Validierung des aktuellen Draft-PR-Commits
+## Historische Validierung des Basis-Draft-PR-Commits (814a293; Stand 2026-10-12)
 
 - **Vollständige Projektsuite auf Commit `814a293`:** `python -m unittest discover -s software_gpu/tests -p 'test_*.py' -v` → **286 bestanden, 2 übersprungen** (113,64 s).
 - **Fokussierte AREMDL02-Tests vor dem Push:** 12 Modell-/Projektionsprüfungen bestanden; enthalten Clipping an sechs Ebenen, Culling und animierte Topologieänderung mit exakter Einworker-/Bio-Parität.
@@ -104,3 +104,25 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 2. Den gleichen gepaarten Perspektivbenchmark auf einem weniger variablen oder dedizierten Runner wiederholen und p95/Maximum weiterhin neben dem Median bewerten.
 3. Den nächsten Funktionsschritt gemäß `docs/native-perspective-texture-pbr-plan.md` implementieren: versionierter Importvertrag, perspektivisch korrekte UV-Interpolation und danach begrenzte Originaltextur-/PBR-Unterstützung. Alpha, Normalmaps, Sampler/Mips und Farbmanagement explizit spezifizieren.
 4. Nach Textur-/Materialintegration denselben Arena-Input, dieselben Originalhashes und dieselbe Kamera erneut gegen serielle Referenz, native Baseline und Bio-Scheduler messen; Perspektiv-, Sampling-, Beleuchtungs- und Resolve-Kosten getrennt berichten.
+
+## Aktualisierung 2026-10-13: native Texturen und PBR
+
+Die Folgearbeit ist inzwischen im opt-in-Profil **AREMDL03** umgesetzt; der frühere
+Abschnitt „Handoff / nächste Schritte“ ist historisch und für den aktuellen Stand
+überholt. Das Profil rendert alle sechs Original-GLBs einschließlich zwölf Figuren-
+Maps und zwei Umfeld-Basecolor-Maps. Der aktuelle Releasebuild ist warnungsfrei;
+Quellhashes stabilisierten sich während des finalen Benchmarks, und serielle
+Referenz, native Baseline sowie Bio gaben in allen 45 Messframes aller drei Cases
+identische RGBA-/Resolved-/Depthbuffer aus. Vollsuite: **292 bestanden, 2
+übersprungen**.
+
+| Case | PBR Bio Median / p95 / Max (ms) | Speedup zur nativen Baseline | Frames >16,7 ms |
+|---|---:|---:|---:|
+| `animated4` | 58,808 / 62,101 / 62,527 | 1,587× | 15/15 |
+| `static2` | 13,285 / 13,970 / 14,163 | 1,575× | 0/15 |
+| `arena6` | 65,244 / 73,653 / 75,887 | 1,696× | 15/15 |
+
+Damit ist die native Textur-/PBR-Funktion validiert, aber **keine 60-FPS-Freigabe**
+erreicht. Methodik, Limits, Reproduktion, Tests und Rohreceipts stehen im
+[AREMDL03-Abschlussbericht](native-pbr-arena-report-20261013.md); die versionierten
+Frames und JSON-Receipts liegen in `evidence/native-pbr-20261013/benchmark/`.

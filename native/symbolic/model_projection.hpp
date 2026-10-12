@@ -9,6 +9,7 @@
 
 namespace are::models::projection {
 using are::rooms::Vertex;
+using are::rooms::SurfaceVertex;
 using V3 = std::array<double, 3>;
 
 struct Camera {
@@ -147,6 +148,47 @@ std::size_t clip_triangle(const std::array<Vertex,3>& triangle, Emit&& emit) {
         emit(std::array<Vertex,3>{a[0],a[i],a[i+1]});
         ++emitted;
     }
+    if(emitted>7)throw std::runtime_error("MODEL_CLIP_TRIANGLE_BUDGET");
+    return emitted;
+}
+
+inline SurfaceVertex surface_intersection(const SurfaceVertex& a,const SurfaceVertex& b,
+                                           double da,double db,unsigned plane) {
+    const double den=da-db;if(!std::isfinite(den)||den==0)throw std::runtime_error("MODEL_CLIP_PARALLEL_EDGE");
+    const double t=std::clamp(da/den,0.0,1.0);SurfaceVertex v;
+    auto mix=[&](float x,float y){return float(double(x)+(double(y)-x)*t);};
+    v.clip={mix(a.clip.x,b.clip.x),mix(a.clip.y,b.clip.y),mix(a.clip.z,b.clip.z),mix(a.clip.w,b.clip.w)};
+    for(int k=0;k<3;++k){v.world[k]=mix(a.world[k],b.world[k]);v.normal[k]=mix(a.normal[k],b.normal[k]);}
+    for(int k=0;k<2;++k)v.uv[k]=mix(a.uv[k],b.uv[k]);
+    switch(plane){case 0:v.clip.x=-v.clip.w;break;case 1:v.clip.x=v.clip.w;break;
+        case 2:v.clip.y=-v.clip.w;break;case 3:v.clip.y=v.clip.w;break;
+        case 4:v.clip.z=-v.clip.w;break;default:v.clip.z=v.clip.w;break;}
+    for(float x:{v.clip.x,v.clip.y,v.clip.z,v.clip.w})if(!std::isfinite(x))throw std::runtime_error("MODEL_CLIP_NONFINITE");
+    return v;
+}
+template<class Emit>
+std::size_t clip_surface_triangle(const std::array<SurfaceVertex,3>& triangle,Emit&& emit) {
+    constexpr std::size_t capacity=16;std::array<SurfaceVertex,capacity> a{},b{};std::size_t count=3;
+    for(std::size_t i=0;i<3;++i){const auto& v=triangle[i];
+        for(float x:{v.clip.x,v.clip.y,v.clip.z,v.clip.w})if(!std::isfinite(x))throw std::runtime_error("MODEL_CLIP_NONFINITE");
+        for(float x:v.world)if(!std::isfinite(x))throw std::runtime_error("MODEL_SURFACE_POSITION");
+        for(float x:v.normal)if(!std::isfinite(x))throw std::runtime_error("MODEL_SURFACE_NORMAL");
+        for(float x:v.uv)if(!std::isfinite(x))throw std::runtime_error("MODEL_SURFACE_UV");
+        a[i]=v;}
+    for(unsigned plane=0;plane<6&&count;++plane){std::size_t out=0;
+        auto push=[&](const SurfaceVertex& v){if(out>=capacity)throw std::runtime_error("MODEL_CLIP_VERTEX_BUDGET");b[out++]=v;};
+        auto previous=a[count-1];double dp=distance(previous.clip,plane);bool prev=dp>=0;
+        for(std::size_t i=0;i<count;++i){const auto current=a[i];const double dc=distance(current.clip,plane);const bool inside=dc>=0;
+            if(prev&&inside)push(current);
+            else if(prev&&!inside)push(surface_intersection(previous,current,dp,dc,plane));
+            else if(!prev&&inside){push(surface_intersection(previous,current,dp,dc,plane));push(current);}
+            previous=current;dp=dc;prev=inside;}
+        count=out;a=b;
+    }
+    if(count<3)return 0;
+    for(std::size_t i=0;i<count;++i){auto& v=a[i].clip;if(!(v.w>0)||!std::isfinite(v.w))throw std::runtime_error("MODEL_CLIP_W");
+        v.x=std::clamp(v.x,-v.w,v.w);v.y=std::clamp(v.y,-v.w,v.w);v.z=std::clamp(v.z,-v.w,v.w);}
+    std::size_t emitted=0;for(std::size_t i=1;i+1<count;++i){emit(std::array<SurfaceVertex,3>{a[0],a[i],a[i+1]});++emitted;}
     if(emitted>7)throw std::runtime_error("MODEL_CLIP_TRIANGLE_BUDGET");
     return emitted;
 }

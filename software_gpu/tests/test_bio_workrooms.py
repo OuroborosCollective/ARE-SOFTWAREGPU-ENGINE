@@ -105,7 +105,7 @@ class TestBioWorkRooms(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='are-bio-build-admission-') as tmp:
             root = Path(tmp);native = root/'native/symbolic';native.mkdir(parents=True)
             fixtures = root/'software_gpu/tests/fixtures';fixtures.mkdir(parents=True)
-            for name in ('core.hpp','workrooms.hpp','workrooms_wire.hpp','bio_workrooms.hpp','bio_workrooms_main.cpp'):
+            for name in ('core.hpp','model_material.hpp','workrooms.hpp','workrooms_wire.hpp','bio_workrooms.hpp','bio_workrooms_main.cpp'):
                 (native/name).write_bytes((NATIVE/name).read_bytes())
             frozen = fixtures/'workrooms-baseline-87ff.hpp'
             original = (Path(__file__).parent/'fixtures/workrooms-baseline-87ff.hpp').read_bytes()

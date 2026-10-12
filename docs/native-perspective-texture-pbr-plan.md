@@ -1,6 +1,6 @@
 # Implementierungsplan: perspektivisch korrekte GLB-Texturen und PBR im nativen C++-Pfad
 
-**Stand:** 2026-10-12
+**Stand:** 2026-10-13
 **Ausgangspunkt:** `main`-basierter Referenzarena-/Frame-Timing-Branch; derzeitiger GLB-Rendervertrag `AREMDL01` / `are.model-input.v1`.
 
 Zum gemessenen Ausgangspunkt und zu den archivierten Arenareferenzen siehe den
@@ -14,11 +14,14 @@ Der bisherige 64-Dreiecks-/`ARERIN01`-Wire-Vertrag, `AREMDL01`, die Diagnosebele
 
 **Nicht das v1-Ziel:** beliebige glTF-Erweiterungen, Transparenz/Blending, Alpha-Masken, morph targets, mehrere Primitive pro GLB, Shadowmapping, Screen-space reflections, HDR-IBL oder eine pixelgleiche Reproduktion von Three.js. Diese Eigenschaften erhalten später explizite Verträge.
 
-**Fortschrittsstand 2026-10-12:** Workpaket 1 (versionierter AREMDL02-Kameravertrag,
-homogene Perspektivprojektion, sechs Frustumebenen, dynamische Clip-Topologie vor
-Dispatch und Baseline/Bio-Parität) ist implementiert. Der Perspektivbenchmark ist
-anwählbar, aber für die Originalarena noch nicht neu ausgeführt. UV-/Materialimport,
-perspektivische Attributinterpolation und PBR bleiben offen.
+**Fortschrittsstand 2026-10-13:** Workpakete 0–5 sind für das begrenzte, opt-in
+`AREMDL03`-Subset implementiert und mit den sechs Original-GLBs gemessen: eingebettete
+PNG/JPEG-Maps, perspektivische Clip-/UV-/Normal-/Weltattributinterpolation, Mips,
+sampler, Ableitungs-TBN, Cook-Torrance/GGX, lineare 4×MSAA bis sRGB/FXAA und
+serial/native-Baseline/Bio-Vollpufferparität. Alle Legacyprofile bleiben getrennt.
+Die vollständige Umsetzung, Zahlen, Grenzen und Reproduktion stehen im
+[AREMDL03-Abschlussbericht](native-pbr-arena-report-20261013.md). Die gemessenen
+`animated4`-/`arena6`-Frames verfehlen weiterhin 60 FPS; das Profil ist nicht Default.
 
 ## Was im Bestand tatsächlich vorliegt
 

@@ -11,6 +11,7 @@ import numpy as np
 
 from software_gpu.research.model_probe import load_asset, write_scene, run_model, build_model_probe, read_glb, accessor, decode_output
 from software_gpu.tests.fixtures.model_fixture import make_glb
+from software_gpu.research.native_symbolic import FLAGS, NATIVE, compiler
 from tools.model_reference import pose
 
 
@@ -25,17 +26,18 @@ class TestModelProbe(unittest.TestCase):
     def tearDownClass(cls):
         cls.temp.cleanup()
 
-    def asset(self, **kwargs):
+    def asset(self, profile='diagnostic', **kwargs):
         path = self.root/'fixture.glb'
         entry = make_glb(path, **kwargs)
-        return load_asset(path, entry)
+        return load_asset(path, entry, profile=profile)
 
     def run_asset(self, asset, times=(0,1,2,3), **kwargs):
         path = self.root/'request.bin'
         projection=kwargs.pop('projection','orthographic');camera=kwargs.pop('camera',None)
+        render_profile=kwargs.pop('render_profile','diagnostic')
         write_scene(path, [dict(asset=asset, clip=0 if asset['clips'] else None)], list(times), 64, 16,
-                    projection=projection,camera=camera)
-        return run_model(self.exe, path, **kwargs)
+                    projection=projection,camera=camera,render_profile=render_profile)
+        return run_model(self.exe, path, render_profile=render_profile, **kwargs)
 
     def test_twelve_influences_clamping_step_slerp_and_mesh_cancellation(self):
         a = self.asset(interleaved=True)
@@ -101,6 +103,61 @@ class TestModelProbe(unittest.TestCase):
         self.assertTrue(any(frame['culled_input_triangles']>0 for frame in details))
         self.assertTrue(all(frame['projected_triangles']<=7*receipt['triangles'] for frame in details))
         self.assertTrue(receipt['full_buffer_parity'])
+
+    def test_aremdl03_imports_glb_maps_and_keeps_serial_baseline_bio_parity(self):
+        asset=self.asset(profile='pbr',surface=True)
+        self.assertEqual(asset['normals'].shape,(3,3));self.assertEqual(asset['uvs'].shape,(3,2))
+        self.assertEqual(len(asset['textures']),3)
+        self.assertEqual([t['srgb'] for t in asset['textures']],[True,False,False])
+        camera=dict(eye=[0,0,4],target=[0,0,0],up=[0,1,0],fov_y_degrees=50,near=.1,far=20)
+        path=self.root/'pbr-input.bin'
+        meta=write_scene(path,[dict(asset=asset,clip=0)],[0,1],64,16,projection='perspective',camera=camera,render_profile='pbr')
+        self.assertEqual(meta['protocol'],'are.model-input.v3')
+        self.assertEqual(meta['textures'],3);self.assertEqual(meta['materials'],1)
+        one=self.run_asset(asset,[0,1],projection='perspective',camera=camera,render_profile='pbr',workers=1,repeats=2)
+        four=self.run_asset(asset,[0,1],projection='perspective',camera=camera,render_profile='pbr',workers=4,repeats=2)
+        for key in ('frames','resolved','depth'):
+            np.testing.assert_array_equal(one[key],four[key])
+        self.assertGreater(int(np.any(four['frames'][0,:,:,:3],axis=2).sum()),0)
+        self.assertGreater(len(np.unique(four['frames'][0].reshape(-1,4),axis=0)),8)
+        receipt=four['receipt']
+        self.assertEqual(receipt['protocol'],'are.model-probe.receipt.v2')
+        self.assertEqual(receipt['render_profile'],'pbr')
+        self.assertEqual((receipt['textures'],receipt['materials']),(3,1))
+        self.assertEqual(receipt['color_pipeline'],'linear-msaa>exposure>reinhard>srgb>fxaa-srgb')
+        self.assertTrue(receipt['full_buffer_parity'])
+
+    def test_aremdl03_importer_rejects_external_and_transformed_textures(self):
+        path=self.root/'unsafe.glb'
+        def external(doc,binary):doc['images'][0]['uri']='https://example.invalid/texture.png'
+        entry=make_glb(path,surface=True,mutate=external)
+        with self.assertRaisesRegex(ValueError,'MODEL_EXTERNAL_IMAGE'):
+            load_asset(path,entry,profile='pbr')
+        def transform(doc,binary):
+            doc['materials'][0]['pbrMetallicRoughness']['baseColorTexture']['extensions']={
+                'KHR_texture_transform':{'offset':[.1,.2]}}
+        entry=make_glb(path,surface=True,mutate=transform)
+        with self.assertRaisesRegex(ValueError,'MODEL_TEXTURE_TRANSFORM'):
+            load_asset(path,entry,profile='pbr')
+
+    def test_inverse_transpose_normal_for_nonuniform_weighted_skin_matrix(self):
+        source=self.root/'normal_matrix_probe.cpp';exe=self.root/'normal_matrix_probe'
+        source.write_text(r'''#include "model_scene.hpp"
+#include <iomanip>
+#include <iostream>
+int main(){using namespace are::models;Mat a=identity(),b=identity();
+a[0]=2;a[1]=.7;a[5]=1;a[10]=.5;b[0]=.5;b[4]=.2;b[5]=3;b[10]=2;
+Mat blended{};for(int k=0;k<16;++k)blended[k]=.25*a[k]+.75*b[k];
+auto n=normal_vector(blended,V3{.3,.8,.4});std::cout<<std::setprecision(17)<<n[0]<<" "<<n[1]<<" "<<n[2]<<"\n";}
+''',encoding='utf-8')
+        subprocess.run([compiler(),*FLAGS,'-I',str(NATIVE),str(source),'-o',str(exe)],
+                       check=True,capture_output=True,timeout=120)
+        actual=np.fromstring(subprocess.check_output([str(exe)],text=True),sep=' ')
+        a=np.eye(4);a[0,0]=2;a[0,1]=.7;a[1,1]=1;a[2,2]=.5
+        b=np.eye(4);b[0,0]=.5;b[1,0]=.2;b[1,1]=3;b[2,2]=2
+        mixed=.25*a+.75*b
+        expected=np.linalg.inv(mixed[:3,:3]).T@np.array([.3,.8,.4])
+        np.testing.assert_allclose(actual,expected,rtol=1e-13,atol=1e-13)
 
     def test_uint32_primitive_ids_beyond_65535(self):
         small = self.run_asset(self.asset(static=True),[0],repeats=1)

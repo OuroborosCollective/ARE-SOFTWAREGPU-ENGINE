@@ -3,12 +3,14 @@
 No external data or simulated compiler/renderer outputs are used.
 """
 import hashlib
+import io
 import json
 import struct
 import numpy as np
+from PIL import Image
 
 
-def make_glb(path, mutate=None, static=False, repeated_faces=1, interleaved=False):
+def make_glb(path, mutate=None, static=False, repeated_faces=1, interleaved=False, surface=False):
     binary = bytearray()
     doc = dict(asset={'version': '2.0'}, buffers=[{'byteLength': 0}], bufferViews=[], accessors=[],
                scenes=[{'nodes': list(range(13))}], scene=0,
@@ -37,10 +39,32 @@ def make_glb(path, mutate=None, static=False, repeated_faces=1, interleaved=Fals
 
     positions = [[1, 2, 3], [2, 2, 3], [1, 3, 3]]
     attrs = {'POSITION': acc(positions, '<f4', 'VEC3', stride=interleaved)}
+    if surface:
+        attrs['NORMAL'] = acc([[0,0,1]]*3, '<f4', 'VEC3')
+        attrs['TEXCOORD_0'] = acc([[0,0],[1,0],[0,1]], '<f4', 'VEC2')
     indices = np.zeros((repeated_faces, 3), dtype='u4')
     indices[-1] = [0, 1, 2]  # Last face detects truncated uint16 bin IDs.
     primitive = {'attributes': attrs, 'indices': acc(indices.reshape(-1), '<u4', 'SCALAR'), 'material': 0}
     doc['meshes'][0]['primitives'] = [primitive]
+    if surface:
+        def png(pixels):
+            stream=io.BytesIO();Image.fromarray(np.asarray(pixels,dtype=np.uint8),'RGBA').save(stream,format='PNG')
+            while len(binary)%4:binary.append(0)
+            start=len(binary);encoded=stream.getvalue();binary.extend(encoded)
+            doc['bufferViews'].append(dict(buffer=0,byteOffset=start,byteLength=len(encoded)))
+            return len(doc['bufferViews'])-1
+        base_view=png([[[255,0,0,255],[0,255,0,255]],[[0,0,255,255],[255,255,255,255]]])
+        normal_view=png([[[128,128,255,255]]*2]*2)
+        mr_view=png([[[0,128,64,255]]*2]*2)
+        doc['images']=[dict(bufferView=base_view,mimeType='image/png'),
+                       dict(bufferView=normal_view,mimeType='image/png'),
+                       dict(bufferView=mr_view,mimeType='image/png')]
+        doc['samplers']=[dict(magFilter=9729,minFilter=9987,wrapS=10497,wrapT=10497)]
+        doc['textures']=[dict(sampler=0,source=i) for i in range(3)]
+        doc['materials']=[dict(doubleSided=True,emissiveFactor=[0,0,0],
+            pbrMetallicRoughness=dict(baseColorFactor=[.8,.7,.6,1],baseColorTexture=dict(index=0),
+                metallicFactor=.5,roughnessFactor=.7,metallicRoughnessTexture=dict(index=2)),
+            normalTexture=dict(index=1,scale=.8))]
     if static:
         doc['nodes'] = [{'mesh': 0, 'matrix': np.eye(4).reshape(-1).tolist()}]
         doc['scenes'] = [{'nodes': [0]}]

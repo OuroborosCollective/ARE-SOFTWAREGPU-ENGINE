@@ -29,7 +29,8 @@ ORDER = ('mage','assassin','axe','sword','log','boulder','crystal','armor','wist
 
 def hashes():
     files = [f'native/symbolic/{n}' for n in SOURCES] + ['software_gpu/research/model_probe.py',
-       'tools/model_reference.py','tools/benchmark_models.py','evidence/original-model-manifest-v1.json']
+       'software_gpu/research/model_material_import.py','tools/model_reference.py','tools/model_surface_reference.py',
+       'tools/benchmark_models.py','evidence/original-model-manifest-v1.json']
     return {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in files}
 
 
@@ -45,12 +46,16 @@ def main():
     p.add_argument('--phase', choices=('poses','bench','all'), default='all')
     p.add_argument('--projection', choices=('orthographic','perspective'), default='orthographic',
                    help='perspective selects AREMDL02 with explicit camera and native homogeneous clipping')
+    p.add_argument('--render-profile', choices=('diagnostic','pbr'), default='diagnostic',
+                   help='pbr selects AREMDL03 perspective-correct UVs, glTF textures and Cook-Torrance shading')
     p.add_argument('--repeats', type=int, default=15)
     p.add_argument('--seconds', type=int, default=1800)
     p.add_argument('--cases', help='comma-separated case names: animated4, static2, arena6, all9, or individual aliases')
     a = p.parse_args()
     if not 15 <= a.repeats <= 30 or not 1 <= a.seconds <= 3600:
         p.error('15..30 pairs and 1..3600 second total budget required')
+    if a.render_profile=='pbr' and a.projection!='perspective':
+        p.error('--render-profile pbr requires --projection perspective')
     output = Path(a.output_dir).resolve(); output.mkdir(parents=True, exist_ok=True)
     start = time.monotonic(); before = hashes()
     manifest = json.loads((ROOT/'evidence/original-model-manifest-v1.json').read_text())
@@ -60,11 +65,13 @@ def main():
     report = dict(protocol='are.original-model-benchmark.v1', phase=a.phase, environment=environment(), build=build,
         source_sha256_before=before, source_sha256_after=None, originals_modified=False,
         config=dict(pixels=256, tile=32, workers=4, repeats=a.repeats, warmups=3, paired_order='alternating',
-                    policy='combined', projection=a.projection,
+                    policy='combined', projection=a.projection,render_profile=a.render_profile,
                     camera=('AREMDL02 explicit view/projection; default eye=(0,0,4), target=(0,0,0), fov_y=43deg, near=0.1, far=80'
                             if a.projection=='perspective' else 'fixed orthographic fit over declared sample times')),
-        scope=dict(shader='opaque double-sided per-face diagnostic lighting; original textures/PBR ignored',
-                   native_frame='skin + pose + projection + lighting + input validation/copy + raster + 4x MSAA + FXAA',
+        scope=dict(shader=('opaque double-sided per-face diagnostic lighting; original textures/PBR ignored'
+                           if a.render_profile=='diagnostic' else 'opaque glTF metallic-roughness; perspective-correct UV/normal/world interpolation; basecolor, normal and MR maps; Cook-Torrance/GGX'),
+                   native_frame=('skin + pose + projection + diagnostic lighting + raster + 4x byte-RGBA MSAA + FXAA'
+                                 if a.render_profile=='diagnostic' else 'skin + pose + homogeneous clip + perspective-correct UV/normal/world interpolation + texture sampling/mips + GGX shading + linear 4x MSAA + Reinhard/sRGB + FXAA'),
                    baseline='current scalar Pipeline with explicit model admission; original 64-triangle ABI is unchanged',
                    excluded='GLB load, typed input, cold fit/construction/reference, parity checks and frame serialization',
                    hardware_gpu=False, combat_ai=False, thermal_measurements=None), poses=[], cases=[])
@@ -111,7 +118,7 @@ def main():
         for name, aliases in specs:
             used_aliases.update(aliases)
             load_start = time.monotonic()
-            assets = {alias: load_asset(Path(a.assets)/entries[alias]['file'], entries[alias]) for alias in aliases}
+            assets = {alias: load_asset(Path(a.assets)/entries[alias]['file'], entries[alias],profile=a.render_profile) for alias in aliases}
             instances = []
             # Fixed placements and clips are chosen before measurements, not tuned to timings.
             for i, alias in enumerate(aliases):
@@ -130,16 +137,17 @@ def main():
                             if instances[i]['clip'] is not None) if any(x['clip'] is not None for x in instances) else 0)
             sample_times = np.linspace(0, duration, a.repeats).tolist()
             request = output/'render-input.bin'
-            metadata = write_scene(request, instances, sample_times, projection=a.projection)
+            metadata = write_scene(request, instances, sample_times, projection=a.projection,render_profile=a.render_profile)
             load_ms = 1000*(time.monotonic()-load_start)
             del assets, instances, asset
             gc.collect()
             print('RENDER_START',name,metadata['triangles'],flush=True)
             try:
-                result = run_model(exe, request, workers=4, repeats=a.repeats, timeout=remaining())
+                result = run_model(exe, request, workers=4, repeats=a.repeats, timeout=remaining(),render_profile=a.render_profile)
                 receipt = result['receipt']
                 if (receipt['triangles'] != metadata['triangles'] or receipt['vertices'] != metadata['vertices']
                         or receipt['projection'] != metadata['projection']
+                        or receipt['render_profile'] != metadata['render_profile']
                         or receipt['models'] != len(metadata['instances']) or result['frames'].shape != (a.repeats,256,256,4)):
                     raise AssertionError('MODEL_REQUEST_RECEIPT_MISMATCH')
                 summary = {key:stats(value) for key,value in receipt.items() if key.endswith('_ms') and isinstance(value,list)}
