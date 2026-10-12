@@ -10,6 +10,7 @@ struct FrameTiming {
     double animated_pose_ms=0,static_pose_ms=0,triangle_prepare_ms=0,handoff_ms=0;
     double render_setup_ms=0,rasterization_ms=0,msaa_ms=0,aa_ms=0,scheduler_binning_ms=0,total_ms=0;
     double render_setup_work_ms=0,rasterization_work_ms=0,msaa_work_ms=0,aa_work_ms=0;
+    std::uint64_t clipped_input_triangles=0,culled_input_triangles=0;std::size_t projected_triangles=0;
 };
 struct Timing{std::vector<double> total,geometry,render,cpu;std::vector<FrameTiming> frames;};
 int main(int argc,char**argv){try{
@@ -37,6 +38,8 @@ int main(int argc,char**argv){try{
         const auto cpu=std::clock();const auto t=Clock::now();FrameProfile profile;FrameTiming detail;
         scene.frame(time,&profile);detail.animated_pose_ms=profile.animated_pose_ms;
         detail.static_pose_ms=profile.static_pose_ms;detail.triangle_prepare_ms=profile.triangle_prepare_ms;
+        detail.clipped_input_triangles=profile.clipped_input_triangles;
+        detail.culled_input_triangles=profile.culled_input_triangles;detail.projected_triangles=profile.projected_triangles;
         const auto g=elapsed(t);const auto handoff=Clock::now();renderer.update_scene(scene.triangles);
         detail.handoff_ms=elapsed(handoff);renderer.execute();detail.total_ms=elapsed(t);
         detail.render_setup_ms=renderer.waves()[0].milliseconds;
@@ -55,7 +58,11 @@ int main(int argc,char**argv){try{
         are::rooms::wire::same(baseline,candidate);frames.push_back(candidate.rgba());writes.push_back(candidate.waves()[1].samples);
     }
     std::ostringstream out;out<<std::setprecision(17)<<"{\"protocol\":\"are.model-probe.receipt.v1\",\"python_in_runtime\":false,\"hardware_gpu_submitted\":false,\"full_buffer_parity\":true,\"serial_reference_first_frame\":true,\"warmups\":3,\"workers\":"<<workers
-        <<",\"triangles\":"<<scene.triangles.size()<<",\"vertices\":"<<scene.vertices<<",\"models\":"<<scene.models.size()<<",\"policy\":\""<<policy.name<<"\",\"construction_fit_and_serial_reference_ms\":"<<construction_ms<<",\"spatial_references\":"<<candidate.spatial_references()
+        <<",\"projection\":\""<<(scene.perspective?"perspective":"orthographic")<<"\",\"camera_eye\":["<<scene.camera.eye[0]<<','<<scene.camera.eye[1]<<','<<scene.camera.eye[2]
+        <<"],\"camera_target\":["<<scene.camera.target[0]<<','<<scene.camera.target[1]<<','<<scene.camera.target[2]
+        <<"],\"camera_up\":["<<scene.camera.up[0]<<','<<scene.camera.up[1]<<','<<scene.camera.up[2]
+        <<"],\"fov_y_degrees\":"<<scene.camera.fov_y_degrees<<",\"near_plane\":"<<scene.camera.near_plane<<",\"far_plane\":"<<scene.camera.far_plane
+        <<",\"triangles\":"<<scene.source_triangles<<",\"vertices\":"<<scene.vertices<<",\"models\":"<<scene.models.size()<<",\"policy\":\""<<policy.name<<"\",\"construction_fit_and_serial_reference_ms\":"<<construction_ms<<",\"spatial_references\":"<<candidate.spatial_references()
         <<",\"stage_timing_clock\":\"steady_clock\",\"stage_timing_semantics\":\"per-frame wall intervals; scheduler stage durations include scheduling and synchronization; bio frontier rasterization_ms, msaa_ms, and aa_ms report the same overlapping shared frontier interval and must not be summed\"";
     auto times=[&](const char*prefix,const Timing& t){for(const auto& kv:std::array<std::pair<const char*,const std::vector<double>*>,4>{{{"total_ms",&t.total},{"geometry_ms",&t.geometry},{"render_ms",&t.render},{"cpu_ms",&t.cpu}}}){
         out<<",\""<<prefix<<kv.first<<"\":";are::rooms::wire::values(out,*kv.second);}};
@@ -67,7 +74,9 @@ int main(int argc,char**argv){try{
                <<",\"msaa_ms\":"<<f.msaa_ms<<",\"aa_ms\":"<<f.aa_ms
                <<",\"render_setup_worker_work_ms\":"<<f.render_setup_work_ms<<",\"rasterization_worker_work_ms\":"<<f.rasterization_work_ms
                <<",\"msaa_worker_work_ms\":"<<f.msaa_work_ms<<",\"aa_worker_work_ms\":"<<f.aa_work_ms
-               <<",\"scheduler_binning_ms\":"<<f.scheduler_binning_ms<<",\"frame_total_ms\":"<<f.total_ms<<"}";
+               <<",\"scheduler_binning_ms\":"<<f.scheduler_binning_ms<<",\"frame_total_ms\":"<<f.total_ms
+               <<",\"projected_triangles\":"<<f.projected_triangles<<",\"clipped_input_triangles\":"<<f.clipped_input_triangles
+               <<",\"culled_input_triangles\":"<<f.culled_input_triangles<<"}";
         }out<<']';};
     times("baseline_",b);times("candidate_",c);detailed("baseline_frame_timings",b);detailed("candidate_frame_timings",c);
     out<<",\"sample_writes\":[";for(unsigned i=0;i<writes.size();++i){if(i)out<<',';out<<writes[i];}out<<"]}";

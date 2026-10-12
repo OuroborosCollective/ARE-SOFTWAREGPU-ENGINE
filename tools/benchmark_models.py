@@ -43,6 +43,8 @@ def main():
     p.add_argument('--assets', required=True)
     p.add_argument('--output-dir', required=True)
     p.add_argument('--phase', choices=('poses','bench','all'), default='all')
+    p.add_argument('--projection', choices=('orthographic','perspective'), default='orthographic',
+                   help='perspective selects AREMDL02 with explicit camera and native homogeneous clipping')
     p.add_argument('--repeats', type=int, default=15)
     p.add_argument('--seconds', type=int, default=1800)
     p.add_argument('--cases', help='comma-separated case names: animated4, static2, arena6, all9, or individual aliases')
@@ -58,7 +60,9 @@ def main():
     report = dict(protocol='are.original-model-benchmark.v1', phase=a.phase, environment=environment(), build=build,
         source_sha256_before=before, source_sha256_after=None, originals_modified=False,
         config=dict(pixels=256, tile=32, workers=4, repeats=a.repeats, warmups=3, paired_order='alternating',
-                    policy='combined', camera='fixed orthographic fit over declared sample times'),
+                    policy='combined', projection=a.projection,
+                    camera=('AREMDL02 explicit view/projection; default eye=(0,0,4), target=(0,0,0), fov_y=43deg, near=0.1, far=80'
+                            if a.projection=='perspective' else 'fixed orthographic fit over declared sample times')),
         scope=dict(shader='opaque double-sided per-face diagnostic lighting; original textures/PBR ignored',
                    native_frame='skin + pose + projection + lighting + input validation/copy + raster + 4x MSAA + FXAA',
                    baseline='current scalar Pipeline with explicit model admission; original 64-triangle ABI is unchanged',
@@ -126,7 +130,7 @@ def main():
                             if instances[i]['clip'] is not None) if any(x['clip'] is not None for x in instances) else 0)
             sample_times = np.linspace(0, duration, a.repeats).tolist()
             request = output/'render-input.bin'
-            metadata = write_scene(request, instances, sample_times)
+            metadata = write_scene(request, instances, sample_times, projection=a.projection)
             load_ms = 1000*(time.monotonic()-load_start)
             del assets, instances, asset
             gc.collect()
@@ -135,6 +139,7 @@ def main():
                 result = run_model(exe, request, workers=4, repeats=a.repeats, timeout=remaining())
                 receipt = result['receipt']
                 if (receipt['triangles'] != metadata['triangles'] or receipt['vertices'] != metadata['vertices']
+                        or receipt['projection'] != metadata['projection']
                         or receipt['models'] != len(metadata['instances']) or result['frames'].shape != (a.repeats,256,256,4)):
                     raise AssertionError('MODEL_REQUEST_RECEIPT_MISMATCH')
                 summary = {key:stats(value) for key,value in receipt.items() if key.endswith('_ms') and isinstance(value,list)}

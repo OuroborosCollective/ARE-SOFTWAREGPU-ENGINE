@@ -258,7 +258,14 @@ public:
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
-    void update_scene(const std::vector<Triangle>& scene){base_.update_scene(scene);}
+    void update_scene(const std::vector<Triangle>& scene){
+        const bool topology_changed=scene.size()!=base_.triangles_.size();
+        base_.update_scene(scene);
+        if(topology_changed){
+            if(policy_.locality)bounds_.resize(scene.size());
+            if(ledger_){ledger_=std::make_unique<CheckpointLedger>(base_.room_count());epoch_=0;}
+        }
+    }
     void execute() {
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
         base_.delivered_=false;require_environment();

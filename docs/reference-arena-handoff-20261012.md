@@ -32,7 +32,7 @@ Bei der Bio-Frontier-Welle laufen Raster, MSAA und AA abhängig von Tile-Abhäng
 
 `reference_arena/` ist eine rein visuelle Three.js-Ansicht mit WebGL, Perspektive, PBR-Licht, GLB-Originaltexturen/-materialien, animierten Clips und Orbit-Steuerung. Sie ist ein nützlicher visueller GLB-Referenzpfad, **kein dritter Timing-Backend**. Ihr browserseitiger FPS-Zähler ist ausdrücklich keine native Messung.
 
-Der vorhandene native GLB-Renderpfad bleibt dagegen absichtlich ein kontrollierter, orthografischer, diagnosebeleuchteter CPU-Vergleich: originale PBR-/Texturzuweisungen und perspektivische native Projektion sind darin noch nicht integriert. Die browserseitige und native Ausgabe werden daher nicht als pixelgleiche Renderings ausgegeben. **Perspektivisch korrekte native Texturen/Materialien** bleiben der nächste Funktionsschritt; sie benötigen einen klar versionierten C++-Attribut-, Projektions- und Materialvertrag sowie neue Referenz-/Paritätstests. Die kleinen Messverbesserungen rechtfertigen keine LOD-, Sichtbarkeits- oder Pixelarbeits-Reduktion, die hier nicht getestet wurde.
+Die hier archivierten Vorher-/Nachher-Messungen beziehen sich auf den kontrollierten orthografischen CPU-Vergleich von `AREMDL01`. Danach wurde additiv `AREMDL02` mit expliziter Kamera, homogener Perspektivprojektion, Sechs-Ebenen-Frustum-Clipping und dynamischer, vor Dispatch aktualisierter Clip-Topologie implementiert. Die neue Perspektivstufe hat nun synthetische und animierte Workerparitätstests; sie wurde **noch nicht** in den archivierten Arena-Läufen gemessen. Originale PBR-/Texturzuweisungen bleiben noch nicht integriert. Browser- und native Ausgabe sind keine pixelgleichen Renderings. **Texturinterpolation und native PBR-Materialien** sind der nächste Funktionsschritt; sie benötigen einen versionierten Attribut-/Materialvertrag. Die kleinen Messverbesserungen rechtfertigen keine LOD-, Sichtbarkeits- oder Pixelarbeits-Reduktion, die hier nicht getestet wurde.
 
 ## Reproduktion
 
@@ -55,10 +55,17 @@ Der vorhandene native GLB-Renderpfad bleibt dagegen absichtlich ein kontrolliert
 3. Wiederhole den nativen Vorher-/Nachher-Szenenvergleich:
 
    ```sh
-   python tools/benchmark_models.py \
+python tools/benchmark_models.py \
      --assets /pfad/zu/den/Originalmodellen \
      --output-dir /tmp/reference-arena-results \
      --phase bench --cases animated4,static2,arena6 \
+     --repeats 15 --seconds 600
+
+# Gesonderter, noch nicht in den obigen historischen Receipts enthaltener AREMDL02-Lauf
+python tools/benchmark_models.py \
+     --assets /pfad/zu/den/Originalmodellen \
+     --output-dir /tmp/reference-arena-perspective \
+     --phase bench --projection perspective --cases animated4,static2,arena6 \
      --repeats 15 --seconds 600
    ```
 
@@ -69,7 +76,8 @@ Der vorhandene native GLB-Renderpfad bleibt dagegen absichtlich ein kontrolliert
      software_gpu.tests.test_workrooms \
      software_gpu.tests.test_bio_workrooms \
      software_gpu.tests.test_native_raster \
-     software_gpu.tests.test_model_probe -v
+     software_gpu.tests.test_model_probe \
+     software_gpu.tests.test_model_projection -v
    ```
 
 5. Vorher-/Nachher-Receipts und komprimierte 256×256 Frame-/Depth-Arrays liegen unter `evidence/reference-arena-{before,after}-...-20261012.*`. Die JSONs enthalten native Rohreceipts, Samplezeitpunkte, Timingprofile, Konfiguration, Umgebungs-/Quellhashes und die sechs benutzten Assethashes. Die sechs Original-GLBs selbst sind nicht eingecheckt.
@@ -87,5 +95,6 @@ Der vorhandene native GLB-Renderpfad bleibt dagegen absichtlich ein kontrolliert
 
 1. Draft-PR reviewen; insbesondere beachten, dass die Rasteroptimierung einen kleinen Mediangewinn bei `arena6`, aber keine stabile 60-FPS-Zielerreichung bringt.
 2. Auf einem weniger variablen oder dedizierten Runner denselben gepaarten Benchmark wiederholen; dabei p95/Maximum und nicht nur Median bewerten.
-3. Anschließend in einem separaten Design-/Implementierungsschritt native Perspektivprojektion plus perspektivisch korrekte UV-Interpolation und Originaltexturen/PBR-Materialien ergänzen. Alpha, Normalmaps, Sampler-/Mip-Verhalten und Farbmanagement jeweils explizit spezifizieren und die bestehende Diagnose-/VertexColor-ABI unverändert halten.
+3. Den neuen Perspektiv-/Clippingpfad mit derselben Originalarena messen; seine Ergebnisse sind nicht mit den oben archivierten orthografischen Zahlen zu vermischen.
+4. Danach perspektivisch korrekte UV-Interpolation und Originaltexturen/PBR-Materialien ergänzen. Alpha, Normalmaps, Sampler-/Mip-Verhalten und Farbmanagement jeweils explizit spezifizieren und die bestehende Diagnose-/VertexColor-ABI unverändert halten.
 4. Nach der Funktionsintegration dieselbe Arena, gleiche Originalhashes, Basis-/Bio-Verfahren und einen perspektivischen Referenzvertrag erneut messen; Textur- und Perspektivkosten separat ausweisen.

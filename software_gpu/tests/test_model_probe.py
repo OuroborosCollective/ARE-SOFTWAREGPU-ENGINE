@@ -32,7 +32,9 @@ class TestModelProbe(unittest.TestCase):
 
     def run_asset(self, asset, times=(0,1,2,3), **kwargs):
         path = self.root/'request.bin'
-        write_scene(path, [dict(asset=asset, clip=0 if asset['clips'] else None)], list(times), 64, 16)
+        projection=kwargs.pop('projection','orthographic');camera=kwargs.pop('camera',None)
+        write_scene(path, [dict(asset=asset, clip=0 if asset['clips'] else None)], list(times), 64, 16,
+                    projection=projection,camera=camera)
         return run_model(self.exe, path, **kwargs)
 
     def test_twelve_influences_clamping_step_slerp_and_mesh_cancellation(self):
@@ -82,6 +84,23 @@ class TestModelProbe(unittest.TestCase):
             for field in ('render_setup_worker_work_ms','rasterization_worker_work_ms',
                           'msaa_worker_work_ms','aa_worker_work_ms'):
                 self.assertGreaterEqual(frame[field],0)
+
+    def test_perspective_profile_and_dynamic_clipping_keep_worker_parity(self):
+        asset=self.asset()
+        camera=dict(eye=[0,0,0],target=[0,0,-1],up=[0,1,0],fov_y_degrees=60,near=.08,far=.30)
+        times=[0,1,2,3]
+        one=self.run_asset(asset,times,projection='perspective',camera=camera,workers=1,repeats=4)
+        four=self.run_asset(asset,times,projection='perspective',camera=camera,workers=4,repeats=4)
+        for key in ('frames','resolved','depth'):
+            np.testing.assert_array_equal(one[key],four[key])
+        receipt=four['receipt'];self.assertEqual(receipt['projection'],'perspective')
+        details=receipt['candidate_frame_timings'];counts=[frame['projected_triangles'] for frame in details]
+        self.assertGreater(len(set(counts)),1)
+        self.assertIn(0,counts);self.assertGreater(max(counts),0)
+        self.assertTrue(any(frame['clipped_input_triangles']>0 for frame in details))
+        self.assertTrue(any(frame['culled_input_triangles']>0 for frame in details))
+        self.assertTrue(all(frame['projected_triangles']<=7*receipt['triangles'] for frame in details))
+        self.assertTrue(receipt['full_buffer_parity'])
 
     def test_uint32_primitive_ids_beyond_65535(self):
         small = self.run_asset(self.asset(static=True),[0],repeats=1)

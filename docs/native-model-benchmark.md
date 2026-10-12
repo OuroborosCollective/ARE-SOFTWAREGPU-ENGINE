@@ -10,7 +10,9 @@ survived workspace maintenance and how the fresh original-model run is identifie
 This is an opt-in research executable, not a general glTF engine or a replacement
 graphics driver. It extends the native work-room experiment with original indexed
 meshes and skeletal animation. The public legacy wire still admits at most 64
-triangles. Only the separate `AREMDL01` input selects bounded model admission.
+triangles. `AREMDL01` retains the orthographic model profile; `AREMDL02` opts into
+an explicit camera, perspective projection and homogeneous clipping. The legacy
+`ARERIN01` profile remains unchanged.
 
 ## Execution and scope
 
@@ -33,10 +35,14 @@ channel to its own key range. Every tested original triangle is submitted, witho
 sampling or LOD. Static models remain static. A multi-model scene combines chosen
 clips and fixed placements; it has no gameplay, physics, attacks or hit detection.
 
-The camera is orthographic and fitted once over the declared sampled timestamps.
-Every instance is uniformly normalized from its default-pose bounds before the
-declared placement transform. This is a visibility-controlled geometry benchmark,
-not a perspective camera/frustum-clipping benchmark. Materials use per-face
+`AREMDL01` uses an orthographic camera fitted once over the declared sampled
+timestamps. `AREMDL02` uses a fixed, serialized look-at camera and vertical FOV;
+the same frame-wide scene normalization is applied before view/projection. Its
+native geometry path clips in homogeneous OpenGL clip space against left/right,
+bottom/top and near/far planes, then fan-triangulates the surviving polygon before
+worker dispatch. Perspective clipping can change or eliminate primitives per
+frame, so model-profile baseline and Bio buffers resize/update before dispatch;
+legacy buffers and admission remain unchanged. Materials still use per-face
 diagnostic lighting. Embedded textures, PBR, transparency, shadows and original
 normal maps are not evaluated. No graphics API or hardware GPU is submitted to.
 
@@ -80,15 +86,21 @@ for offline preparation and a C++17 compiler installed:
 
 ```sh
 python tools/benchmark_models.py --assets /path/to/originals --output-dir /path/to/evidence --phase all --repeats 15 --seconds 1800
+python tools/benchmark_models.py --assets /path/to/originals --output-dir /path/to/perspective-evidence --phase bench --projection perspective --cases animated4,static2,arena6 --repeats 15 --seconds 1800
 python -m unittest software_gpu.tests.test_model_probe -v
+python -m unittest software_gpu.tests.test_model_projection -v
 ```
 
-The executable reads a bounded little-endian binary protocol, rejects invalid
-counts, graphs, matrices, weights, indices, times and trailing bytes, and only
-supports little-endian hosts. The model profile admits at most 6.1 million
+The executable reads bounded little-endian binary protocols: `AREMDL01` for the
+unchanged orthographic model input and `AREMDL02` for the camera-bearing
+perspective model input. It rejects invalid camera bases/ranges, counts, graphs,
+matrices, weights, indices, times and trailing bytes, and only supports
+little-endian hosts. Both model profiles admit at most 6.1 million
 vertices, 8 million triangles, 12 instances and 60 sampled times, plus independent
-tile-reference/key/input-byte budgets. These are rejection limits, not memory
-availability guarantees. Existing raster numeric contracts remain unchanged.
+tile-reference/key/input-byte budgets. Clipped output is capped by the same
+8-million-triangle renderer budget; empty visible frames are valid in model mode.
+These are rejection limits, not memory availability guarantees. Existing raster
+numeric contracts remain unchanged.
 
 The benchmark records source and binary SHA-256, original-file hashes before and
 after, typed-input hashes, response/frame hashes, raw timings and environment.

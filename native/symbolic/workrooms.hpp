@@ -23,11 +23,11 @@ enum class Admission { legacy, model_probe };
 inline std::size_t validate(Config c,std::size_t triangles,unsigned workers,
                             Admission admission=Admission::legacy) {
     if(c.width<2 || c.height<2 || c.width>1024 || c.height>1024 ||
-       c.tile<1 || c.tile>64 || c.frame>1000000 || triangles<1 ||
+       c.tile<1 || c.tile>64 || c.frame>1000000 ||
        workers<1 || workers>8)
         throw std::runtime_error("ROOM_BUDGET");
     if(admission==Admission::legacy) {
-        if(triangles>64 || std::uint64_t(c.width)*c.height*triangles>67108864)
+        if(triangles<1 || triangles>64 || std::uint64_t(c.width)*c.height*triangles>67108864)
             throw std::runtime_error("ROOM_BUDGET");
     } else if(admission==Admission::model_probe) {
         const auto tiles=std::uint64_t((c.width+c.tile-1)/c.tile)*((c.height+c.tile-1)/c.tile);
@@ -191,10 +191,13 @@ public:
     }
     void update_scene(const std::vector<Triangle>& triangles) {
         delivered_=false;
-        if(admission_!=Admission::model_probe || triangles.size()!=triangles_.size())
+        if(admission_!=Admission::model_probe)
             throw std::runtime_error("MODEL_TOPOLOGY_CHANGED");
+        validate(c_,triangles.size(),workers_,admission_);
         validate_geometry(triangles);
-        std::copy(triangles.begin(),triangles.end(),triangles_.begin());
+        triangles_=triangles;
+        prepared_.resize(triangles_.size());
+        states_.resize(triangles_.size()+3*tiles_);
     }
     void execute() {
         delivered_=false;require_environment();std::fill(states_.begin(),states_.end(),State::waiting);operation_work_ms_={};

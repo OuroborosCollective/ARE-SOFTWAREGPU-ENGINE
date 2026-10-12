@@ -2,6 +2,7 @@
 // Bounded, typed model probe. GLB decoding is offline; poses and frames are C++.
 #pragma once
 #include "workrooms_wire.hpp"
+#include "model_projection.hpp"
 #include <fstream>
 #include <numeric>
 #include <chrono>
@@ -49,7 +50,8 @@ struct Bounds {V3 lo{1e300,1e300,1e300},hi{-1e300,-1e300,-1e300};
     V3 center()const{return {(lo[0]+hi[0])*.5,(lo[1]+hi[1])*.5,(lo[2]+hi[2])*.5};}
     double span()const{return std::max({hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2]});}
 };
-struct FrameProfile {double animated_pose_ms=0,static_pose_ms=0,triangle_prepare_ms=0;};
+struct FrameProfile {double animated_pose_ms=0,static_pose_ms=0,triangle_prepare_ms=0;
+    std::uint64_t clipped_input_triangles=0,culled_input_triangles=0;std::size_t projected_triangles=0;};
 struct Model {
     std::vector<std::array<float,3>> positions;
     std::vector<std::array<std::uint32_t,3>> faces;
@@ -96,10 +98,16 @@ struct Model {
 };
 struct Scene {
     are::rooms::Config config{};std::vector<double> times;std::vector<Model> models;
-    std::vector<are::rooms::Triangle> triangles;V3 center{};double scale=1;std::size_t vertices=0;
-    explicit Scene(const char* path,unsigned workers){Reader r(path);char magic[8];r.bytes(magic,8);need(std::memcmp(magic,"AREMDL01",8)==0,"MODEL_PROTOCOL");
+    std::vector<are::rooms::Triangle> triangles;V3 center{};double scale=1;std::size_t vertices=0,source_triangles=0;
+    bool perspective=false;projection::Camera camera{};
+    explicit Scene(const char* path,unsigned workers){Reader r(path);char magic[8];r.bytes(magic,8);
+        const bool v1=std::memcmp(magic,"AREMDL01",8)==0;perspective=std::memcmp(magic,"AREMDL02",8)==0;
+        need(v1||perspective,"MODEL_PROTOCOL");
         const auto nm=r.count(1,12),nf=r.count(1,60);config={r.count(2,512),r.count(2,512),r.count(16,64),0};
         for(unsigned f=0;f<nf;++f){const auto t=r.number();need(t>=0&&t<=3600,"MODEL_FRAME_TIME");times.push_back(t);}
+        if(perspective){camera.eye=r.numbers<3>();camera.target=r.numbers<3>();camera.up=r.numbers<3>();
+            camera.fov_y_degrees=r.number();camera.near_plane=r.number();camera.far_plane=r.number();
+            projection::validate_camera(camera,double(config.width)/config.height);}
         std::size_t total_faces=0,total_keys=0;
         for(unsigned mi=0;mi<nm;++mi){Model m;const auto nv=r.count(1,max_vertices),nt=r.count(1,max_triangles),nn=r.count(1,max_nodes),nj=r.count(0,max_nodes);
             m.influence_count=r.count(0,12);m.mesh_node=r.count(0,nn-1);const auto nc=r.count(0,3*nn);
@@ -127,26 +135,47 @@ struct Scene {
                 m.channels.push_back(std::move(c));}
             m.normalize();models.push_back(std::move(m));
         }
-        need(r.remaining==0,"MODEL_TRAILING");triangles.resize(total_faces);
+        need(r.remaining==0,"MODEL_TRAILING");source_triangles=total_faces;
+        if(!perspective)triangles.resize(total_faces);else triangles.reserve(total_faces);
     }
     void fit(){Bounds b;for(double t:times)for(auto& m:models){m.pose(t);for(const auto&p:m.posed)b.add(p);}center=b.center();need(b.span()>1e-12,"MODEL_EMPTY_BOUNDS");scale=1.8/b.span();}
     void frame(double time,FrameProfile* profile=nullptr){std::size_t cursor=0;
+        if(perspective)triangles.clear();
         for(auto& m:models){const auto begin=std::chrono::steady_clock::now();m.pose(time);
             if(profile){const auto ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
                 (m.channels.empty()?profile->static_pose_ms:profile->animated_pose_ms)+=ms;}}
         const auto prepare=std::chrono::steady_clock::now();
+        const auto projector=perspective?projection::make_projector(camera,double(config.width)/config.height):projection::Projector{};
+        std::uint64_t clipped_count=0,culled_count=0;
         for(auto& m:models){
-        for(const auto& f:m.faces){auto& tri=triangles[cursor++];V3 p[3];
-            for(int k=0;k<3;++k){p[k]=m.posed[f[k]];tri.v[k]={float((p[k][0]-center[0])*scale),float((p[k][1]-center[1])*scale),float(-(p[k][2]-center[2])*scale),1};}
+        for(const auto& f:m.faces){V3 p[3];std::array<are::rooms::Vertex,3> input{};
+            for(int k=0;k<3;++k){p[k]=m.posed[f[k]];
+                if(perspective){V3 q{(p[k][0]-center[0])*scale,(p[k][1]-center[1])*scale,(p[k][2]-center[2])*scale};
+                    input[k]=projection::project(q,projector);}
+                else input[k]={float((p[k][0]-center[0])*scale),float((p[k][1]-center[1])*scale),float(-(p[k][2]-center[2])*scale),1};}
             V3 u{},v{};for(int k=0;k<3;++k){u[k]=p[1][k]-p[0][k];v[k]=p[2][k]-p[0][k];}
             const V3 n{u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]};
             const auto len=std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);const auto light=len>0?.25+.75*std::abs((.36*n[0]+.48*n[1]+.8*n[2])/len):.25;
-            for(int k=0;k<3;++k){tri.rgba[k]=std::uint8_t(std::clamp(m.color[k]*light,0.0,255.0));}
-            tri.rgba[3]=255;
-            // All admitted assets are double-sided. Orient after the exact screen map.
-            auto screen=[&](are::rooms::Vertex a){return are::rooms::Vertex{float((double(a.x)+1)*.5*config.width),float((1-double(a.y))*.5*config.height),a.z,1};};
-            const auto a=screen(tri.v[0]),b=screen(tri.v[1]),c=screen(tri.v[2]);if(are::rooms::edge(a,b,c.x,c.y)<0)std::swap(tri.v[1],tri.v[2]);
+            std::array<std::uint8_t,4> rgba{};for(int k=0;k<3;++k)rgba[k]=std::uint8_t(std::clamp(m.color[k]*light,0.0,255.0));rgba[3]=255;
+            auto append=[&](const std::array<are::rooms::Vertex,3>& vertices){
+                are::rooms::Triangle tri;tri.v=vertices;tri.rgba=rgba;
+                // Preserve the renderer's positive-area convention and stable fan order.
+                auto screen=[&](are::rooms::Vertex a){const double inv=1.0/double(a.w);
+                    return are::rooms::Vertex{float((double(a.x)*inv+1)*.5*config.width),
+                        float((1-double(a.y)*inv)*.5*config.height),float(double(a.z)*inv),1};};
+                const auto a=screen(tri.v[0]),b=screen(tri.v[1]),c=screen(tri.v[2]);
+                if(are::rooms::edge(a,b,c.x,c.y)<0)std::swap(tri.v[1],tri.v[2]);
+                if(perspective){if(triangles.size()>=max_triangles)throw std::runtime_error("MODEL_RENDER_BUDGET");
+                    triangles.push_back(std::move(tri));}
+                else triangles[cursor++]=std::move(tri);
+            };
+            if(perspective){const auto emitted=projection::clip_triangle(input,append);
+                if(emitted==0)++culled_count;else if(emitted!=1)++clipped_count;}
+            else append(input);
         }}
+        if(!perspective)need(cursor==source_triangles,"MODEL_FRAME_TOPOLOGY");
+        if(profile){profile->clipped_input_triangles=clipped_count;profile->culled_input_triangles=culled_count;
+            profile->projected_triangles=triangles.size();}
         if(profile)profile->triangle_prepare_ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-prepare).count();
     }
 };

@@ -14,6 +14,12 @@ Der bisherige 64-Dreiecks-/`ARERIN01`-Wire-Vertrag, `AREMDL01`, die Diagnosebele
 
 **Nicht das v1-Ziel:** beliebige glTF-Erweiterungen, Transparenz/Blending, Alpha-Masken, morph targets, mehrere Primitive pro GLB, Shadowmapping, Screen-space reflections, HDR-IBL oder eine pixelgleiche Reproduktion von Three.js. Diese Eigenschaften erhalten später explizite Verträge.
 
+**Fortschrittsstand 2026-10-12:** Workpaket 1 (versionierter AREMDL02-Kameravertrag,
+homogene Perspektivprojektion, sechs Frustumebenen, dynamische Clip-Topologie vor
+Dispatch und Baseline/Bio-Parität) ist implementiert. Der Perspektivbenchmark ist
+anwählbar, aber für die Originalarena noch nicht neu ausgeführt. UV-/Materialimport,
+perspektivische Attributinterpolation und PBR bleiben offen.
+
 ## Was im Bestand tatsächlich vorliegt
 
 Der Pfad heute ist `model_probe.py` (GLB parsen und `AREMDL01` packen) → `model_scene.hpp` (Pose, Skinning, orthografisch normalisierte/gefitte Dreiecke und Diagnosefarbe) → `workrooms.hpp` (`Vertex{x,y,z,w}`, vorbereitete Fläche, flat RGBA, Raster, Depth, MSAA und AA) → unveränderte Rendereroperationen im `BioPipeline`.

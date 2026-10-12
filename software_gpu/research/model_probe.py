@@ -2,7 +2,7 @@
 
 Admitted subset: one indexed triangle primitive/instance, opaque double-sided
 geometry, optional one skin with all 1..3 influence sets, TRS/matrix nodes and
-STEP/LINEAR TRS animation. This diagnostic renderer does not evaluate textures.
+STEP/LINEAR TRS animation. Textures are not yet evaluated.
 """
 from __future__ import annotations
 import hashlib
@@ -18,7 +18,11 @@ from .native_symbolic import FLAGS, NATIVE, compiler
 MAX_BYTES = 256 * 1024 * 1024
 DTYPES = {5121: '<u1', 5123: '<u2', 5125: '<u4', 5126: '<f4'}
 DIMS = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}
-SOURCES = ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp', 'model_scene.hpp', 'model_main.cpp')
+SOURCES = ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp',
+           'model_projection.hpp', 'model_scene.hpp', 'model_main.cpp')
+
+DEFAULT_PERSPECTIVE_CAMERA = dict(eye=[0.0,0.0,4.0], target=[0.0,0.0,0.0], up=[0.0,1.0,0.0],
+                                  fov_y_degrees=43.0, near=0.1, far=80.0)
 
 
 def require(ok, code):
@@ -214,17 +218,39 @@ def load_asset(path, entry):
                 joint_data=joint_data, weights=weights, mesh_node=mesh_node, clips=clips, metadata=metadata)
 
 
-def write_scene(path, instances, times, pixels=256, tile=32):
+def write_scene(path, instances, times, pixels=256, tile=32, projection='orthographic', camera=None):
     require(1 <= len(instances) <= 12 and 1 <= len(times) <= 60, 'MODEL_SCENE_COUNT')
+    require(projection in ('orthographic','perspective'), 'MODEL_PROJECTION_MODE')
     _uint(pixels, 512, 2); _uint(tile, 64, 16)
     require(all(type(t) in (int, float) and np.isfinite(t) and 0 <= t <= 3600 for t in times), 'MODEL_FRAME_TIME')
+    camera_record = None
+    if projection == 'perspective':
+        camera_record = dict(DEFAULT_PERSPECTIVE_CAMERA if camera is None else camera)
+        require(set(camera_record)=={'eye','target','up','fov_y_degrees','near','far'}, 'MODEL_CAMERA_FIELDS')
+        eye = _vec(camera_record.get('eye'),3); target = _vec(camera_record.get('target'),3); up = _vec(camera_record.get('up'),3)
+        fov = camera_record.get('fov_y_degrees'); near = camera_record.get('near'); far = camera_record.get('far')
+        require(type(fov) in (int,float) and np.isfinite(fov) and 1 <= fov <= 179, 'MODEL_CAMERA_BOUNDS')
+        require(type(near) in (int,float) and np.isfinite(near) and near > 0 and
+                type(far) in (int,float) and np.isfinite(far) and far > near, 'MODEL_CAMERA_BOUNDS')
+        forward = target-eye
+        cross = np.cross(forward,up)
+        require(float(np.dot(forward,forward)) > 1e-24 and float(np.dot(up,up)) > 1e-24 and
+                float(np.dot(cross,cross)) > 1e-24, 'MODEL_CAMERA_DIRECTION')
+        camera_record = dict(eye=eye.tolist(),target=target.tolist(),up=up.tolist(),
+                             fov_y_degrees=float(fov),near=float(near),far=float(far))
+    else:
+        require(camera is None, 'MODEL_CAMERA_ORTHOGRAPHIC')
     total_vertices = sum(len(x['asset']['positions']) for x in instances)
     total_faces = sum(len(x['asset']['faces']) for x in instances)
     require(total_vertices <= 6100000 and total_faces <= 8000000
             and ((pixels+tile-1)//tile)**2 * total_faces <= 536870912, 'MODEL_SCENE_BUDGET')
     with Path(path).open('wb') as out:
-        out.write(b'AREMDL01'+struct.pack('<5I', len(instances), len(times), pixels, pixels, tile))
+        out.write((b'AREMDL02' if projection=='perspective' else b'AREMDL01')+
+                  struct.pack('<5I', len(instances), len(times), pixels, pixels, tile))
         out.write(np.asarray(times, '<f8').tobytes())
+        if camera_record is not None:
+            out.write(np.asarray(camera_record['eye']+camera_record['target']+camera_record['up']+
+                                 [camera_record['fov_y_degrees'],camera_record['near'],camera_record['far']], '<f8').tobytes())
         for instance in instances:
             a = instance['asset']; clip = instance.get('clip')
             channels = [] if clip is None else a['clips'][_uint(clip, len(a['clips'])-1)]['channels']
@@ -248,7 +274,9 @@ def write_scene(path, instances, times, pixels=256, tile=32):
                 out.write(struct.pack('<4I', c['node'], c['path'], c['interpolation'], len(c['times'])))
                 out.write(c['times'].astype('<f8').tobytes()); out.write(c['values'].astype('<f8').tobytes())
     require(Path(path).stat().st_size <= 536870912, 'MODEL_INPUT_BYTES')
-    return dict(protocol='are.model-input.v1', sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+    return dict(protocol='are.model-input.v2' if projection=='perspective' else 'are.model-input.v1',
+                projection=projection,camera=camera_record,
+                sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
                 bytes=Path(path).stat().st_size, vertices=total_vertices, triangles=total_faces, pixels=pixels, tile=tile,
                 times=list(times), instances=[dict(source=x['asset']['metadata']['sha256'], clip=x.get('clip'),
                 color=x.get('color', [185, 195, 215, 255]), placement=np.asarray(x.get('placement', np.eye(4))).tolist()) for x in instances])
@@ -308,13 +336,23 @@ def decode_output(raw, workers, repeats, policy, mode='render'):
             and receipt.get('python_in_runtime') is False and receipt.get('warmups') == 3
             and receipt.get('hardware_gpu_submitted') is False
             and receipt.get('serial_reference_first_frame') is True, 'MODEL_OUTPUT_RECEIPT')
+    require(receipt.get('projection') in ('orthographic','perspective'), 'MODEL_OUTPUT_RECEIPT')
+    for field in ('camera_eye','camera_target','camera_up'):
+        value = np.asarray(receipt.get(field),dtype='<f8')
+        require(value.shape==(3,) and np.isfinite(value).all(), 'MODEL_OUTPUT_RECEIPT')
+    for field in ('fov_y_degrees','near_plane','far_plane'):
+        value=receipt.get(field)
+        require(type(value) in (int,float) and np.isfinite(value), 'MODEL_OUTPUT_RECEIPT')
+    if receipt['projection']=='perspective':
+        require(1<=receipt['fov_y_degrees']<=179 and 0<receipt['near_plane']<receipt['far_plane'],
+                'MODEL_OUTPUT_RECEIPT')
     for field, limit in [('triangles',8000000),('vertices',6100000),('models',12),('spatial_references',67108864)]:
         _uint(receipt.get(field),limit,0 if field == 'spatial_references' else 1)
     construction = receipt.get('construction_fit_and_serial_reference_ms')
     require(type(construction) in (int,float) and np.isfinite(construction) and construction >= 0, 'MODEL_OUTPUT_TIMING')
     writes = receipt.get('sample_writes')
     require(isinstance(writes,list) and len(writes) == repeats
-            and all(type(x) is int and 0 <= x <= 4*w*h*receipt['triangles'] for x in writes), 'MODEL_OUTPUT_WRITES')
+            and all(type(x) is int and x >= 0 for x in writes), 'MODEL_OUTPUT_WRITES')
     for prefix in ('baseline_', 'candidate_'):
         for field in ('total_ms', 'geometry_ms', 'render_ms', 'cpu_ms'):
             values = receipt.get(prefix+field)
@@ -323,19 +361,31 @@ def decode_output(raw, workers, repeats, policy, mode='render'):
     detail_fields = ('animated_pose_ms','static_pose_ms','triangle_prepare_ms','handoff_ms',
                      'render_setup_ms','rasterization_ms','msaa_ms','aa_ms','scheduler_binning_ms','frame_total_ms')
     for field in ('baseline_frame_timings','candidate_frame_timings'):
+        timing_prefix='baseline_' if field=='baseline_frame_timings' else 'candidate_'
         detail = receipt.get(field)
         require(isinstance(detail,list) and len(detail)==repeats, 'MODEL_OUTPUT_TIMING')
         for index,frame in enumerate(detail):
             require(isinstance(frame,dict) and frame.get('frame')==index
                     and all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
                             for k in detail_fields), 'MODEL_OUTPUT_TIMING')
+            for field,limit in (('projected_triangles',8000000),('clipped_input_triangles',8000000),
+                                ('culled_input_triangles',receipt['triangles'])):
+                _uint(frame.get(field),limit,0)
+            require(frame['clipped_input_triangles']+frame['culled_input_triangles']<=receipt['triangles'] and
+                    (receipt['projection']=='perspective' or frame['projected_triangles']==receipt['triangles']),
+                    'MODEL_OUTPUT_PROJECTION')
+            require(writes[index] <= 4*w*h*max(receipt['triangles'],frame['projected_triangles']),
+                    'MODEL_OUTPUT_WRITES')
             work_fields=('render_setup_worker_work_ms','rasterization_worker_work_ms',
                          'msaa_worker_work_ms','aa_worker_work_ms')
             require(all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
                         for k in work_fields), 'MODEL_OUTPUT_TIMING')
-            prefix='baseline_' if field.startswith('baseline_') else 'candidate_'
-            require(abs(frame['frame_total_ms']-receipt[prefix+'total_ms'][index])<=1e-9,
+            require(abs(frame['frame_total_ms']-receipt[timing_prefix+'total_ms'][index])<=1e-9,
                     'MODEL_OUTPUT_TIMING')
+    for base,candidate in zip(receipt['baseline_frame_timings'],receipt['candidate_frame_timings']):
+        require(all(base[k]==candidate[k] for k in
+                    ('projected_triangles','clipped_input_triangles','culled_input_triangles')),
+                'MODEL_OUTPUT_PROJECTION_PARITY')
     require(isinstance(receipt.get('stage_timing_semantics'),str)
             and 'must not be summed' in receipt['stage_timing_semantics'], 'MODEL_OUTPUT_TIMING')
     frames = np.frombuffer(raw, dtype='u1', count=w*h*nf*4, offset=start).reshape(nf, h, w, 4)
