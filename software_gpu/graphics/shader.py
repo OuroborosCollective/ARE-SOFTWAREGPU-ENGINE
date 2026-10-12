@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -186,7 +187,8 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        # Opt: math.sqrt is much faster than np.linalg.norm for size 3 arrays
+        n_len = math.sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
         if n_len > 1e-6:
             normal = normal / n_len
 
@@ -194,8 +196,8 @@ class BlinnPhongShader(Shader):
         base_color = self.diffuse_color
         if self.texture is not None:
             u, v = varyings['uv'][0], varyings['uv'][1]
-            u = max(0.0, min(1.0, u))
-            v = max(0.0, min(1.0, v))
+            u = max(0.0, min(1.0, float(u)))
+            v = max(0.0, min(1.0, float(v)))
             th, tw = self.texture.shape[0], self.texture.shape[1]
             tx = int(u * (tw - 1))
             ty = int(v * (th - 1))
@@ -203,11 +205,10 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
+        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
 
-        # Ambient component
-        ambient = base_color * self.ambient_color
+        # Ambient/Diffuse combination avoids scalar mult per component, fallback to numpy
+        ambient_diffuse = base_color * self.ambient_color + base_color * self.light_color * diff
 
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
@@ -217,17 +218,25 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            half_len = math.sqrt(half_dir[0]*half_dir[0] + half_dir[1]*half_dir[1] + half_dir[2]*half_dir[2])
             valid = bool(half_len > 1e-6)
             if valid:
                 half_dir /= half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
-        if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
-        else:
-            spec = 0.0
-        specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        if cache[2]:
+            h_dir = cache[1]
+            dot_val = normal[0]*h_dir[0] + normal[1]*h_dir[1] + normal[2]*h_dir[2]
+            spec = max(0.0, float(dot_val)) ** self.shininess
+            specular = self.specular_color * self.light_color * spec
+        else:
+            specular = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+
+        # Avoid np.clip on length 3 array for performance
+        rgb = ambient_diffuse + specular
+        r = max(0.0, min(1.0, float(rgb[0])))
+        g = max(0.0, min(1.0, float(rgb[1])))
+        b = max(0.0, min(1.0, float(rgb[2])))
+
+        return int(r * 255.0), int(g * 255.0), int(b * 255.0), 255
