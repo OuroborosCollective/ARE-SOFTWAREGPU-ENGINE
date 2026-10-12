@@ -25,6 +25,17 @@ COLORS = dict(mage=[145,110,245,255], assassin=[235,115,165,255], axe=[75,205,19
               crystal=[100,215,245,255], wisteria=[145,190,120,255], armor=[210,85,60,255])
 CLIPS = dict(mage='Charged_Spell_Cast', assassin='Dodge_and_Counter', axe='Axe_Spin_Attack', sword='Sword_Judgment')
 ORDER = ('mage','assassin','axe','sword','log','boulder','crystal','armor','wisteria')
+# Keep the workload's temporal distribution independent of the requested number
+# of measurement pairs. Repeats may change for statistical runs, but the same
+# first 15 frame poses must remain the same reference workload.
+REFERENCE_PHASES = np.linspace(0.0, 1.0, 15).tolist()
+
+
+def reference_sample_times(duration, repeats):
+    """Return a stable, cyclic set of normalized reference timestamps."""
+    if duration < 0 or repeats < 1:
+        raise ValueError('duration and repeats must be positive')
+    return [duration * REFERENCE_PHASES[i % len(REFERENCE_PHASES)] for i in range(repeats)]
 
 
 def hashes():
@@ -135,7 +146,7 @@ def main():
                 instances.append(dict(asset=asset,clip=clip,color=COLORS[alias],placement=m))
             duration = (max(assets[x]['clips'][instances[i]['clip']]['duration'] for i,x in enumerate(aliases)
                             if instances[i]['clip'] is not None) if any(x['clip'] is not None for x in instances) else 0)
-            sample_times = np.linspace(0, duration, a.repeats).tolist()
+            sample_times = reference_sample_times(duration, a.repeats)
             request = output/'render-input.bin'
             metadata = write_scene(request, instances, sample_times, projection=a.projection,render_profile=a.render_profile)
             load_ms = 1000*(time.monotonic()-load_start)

@@ -105,6 +105,19 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 3. Den nächsten Funktionsschritt gemäß `docs/native-perspective-texture-pbr-plan.md` implementieren: versionierter Importvertrag, perspektivisch korrekte UV-Interpolation und danach begrenzte Originaltextur-/PBR-Unterstützung. Alpha, Normalmaps, Sampler/Mips und Farbmanagement explizit spezifizieren.
 4. Nach Textur-/Materialintegration denselben Arena-Input, dieselben Originalhashes und dieselbe Kamera erneut gegen serielle Referenz, native Baseline und Bio-Scheduler messen; Perspektiv-, Sampling-, Beleuchtungs- und Resolve-Kosten getrennt berichten.
 
+## Aktualisierung 2026-10-13: deterministischer Benchmark und Clipping-Zähler
+
+- Die Benchmark-Zeitpunkte verwenden nun 15 feste, gleichmäßig verteilte Phasen, unabhängig von der Anzahl der Messwiederholungen; bei mehr als 15 Wiederholungen wird diese Referenzfolge zyklisch wiederholt. Eine Regression prüft die Stabilität der ersten 15 Zeitpunkte.
+- Der native `clipped_input_triangles`-Zähler erkennt jetzt auch beschnittene Eingangsdreiecke, aus denen genau ein Ausgabedreieck entsteht. Vollständig verworfene Dreiecke bleiben ausschließlich im Culling-Zähler.
+- Vollsuite auf dem korrigierten Stand: **293 Tests, 2 übersprungen, OK**. Der korrigierte PBR-Lauf bestätigt in allen drei Fällen `full_buffer_parity=true`, stabile Quellhashes und unveränderte Original-GLB-Hashes.
+- Neue Receipts und komprimierte Framebuffer liegen unter `evidence/native-pbr-20261013-fixed/`; die sechs Original-GLBs und das native Executable bleiben außerhalb von Git.
+
+| Workload | Baseline median / p95 / max | Bio-PBR median / p95 / max | Bio-Speedup | Frames >16,7 ms |
+|---|---:|---:|---:|---:|
+| `animated4` | 96,420 / 104,613 / 113,601 ms | 60,774 / 63,451 / 65,621 ms | 1,587× | 15/15 |
+| `static2` | 21,167 / 22,388 / 22,666 ms | 13,621 / 14,186 / 14,343 ms | 1,554× | 0/15 |
+| `arena6` | 105,482 / 114,309 / 117,084 ms | 61,723 / 75,595 / 89,437 ms | 1,709× | 15/15 |
+
 ## Aktualisierung 2026-10-13: native Texturen und PBR
 
 Die Folgearbeit ist inzwischen im opt-in-Profil **AREMDL03** umgesetzt; der frühere

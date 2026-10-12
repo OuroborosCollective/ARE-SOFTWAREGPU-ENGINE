@@ -241,10 +241,15 @@ struct Scene {
                     triangles.push_back(std::move(tri));}
                 else triangles[cursor++]=std::move(tri);
             };
-            if(pbr){const auto emitted=projection::clip_surface_triangle(surface_input,append_surface);
-                if(emitted==0)++culled_count;else if(emitted!=1)++clipped_count;}
-            else if(perspective){const auto emitted=projection::clip_triangle(input,append);
-                if(emitted==0)++culled_count;else if(emitted!=1)++clipped_count;}
+            bool input_clipped=false;
+            if(pbr){for(const auto& vertex:surface_input)for(unsigned plane=0;plane<6;++plane)
+                    input_clipped=input_clipped||projection::distance(vertex.clip,plane)<0.0;
+                const auto emitted=projection::clip_surface_triangle(surface_input,append_surface);
+                if(emitted==0)++culled_count;else if(input_clipped)++clipped_count;}
+            else if(perspective){for(const auto& vertex:input)for(unsigned plane=0;plane<6;++plane)
+                    input_clipped=input_clipped||projection::distance(vertex,plane)<0.0;
+                const auto emitted=projection::clip_triangle(input,append);
+                if(emitted==0)++culled_count;else if(input_clipped)++clipped_count;}
             else append(input);
         }}
         if(!perspective)need(cursor==source_triangles,"MODEL_FRAME_TOPOLOGY");

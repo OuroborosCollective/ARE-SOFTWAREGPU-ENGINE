@@ -13,6 +13,7 @@ from software_gpu.research.model_probe import load_asset, write_scene, run_model
 from software_gpu.tests.fixtures.model_fixture import make_glb
 from software_gpu.research.native_symbolic import FLAGS, NATIVE, compiler
 from tools.model_reference import pose
+from tools.benchmark_models import reference_sample_times
 
 
 class TestModelProbe(unittest.TestCase):
@@ -30,6 +31,13 @@ class TestModelProbe(unittest.TestCase):
         path = self.root/'fixture.glb'
         entry = make_glb(path, **kwargs)
         return load_asset(path, entry, profile=profile)
+
+    def test_reference_sample_times_are_independent_of_repeat_count(self):
+        fifteen = reference_sample_times(12.0, 15)
+        thirty = reference_sample_times(12.0, 30)
+        self.assertEqual(fifteen, thirty[:15])
+        self.assertEqual(thirty[0], thirty[15])
+        self.assertEqual(thirty[-1], 12.0)
 
     def run_asset(self, asset, times=(0,1,2,3), **kwargs):
         path = self.root/'request.bin'
