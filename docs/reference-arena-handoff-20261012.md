@@ -1,16 +1,18 @@
 # Übergabe: reproduzierbare Referenzarena und Renderer-Phasenprofil
 
-**Stand:** 2026-10-12 · Branch `feat/reference-arena-frame-timings-20261012` · Basis: `main` bei `1b74820` (`Merge pull request #35...`)
+**Stand:** 2026-10-12 · Branch `feat/reference-arena-frame-timings-20261012` · aktueller PR-Commit `814a293` · Ziel: Draft-PR #48 gegen `main`
 
 ## Ergebnis in Kürze
 
-- Eine browserfähige **Three.js-Referenzarena** lädt alle sechs verifizierten GLB-Anhänge. Vier Figuren laufen mit Originalclips; Baumstamm und Granitfelsen sind statisch. Die GLB-Materialien und eingebetteten Texturen bleiben erhalten; die Kamera ist perspektivisch.
-- Der native Läufer zeichnet nun **Pose (animiert/statisch), Dreiecksvorbereitung/Beleuchtung, Übergabe, Setup, Raster, MSAA, AA und Bio-Binning pro Frame** auf. Zusätzlich werden die summierten Worker-Ausführungszeiten je Rendereroperation erfasst, damit die überlappende Frontier-Wallzeit nicht fälschlich als isolierte Stufenzeit ausgelegt wird.
-- `tools/benchmark_models.py` kann `animated4`, `static2` und `arena6` gezielt in einem reproduzierbaren Lauf messen. Es zeichnet Median, p95, Maximum, Slow-Frames über 16,7 ms, Bilder/Framehashes, Vollbufferparität sowie Quell- und Originalmodellhashes auf.
-- Die nachweislich größte Workerarbeit – das Raster – erhielt eine gezielte, semantikerhaltende Optimierung: **Top-left-Kanten-Inklusivität wird einmal pro vorbereitetem Dreieck statt je Sample bestimmt.** Die Raster-/Bio-Paritätstests bleiben bitgenau.
-- Die tatsächlich gemessene Beschleunigung ist **begrenzt**: Arena6 Median 42,33 → 41,28 ms (−2,48 %); das Bio-Ergebnis bleibt deutlich über 16,7 ms. Das ist ein gemessener Fortschritt, keine Behauptung einer fertigen 60-FPS-Spielepipeline.
+- Eine browserfähige **Three.js-Referenzarena** lädt sechs verifizierte GLB-Modelle: vier animierte Figuren sowie Baumstamm und Granitfelsen. Originalmaterialien und eingebettete Texturen bleiben im Viewer erhalten; die Kamera ist perspektivisch.
+- Der native Pfad ergänzt den unveränderten orthografischen `AREMDL01`-Vertrag um das versionierte Profil **`AREMDL02`**: explizite Look-at-/FOV-/Near-/Far-Kamera, homogene Perspektivprojektion, Sechs-Ebenen-Frustum-Clipping und vor dem Worker-Dispatch angepasste Dreieckstopologie.
+- Der Native-Benchmark trennt animierte Figuren (`animated4`), statische Umgebung (`static2`) und die kombinierte Arena (`arena6`). Er berichtet Median, p95, Maximum, Frame-Stufen, langsame Frames, Framehashes, Vollpufferparität sowie Quell- und Assethashes.
+- Die frühere orthografische Rasteroptimierung berechnet die Top-left-Kanten-Inklusivität einmal je vorbereitetem Dreieck statt einmal je Sample. Ihr gemessener Nutzen bleibt begrenzt und ist von den neuen Perspektivmessungen getrennt.
+- Im aktuellen `AREMDL02`-Lauf beträgt das mediane Bio-Speedup gegenüber der nativen Baseline rund **2,0–2,2×**. Trotzdem überschreiten `animated4` und `arena6` weiterhin in allen 15 Messframes das 16,7-ms-Budget; dies ist **keine** 60-FPS-Zusage.
 
-## Vorher/Nachher (15 alternierende Paare, 256×256, Tile 32, 4 Worker)
+## Historischer orthografischer Vorher-/Nachhervergleich
+
+**15 alternierende Paare, 256×256, Tile 32, 4 Worker.** Diese `AREMDL01`-Messungen stammen aus dem ursprünglichen Referenzarena-Changeset und sind nicht mit dem späteren Perspektivpfad zusammenzurechnen.
 
 | Workload | Native Baseline median vorher → nachher | Bio median vorher → nachher | Bio p95 vorher → nachher | Bio max vorher → nachher | Bio-Speedup nachher (Medianverhältnis) | Slow-Frames nachher >16,7 ms |
 |---|---:|---:|---:|---:|---:|---:|
@@ -18,83 +20,87 @@
 | `static2` (Baumstamm + Felsen) | 23,61 → 22,25 ms | 10,94 → 10,49 ms (−4,04 %) | 13,43 → 16,45 ms | 14,11 → 17,64 ms | 2,12× | 1/15 |
 | `arena6` (4 Figuren + 2 Umfeldobjekte) | 106,34 → 101,44 ms | 42,33 → 41,28 ms (−2,48 %) | 47,50 → 57,34 ms | 47,61 → 61,73 ms | 2,46× | 15/15 |
 
-Vorher- und Nachher-Benchmark wurden auf demselben Sandbox-Host, mit denselben sechs nach SHA-256 verifizierten Modelloriginalen, derselben Arena-Geometrie, Konfiguration und 15 Samplezeitpunkten ausgeführt. Jeder Lauf bestätigt nach der Messung keine Quellenänderung während des Laufs und keine Abweichung der geprüften GLB-Hashes. **Die vollständigen Framepuffer entsprechen pro Fall bitgenau der seriellen Referenz (`full_buffer_parity=true`);** es liegen 15 Frame-Hashes je Fall vor. Der Lauf dauert jeweils rund 11 Sekunden für alle drei ausgewählten Cases.
+Vorher und Nachher verwendeten denselben Host, dieselben sechs nach SHA-256 verifizierten Originale, dieselbe Geometrie, Konfiguration und Samplezeitpunkte. Für jeden Fall wurde die vollständige Framepufferparität mit der seriellen Referenz bestätigt. Die erhöhten p95-/Maximalwerte, besonders der 71,33-ms-Ausreißer in `animated4`, bleiben als Last-/Hostempfindlichkeit relevant.
 
-Messungen eines geteilten Hosts mit 15 Paaren sind beobachtete Workload-Werte, keine gerätespezifische FPS-Garantie und kein statistischer Konfidenzbereich. Die höheren p95-/Maxima nachher, besonders das einzelne animierte 71,33-ms-Maximum, müssen als **Langsamframes und Host-/Lastempfindlichkeit** mitgelesen werden; der Median allein beschreibt sie nicht.
+## Aktueller AREMDL02-Perspektivbenchmark
+
+**Ausgeführt am 2026-10-12, auf dem Sandbox-Host; 15 alternierende Baseline-/Bio-Paare, 3 Warmups, 256×256, Tile 32, 4 Worker, feste serialisierte Perspektivkamera.** Für jeden Case ist `full_buffer_parity=true`; das Receipt enthält 15 Framehashes. Alle sechs vom Nutzer bereitgestellten Arena-GLBs stimmen nach dem Lauf weiterhin mit den SHA-256-Werten im Modellmanifest überein; die Quellhashes blieben vor/nach dem Benchmark identisch.
+
+| Workload | Eingabedreiecke | Baseline median / p95 / max | Bio median / p95 / max | Bio-Speedup (Medianverhältnis) | Bio-Frames >16,7 ms |
+|---|---:|---:|---:|---:|---:|
+| `animated4` | 68.775 | 60,226 / 62,148 / 63,038 ms | 27,619 / 29,098 / 29,748 ms | 2,181× | 15/15 |
+| `static2` | 20.477 | 15,077 / 21,087 / 21,170 ms | 7,485 / 11,861 / 12,385 ms | 2,014× | 0/15 |
+| `arena6` | 89.252 | 75,334 / 78,497 / 78,847 ms | 37,165 / 38,995 / 39,257 ms | 2,027× | 15/15 |
+
+**Interpretation:** Der Perspektiv-/Clippingpfad besteht die exakte Pufferparität für alle drei Cases und zeigt in diesem Lauf etwa 2× Bio-Speedup. `static2` blieb unter dem Framebudget; sämtliche Frames in `animated4` und `arena6` lagen darüber. Das sind beobachtete Workload-Werte eines geteilten Hosts, weder geräteunabhängige FPS-Angaben noch statistische Konfidenzintervalle. Sie dürfen nicht direkt mit dem historischen orthografischen Lauf gleichgesetzt werden.
+
+Das vollständige Receipt und die komprimierten RGBA-/Resolved-/Depth-Arrays liegen unter `evidence/reference-arena-perspective-20261012/`:
+
+- `benchmark.json`
+- `animated4-frames.npz`
+- `static2-frames.npz`
+- `arena6-frames.npz`
 
 ## Interpretation der Phasenmessung
 
-In der optimierten `arena6`-Messung beträgt die mediane Raster-Workerarbeit 28,56 ms (Summe der gemessenen Workerintervalle), gegenüber rund 0,46 ms MSAA- und 2,55 ms AA-Workerarbeit. Das macht Raster zu einer sinnvollen Optimierungsstelle. Die Workerarbeitszeiten summieren über parallele Arbeit und sind **keine Wandzeit**.
+In der historischen optimierten `arena6`-Messung betrug die mediane Raster-Workerarbeit 28,56 ms (Summe der gemessenen Workerintervalle), gegenüber rund 0,46 ms MSAA- und 2,55 ms AA-Workerarbeit. Workerarbeitszeiten summieren über parallele Arbeit und sind **keine Wandzeit**.
 
-Bei der Bio-Frontier-Welle laufen Raster, MSAA und AA abhängig von Tile-Abhängigkeiten überlappend. Für diese drei `*_ms`-Wallfelder wird dieselbe gemeinsame Wellen-Wandzeit berichtet. **Diese Felder niemals addieren oder als isolierte Phasendauern interpretieren.** Als echte Latenz gilt `frame_total_ms`; für den Rechenarbeitsanteil dienen die separat ausgewiesenen `*_worker_work_ms`-Summen. Die serielle Referenz hat sequenzielle Wellenintervalle.
+In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhängigkeiten überlappen. Die gemeinsamen `*_ms`-Wallfelder für diese Stufen dürfen daher weder addiert noch als isolierte Phasendauern interpretiert werden. Als Latenz dient `frame_total_ms`; als Rechenarbeitsanteil dienen die separat ausgewiesenen `*_worker_work_ms`-Summen.
 
-## Referenzviewer und ursprüngliche Spielepipeline
+## Referenzviewer und Funktionsgrenzen
 
-`reference_arena/` ist eine rein visuelle Three.js-Ansicht mit WebGL, Perspektive, PBR-Licht, GLB-Originaltexturen/-materialien, animierten Clips und Orbit-Steuerung. Sie ist ein nützlicher visueller GLB-Referenzpfad, **kein dritter Timing-Backend**. Ihr browserseitiger FPS-Zähler ist ausdrücklich keine native Messung.
+`reference_arena/` ist eine rein visuelle Three.js-Ansicht mit WebGL, perspektivischer Kamera, GLB-Originaltexturen/-materialien, Animationen und Orbit-Steuerung. Sie ist ein visueller Referenzpfad, **kein dritter Timing-Backend**; ihr Browser-FPS-Zähler ist keine native Messung.
 
-Die hier archivierten Vorher-/Nachher-Messungen beziehen sich auf den kontrollierten orthografischen CPU-Vergleich von `AREMDL01`. Danach wurde additiv `AREMDL02` mit expliziter Kamera, homogener Perspektivprojektion, Sechs-Ebenen-Frustum-Clipping und dynamischer, vor Dispatch aktualisierter Clip-Topologie implementiert. Die neue Perspektivstufe hat nun synthetische und animierte Workerparitätstests; sie wurde **noch nicht** in den archivierten Arena-Läufen gemessen. Originale PBR-/Texturzuweisungen bleiben noch nicht integriert. Browser- und native Ausgabe sind keine pixelgleichen Renderings. **Texturinterpolation und native PBR-Materialien** sind der nächste Funktionsschritt; sie benötigen einen versionierten Attribut-/Materialvertrag. Die kleinen Messverbesserungen rechtfertigen keine LOD-, Sichtbarkeits- oder Pixelarbeits-Reduktion, die hier nicht getestet wurde.
+`AREMDL02` bringt Perspektivprojektion und Clipping in den nativen C++-Pfad. Native Textur-/UV-Interpolation und originale PBR-Materialzuweisungen sind weiterhin nicht integriert; die Beleuchtung ist diagnostisch pro Fläche. Browser- und native Ausgabe sind keine pixelgleichen Renderings. Der nächste Funktionsschritt ist der explizite Attribut-/Materialvertrag aus [`docs/native-perspective-texture-pbr-plan.md`](native-perspective-texture-pbr-plan.md), während `ARERIN01`, `AREMDL01`, VertexColor- und Diagnosepfad rückwärtskompatibel bleiben. Es gibt weiterhin keine unbelegte Grundlage für LOD-, Sichtbarkeits- oder Pixelarbeitsreduktionen.
 
 ## Reproduktion
 
-1. Lege die vom Projekt verwaltete ZIP bereit (die Quellen bleiben privat/lokal):
+1. Die vom Nutzer bereitgestellte ZIP lokal ablegen (Originalmodelle bleiben privat):
 
    ```sh
    python tools/install_reference_arena_assets.py /pfad/SoftwareGPU_Referenzarena_GLB_Modelle.zip
    ```
 
-   Der Installer prüft Größe und SHA-256 jedes ausgewählten GLB gegen `evidence/original-model-manifest-v1.json`; `reference_arena/assets/*.glb` wird ignoriert und **nicht** committet.
+   Der Installer prüft Größe und SHA-256 der sechs ausgewählten GLBs gegen `evidence/original-model-manifest-v1.json`; `reference_arena/assets/*.glb` wird Git-ignoriert und **nicht** committet. Für den nativen Benchmark muss `--assets` auf ein Verzeichnis mit den Originaldateinamen aus dem Manifest zeigen.
 
-2. Starte den visuellen Viewer aus dem Repositoryroot:
+2. Viewer aus dem Repositoryroot starten:
 
    ```sh
    python -m http.server 8000 --directory reference_arena
    ```
 
-   Öffne `http://localhost:8000/` in einem Browser mit Internetzugang (Three.js 0.180.0 und Addons werden von jsDelivr geladen).
+   Im Browser `http://localhost:8000/` öffnen (Three.js 0.180.0 und Addons werden von jsDelivr geladen).
 
-3. Wiederhole den nativen Vorher-/Nachher-Szenenvergleich:
+3. Perspektivbenchmark der sechs Originalmodelle wiederholen:
 
    ```sh
-python tools/benchmark_models.py \
-     --assets /pfad/zu/den/Originalmodellen \
-     --output-dir /tmp/reference-arena-results \
-     --phase bench --cases animated4,static2,arena6 \
-     --repeats 15 --seconds 600
-
-# Gesonderter, noch nicht in den obigen historischen Receipts enthaltener AREMDL02-Lauf
-python tools/benchmark_models.py \
-     --assets /pfad/zu/den/Originalmodellen \
+   python tools/benchmark_models.py \
+     --assets /pfad/zu/den/Originaldateien \
      --output-dir /tmp/reference-arena-perspective \
-     --phase bench --projection perspective --cases animated4,static2,arena6 \
-     --repeats 15 --seconds 600
+     --phase bench --projection perspective \
+     --cases animated4,static2,arena6 --repeats 15 --seconds 600
    ```
 
-4. Führe die regressionskritischen Tests aus:
+4. Regressionstests ausführen:
 
    ```sh
-   python -m unittest \
-     software_gpu.tests.test_workrooms \
-     software_gpu.tests.test_bio_workrooms \
-     software_gpu.tests.test_native_raster \
-     software_gpu.tests.test_model_probe \
-     software_gpu.tests.test_model_projection -v
+   python -m unittest discover -s software_gpu/tests -p 'test_*.py' -v
    ```
 
-5. Vorher-/Nachher-Receipts und komprimierte 256×256 Frame-/Depth-Arrays liegen unter `evidence/reference-arena-{before,after}-...-20261012.*`. Die JSONs enthalten native Rohreceipts, Samplezeitpunkte, Timingprofile, Konfiguration, Umgebungs-/Quellhashes und die sechs benutzten Assethashes. Die sechs Original-GLBs selbst sind nicht eingecheckt.
+5. Historische Orthogonal-Receipts und komprimierte Frames liegen unter `evidence/reference-arena-{before,after}-...-20261012.*`; der aktuelle Perspektivlauf liegt in `evidence/reference-arena-perspective-20261012/`. Die sechs GLB-Binaries sind nicht eingecheckt.
 
-## Validierung dieses Changesets
+## Validierung des aktuellen Draft-PR-Commits
 
-- **26 Tests bestanden:** Workrooms, Bio-Workrooms, Native-Raster, GLB-Laden/Skinning/Animation, nativer Puffer, fehlerhafte Receipts und exakte Workerparität.
-- **Vollständige Projektsuite bestanden:** `python -m unittest discover -s software_gpu/tests -p 'test_*.py'` → 282 Tests bestanden, 2 übersprungen (184,2 s).
-- Python- und Viewer-JavaScript-Syntaxprüfung bestanden.
-- Der Viewer wurde im Sandbox-Browser geprüft: **6/6** Modelle geladen; vier Animation-Dropdowns, geladene Originalmodelle und sichtbare Arena.
-- Beide Benchmarkläufe enthielten `animated4`, `static2`, `arena6`, je 15 Paare und exakt gleiche finale Puffer; vor/nach den Messungen bestand jeweils Quell-/Asset-Hashkonsistenz.
-- `git diff --check` bestanden; die GLB-Dateien sind per `.gitignore` geschützt.
+- **Vollständige Projektsuite auf Commit `814a293`:** `python -m unittest discover -s software_gpu/tests -p 'test_*.py' -v` → **286 bestanden, 2 übersprungen** (113,64 s).
+- **Fokussierte AREMDL02-Tests vor dem Push:** 12 Modell-/Projektionsprüfungen bestanden; enthalten Clipping an sechs Ebenen, Culling und animierte Topologieänderung mit exakter Einworker-/Bio-Parität.
+- **GitHub CI für den aktuellen PR-Head:** 11 Checks erfolgreich, 0 fehlgeschlagen, 0 ausstehend.
+- **Perspektivbenchmark:** drei ausgewählte Cases, je 15 Framehashes und `full_buffer_parity=true`; Quellhashes stabil; sechs Original-GLB-Hashes am Ende manifestkonform.
+- Python-/Viewer-JavaScript-Syntaxprüfung bestand; der Sandbox-Browser lud zuvor **6/6** Viewer-Modelle mit vier Animationsauswahlen.
+- `git diff --check` bestand. Original-GLBs und Native-Buildartefakte bleiben außerhalb des Commits.
 
 ## Handoff / nächste sinnvolle Schritte
 
-1. Draft-PR reviewen; insbesondere beachten, dass die Rasteroptimierung einen kleinen Mediangewinn bei `arena6`, aber keine stabile 60-FPS-Zielerreichung bringt.
-2. Auf einem weniger variablen oder dedizierten Runner denselben gepaarten Benchmark wiederholen; dabei p95/Maximum und nicht nur Median bewerten.
-3. Den neuen Perspektiv-/Clippingpfad mit derselben Originalarena messen; seine Ergebnisse sind nicht mit den oben archivierten orthografischen Zahlen zu vermischen.
-4. Danach perspektivisch korrekte UV-Interpolation und Originaltexturen/PBR-Materialien ergänzen. Alpha, Normalmaps, Sampler-/Mip-Verhalten und Farbmanagement jeweils explizit spezifizieren und die bestehende Diagnose-/VertexColor-ABI unverändert halten.
-4. Nach der Funktionsintegration dieselbe Arena, gleiche Originalhashes, Basis-/Bio-Verfahren und einen perspektivischen Referenzvertrag erneut messen; Textur- und Perspektivkosten separat ausweisen.
+1. Draft-PR #48 reviewen; nicht aus diesen Messungen auf eine fertige 60-FPS-Spielepipeline schließen.
+2. Den gleichen gepaarten Perspektivbenchmark auf einem weniger variablen oder dedizierten Runner wiederholen und p95/Maximum weiterhin neben dem Median bewerten.
+3. Den nächsten Funktionsschritt gemäß `docs/native-perspective-texture-pbr-plan.md` implementieren: versionierter Importvertrag, perspektivisch korrekte UV-Interpolation und danach begrenzte Originaltextur-/PBR-Unterstützung. Alpha, Normalmaps, Sampler/Mips und Farbmanagement explizit spezifizieren.
+4. Nach Textur-/Materialintegration denselben Arena-Input, dieselben Originalhashes und dieselbe Kamera erneut gegen serielle Referenz, native Baseline und Bio-Scheduler messen; Perspektiv-, Sampling-, Beleuchtungs- und Resolve-Kosten getrennt berichten.
