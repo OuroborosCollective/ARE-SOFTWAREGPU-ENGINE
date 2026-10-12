@@ -1,0 +1,28 @@
+{
+  "source": "software_gpu/research/bio_workrooms.wl",
+  "proof": {
+    "protocol": "are.bio-workrooms.wolfram.v1",
+    "nodes": 41,
+    "edges": 142,
+    "acyclic": true,
+    "halo_matches_pixel_reads": true,
+    "resolve_permutations": 100,
+    "single_release_after_all_neighbors": true,
+    "four_coordinates": [
+      "slot_x",
+      "slot_y",
+      "operation",
+      "frame"
+    ],
+    "performance_evidence": false
+  },
+  "tool_response": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Out[1]= \"{\\n\\t\\\"protocol\\\":\\\"are.bio-workrooms.wolfram.v1\\\",\\n\\t\\\"nodes\\\":41,\\n\\t\\\"edges\\\":142,\\n\\t\\\"acyclic\\\":true,\\n\\t\\\"halo_matches_pixel_reads\\\":true,\\n\\t\\\"resolve_permutations\\\":100,\\n\\t\\\"single_release_after_all_neighbors\\\":true,\\n\\t\\\"four_coordinates\\\":[\\n\\t\\t\\\"slot_x\\\",\\n\\t\\t\\\"slot_y\\\",\\n\\t\\t\\\"operation\\\",\\n\\t\\t\\\"frame\\\"\\n\\t],\\n\\t\\\"performance_evidence\\\":false\\n}\""
+      }
+    ],
+    "isError": false
+  }
+}

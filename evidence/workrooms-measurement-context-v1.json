@@ -1,0 +1,113 @@
+{
+  "protocol": "are.workrooms.measurement-context.v1",
+  "environment": {
+    "affinity_cpus": 9,
+    "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+    "logical_cpus": 9,
+    "numpy_build": {
+      "Build Dependencies": {
+        "blas": {
+          "detection method": "pkgconfig",
+          "found": true,
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "name": "scipy-openblas",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas",
+          "version": "0.3.30"
+        },
+        "lapack": {
+          "detection method": "pkgconfig",
+          "found": true,
+          "include directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/include",
+          "lib directory": "/opt/_internal/cpython-3.12.12/lib/python3.12/site-packages/scipy_openblas64/lib",
+          "name": "scipy-openblas",
+          "openblas configuration": "OpenBLAS 0.3.30  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=64",
+          "pc file directory": "/project/.openblas",
+          "version": "0.3.30"
+        }
+      },
+      "SIMD Extensions": {
+        "baseline": [
+          "SSE",
+          "SSE2",
+          "SSE3"
+        ],
+        "found": [
+          "SSSE3",
+          "SSE41",
+          "POPCNT",
+          "SSE42",
+          "AVX",
+          "F16C",
+          "FMA3",
+          "AVX2",
+          "AVX512F",
+          "AVX512CD",
+          "AVX512_SKX",
+          "AVX512_CLX",
+          "AVX512_CNL",
+          "AVX512_ICL"
+        ],
+        "not found": [
+          "AVX512_KNL",
+          "AVX512_KNM",
+          "AVX512_SPR"
+        ]
+      }
+    },
+    "python_compiler": "Clang 22.1.3 ",
+    "thread_env": {
+      "MKL_NUM_THREADS": null,
+      "NUMEXPR_NUM_THREADS": null,
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "VECLIB_MAXIMUM_THREADS": null
+    }
+  },
+  "environment_observed_in": "same-session existing-backend benchmark",
+  "source_receipt_sha256": "1eac5e524f3b9cb2a9a4146f9f4c9cb6fa601ca53f973fb206f8a90dca79ed65",
+  "wall_statistics": [
+    {
+      "tile": 1,
+      "workers": 1,
+      "median_ms": 62.949189,
+      "iqr_ms": 3.3105944999999934,
+      "mad_ms": 1.873427999999997
+    },
+    {
+      "tile": 1,
+      "workers": 4,
+      "median_ms": 36.880304,
+      "iqr_ms": 10.795984499999996,
+      "mad_ms": 3.6198849999999965
+    },
+    {
+      "tile": 16,
+      "workers": 4,
+      "median_ms": 12.611005,
+      "iqr_ms": 1.265252499999999,
+      "mad_ms": 0.669848
+    },
+    {
+      "tile": 16,
+      "workers": 1,
+      "median_ms": 37.658575,
+      "iqr_ms": 0.9699540000000013,
+      "mad_ms": 0.5132720000000006
+    }
+  ],
+  "existing_backend_raw_sha256": "085544679f3f539075f822fc35ef53dbbfb0594e5c85560d83cd69c290e4e369",
+  "existing_backend_storage": "gzip, decompress before workbench audit/analyze",
+  "ordering": "native cases completed before existing-backend cases; no concurrent performance batches",
+  "native_sanitizers": {
+    "address": "PASS",
+    "undefined": "PASS",
+    "leak": "not tested: host does not support LeakSanitizer",
+    "cases": [
+      "640x640 tile1 workers4",
+      "640x640 tile16 workers1",
+      "truncated and trailing wire inputs"
+    ]
+  }
+}
