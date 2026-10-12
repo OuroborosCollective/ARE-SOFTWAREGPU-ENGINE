@@ -71,6 +71,17 @@ class TestModelProbe(unittest.TestCase):
         self.assertEqual(four['receipt']['frame_sha256'][2],four['receipt']['frame_sha256'][3])
         self.assertTrue(four['receipt']['full_buffer_parity'])
         self.assertFalse(self.build['python_in_runtime'])
+        receipt=four['receipt']
+        self.assertEqual(len(receipt['baseline_frame_timings']),4)
+        self.assertEqual(len(receipt['candidate_frame_timings']),4)
+        for frame in receipt['candidate_frame_timings']:
+            self.assertEqual(frame['frame_total_ms'],receipt['candidate_total_ms'][frame['frame']])
+            for field in ('animated_pose_ms','static_pose_ms','triangle_prepare_ms','handoff_ms',
+                          'render_setup_ms','rasterization_ms','msaa_ms','aa_ms','scheduler_binning_ms'):
+                self.assertGreaterEqual(frame[field],0)
+            for field in ('render_setup_worker_work_ms','rasterization_worker_work_ms',
+                          'msaa_worker_work_ms','aa_worker_work_ms'):
+                self.assertGreaterEqual(frame[field],0)
 
     def test_uint32_primitive_ids_beyond_65535(self):
         small = self.run_asset(self.asset(static=True),[0],repeats=1)
@@ -127,7 +138,7 @@ class TestModelProbe(unittest.TestCase):
         good = json.loads(raw[24:24+nj])
         for field,value in [('full_buffer_parity',False),('hardware_gpu_submitted',True),('models',0),
                             ('candidate_total_ms',[float('nan')]),('sample_writes',[True]),
-                            ('construction_fit_and_serial_reference_ms',-1)]:
+                            ('construction_fit_and_serial_reference_ms',-1),('candidate_frame_timings',[])]:
             bad = dict(good,**{field:value}); encoded = json.dumps(bad).encode()
             changed = raw[:8]+struct.pack('<4I',w,h,n,len(encoded))+encoded+raw[24+nj:]
             with self.subTest(field=field),self.assertRaises(ValueError):decode_output(changed,4,1,'combined')

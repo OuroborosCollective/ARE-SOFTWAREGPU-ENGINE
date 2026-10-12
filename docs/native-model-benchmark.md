@@ -1,5 +1,9 @@
 # Native original-model benchmark
 
+See [reference arena and frame-timing handoff](reference-arena-handoff-20261012.md)
+for the animated/static arena cases, per-frame phase/worker-work profiles, and
+hash-bound before/after evidence from the Three.js visual reference and native paths.
+
 See [evidence recovery](model-evidence-recovery.md) for which historical artifacts
 survived workspace maintenance and how the fresh original-model run is identified.
 

@@ -320,6 +320,24 @@ def decode_output(raw, workers, repeats, policy, mode='render'):
             values = receipt.get(prefix+field)
             require(isinstance(values,list) and len(values) == repeats
                     and all(type(x) in (int, float) and np.isfinite(x) and x >= 0 for x in values), 'MODEL_OUTPUT_TIMING')
+    detail_fields = ('animated_pose_ms','static_pose_ms','triangle_prepare_ms','handoff_ms',
+                     'render_setup_ms','rasterization_ms','msaa_ms','aa_ms','scheduler_binning_ms','frame_total_ms')
+    for field in ('baseline_frame_timings','candidate_frame_timings'):
+        detail = receipt.get(field)
+        require(isinstance(detail,list) and len(detail)==repeats, 'MODEL_OUTPUT_TIMING')
+        for index,frame in enumerate(detail):
+            require(isinstance(frame,dict) and frame.get('frame')==index
+                    and all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
+                            for k in detail_fields), 'MODEL_OUTPUT_TIMING')
+            work_fields=('render_setup_worker_work_ms','rasterization_worker_work_ms',
+                         'msaa_worker_work_ms','aa_worker_work_ms')
+            require(all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
+                        for k in work_fields), 'MODEL_OUTPUT_TIMING')
+            prefix='baseline_' if field.startswith('baseline_') else 'candidate_'
+            require(abs(frame['frame_total_ms']-receipt[prefix+'total_ms'][index])<=1e-9,
+                    'MODEL_OUTPUT_TIMING')
+    require(isinstance(receipt.get('stage_timing_semantics'),str)
+            and 'must not be summed' in receipt['stage_timing_semantics'], 'MODEL_OUTPUT_TIMING')
     frames = np.frombuffer(raw, dtype='u1', count=w*h*nf*4, offset=start).reshape(nf, h, w, 4)
     resolved = np.frombuffer(raw, dtype='u1', count=w*h*4, offset=start+w*h*nf*4).reshape(h, w, 4)
     depth = np.frombuffer(raw, dtype='<f4', count=w*h, offset=start+w*h*(nf*4+4)).reshape(h, w)

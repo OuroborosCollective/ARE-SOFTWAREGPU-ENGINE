@@ -45,6 +45,7 @@ def main():
     p.add_argument('--phase', choices=('poses','bench','all'), default='all')
     p.add_argument('--repeats', type=int, default=15)
     p.add_argument('--seconds', type=int, default=1800)
+    p.add_argument('--cases', help='comma-separated case names: animated4, static2, arena6, all9, or individual aliases')
     a = p.parse_args()
     if not 15 <= a.repeats <= 30 or not 1 <= a.seconds <= 3600:
         p.error('15..30 pairs and 1..3600 second total budget required')
@@ -52,6 +53,7 @@ def main():
     start = time.monotonic(); before = hashes()
     manifest = json.loads((ROOT/'evidence/original-model-manifest-v1.json').read_text())
     entries = {e['alias']: e for e in manifest['files'] if 'duplicate_of' not in e}
+    used_aliases = set()
     exe, build = build_model_probe(output/'native')
     report = dict(protocol='are.original-model-benchmark.v1', phase=a.phase, environment=environment(), build=build,
         source_sha256_before=before, source_sha256_after=None, originals_modified=False,
@@ -75,6 +77,7 @@ def main():
 
     if a.phase in ('poses','all'):
         for alias in ORDER[:4]:
+            used_aliases.add(alias)
             asset = load_asset(Path(a.assets)/entries[alias]['file'], entries[alias])
             for ci, clip in enumerate(asset['clips']):
                 sample_times = [0.0, .25*clip['duration'], .5*clip['duration'], .75*clip['duration'], clip['duration']]
@@ -92,8 +95,17 @@ def main():
             gc.collect(); checkpoint()
         request.unlink()
     if a.phase in ('bench','all'):
-        specs = [(alias, [alias]) for alias in ORDER] + [('arena6',list(ORDER[:6])), ('all9',list(ORDER))]
+        scene_sets = {'animated4':list(ORDER[:4]),'static2':list(ORDER[4:6]),
+                      'arena6':list(ORDER[:6]),'all9':list(ORDER)}
+        if a.cases:
+            requested=[value.strip() for value in a.cases.split(',') if value.strip()]
+            unknown=sorted(set(requested)-set(ORDER)-set(scene_sets))
+            if not requested or unknown:p.error(f'unknown or empty --cases values: {unknown}')
+            specs=[(name,scene_sets[name]) if name in scene_sets else (name,[name]) for name in requested]
+        else:
+            specs=[(alias,[alias]) for alias in ORDER]+[(name,scene_sets[name]) for name in ('arena6','all9')]
         for name, aliases in specs:
+            used_aliases.update(aliases)
             load_start = time.monotonic()
             assets = {alias: load_asset(Path(a.assets)/entries[alias]['file'], entries[alias]) for alias in aliases}
             instances = []
@@ -129,6 +141,19 @@ def main():
                 summary['paired_total_speedup'] = stats([b/c for b,c in zip(receipt['baseline_total_ms'],receipt['candidate_total_ms'])])
                 summary['ratio_of_median_total'] = summary['baseline_total_ms']['median']/summary['candidate_total_ms']['median']
                 summary['ratio_of_median_render'] = summary['baseline_render_ms']['median']/summary['candidate_render_ms']['median']
+                timing_fields=('animated_pose_ms','static_pose_ms','triangle_prepare_ms','handoff_ms',
+                    'render_setup_ms','rasterization_ms','msaa_ms','aa_ms','scheduler_binning_ms','frame_total_ms',
+                    'render_setup_worker_work_ms','rasterization_worker_work_ms','msaa_worker_work_ms','aa_worker_work_ms')
+                summary['candidate_frame_stages']={field:stats([frame[field] for frame in receipt['candidate_frame_timings']])
+                                                   for field in timing_fields}
+                summary['baseline_frame_stages']={field:stats([frame[field] for frame in receipt['baseline_frame_timings']])
+                                                  for field in timing_fields}
+                summary['frame_budget_ms']=16.7
+                summary['candidate_slow_frames']=[{'frame':frame['frame'],'frame_total_ms':frame['frame_total_ms']}
+                    for frame in receipt['candidate_frame_timings'] if frame['frame_total_ms']>16.7]
+                summary['candidate_slowest_frames']=sorted(
+                    ({'frame':frame['frame'],'frame_total_ms':frame['frame_total_ms']} for frame in receipt['candidate_frame_timings']),
+                    key=lambda frame:frame['frame_total_ms'],reverse=True)[:min(5,a.repeats)]
                 np.savez_compressed(output/(name+'-frames.npz'), frames=result['frames'], resolved=result['resolved'], depth=result['depth'])
                 case = dict(name=name,status='measured',input=metadata,offline_load_and_pack_ms=load_ms,receipt=receipt,summary=summary)
                 report['cases'].append(case)
@@ -142,8 +167,9 @@ def main():
     report['source_sha256_after'] = hashes()
     if report['source_sha256_after'] != before:
         raise AssertionError('SOURCE_DRIFT')
-    report['original_sha256_after'] = {e['file']:hashlib.sha256((Path(a.assets)/e['file']).read_bytes()).hexdigest() for e in manifest['files']}
-    if any(report['original_sha256_after'][e['file']] != e['sha256'] for e in manifest['files']):
+    measured_entries=[entries[alias] for alias in sorted(used_aliases)]
+    report['original_sha256_after'] = {e['file']:hashlib.sha256((Path(a.assets)/e['file']).read_bytes()).hexdigest() for e in measured_entries}
+    if any(report['original_sha256_after'][e['file']] != e['sha256'] for e in measured_entries):
         raise AssertionError('ORIGINAL_SOURCE_DRIFT')
     checkpoint()
 

@@ -16,7 +16,7 @@ constexpr const char* colors[]={"green","blue","orange","purple"};
 struct Config { std::uint32_t width,height,tile,frame; };
 struct Vertex { float x,y,z,w; };
 struct Triangle { std::array<Vertex,3> v; std::array<std::uint8_t,4> rgba; };
-struct Prepared { std::array<Vertex,3> v; float area; std::array<std::uint8_t,4> rgba; };
+struct Prepared { std::array<Vertex,3> v; float area; std::array<std::uint8_t,4> rgba; std::array<bool,3> inclusive_edges; };
 struct Wave { std::uint64_t executed=0, samples=0; double milliseconds=0;
     std::vector<std::uint64_t> worker_jobs; };
 enum class Admission { legacy, model_probe };
@@ -43,6 +43,11 @@ inline bool covered(float e,const Vertex& a,const Vertex& b) {
     const float dy=b.y-a.y,dx=b.x-a.x;
     return (dy>0 || (dy==0 && dx<0))?e>=0:e>0;
 }
+inline bool inclusive_edge(const Vertex& a,const Vertex& b) {
+    const float dy=b.y-a.y,dx=b.x-a.x;
+    return dy>0 || (dy==0 && dx<0);
+}
+inline bool covered(float e,bool inclusive) {return inclusive?e>=0:e>0;}
 class Pipeline {
     friend class BioPipeline; // Optional scheduler shares the exact render operations.
     Config c_; unsigned workers_; Admission admission_; std::size_t pixels_,tiles_x_,tiles_y_,tiles_;
@@ -51,6 +56,7 @@ class Pipeline {
     std::vector<float> sample_depth_,depth_;
     std::vector<State> states_;
     std::array<Wave,4> waves_;
+    std::array<std::array<double,8>,4> operation_work_ms_{};
     bool delivered_=false;
     struct Rect { std::size_t x0,y0,x1,y1; };
     Rect rect(std::size_t tile)const {
@@ -63,6 +69,8 @@ class Pipeline {
             out.v[k]={float((double(v.x)*inv+1.0)*0.5*c_.width),
                       float((1.0-double(v.y)*inv)*0.5*c_.height),float(double(v.z)*inv),1};}
         out.area=edge(out.v[0],out.v[1],out.v[2].x,out.v[2].y);
+        out.inclusive_edges={inclusive_edge(out.v[1],out.v[2]),inclusive_edge(out.v[2],out.v[0]),
+                             inclusive_edge(out.v[0],out.v[1])};
     }
     void clear_samples(const Rect& r) {
         for(auto y=r.y0;y<r.y1;++y)for(auto x=r.x0;x<r.x1;++x){const auto p=y*c_.width+x;
@@ -76,7 +84,8 @@ class Pipeline {
             for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x)for(int s=0;s<4;++s) {
                 const float px=x+(s%2?0.75f:0.25f),py=y+(s/2?0.75f:0.25f);
                 const float e0=edge(b,d,px,py),e1=edge(d,a,px,py),e2=edge(a,b,px,py);
-                if(!covered(e0,b,d)||!covered(e1,d,a)||!covered(e2,a,b))continue;
+                if(!covered(e0,t.inclusive_edges[0])||!covered(e1,t.inclusive_edges[1])||
+                   !covered(e2,t.inclusive_edges[2]))continue;
                 const float z=((e0*inv)*a.z+(e1*inv)*b.z)+(e2*inv)*d.z;
                 const auto index=(std::size_t(y)*c_.width+x)*4+s;
                 if(z<sample_depth_[index]){sample_depth_[index]=z;++samples;
@@ -141,12 +150,15 @@ class Pipeline {
                 for(;;){const auto first=cursor.fetch_add(32,std::memory_order_relaxed);if(first>=count)break;
                     for(auto i=first;i<std::min(first+32,count);++i) {
                         states_[offset+i]=State::running;
+                        const auto operation_begin=std::chrono::steady_clock::now();
                         switch(static_cast<Kind>(kind)) {
                             case Kind::render:render(i);break;
                             case Kind::raster:samples[worker]+=raster(i);break;
                             case Kind::msaa:msaa(i);break;
                             case Kind::aa:aa(i);break;
                         }
+                        operation_work_ms_[kind][worker]+=std::chrono::duration<double,std::milli>(
+                            std::chrono::steady_clock::now()-operation_begin).count();
                         states_[offset+i]=State::done;++receipt.worker_jobs[worker];
                     }
                 }
@@ -185,7 +197,7 @@ public:
         std::copy(triangles.begin(),triangles.end(),triangles_.begin());
     }
     void execute() {
-        delivered_=false;require_environment();std::fill(states_.begin(),states_.end(),State::waiting);
+        delivered_=false;require_environment();std::fill(states_.begin(),states_.end(),State::waiting);operation_work_ms_={};
         const auto n=triangles_.size();
         wave(0,n,0);wave(1,tiles_,n);wave(2,tiles_,n+tiles_);wave(3,tiles_,n+2*tiles_);
         for(auto s:states_)if(s!=State::done)throw std::runtime_error("ROOM_HANDOFF_INCOMPLETE");
@@ -195,6 +207,11 @@ public:
     const auto& resolved()const {if(!delivered_)throw std::runtime_error("ROOM_NO_HANDOFF");return resolved_;}
     const auto& depth()const {if(!delivered_)throw std::runtime_error("ROOM_NO_HANDOFF");return depth_;}
     const auto& waves()const{return waves_;}
+    std::array<double,4> stage_work_ms()const {
+        std::array<double,4> total{};
+        for(unsigned k=0;k<4;++k)for(unsigned w=0;w<workers_;++w)total[k]+=operation_work_ms_[k][w];
+        return total;
+    }
     std::size_t room_count()const{return states_.size();}
     std::size_t tiles()const{return tiles_;}
     // (slot_x, slot_y, operation, frame). Render slots index primitives;

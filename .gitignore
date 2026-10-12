@@ -14,6 +14,7 @@ dist/
 # Runtime-generated output and reports
 *.bmp
 *.ppm
+/reference_arena/assets/*.glb
 benchmark_load_curve_report.json
 .aurion-impact-results/
 run-output/

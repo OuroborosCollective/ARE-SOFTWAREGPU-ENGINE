@@ -130,6 +130,7 @@ class BioPipeline {
     std::vector<Bounds> bounds_;
     std::vector<std::size_t> offsets_,cursor_;
     std::vector<std::uint32_t> ids_;
+    double binning_ms_=0;
     using Counts=std::array<std::uint64_t,4>;
     std::array<Counts,8> jobs_{};
     std::array<std::uint64_t,8> samples_{};
@@ -196,12 +197,15 @@ class BioPipeline {
             ledger_->claim(room,epoch_);
         }
         base_.states_[room]=State::ready;base_.states_[room]=State::running;
+        const auto operation_begin=std::chrono::steady_clock::now();
         switch(static_cast<Kind>(kind)) {
             case Kind::render:base_.render(i);break;
             case Kind::raster:samples_[worker]+=policy_.locality?raster_local(i):base_.raster(i);break;
             case Kind::msaa:base_.msaa(i);break;
             case Kind::aa:base_.aa(i);break;
         }
+        base_.operation_work_ms_[kind][worker]+=std::chrono::duration<double,std::milli>(
+            std::chrono::steady_clock::now()-operation_begin).count();
         base_.states_[room]=State::done;if(ledger_)ledger_->finish(room,epoch_);
         ++jobs_[worker][kind];
     }
@@ -259,10 +263,13 @@ public:
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
         base_.delivered_=false;require_environment();
         std::fill(base_.states_.begin(),base_.states_.end(),State::waiting);jobs_={};samples_={};
+        base_.operation_work_ms_={};
+        binning_ms_=0;
         if(ledger_)epoch_=ledger_->begin();
         stage(0,base_.triangles_.size());
         if(ledger_)for(std::size_t i=0;i<base_.triangles_.size();++i)ledger_->require_done(i,epoch_);
-        if(policy_.locality)make_bins(); // recomputed each frame, included in timing
+        if(policy_.locality){const auto begin=std::chrono::steady_clock::now();make_bins();
+            binning_ms_=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();} // recomputed each frame, included in timing
         if(policy_.frontier)frontier();else for(unsigned k=1;k<4;++k)stage(k,base_.tiles_);
         for(auto state:base_.states_)if(state!=State::done)throw std::runtime_error("ROOM_HANDOFF_INCOMPLETE");
         if(ledger_)ledger_->seal(epoch_);
@@ -272,8 +279,10 @@ public:
     const auto& resolved()const{return base_.resolved();}
     const auto& depth()const{return base_.depth();}
     const auto& waves()const{return base_.waves();}
+    std::array<double,4> stage_work_ms()const{return base_.stage_work_ms();}
     auto room_count()const{return base_.room_count();}
     auto tiles()const{return base_.tiles();}
+    double binning_ms()const{return binning_ms_;}
     auto address(std::size_t room)const{return base_.address(room);}
     std::size_t spatial_references()const{return ids_.size();}
 };

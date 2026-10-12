@@ -4,6 +4,7 @@
 #include "workrooms_wire.hpp"
 #include <fstream>
 #include <numeric>
+#include <chrono>
 namespace are::models {
 using V3=std::array<double,3>;using V4=std::array<double,4>;using Mat=std::array<double,16>;
 constexpr std::size_t max_vertices=6100000,max_triangles=8000000,max_nodes=256;
@@ -48,6 +49,7 @@ struct Bounds {V3 lo{1e300,1e300,1e300},hi{-1e300,-1e300,-1e300};
     V3 center()const{return {(lo[0]+hi[0])*.5,(lo[1]+hi[1])*.5,(lo[2]+hi[2])*.5};}
     double span()const{return std::max({hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2]});}
 };
+struct FrameProfile {double animated_pose_ms=0,static_pose_ms=0,triangle_prepare_ms=0;};
 struct Model {
     std::vector<std::array<float,3>> positions;
     std::vector<std::array<std::uint32_t,3>> faces;
@@ -128,7 +130,12 @@ struct Scene {
         need(r.remaining==0,"MODEL_TRAILING");triangles.resize(total_faces);
     }
     void fit(){Bounds b;for(double t:times)for(auto& m:models){m.pose(t);for(const auto&p:m.posed)b.add(p);}center=b.center();need(b.span()>1e-12,"MODEL_EMPTY_BOUNDS");scale=1.8/b.span();}
-    void frame(double time){std::size_t cursor=0;for(auto& m:models){m.pose(time);
+    void frame(double time,FrameProfile* profile=nullptr){std::size_t cursor=0;
+        for(auto& m:models){const auto begin=std::chrono::steady_clock::now();m.pose(time);
+            if(profile){const auto ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();
+                (m.channels.empty()?profile->static_pose_ms:profile->animated_pose_ms)+=ms;}}
+        const auto prepare=std::chrono::steady_clock::now();
+        for(auto& m:models){
         for(const auto& f:m.faces){auto& tri=triangles[cursor++];V3 p[3];
             for(int k=0;k<3;++k){p[k]=m.posed[f[k]];tri.v[k]={float((p[k][0]-center[0])*scale),float((p[k][1]-center[1])*scale),float(-(p[k][2]-center[2])*scale),1};}
             V3 u{},v{};for(int k=0;k<3;++k){u[k]=p[1][k]-p[0][k];v[k]=p[2][k]-p[0][k];}
@@ -140,6 +147,7 @@ struct Scene {
             auto screen=[&](are::rooms::Vertex a){return are::rooms::Vertex{float((double(a.x)+1)*.5*config.width),float((1-double(a.y))*.5*config.height),a.z,1};};
             const auto a=screen(tri.v[0]),b=screen(tri.v[1]),c=screen(tri.v[2]);if(are::rooms::edge(a,b,c.x,c.y)<0)std::swap(tri.v[1],tri.v[2]);
         }}
+        if(profile)profile->triangle_prepare_ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-prepare).count();
     }
 };
 } // namespace are::models
