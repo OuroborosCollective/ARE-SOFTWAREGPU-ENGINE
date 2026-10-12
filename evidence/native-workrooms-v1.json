@@ -1,0 +1,737 @@
+{
+  "protocol": "are.workrooms.benchmark.v1",
+  "status": "PASS",
+  "base_commit": "f6633bc54e63ffb7478b1b82c2c7e4d74b52b39a",
+  "source_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/workrooms.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+    "native/symbolic/workrooms_main.cpp": "5a669f0535f891abb0a981179e6c79c4bc9bd8528bd428661476b533b9543c08",
+    "software_gpu/research/workrooms.py": "dbffda8999db7a2f489a7b89f0c1cb0c5c6efff1c8861fd723d36ea27a4d02a5",
+    "software_gpu/research/workrooms.wl": "2eca556e60dad4a2cf7ddfcd03f36e28a1effbd3267d86054c58c1529c10ad3c",
+    "software_gpu/tests/test_workrooms.py": "a021441cdd834d26c72a159fd21400679d7cf5fb079d53ecb91ba9914503e717",
+    "software_gpu/tests/fixtures/workrooms-plan.json": "d306ff89af6a707720f08d3d947aae95c40c216768d32c367bc2622edb7a4449",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/graphics/postprocess.py": "bfb8f4820bfa65ae56040a61ecb267760236ccaad6cbd66e91abebb0d9def9f7",
+    "tools/benchmark_workrooms.py": "7e763c0479984293652086db9f67a72118655ab975c7b9d5eb7a3cf4844eb784"
+  },
+  "source_after_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/workrooms.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+    "native/symbolic/workrooms_main.cpp": "5a669f0535f891abb0a981179e6c79c4bc9bd8528bd428661476b533b9543c08",
+    "software_gpu/research/workrooms.py": "dbffda8999db7a2f489a7b89f0c1cb0c5c6efff1c8861fd723d36ea27a4d02a5",
+    "software_gpu/research/workrooms.wl": "2eca556e60dad4a2cf7ddfcd03f36e28a1effbd3267d86054c58c1529c10ad3c",
+    "software_gpu/tests/test_workrooms.py": "a021441cdd834d26c72a159fd21400679d7cf5fb079d53ecb91ba9914503e717",
+    "software_gpu/tests/fixtures/workrooms-plan.json": "d306ff89af6a707720f08d3d947aae95c40c216768d32c367bc2622edb7a4449",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/graphics/postprocess.py": "bfb8f4820bfa65ae56040a61ecb267760236ccaad6cbd66e91abebb0d9def9f7",
+    "tools/benchmark_workrooms.py": "7e763c0479984293652086db9f67a72118655ab975c7b9d5eb7a3cf4844eb784"
+  },
+  "build": {
+    "protocol": "are.workrooms.build.v1",
+    "flags": [
+      "-std=c++17",
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-Wall",
+      "-Wextra",
+      "-pthread"
+    ],
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "source_sha256": {
+      "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+      "workrooms.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+      "workrooms_main.cpp": "5a669f0535f891abb0a981179e6c79c4bc9bd8528bd428661476b533b9543c08"
+    },
+    "binary_sha256": "dccc1fde4b7c62d9337afd665290ad80540af11cc6969de3993951dd97e0e0c5",
+    "python_in_runtime": false,
+    "diagnostics": ""
+  },
+  "cases": [
+    {
+      "tile": 1,
+      "workers": 1,
+      "median_ms": 62.949189,
+      "median_cpu_ms": 62.593,
+      "process_ms_including_startup_warmup_protocol_and_all_repeats": 1150.418865,
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 1,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "warmups": 1,
+        "samples_ms": [
+          60.699616,
+          66.192336,
+          63.197964,
+          65.136699,
+          63.693229,
+          73.579256,
+          76.541731,
+          61.34031,
+          60.526746,
+          60.526495,
+          63.319597,
+          62.949189,
+          62.582858,
+          61.075761,
+          61.132978
+        ],
+        "cpu_samples_ms": [
+          60.704,
+          66.197,
+          63.202,
+          65.141,
+          63.697,
+          73.582,
+          76.535,
+          61.344,
+          60.522,
+          60.53,
+          63.337,
+          62.593,
+          62.586,
+          61.08,
+          61.137
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.00054,
+            "worker_jobs": [
+              4
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 39.415276,
+            "worker_jobs": [
+              409600
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 4.718006,
+            "worker_jobs": [
+              409600
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 16.213073,
+            "worker_jobs": [
+              409600
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "ddd32dacede045511bb676e446f5593f2e682b3ff644b6a021fae602257fe662",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "tile": 1,
+      "workers": 4,
+      "median_ms": 36.880304,
+      "median_cpu_ms": 128.318,
+      "process_ms_including_startup_warmup_protocol_and_all_repeats": 870.949747,
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "warmups": 1,
+        "samples_ms": [
+          57.522503,
+          31.914831,
+          34.825994,
+          36.426242,
+          38.420266,
+          36.880304,
+          33.587061,
+          40.500189,
+          40.672638,
+          35.390694,
+          31.887505,
+          36.856679,
+          51.136019,
+          62.181109,
+          60.995652
+        ],
+        "cpu_samples_ms": [
+          204.817,
+          111.162,
+          114.541,
+          124.344,
+          128.318,
+          126.113,
+          111.603,
+          133.214,
+          144.879,
+          112.374,
+          101.275,
+          132.479,
+          184.588,
+          228.95,
+          215.846
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.12595,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 26.64407,
+            "worker_jobs": [
+              79360,
+              92576,
+              117792,
+              119872
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 16.491491,
+            "worker_jobs": [
+              101056,
+              120544,
+              88160,
+              99840
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 16.958844,
+            "worker_jobs": [
+              97888,
+              114976,
+              98496,
+              98240
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "b80da4eab4398978702f05d8c57d51dd0b3f8f3a371cb0d9cdc5d2b683319767",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "tile": 16,
+      "workers": 4,
+      "median_ms": 12.611005,
+      "median_cpu_ms": 33.671,
+      "process_ms_including_startup_warmup_protocol_and_all_repeats": 289.076607,
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "warmups": 1,
+        "samples_ms": [
+          12.182662,
+          12.260068,
+          11.047624,
+          11.10459,
+          11.989741,
+          12.611005,
+          13.631721,
+          12.978538,
+          13.150607,
+          13.280853,
+          11.939235,
+          12.271225,
+          14.100666,
+          13.422055,
+          14.570052
+        ],
+        "cpu_samples_ms": [
+          33.56,
+          30.507,
+          30.184,
+          34.581,
+          36.935,
+          33.159,
+          37.939,
+          40.993,
+          33.671,
+          37.423,
+          30.831,
+          28.174,
+          33.215,
+          35.353,
+          34.474
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.385069,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 7.988724,
+            "worker_jobs": [
+              320,
+              352,
+              448,
+              480
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.254607,
+            "worker_jobs": [
+              416,
+              480,
+              384,
+              320
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 4.935433,
+            "worker_jobs": [
+              288,
+              288,
+              512,
+              512
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "81b01fc06ed6dc5dba3d04f248161e2f80336c92b2696bbba30f4717cc2c6ff3",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "tile": 16,
+      "workers": 1,
+      "median_ms": 37.658575,
+      "median_cpu_ms": 37.663,
+      "process_ms_including_startup_warmup_protocol_and_all_repeats": 685.988398,
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 1,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "warmups": 1,
+        "samples_ms": [
+          36.388615,
+          37.595019,
+          39.418662,
+          39.619183,
+          39.402548,
+          38.326459,
+          37.145303,
+          38.588944,
+          38.059107,
+          37.658575,
+          37.525845,
+          37.556872,
+          37.454758,
+          38.331567,
+          37.208558
+        ],
+        "cpu_samples_ms": [
+          36.391,
+          37.598,
+          39.423,
+          39.623,
+          39.407,
+          38.33,
+          37.148,
+          38.594,
+          38.056,
+          37.663,
+          37.53,
+          37.561,
+          37.458,
+          38.336,
+          37.211
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.000321,
+            "worker_jobs": [
+              4
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 19.940208,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.6974,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 13.560113,
+            "worker_jobs": [
+              1600
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "515064733ef769b3c68e2e1010c51219067065a2e091f115fde58642a505ab0c",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    }
+  ],
+  "repeats": 15,
+  "width": 640,
+  "height": 640,
+  "triangles": 4,
+  "oracle": "existing MSAARasterizer + FXAAPass: 32x32 rgba, resolved rgba and depth exact",
+  "wolfram_descriptor_receipt": {
+    "protocol": "are.workrooms.receipt.v1",
+    "python_in_runtime": false,
+    "workers": 4,
+    "frame": 0,
+    "triangles": 4,
+    "tile": 8,
+    "rooms_executed": 52,
+    "handoff_ready": true,
+    "hardware_gpu_submitted": false,
+    "worker_parity": true,
+    "warmups": 1,
+    "samples_ms": [
+      0.430878
+    ],
+    "cpu_samples_ms": [
+      0.281
+    ],
+    "waves": [
+      {
+        "kind": "render",
+        "color": "green",
+        "executed": 4,
+        "sample_writes": 0,
+        "last_ms": 0.05963,
+        "worker_jobs": [
+          0,
+          4,
+          0,
+          0
+        ]
+      },
+      {
+        "kind": "raster",
+        "color": "blue",
+        "executed": 16,
+        "sample_writes": 3912,
+        "last_ms": 0.134822,
+        "worker_jobs": [
+          0,
+          0,
+          16,
+          0
+        ]
+      },
+      {
+        "kind": "msaa",
+        "color": "orange",
+        "executed": 16,
+        "sample_writes": 0,
+        "last_ms": 0.133571,
+        "worker_jobs": [
+          0,
+          16,
+          0,
+          0
+        ]
+      },
+      {
+        "kind": "aa",
+        "color": "purple",
+        "executed": 16,
+        "sample_writes": 0,
+        "last_ms": 0.100741,
+        "worker_jobs": [
+          0,
+          16,
+          0,
+          0
+        ]
+      }
+    ],
+    "address_examples": [
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        3,
+        0
+      ],
+      [
+        3,
+        3,
+        3,
+        0
+      ]
+    ],
+    "request_sha256": "944305ddbc985f1229b7685767d70ceb4176a646f40d7f64833cd1149881c330",
+    "response_sha256": "b39a0eb3fc39a13308463dc9c28c1483091d8e4b440815543d9b0ac35d031779",
+    "rgba_sha256": "6097e9979eb2b95b0bda8fa6e94d8017196dc799ea7a059ba124fd150905bf27"
+  },
+  "four_worker_ratio_of_medians": {
+    "1": 1.70685114200794,
+    "16": 2.986167636917121
+  },
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "python": "3.12.14",
+    "machine": "x86_64"
+  },
+  "limitations": [
+    "CPU software rendering only; final node returns CPU buffers, no GPU API submission",
+    "Already-clipped finite geometry and flat per-triangle colour only; not a full shader/clipper port",
+    "Four ordered global waves are a conservative dependency scheduler, not a physical wave equation",
+    "Native repeats use resident input/output buffers; startup, parsing, copying and allocations excluded",
+    "Every timed frame includes scheduling, worker creation/join and handoff readiness scan",
+    "Native worker parity and tile parity are full-buffer checks; independent Python oracle runs at small size",
+    "One host, independent process batches, descriptive speed ratios only",
+    "No temperature sensors or thermal safety conclusion; C++ can fully load a CPU",
+    "OpenProblems graph/method/metric structure is inspiration, no biological dataset or eigensolver port"
+  ]
+}

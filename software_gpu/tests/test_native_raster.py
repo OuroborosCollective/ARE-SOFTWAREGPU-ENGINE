@@ -117,7 +117,7 @@ class TestNativeRaster(unittest.TestCase):
     def test_explicit_backend_and_callback_rejection(self):
         fb = Framebuffer(8,8)
         for options in ({'backend':'native-cpp'}, {'backend':'native-cpp','native_kernel':self.kernel,'num_threads':2},
-                        {'native_kernel':self.kernel}, {'backend':'native-cpp','native_kernel':self.kernel,'plan_policy':BATCH_FIRST_POLICY}):
+                        {'native_kernel':self.kernel}, {'backend':'native-cpp','native_kernel':self.kernel,'preparation_cache_bytes':1024}, {'backend':'native-cpp','native_kernel':self.kernel,'plan_policy':BATCH_FIRST_POLICY}):
             with self.assertRaises(ValueError): SoftwareRasterizer(fb,**options)
         engine = SoftwareRasterizer(fb, backend='native-cpp', native_kernel=self.kernel)
         class Custom(VertexColorShader): pass

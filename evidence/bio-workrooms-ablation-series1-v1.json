@@ -1,0 +1,7647 @@
+{
+  "protocol": "are.bio-workrooms.benchmark.v1",
+  "status": "PASS",
+  "baseline_commit": "87ff610cd9419dd4b465e60bc19eb367a6b1a8f2",
+  "build": {
+    "protocol": "are.bio-workrooms.build.v1",
+    "flags": [
+      "-std=c++17",
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-Wall",
+      "-Wextra",
+      "-pthread"
+    ],
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "source_sha256": {
+      "core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+      "workrooms.hpp": "adc111d047741f540c56fe7d5ba9a4e8626832ff0636873ddf37b26ee0239c41",
+      "workrooms_wire.hpp": "15288833ab2a07a0128090cccfe197295b9f3b6c72e998e79393a6f589c32a23",
+      "bio_workrooms.hpp": "60c27ab7d25f64e253b12dbcaadc48ed907d364114fcd43e5b4f6c3445bc7ef3",
+      "bio_workrooms_main.cpp": "ad8cc4d034281e520648825af6bc6e7ad67c30585405c5d28e9efd9b5c17a310",
+      "frozen_workrooms.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca"
+    },
+    "binary_sha256": "ceba3cb2270bda6f399f8a635aa802f8774544ff1b4e88b185dfdd71c9e9c2e0",
+    "baseline_commit": "87ff610cd9419dd4b465e60bc19eb367a6b1a8f2",
+    "baseline_source_sha256": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+    "python_in_runtime": false,
+    "diagnostics": ""
+  },
+  "checkout_head_at_measurement": "87ff610cd9419dd4b465e60bc19eb367a6b1a8f2",
+  "source_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/workrooms.hpp": "adc111d047741f540c56fe7d5ba9a4e8626832ff0636873ddf37b26ee0239c41",
+    "native/symbolic/workrooms_wire.hpp": "15288833ab2a07a0128090cccfe197295b9f3b6c72e998e79393a6f589c32a23",
+    "native/symbolic/workrooms_main.cpp": "187d2186b0c797b89266bbec88f9c53b5b32fdc03ad866542d7a7f6df473d48a",
+    "native/symbolic/bio_workrooms.hpp": "60c27ab7d25f64e253b12dbcaadc48ed907d364114fcd43e5b4f6c3445bc7ef3",
+    "native/symbolic/bio_workrooms_main.cpp": "ad8cc4d034281e520648825af6bc6e7ad67c30585405c5d28e9efd9b5c17a310",
+    "software_gpu/research/workrooms.py": "2110e6984ccf72836f91f2c28b305f25f46449ff6dcd637178d380a709c76ba7",
+    "software_gpu/research/workrooms.wl": "2eca556e60dad4a2cf7ddfcd03f36e28a1effbd3267d86054c58c1529c10ad3c",
+    "software_gpu/research/bio_workrooms.py": "d298dab843bc17dc0a0a5d41847b9d1d6f3eab6f955f6459746568811b2b5052",
+    "software_gpu/research/bio_workrooms.wl": "5b0a9ee29ae8cb9cae9057252bdc2ca6baefbab8c8ac2dc6982fb99bc6b1c8f2",
+    "software_gpu/tests/test_workrooms.py": "a021441cdd834d26c72a159fd21400679d7cf5fb079d53ecb91ba9914503e717",
+    "software_gpu/tests/test_bio_workrooms.py": "9107ae4cc93c956a93821395d67c27eac5f8e4d4798faa297c06fb6e25255e18",
+    "software_gpu/tests/fixtures/bio_checkpoint_probe.cpp": "94180f41b1d07ab69133d035fa29338e44cdce588adba64deb3e84f63e354796",
+    "software_gpu/tests/fixtures/workrooms-baseline-87ff.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/graphics/postprocess.py": "bfb8f4820bfa65ae56040a61ecb267760236ccaad6cbd66e91abebb0d9def9f7",
+    "tools/benchmark_bio_workrooms.py": "87172835f0a6cb37bdf800f36a59088962d8ce5db63398bd9e3137211b3a7e2d"
+  },
+  "source_after_sha256": {
+    "native/symbolic/core.hpp": "24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8",
+    "native/symbolic/workrooms.hpp": "adc111d047741f540c56fe7d5ba9a4e8626832ff0636873ddf37b26ee0239c41",
+    "native/symbolic/workrooms_wire.hpp": "15288833ab2a07a0128090cccfe197295b9f3b6c72e998e79393a6f589c32a23",
+    "native/symbolic/workrooms_main.cpp": "187d2186b0c797b89266bbec88f9c53b5b32fdc03ad866542d7a7f6df473d48a",
+    "native/symbolic/bio_workrooms.hpp": "60c27ab7d25f64e253b12dbcaadc48ed907d364114fcd43e5b4f6c3445bc7ef3",
+    "native/symbolic/bio_workrooms_main.cpp": "ad8cc4d034281e520648825af6bc6e7ad67c30585405c5d28e9efd9b5c17a310",
+    "software_gpu/research/workrooms.py": "2110e6984ccf72836f91f2c28b305f25f46449ff6dcd637178d380a709c76ba7",
+    "software_gpu/research/workrooms.wl": "2eca556e60dad4a2cf7ddfcd03f36e28a1effbd3267d86054c58c1529c10ad3c",
+    "software_gpu/research/bio_workrooms.py": "d298dab843bc17dc0a0a5d41847b9d1d6f3eab6f955f6459746568811b2b5052",
+    "software_gpu/research/bio_workrooms.wl": "5b0a9ee29ae8cb9cae9057252bdc2ca6baefbab8c8ac2dc6982fb99bc6b1c8f2",
+    "software_gpu/tests/test_workrooms.py": "a021441cdd834d26c72a159fd21400679d7cf5fb079d53ecb91ba9914503e717",
+    "software_gpu/tests/test_bio_workrooms.py": "9107ae4cc93c956a93821395d67c27eac5f8e4d4798faa297c06fb6e25255e18",
+    "software_gpu/tests/fixtures/bio_checkpoint_probe.cpp": "94180f41b1d07ab69133d035fa29338e44cdce588adba64deb3e84f63e354796",
+    "software_gpu/tests/fixtures/workrooms-baseline-87ff.hpp": "8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca",
+    "software_gpu/graphics/geometry.py": "3cd52ad3abe68ac5982500f57e527f4c818bb8ef42c58e0b60dfabd94868e4e7",
+    "software_gpu/graphics/postprocess.py": "bfb8f4820bfa65ae56040a61ecb267760236ccaad6cbd66e91abebb0d9def9f7",
+    "tools/benchmark_bio_workrooms.py": "87172835f0a6cb37bdf800f36a59088962d8ce5db63398bd9e3137211b3a7e2d"
+  },
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "python": "3.12.14",
+    "machine": "x86_64",
+    "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+    "logical_cpu_count": 9,
+    "available_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "cgroup_limits": {
+      "cpu.max": "800000 100000",
+      "memory.max": "8589934592"
+    },
+    "thermal_measurements": null,
+    "thread_environment": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "NUMBA_NUM_THREADS": null
+    }
+  },
+  "repeats": 15,
+  "total_seconds": 41.48885776700081,
+  "metric": "resident native frame elapsed time",
+  "unit": "ms",
+  "statistic": "median",
+  "direction": "lower",
+  "oracle": [
+    {
+      "scene": "large4",
+      "width": 31,
+      "height": 29,
+      "rgba_depth_and_resolved_exact": true,
+      "rgba_sha256": "0242f25057f1f62cf271d15f55196d2c4558a4084fb177f86100fb6bff6d701d"
+    },
+    {
+      "scene": "sparse64",
+      "width": 31,
+      "height": 29,
+      "rgba_depth_and_resolved_exact": true,
+      "rgba_sha256": "539f8a6376148708a054880a3b43d63e42a7090419b04c6af5dc1c2712964a29"
+    }
+  ],
+  "cases": [
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "baseline",
+      "baseline_ms": {
+        "n": 15,
+        "median": 47.728686,
+        "iqr": 26.325787499999997,
+        "mad": 11.488932000000005,
+        "min": 32.978416,
+        "max": 76.358782,
+        "p95": 74.49714180000001
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 51.561759,
+        "iqr": 23.800767,
+        "mad": 13.358983000000002,
+        "min": 32.239855,
+        "max": 91.858135,
+        "p95": 82.21049279999998
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 177.765,
+        "iqr": 97.2955,
+        "mad": 47.53199999999998,
+        "min": 110.22,
+        "max": 296.91,
+        "p95": 285.8472
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 185.762,
+        "iqr": 93.02499999999998,
+        "mad": 51.123999999999995,
+        "min": 104.056,
+        "max": 350.227,
+        "p95": 310.79459999999995
+      },
+      "speedup_ratio_of_medians": 0.9256605462199224,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0158047637122514,
+        "iqr": 0.39502359855142455,
+        "mad": 0.21390022658330032,
+        "min": 0.5195912806198384,
+        "max": 1.4622478016628888,
+        "p95": 1.3853579513881582
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 2111.079485,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "baseline",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 10.003675,
+        "candidate_construction_ms": 6.07473,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          47.728686,
+          62.902828,
+          40.438508,
+          36.239754,
+          38.412102,
+          32.978416,
+          60.871032,
+          73.699296,
+          64.756655,
+          36.274221,
+          47.458939,
+          36.595806,
+          53.918439,
+          76.358782,
+          72.794633
+        ],
+        "baseline_cpu_samples_ms": [
+          175.006,
+          218.51,
+          139.399,
+          120.274,
+          136.061,
+          110.22,
+          200.591,
+          281.106,
+          242.375,
+          130.233,
+          177.765,
+          129.882,
+          192.527,
+          296.91,
+          278.544
+        ],
+        "samples_ms": [
+          91.858135,
+          46.511822,
+          32.239855,
+          38.202776,
+          33.483212,
+          37.352846,
+          41.628397,
+          72.552619,
+          55.036604,
+          51.561759,
+          59.182779,
+          66.378729,
+          44.045107,
+          61.053978,
+          78.075789
+        ],
+        "cpu_samples_ms": [
+          350.227,
+          173.775,
+          104.056,
+          125.901,
+          106.39,
+          139.268,
+          153.429,
+          264.509,
+          209.954,
+          185.762,
+          219.195,
+          241.861,
+          154.446,
+          236.886,
+          293.895
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.11899,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 34.157412,
+            "worker_jobs": [
+              88896,
+              117760,
+              110816,
+              92128
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 24.486054,
+            "worker_jobs": [
+              82144,
+              145216,
+              97696,
+              84544
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 18.892339,
+            "worker_jobs": [
+              99104,
+              88736,
+              122592,
+              99168
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "ed6a9113e46bc6bbe9c36f8df97f96cf2389829149cc1e452da74065a6897905",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 66.817738,
+        "iqr": 36.037772499999996,
+        "mad": 13.202018999999993,
+        "min": 35.482349,
+        "max": 83.559246,
+        "p95": 81.0816037
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 46.155145,
+        "iqr": 20.296836,
+        "mad": 6.0411670000000015,
+        "min": 25.627363,
+        "max": 59.29442,
+        "p95": 54.32574439999999
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 253.558,
+        "iqr": 144.598,
+        "mad": 45.185,
+        "min": 122.48,
+        "max": 300.64,
+        "p95": 299.3121
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 154.319,
+        "iqr": 74.9145,
+        "mad": 26.570999999999998,
+        "min": 77.886,
+        "max": 210.821,
+        "p95": 189.86929999999995
+      },
+      "speedup_ratio_of_medians": 1.4476769166254382,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.43266280854452,
+        "iqr": 0.15040019694906315,
+        "mad": 0.10039104016417788,
+        "min": 1.2425555052384598,
+        "max": 2.0206810197365996,
+        "p95": 1.7643881777328931
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 1901.672547,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.58297,
+        "candidate_construction_ms": 8.658552,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          35.482349,
+          35.686296,
+          35.598603,
+          36.211381,
+          37.757586,
+          51.784726,
+          74.556497,
+          65.88303,
+          72.803281,
+          73.241231,
+          66.817738,
+          68.473762,
+          71.382572,
+          80.019757,
+          83.559246
+        ],
+        "baseline_cpu_samples_ms": [
+          124.017,
+          128.002,
+          122.48,
+          133.714,
+          127.324,
+          180.694,
+          276.029,
+          240.902,
+          274.883,
+          282.197,
+          253.558,
+          256.88,
+          256.216,
+          298.743,
+          300.64
+        ],
+        "samples_ms": [
+          27.105961,
+          28.720082,
+          27.823883,
+          26.297393,
+          26.341419,
+          25.627363,
+          47.600257,
+          46.155145,
+          44.001905,
+          47.131757,
+          46.621949,
+          47.923259,
+          49.825103,
+          52.196312,
+          59.29442
+        ],
+        "cpu_samples_ms": [
+          84.239,
+          89.376,
+          89.543,
+          85.724,
+          85.896,
+          77.886,
+          166.742,
+          157.631,
+          154.58,
+          153.573,
+          154.319,
+          158.359,
+          168.671,
+          180.89,
+          210.821
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.173522,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 38.360581,
+            "worker_jobs": [
+              113504,
+              95808,
+              80000,
+              120288
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 6.954492,
+            "worker_jobs": [
+              114048,
+              100992,
+              94848,
+              99712
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 11.521848,
+            "worker_jobs": [
+              159616,
+              75712,
+              70464,
+              103808
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "749daf74ff51fcf2ccbebaf0314efe675824baeaaa74305f16be65ab924677f1",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 75.595015,
+        "iqr": 12.040944499999995,
+        "mad": 5.496140999999994,
+        "min": 55.633683,
+        "max": 90.800009,
+        "p95": 90.3113103
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 52.077253,
+        "iqr": 14.381245999999997,
+        "mad": 7.085203999999997,
+        "min": 33.663902,
+        "max": 59.564208,
+        "p95": 59.3534282
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 285.476,
+        "iqr": 49.186500000000024,
+        "mad": 30.549000000000007,
+        "min": 206.092,
+        "max": 339.065,
+        "p95": 336.3791
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 206.301,
+        "iqr": 57.144000000000005,
+        "mad": 28.718000000000018,
+        "min": 132.62,
+        "max": 235.932,
+        "p95": 235.2929
+      },
+      "speedup_ratio_of_medians": 1.451593750538263,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.5052205335213782,
+        "iqr": 0.2606465638459712,
+        "mad": 0.12721260427084968,
+        "min": 1.280018237737548,
+        "max": 2.1876169613373992,
+        "p95": 2.040322073356582
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 2435.553622,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.821301,
+        "candidate_construction_ms": 5.799081,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          75.314562,
+          74.405062,
+          85.300088,
+          75.595015,
+          83.908332,
+          90.800009,
+          90.101868,
+          86.263444,
+          80.869869,
+          67.722956,
+          55.633683,
+          70.149501,
+          73.643723,
+          81.091156,
+          71.482808
+        ],
+        "baseline_cpu_samples_ms": [
+          272.993,
+          273.639,
+          321.936,
+          291.971,
+          316.518,
+          335.228,
+          339.065,
+          328.661,
+          285.476,
+          254.927,
+          206.092,
+          269.472,
+          270.609,
+          297.402,
+          252.644
+        ],
+        "samples_ms": [
+          53.214687,
+          54.323536,
+          52.077253,
+          59.057764,
+          59.263094,
+          56.142124,
+          57.149541,
+          59.564208,
+          43.515956,
+          44.992049,
+          40.372542,
+          40.91547,
+          33.663902,
+          41.013217,
+          49.541874
+        ],
+        "cpu_samples_ms": [
+          211.018,
+          215.419,
+          206.301,
+          234.331,
+          235.019,
+          222.42,
+          226.066,
+          235.932,
+          172.014,
+          177.249,
+          159.518,
+          162.033,
+          132.62,
+          162.184,
+          194.549
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.095103,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 29.962372,
+            "worker_jobs": [
+              101088,
+              94656,
+              89440,
+              124416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 6.852217,
+            "worker_jobs": [
+              104704,
+              81760,
+              67712,
+              155424
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 12.057577,
+            "worker_jobs": [
+              105952,
+              77536,
+              69344,
+              156768
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "2707f4cc988a707b8ba75bc261c31629a9c692d5f26ec3a89f29162e7251f32f",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 45.47103,
+        "iqr": 32.577633500000005,
+        "mad": 8.868083999999996,
+        "min": 36.048802,
+        "max": 78.866596,
+        "p95": 76.2992823
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 38.755598,
+        "iqr": 28.829175999999997,
+        "mad": 9.494357,
+        "min": 29.261241,
+        "max": 71.954748,
+        "p95": 67.64980469999999
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 165.506,
+        "iqr": 120.94300000000001,
+        "mad": 37.46199999999999,
+        "min": 125.512,
+        "max": 297.941,
+        "p95": 279.76899999999995
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 136.068,
+        "iqr": 116.689,
+        "mad": 34.60100000000001,
+        "min": 101.467,
+        "max": 281.385,
+        "p95": 260.78959999999995
+      },
+      "speedup_ratio_of_medians": 1.1732764386708727,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.1866369666730812,
+        "iqr": 0.1494818728766294,
+        "mad": 0.08046103508289382,
+        "min": 0.6932125952783075,
+        "max": 1.4878945813101572,
+        "p95": 1.4832066686942729
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 1928.761441,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.888947,
+        "candidate_construction_ms": 5.809287,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          45.47103,
+          67.417856,
+          37.343247,
+          40.504692,
+          60.672079,
+          41.396755,
+          36.612671,
+          36.602946,
+          36.048802,
+          37.07686,
+          46.675364,
+          73.560436,
+          78.866596,
+          75.199005,
+          72.157518
+        ],
+        "baseline_cpu_samples_ms": [
+          165.583,
+          241.766,
+          133.369,
+          144.051,
+          214.6,
+          140.522,
+          128.044,
+          132.508,
+          125.512,
+          134.273,
+          165.506,
+          271.142,
+          297.941,
+          271.981,
+          267.762
+        ],
+        "samples_ms": [
+          30.560653,
+          71.954748,
+          31.469816,
+          58.430404,
+          50.294213,
+          30.745055,
+          38.755598,
+          31.61799,
+          31.034752,
+          29.261241,
+          35.419164,
+          65.197434,
+          65.804829,
+          50.769058,
+          61.732516
+        ],
+        "cpu_samples_ms": [
+          108.377,
+          281.385,
+          116.092,
+          226.835,
+          194.523,
+          105.807,
+          136.068,
+          116.998,
+          113.891,
+          101.467,
+          126.399,
+          251.963,
+          245.889,
+          187.896,
+          236.526
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.138608,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 59.372402,
+            "worker_jobs": [
+              101184,
+              106368,
+              95680,
+              106368
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 59.372402,
+            "worker_jobs": [
+              101184,
+              106368,
+              95680,
+              106368
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 59.372402,
+            "worker_jobs": [
+              101465,
+              106139,
+              95714,
+              106282
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "a341de32c22b3ad247c6a36679896a4046da18329831f7f9744b9df2e78984fb",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 61.005627,
+        "iqr": 19.877333999999998,
+        "mad": 13.096866999999996,
+        "min": 32.742263,
+        "max": 94.98014,
+        "p95": 93.4790677
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 119.942057,
+        "iqr": 35.36728099999999,
+        "mad": 19.912273999999996,
+        "min": 73.354588,
+        "max": 213.080324,
+        "p95": 170.14820959999992
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 222.598,
+        "iqr": 84.007,
+        "mad": 54.59800000000001,
+        "min": 100.214,
+        "max": 360.494,
+        "p95": 351.723
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 455.872,
+        "iqr": 140.83899999999994,
+        "mad": 78.53000000000003,
+        "min": 277.584,
+        "max": 729.936,
+        "p95": 631.2156999999999
+      },
+      "speedup_ratio_of_medians": 0.5086258192153565,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.4457480550855555,
+        "iqr": 0.13050374170527235,
+        "mad": 0.056710355929125655,
+        "min": 0.3581117069545165,
+        "max": 0.7007776254809671,
+        "p95": 0.7001612059907198
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 3600.517829,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.637759,
+        "candidate_construction_ms": 7.967297,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          94.98014,
+          76.518651,
+          64.281785,
+          47.90876,
+          68.662512,
+          65.471766,
+          61.005627,
+          52.611342,
+          51.340658,
+          32.742263,
+          33.649889,
+          46.47085,
+          44.035378,
+          92.835751,
+          63.984917
+        ],
+        "baseline_cpu_samples_ms": [
+          360.494,
+          283.634,
+          244.547,
+          168,
+          257.174,
+          237.392,
+          222.598,
+          189.038,
+          179.794,
+          118.425,
+          100.214,
+          165.707,
+          159.006,
+          347.964,
+          225.024
+        ],
+        "samples_ms": [
+          213.080324,
+          151.748732,
+          136.784539,
+          133.781608,
+          97.980457,
+          118.50563,
+          140.401385,
+          126.377177,
+          73.354588,
+          74.294421,
+          82.347718,
+          119.450763,
+          107.923851,
+          139.854331,
+          119.942057
+        ],
+        "cpu_samples_ms": [
+          729.936,
+          588.907,
+          527.87,
+          499.831,
+          362.869,
+          452.873,
+          545.364,
+          488.87,
+          277.584,
+          277.732,
+          316.592,
+          455.872,
+          417.725,
+          534.402,
+          455.581
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.82358,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 55.609727,
+            "worker_jobs": [
+              117216,
+              97696,
+              85856,
+              108832
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 17.632401,
+            "worker_jobs": [
+              102304,
+              102624,
+              101856,
+              102816
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 44.779508,
+            "worker_jobs": [
+              126592,
+              104992,
+              87872,
+              90144
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "7a5144bef649f39da0c5c45b772f6ed0a200b7069af78d81f37ac45ef4ed566b",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 68.096845,
+        "iqr": 25.996899000000006,
+        "mad": 6.990210000000005,
+        "min": 34.341595,
+        "max": 76.111145,
+        "p95": 75.394282
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 154.749041,
+        "iqr": 16.835638000000017,
+        "mad": 7.59952899999999,
+        "min": 142.461863,
+        "max": 188.727604,
+        "p95": 176.5372209
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 253.899,
+        "iqr": 101.17849999999999,
+        "mad": 28.00200000000001,
+        "min": 106.81,
+        "max": 293.021,
+        "p95": 285.237
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 605.513,
+        "iqr": 67.32999999999993,
+        "mad": 31.145999999999958,
+        "min": 553.361,
+        "max": 740.765,
+        "p95": 692.6336999999999
+      },
+      "speedup_ratio_of_medians": 0.44004695964480967,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.40419425424014394,
+        "iqr": 0.1343376921719534,
+        "mad": 0.05099180533204689,
+        "min": 0.231504144766503,
+        "max": 0.4943072071452457,
+        "p95": 0.48061128896421423
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 3745.989389,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.686583,
+        "candidate_construction_ms": 11.894551,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          35.619405,
+          68.096845,
+          75.087055,
+          74.732933,
+          69.117827,
+          70.092482,
+          57.620811,
+          35.495563,
+          43.801902,
+          34.341595,
+          48.688199,
+          71.196856,
+          73.287043,
+          66.608635,
+          76.111145
+        ],
+        "baseline_cpu_samples_ms": [
+          127.751,
+          258.03,
+          281.901,
+          274.062,
+          253.899,
+          254.317,
+          210.73,
+          123.404,
+          160.817,
+          106.81,
+          175.626,
+          264.738,
+          275.621,
+          242.187,
+          293.021
+        ],
+        "samples_ms": [
+          142.461863,
+          152.041393,
+          171.312771,
+          188.727604,
+          171.001508,
+          147.643435,
+          162.34857,
+          142.59933,
+          144.615486,
+          148.341167,
+          154.749041,
+          156.412646,
+          167.307308,
+          160.066164,
+          153.97539
+        ],
+        "cpu_samples_ms": [
+          553.361,
+          592.008,
+          672.006,
+          740.765,
+          665.95,
+          575.21,
+          636.659,
+          556.858,
+          563.174,
+          578.494,
+          605.513,
+          608.797,
+          651.705,
+          624.782,
+          601.116
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.073381,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 149.095241,
+            "worker_jobs": [
+              104160,
+              96672,
+              94720,
+              114048
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 149.095241,
+            "worker_jobs": [
+              104160,
+              96672,
+              94720,
+              114048
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 149.095241,
+            "worker_jobs": [
+              103994,
+              96603,
+              94900,
+              114103
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "018f56a1f1ec7b5bd34fa1d3459665e6fab782829d9ae428a5003c6e24999bf1",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 62.120833,
+        "iqr": 10.85800600000001,
+        "mad": 4.568224000000008,
+        "min": 42.720983,
+        "max": 76.179849,
+        "p95": 71.09498669999999
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 150.175538,
+        "iqr": 8.940263500000015,
+        "mad": 5.74659299999999,
+        "min": 116.07372,
+        "max": 183.613492,
+        "p95": 182.3104966
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 234.864,
+        "iqr": 36.69200000000001,
+        "mad": 13.968000000000018,
+        "min": 152.402,
+        "max": 292.242,
+        "p95": 264.78869999999995
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 593.411,
+        "iqr": 35.97900000000004,
+        "mad": 23.630999999999972,
+        "min": 457.196,
+        "max": 727.187,
+        "p95": 722.1043000000001
+      },
+      "speedup_ratio_of_medians": 0.41365480575138674,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.41205360129874835,
+        "iqr": 0.12564320462943984,
+        "mad": 0.06510670752992864,
+        "min": 0.2839371661243771,
+        "max": 0.5341144175049708,
+        "p95": 0.5017662313463247
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 3809.355979,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.874877,
+        "candidate_construction_ms": 8.444707,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          50.8867,
+          67.924127,
+          68.91576,
+          63.965185,
+          66.384398,
+          42.720983,
+          43.506997,
+          53.062547,
+          76.179849,
+          61.522417,
+          66.689057,
+          62.120833,
+          65.352384,
+          58.294896,
+          58.967629
+        ],
+        "baseline_cpu_samples_ms": [
+          174.048,
+          253.023,
+          247.672,
+          237.668,
+          238.803,
+          152.402,
+          159.347,
+          193.024,
+          292.242,
+          220.896,
+          240.29,
+          234.864,
+          246.267,
+          221.323,
+          220.149
+        ],
+        "samples_ms": [
+          150.701245,
+          139.216536,
+          144.428945,
+          150.175538,
+          145.330182,
+          150.459285,
+          136.842094,
+          116.07372,
+          142.628333,
+          149.30683,
+          152.363173,
+          152.574632,
+          181.75207,
+          179.38215,
+          183.613492
+        ],
+        "cpu_samples_ms": [
+          595.476,
+          548.602,
+          569.78,
+          593.411,
+          574.135,
+          594.874,
+          540.199,
+          457.196,
+          563.575,
+          590.149,
+          602.239,
+          603.074,
+          719.926,
+          710.377,
+          727.187
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.081623,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 181.277665,
+            "worker_jobs": [
+              108480,
+              96960,
+              98656,
+              105504
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 181.277665,
+            "worker_jobs": [
+              108480,
+              96960,
+              98656,
+              105504
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 181.277665,
+            "worker_jobs": [
+              108276,
+              97078,
+              98777,
+              105469
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "0cf115c273ce9c0033e7ef0df911c4d58f1cf20d0601e94daf23b02ab8a12ab1",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 43.81894,
+        "iqr": 9.550873499999994,
+        "mad": 4.769435999999999,
+        "min": 35.808239,
+        "max": 72.417793,
+        "p95": 71.12561120000001
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 79.739845,
+        "iqr": 49.86363299999999,
+        "mad": 4.182714000000004,
+        "min": 71.697509,
+        "max": 159.972058,
+        "p95": 152.7511898
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 154.022,
+        "iqr": 35.93950000000001,
+        "mad": 21.363,
+        "min": 122.264,
+        "max": 274.225,
+        "p95": 267.39160000000004
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 302.875,
+        "iqr": 198.61249999999995,
+        "mad": 21.204000000000008,
+        "min": 271.935,
+        "max": 616.917,
+        "p95": 587.0038999999999
+      },
+      "speedup_ratio_of_medians": 0.5495237669448693,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.5480637636258537,
+        "iqr": 0.15531589296827458,
+        "mad": 0.09537350068005851,
+        "min": 0.2512837919943447,
+        "max": 0.9112132886670856,
+        "p95": 0.7346687003179422
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 2979.07337,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.678497,
+        "candidate_construction_ms": 10.647534,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          58.76962,
+          37.377327,
+          70.571819,
+          48.224901,
+          48.707162,
+          53.489079,
+          39.049504,
+          41.077738,
+          42.984861,
+          43.81894,
+          35.808239,
+          43.760767,
+          72.417793,
+          42.016756,
+          45.650108
+        ],
+        "baseline_cpu_samples_ms": [
+          213.98,
+          130.94,
+          264.463,
+          170.273,
+          178.572,
+          189.83,
+          146.455,
+          150.068,
+          150.903,
+          152.873,
+          122.264,
+          132.659,
+          274.225,
+          154.022,
+          172.719
+        ],
+        "samples_ms": [
+          107.231355,
+          148.745475,
+          77.448189,
+          79.739845,
+          73.909961,
+          82.772106,
+          79.885188,
+          75.557131,
+          146.328426,
+          76.384326,
+          79.255329,
+          71.697509,
+          159.972058,
+          149.656532,
+          77.514217
+        ],
+        "cpu_samples_ms": [
+          411.902,
+          574.184,
+          281.54,
+          303.296,
+          281.671,
+          306.85,
+          302.875,
+          286.487,
+          559.283,
+          287.473,
+          300.457,
+          271.935,
+          616.917,
+          571.023,
+          292.066
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.1198,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 73.167282,
+            "worker_jobs": [
+              87456,
+              113600,
+              97280,
+              111264
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 73.167282,
+            "worker_jobs": [
+              87456,
+              113600,
+              97280,
+              111264
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 73.167282,
+            "worker_jobs": [
+              87729,
+              113050,
+              97443,
+              111378
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "f0f9554b62777bc53abe737ed4b77d680d873992006a529a236fef497055af01",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 35.985786,
+        "iqr": 4.519681000000006,
+        "mad": 1.7274320000000003,
+        "min": 31.511809,
+        "max": 64.129803,
+        "p95": 55.232257699999984
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 71.878912,
+        "iqr": 33.791957,
+        "mad": 4.977424999999997,
+        "min": 63.907278,
+        "max": 165.713819,
+        "p95": 154.7380073
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 123.979,
+        "iqr": 22.11749999999998,
+        "mad": 9.421999999999997,
+        "min": 105.611,
+        "max": 247.972,
+        "p95": 201.53399999999993
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 277.257,
+        "iqr": 136.1445,
+        "mad": 19.685000000000002,
+        "min": 246.335,
+        "max": 653.127,
+        "p95": 608.9191999999999
+      },
+      "speedup_ratio_of_medians": 0.5006445562225538,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.48245965403714414,
+        "iqr": 0.2397636337814354,
+        "mad": 0.10445162328510715,
+        "min": 0.2138630255812266,
+        "max": 0.9190316973186102,
+        "p95": 0.8012911455146905
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 2458.406343,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.670098,
+        "candidate_construction_ms": 10.235532,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          36.849316,
+          34.433969,
+          35.72275,
+          36.576445,
+          35.484531,
+          35.985786,
+          32.086744,
+          39.940341,
+          31.511809,
+          34.258354,
+          35.202957,
+          38.735947,
+          64.129803,
+          51.419024,
+          49.834588
+        ],
+        "baseline_cpu_samples_ms": [
+          114.557,
+          123.979,
+          117.859,
+          124.976,
+          123.942,
+          125.647,
+          108.065,
+          143.498,
+          105.611,
+          119.302,
+          112.786,
+          133.153,
+          247.972,
+          181.632,
+          171.86
+        ],
+        "samples_ms": [
+          76.378026,
+          142.977849,
+          66.015883,
+          63.907278,
+          74.848323,
+          122.48369,
+          150.034088,
+          165.713819,
+          83.362803,
+          71.878912,
+          70.466806,
+          66.901487,
+          69.779751,
+          68.482828,
+          70.236073
+        ],
+        "cpu_samples_ms": [
+          295.001,
+          562.184,
+          253.761,
+          246.335,
+          287.978,
+          480.354,
+          589.973,
+          653.127,
+          324.029,
+          277.257,
+          271.822,
+          257.572,
+          268.547,
+          263.547,
+          270.394
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.081072,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 26.729929,
+            "worker_jobs": [
+              89216,
+              88448,
+              105600,
+              126336
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 18.186114,
+            "worker_jobs": [
+              94208,
+              94496,
+              108352,
+              112544
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 21.966942,
+            "worker_jobs": [
+              95232,
+              98880,
+              103904,
+              111584
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "df3f5c4867a5d5af78c3fe3cf3713f143511a72ea77d028bdded3eb3bfc05199",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 1,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 52.561189,
+        "iqr": 30.138155999999995,
+        "mad": 18.231988,
+        "min": 28.527435,
+        "max": 77.32983,
+        "p95": 73.9659688
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 71.368824,
+        "iqr": 10.333231499999997,
+        "mad": 3.477955999999992,
+        "min": 34.013891,
+        "max": 75.43765,
+        "p95": 75.302599
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 194.45,
+        "iqr": 122.2005,
+        "mad": 68.78000000000003,
+        "min": 88.201,
+        "max": 289.302,
+        "p95": 272.17089999999996
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 274.792,
+        "iqr": 39.05799999999999,
+        "mad": 8.871000000000038,
+        "min": 124.23,
+        "max": 287.225,
+        "p95": 284.7316
+      },
+      "speedup_ratio_of_medians": 0.736472678882869,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.8369745943635646,
+        "iqr": 0.4004011041448525,
+        "mad": 0.17921580832543016,
+        "min": 0.4006027781330586,
+        "max": 1.5333136655881203,
+        "p95": 1.208082678595414
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 2116.499441,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 1,
+        "rooms_executed": 1228804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.796098,
+        "candidate_construction_ms": 7.807436,
+        "spatial_references": 898214,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          32.1436,
+          32.345974,
+          49.484261,
+          34.329201,
+          28.527435,
+          56.133413,
+          56.172101,
+          62.977919,
+          72.524314,
+          69.588913,
+          77.32983,
+          62.668403,
+          52.561189,
+          33.024036,
+          31.015822
+        ],
+        "baseline_cpu_samples_ms": [
+          113.318,
+          111.947,
+          174.878,
+          126.657,
+          88.201,
+          194.941,
+          208.293,
+          235.794,
+          263.23,
+          264.829,
+          289.302,
+          234.668,
+          194.45,
+          112.743,
+          98.721
+        ],
+        "samples_ms": [
+          69.038595,
+          74.84678,
+          69.071444,
+          73.061793,
+          71.211276,
+          73.498235,
+          74.871588,
+          75.24472,
+          71.368824,
+          75.43765,
+          72.837997,
+          58.639957,
+          34.279476,
+          34.013891,
+          35.99513
+        ],
+        "cpu_samples_ms": [
+          262.594,
+          282.08,
+          263.602,
+          274.792,
+          273.825,
+          276.412,
+          287.225,
+          283.663,
+          275.136,
+          283.558,
+          275.503,
+          217.782,
+          124.996,
+          124.23,
+          132.005
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.071718,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 409600,
+            "sample_writes": 1547093,
+            "last_ms": 32.05015,
+            "worker_jobs": [
+              108992,
+              110464,
+              86080,
+              104064
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 32.05015,
+            "worker_jobs": [
+              108992,
+              110464,
+              86080,
+              104064
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 409600,
+            "sample_writes": 0,
+            "last_ms": 32.05015,
+            "worker_jobs": [
+              108420,
+              110264,
+              86590,
+              104326
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            639,
+            639,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "c5203193ddc4cd4e7c75a08668b78708b7f109b7775ac00ab88c79bdf1686f5e",
+        "response_sha256": "45a7b584f7b57a862895ad93996b580ae6ec7fb7722d35dacb020b5f4d20a9c1",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 11.72839,
+        "iqr": 1.5520115000000008,
+        "mad": 0.937952000000001,
+        "min": 9.815029,
+        "max": 13.717855,
+        "p95": 13.5259976
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 11.698746,
+        "iqr": 1.92596,
+        "mad": 0.963101,
+        "min": 9.90837,
+        "max": 12.815988,
+        "p95": 12.7746747
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 30.914,
+        "iqr": 9.606500000000004,
+        "mad": 4.884999999999998,
+        "min": 16.611,
+        "max": 39.623,
+        "p95": 38.045199999999994
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 30.601,
+        "iqr": 9.734499999999997,
+        "mad": 5.582000000000001,
+        "min": 18.607,
+        "max": 41.245,
+        "p95": 39.3963
+      },
+      "speedup_ratio_of_medians": 1.0025339468007939,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0688103178667254,
+        "iqr": 0.17885069176157598,
+        "mad": 0.12529403027065134,
+        "min": 0.7658425554081354,
+        "max": 1.2573945694941817,
+        "p95": 1.2169882288414422
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 515.977699,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.442835,
+        "candidate_construction_ms": 5.441394,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          12.666342,
+          11.222859,
+          11.405413,
+          13.443773,
+          12.85792,
+          11.420497,
+          9.815029,
+          13.717855,
+          12.844791,
+          10.414392,
+          11.72839,
+          12.116605,
+          11.184251,
+          10.470956,
+          12.226791
+        ],
+        "baseline_cpu_samples_ms": [
+          27.979,
+          25.004,
+          30.914,
+          37.369,
+          35.799,
+          34.398,
+          16.611,
+          35.72,
+          36.307,
+          29.12,
+          25.551,
+          24.945,
+          26.755,
+          34.383,
+          39.623
+        ],
+        "samples_ms": [
+          10.562494,
+          9.90837,
+          12.5718,
+          12.578259,
+          12.697889,
+          12.360933,
+          12.815988,
+          12.756969,
+          10.215402,
+          11.698746,
+          10.735645,
+          10.099938,
+          11.824415,
+          11.097801,
+          11.314887
+        ],
+        "cpu_samples_ms": [
+          26.111,
+          31.541,
+          36.507,
+          38.604,
+          34.406,
+          37.446,
+          36.772,
+          41.245,
+          19.73,
+          28.377,
+          25.019,
+          18.607,
+          27.989,
+          27.699,
+          30.601
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.0729,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 5.476416,
+            "worker_jobs": [
+              448,
+              448,
+              320,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.094318,
+            "worker_jobs": [
+              448,
+              288,
+              416,
+              448
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 4.651053,
+            "worker_jobs": [
+              288,
+              512,
+              512,
+              288
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "6f7a99816828f24f3646e6b04012e27c554b08d89fb4601ac922e90090968584",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 12.150015,
+        "iqr": 2.1130615000000006,
+        "mad": 1.1314440000000001,
+        "min": 9.898024,
+        "max": 14.29164,
+        "p95": 13.980287699999998
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 12.443396,
+        "iqr": 2.5676665000000014,
+        "mad": 1.170433000000001,
+        "min": 9.575057,
+        "max": 14.025599,
+        "p95": 13.73736
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 32.048,
+        "iqr": 6.418499999999998,
+        "mad": 2.998000000000001,
+        "min": 20.104,
+        "max": 42.738,
+        "p95": 41.885400000000004
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 47.819,
+        "iqr": 9.843999999999994,
+        "mad": 5.537999999999997,
+        "min": 37.172,
+        "max": 54.018,
+        "p95": 53.5553
+      },
+      "speedup_ratio_of_medians": 0.976422754688511,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.9872555888700368,
+        "iqr": 0.23797322074089067,
+        "mad": 0.14017425306197462,
+        "min": 0.7667694371656938,
+        "max": 1.3221966760560857,
+        "p95": 1.2674780927769296
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 517.899853,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 7.047992,
+        "candidate_construction_ms": 5.612341,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          11.535775,
+          12.252389,
+          10.079216,
+          14.29164,
+          13.642152,
+          12.150015,
+          12.980295,
+          10.795205,
+          12.803629,
+          11.240426,
+          10.438668,
+          13.846851,
+          13.281459,
+          11.731916,
+          9.898024
+        ],
+        "baseline_cpu_samples_ms": [
+          32.048,
+          35.016,
+          30.591,
+          41.52,
+          37.18,
+          34.451,
+          38.288,
+          30.309,
+          34.175,
+          29.05,
+          20.104,
+          42.738,
+          31.705,
+          25.159,
+          24.001
+        ],
+        "samples_ms": [
+          12.757189,
+          10.302262,
+          12.982098,
+          12.584209,
+          12.814816,
+          12.308173,
+          10.434092,
+          9.575057,
+          13.552136,
+          12.443396,
+          13.613829,
+          14.025599,
+          10.044995,
+          9.613225,
+          10.359319
+        ],
+        "cpu_samples_ms": [
+          49.35,
+          40.201,
+          50.052,
+          48.897,
+          49.387,
+          47.629,
+          39.82,
+          37.172,
+          52.162,
+          47.819,
+          53.357,
+          54.018,
+          38.796,
+          37.255,
+          39.931
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.060781,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 5.484468,
+            "worker_jobs": [
+              416,
+              384,
+              416,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.00268,
+            "worker_jobs": [
+              384,
+              384,
+              384,
+              448
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.808254,
+            "worker_jobs": [
+              416,
+              384,
+              416,
+              384
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "880bbf5c3fc757bf2e777ca16e4dd0cad332e289177245b9c4bcbe9922df9e09",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 11.325133,
+        "iqr": 1.4761270000000017,
+        "mad": 0.6737149999999996,
+        "min": 9.762951,
+        "max": 14.018909,
+        "p95": 13.1543117
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 10.650858,
+        "iqr": 1.816706,
+        "mad": 0.8894699999999993,
+        "min": 9.654477,
+        "max": 12.263902,
+        "p95": 12.1778923
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 30.674,
+        "iqr": 7.170499999999997,
+        "mad": 3.9639999999999986,
+        "min": 16.045,
+        "max": 35.847,
+        "p95": 35.7959
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 33.111,
+        "iqr": 5.2549999999999955,
+        "mad": 2.503999999999998,
+        "min": 27.89,
+        "max": 45.79,
+        "p95": 41.447199999999995
+      },
+      "speedup_ratio_of_medians": 1.0633071063382875,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0774630560374405,
+        "iqr": 0.14980229348456886,
+        "mad": 0.0774104781136713,
+        "min": 0.8789999967587667,
+        "max": 1.3089729252035092,
+        "p95": 1.2127181262521634
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 494.149236,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.622586,
+        "candidate_construction_ms": 5.915877,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          11.317802,
+          11.985066,
+          10.651418,
+          11.04427,
+          11.647408,
+          11.203941,
+          9.762951,
+          9.923382,
+          11.325133,
+          12.563016,
+          14.018909,
+          11.306635,
+          12.637449,
+          12.757941,
+          12.78377
+        ],
+        "baseline_cpu_samples_ms": [
+          35.774,
+          30.674,
+          30.09,
+          29.512,
+          34.638,
+          33.522,
+          24.093,
+          16.045,
+          25.288,
+          35.029,
+          34.083,
+          24.357,
+          29.871,
+          34.503,
+          35.847
+        ],
+        "samples_ms": [
+          9.761388,
+          10.465309,
+          10.650858,
+          10.250254,
+          9.942591,
+          10.1075,
+          11.106884,
+          9.897172,
+          12.263902,
+          11.751435,
+          12.115693,
+          11.901822,
+          9.654477,
+          11.781681,
+          12.141031
+        ],
+        "cpu_samples_ms": [
+          27.89,
+          33.111,
+          32.192,
+          30.607,
+          30.371,
+          31.19,
+          32.132,
+          33.364,
+          36.24,
+          45.79,
+          37.592,
+          35.468,
+          32.432,
+          39.586,
+          38.815
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.088854,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 12.044376,
+            "worker_jobs": [
+              288,
+              544,
+              512,
+              256
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 12.044376,
+            "worker_jobs": [
+              288,
+              544,
+              512,
+              256
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 12.044376,
+            "worker_jobs": [
+              364,
+              405,
+              471,
+              360
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "337e89429116d862fbd8d786cbf32f605cbc9a185e77e2b516772f596b5106b1",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 12.533712,
+        "iqr": 1.8686534999999989,
+        "mad": 0.7772699999999997,
+        "min": 10.808264,
+        "max": 16.276889,
+        "p95": 15.528371299999998
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 12.121412,
+        "iqr": 0.8171955000000004,
+        "mad": 0.616028,
+        "min": 10.594893,
+        "max": 13.95272,
+        "p95": 13.9181575
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 33.914,
+        "iqr": 3.3605000000000054,
+        "mad": 2.0970000000000013,
+        "min": 23.433,
+        "max": 58.192,
+        "p95": 48.840699999999984
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 30.737,
+        "iqr": 5.827999999999999,
+        "mad": 3.1860000000000035,
+        "min": 23.427,
+        "max": 38.5,
+        "p95": 37.6719
+      },
+      "speedup_ratio_of_medians": 1.0340141891060217,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0201390424613064,
+        "iqr": 0.10932389034426238,
+        "mad": 0.06876715929891175,
+        "min": 0.8765951728408511,
+        "max": 1.5083820631697331,
+        "p95": 1.2740090045119232
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 521.731072,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.474033,
+        "candidate_construction_ms": 5.243745,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          12.533712,
+          11.319705,
+          15.207578,
+          13.182209,
+          11.069417,
+          13.000516,
+          12.834605,
+          12.230887,
+          16.276889,
+          11.756442,
+          10.808264,
+          10.975246,
+          13.252856,
+          11.125713,
+          12.55127
+        ],
+        "baseline_cpu_samples_ms": [
+          35.387,
+          34.104,
+          44.833,
+          40.656,
+          31.619,
+          33.914,
+          34.77,
+          25.671,
+          58.192,
+          26.259,
+          23.433,
+          31.817,
+          33.868,
+          34.038,
+          31.881
+        ],
+        "samples_ms": [
+          12.121412,
+          11.489661,
+          12.958463,
+          13.903345,
+          11.76196,
+          12.123796,
+          12.272079,
+          13.95272,
+          10.790959,
+          12.357357,
+          10.594893,
+          12.031196,
+          11.505384,
+          11.39006,
+          12.158267
+        ],
+        "cpu_samples_ms": [
+          29.906,
+          28.223,
+          37.317,
+          38.5,
+          35.27,
+          28.105,
+          34.515,
+          37.111,
+          23.427,
+          27.092,
+          30.966,
+          33.923,
+          30.683,
+          29.915,
+          30.737
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.108313,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 7.122044,
+            "worker_jobs": [
+              352,
+              512,
+              288,
+              448
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.205325,
+            "worker_jobs": [
+              448,
+              352,
+              384,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.716015,
+            "worker_jobs": [
+              416,
+              416,
+              384,
+              384
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "4b89f598d0a4e009dbe0b2d70eb0f8c0aa5c6ef798e4587440f2edc8708444ba",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 10.846492,
+        "iqr": 0.5559825000000007,
+        "mad": 0.09834799999999966,
+        "min": 10.688444,
+        "max": 12.370397,
+        "p95": 11.7319599
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 12.631379,
+        "iqr": 2.6574215,
+        "mad": 0.8074870000000001,
+        "min": 9.979747,
+        "max": 13.438866,
+        "p95": 13.3389725
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 27.987,
+        "iqr": 3.3455000000000013,
+        "mad": 1.7019999999999982,
+        "min": 21.44,
+        "max": 35.281,
+        "p95": 34.236599999999996
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 48.679,
+        "iqr": 9.916499999999992,
+        "mad": 3.2239999999999966,
+        "min": 38.961,
+        "max": 51.903,
+        "p95": 51.3108
+      },
+      "speedup_ratio_of_medians": 0.8586942090804178,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.9793385979472233,
+        "iqr": 0.25186023685156167,
+        "mad": 0.1268535267380675,
+        "min": 0.8023046736235036,
+        "max": 1.106624990181393,
+        "p95": 1.1063219843341214
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 511.008587,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.20271,
+        "candidate_construction_ms": 7.663509,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          11.039192,
+          10.891921,
+          11.440466,
+          11.327046,
+          10.782065,
+          12.370397,
+          10.846492,
+          10.688444,
+          11.363811,
+          10.748144,
+          10.796827,
+          10.75841,
+          10.821965,
+          10.837319,
+          11.458344
+        ],
+        "baseline_cpu_samples_ms": [
+          26.545,
+          28.681,
+          31.059,
+          27.389,
+          28.405,
+          35.281,
+          27.141,
+          30.391,
+          33.789,
+          24.201,
+          27.987,
+          21.44,
+          25.709,
+          26.285,
+          29.13
+        ],
+        "samples_ms": [
+          10.030734,
+          10.290414,
+          10.469975,
+          10.235668,
+          13.438866,
+          12.631379,
+          13.296161,
+          12.712202,
+          13.077731,
+          12.885893,
+          13.090761,
+          12.706132,
+          10.62639,
+          9.979747,
+          10.358367
+        ],
+        "cpu_samples_ms": [
+          39.202,
+          40.002,
+          39.978,
+          38.961,
+          51.903,
+          48.679,
+          51.057,
+          49.382,
+          50.238,
+          49.745,
+          50.068,
+          49.472,
+          40.758,
+          39.36,
+          40.512
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.100371,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 10.236133,
+            "worker_jobs": [
+              448,
+              384,
+              384,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.236133,
+            "worker_jobs": [
+              448,
+              384,
+              384,
+              384
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.236133,
+            "worker_jobs": [
+              406,
+              406,
+              425,
+              363
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "10c969d87d5e95292cd474222585775714da83aef9a834bd8e6c413722004842",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 11.798075,
+        "iqr": 2.3401490000000003,
+        "mad": 1.2151499999999995,
+        "min": 10.191266,
+        "max": 14.546624,
+        "p95": 13.776647099999998
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 10.53314,
+        "iqr": 0.42071900000000184,
+        "mad": 0.210858,
+        "min": 9.873842,
+        "max": 12.828887,
+        "p95": 12.7323521
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 30.816,
+        "iqr": 10.0475,
+        "mad": 4.708000000000002,
+        "min": 19.04,
+        "max": 40.022,
+        "p95": 39.2933
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 39.961,
+        "iqr": 2.4869999999999948,
+        "mad": 1.0560000000000045,
+        "min": 38.51,
+        "max": 49.457,
+        "p95": 48.8802
+      },
+      "speedup_ratio_of_medians": 1.1200909700241335,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.1670329242050665,
+        "iqr": 0.2695582562873864,
+        "mad": 0.15089083513487456,
+        "min": 0.8287725973422324,
+        "max": 1.3810339556865285,
+        "p95": 1.3472417142714188
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 501.881962,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.623397,
+        "candidate_construction_ms": 6.096491,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          10.736486,
+          10.469744,
+          10.191266,
+          12.935168,
+          13.446657,
+          11.379464,
+          13.159455,
+          10.265908,
+          10.63223,
+          11.073955,
+          12.561395,
+          11.798075,
+          13.013225,
+          14.546624,
+          13.035789
+        ],
+        "baseline_cpu_samples_ms": [
+          26.258,
+          21.749,
+          28.882,
+          31.363,
+          36.957,
+          31.165,
+          40.022,
+          19.04,
+          26.128,
+          23.003,
+          38.981,
+          30.07,
+          35.524,
+          30.816,
+          38.694
+        ],
+        "samples_ms": [
+          10.950709,
+          10.641293,
+          10.029371,
+          10.322282,
+          10.554893,
+          10.535714,
+          9.873842,
+          10.380851,
+          12.828887,
+          12.69098,
+          10.201511,
+          10.109462,
+          10.337866,
+          10.53314,
+          10.723938
+        ],
+        "cpu_samples_ms": [
+          42.763,
+          39.961,
+          39.277,
+          39.445,
+          41.017,
+          40.13,
+          38.511,
+          38.965,
+          48.633,
+          49.457,
+          38.51,
+          38.869,
+          39.132,
+          40.284,
+          42.054
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.096024,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 10.615594,
+            "worker_jobs": [
+              448,
+              288,
+              448,
+              416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.615594,
+            "worker_jobs": [
+              448,
+              288,
+              448,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.615594,
+            "worker_jobs": [
+              465,
+              331,
+              392,
+              412
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "e27072b70a7381c74cb2ac94e897bbf6d7f42898665c001ad4a95975b44e1a80",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 12.377227,
+        "iqr": 2.3346204999999998,
+        "mad": 1.2430719999999997,
+        "min": 10.958621,
+        "max": 15.130312,
+        "p95": 14.7803729
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 11.174676,
+        "iqr": 2.3912760000000013,
+        "mad": 0.7272739999999995,
+        "min": 10.381652,
+        "max": 14.76658,
+        "p95": 14.0767727
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 31.855,
+        "iqr": 8.107999999999997,
+        "mad": 2.030000000000001,
+        "min": 28.776,
+        "max": 45.018,
+        "p95": 44.416
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 36.377,
+        "iqr": 8.4555,
+        "mad": 4.053999999999995,
+        "min": 30.916,
+        "max": 48.809,
+        "p95": 48.4646
+      },
+      "speedup_ratio_of_medians": 1.1076139478227378,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0860894198403237,
+        "iqr": 0.12954903725551348,
+        "mad": 0.05319007201823567,
+        "min": 0.8693525449017611,
+        "max": 1.3520471122994802,
+        "p95": 1.2873179034277356
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 518.166519,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.415284,
+        "candidate_construction_ms": 5.429727,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          14.243407,
+          12.377227,
+          11.98067,
+          12.39209,
+          14.630399,
+          14.077067,
+          11.98753,
+          12.37897,
+          15.130312,
+          11.670563,
+          10.958621,
+          10.975277,
+          14.400163,
+          11.134155,
+          12.051757
+        ],
+        "baseline_cpu_samples_ms": [
+          45.018,
+          31.855,
+          36.395,
+          28.776,
+          42.407,
+          36.211,
+          31.593,
+          31.168,
+          44.158,
+          30.932,
+          31.418,
+          29.825,
+          43.647,
+          31.5,
+          32.909
+        ],
+        "samples_ms": [
+          14.76658,
+          13.381724,
+          13.781141,
+          10.877129,
+          13.202781,
+          11.176029,
+          12.269354,
+          11.174676,
+          12.812382,
+          10.74549,
+          10.381652,
+          10.532429,
+          10.650637,
+          10.447402,
+          10.581974
+        ],
+        "cpu_samples_ms": [
+          48.317,
+          48.809,
+          41.861,
+          32.944,
+          43.639,
+          32.843,
+          40.431,
+          36.377,
+          40.837,
+          34.393,
+          32.517,
+          31.297,
+          30.916,
+          32.964,
+          38.872
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.108764,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 10.452218,
+            "worker_jobs": [
+              416,
+              448,
+              352,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.452218,
+            "worker_jobs": [
+              416,
+              448,
+              352,
+              384
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.452218,
+            "worker_jobs": [
+              419,
+              328,
+              381,
+              472
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "fc7524332d62ead95a3a12a39ea05caa6706645d42454c769d44738123edc636",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 11.67488,
+        "iqr": 1.741207000000001,
+        "mad": 0.9634509999999992,
+        "min": 10.481893,
+        "max": 13.391184,
+        "p95": 13.303965400000001
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 11.159203,
+        "iqr": 2.5011740000000007,
+        "mad": 0.524208999999999,
+        "min": 10.447311,
+        "max": 14.221133,
+        "p95": 14.197585
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 31.073,
+        "iqr": 7.583500000000001,
+        "mad": 3.9810000000000016,
+        "min": 21.376,
+        "max": 41.214,
+        "p95": 37.591499999999996
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 42.928,
+        "iqr": 7.8359999999999985,
+        "mad": 1.7339999999999947,
+        "min": 40.025,
+        "max": 54.866,
+        "p95": 53.0404
+      },
+      "speedup_ratio_of_medians": 1.0462109166756801,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.011831127386481,
+        "iqr": 0.09273391085249827,
+        "mad": 0.047530528160748764,
+        "min": 0.8006956227153132,
+        "max": 1.2591623464949768,
+        "p95": 1.2419976384350802
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 513.31961,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.788646,
+        "candidate_construction_ms": 6.025163,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          10.711429,
+          11.925998,
+          13.266586,
+          11.115737,
+          11.264862,
+          10.919722,
+          10.481893,
+          11.67488,
+          12.964331,
+          11.67207,
+          12.898682,
+          11.367357,
+          13.391184,
+          13.174788,
+          12.741235
+        ],
+        "baseline_cpu_samples_ms": [
+          21.376,
+          36.039,
+          31.073,
+          27.527,
+          29.97,
+          32.841,
+          26.107,
+          26.405,
+          35.054,
+          25.01,
+          32.351,
+          28.902,
+          41.214,
+          34.045,
+          35.759
+        ],
+        "samples_ms": [
+          13.377654,
+          11.339865,
+          11.159203,
+          11.236879,
+          10.633632,
+          10.79204,
+          10.794304,
+          14.187493,
+          13.448219,
+          11.068156,
+          10.447311,
+          11.039432,
+          10.634994,
+          14.221133,
+          13.211038
+        ],
+        "cpu_samples_ms": [
+          51.522,
+          43.585,
+          42.163,
+          43.38,
+          41.194,
+          41.911,
+          41.475,
+          54.866,
+          52.258,
+          42.613,
+          40.025,
+          42.928,
+          41.066,
+          48.352,
+          50.706
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.095434,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 7.130156,
+            "worker_jobs": [
+              480,
+              512,
+              288,
+              320
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.302611,
+            "worker_jobs": [
+              480,
+              416,
+              352,
+              352
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 4.666201,
+            "worker_jobs": [
+              512,
+              512,
+              288,
+              288
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "d1bc40fb4e93bae24a156583ac6e3926c269ebe07f22bdfc7d0a41cccc9b9e0d",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "without-checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 11.647658,
+        "iqr": 1.627561,
+        "mad": 0.8746469999999995,
+        "min": 10.627643,
+        "max": 14.088584,
+        "p95": 13.9173437
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 10.824589,
+        "iqr": 1.9295504999999995,
+        "mad": 0.325094,
+        "min": 10.069442,
+        "max": 13.368259,
+        "p95": 12.9632103
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 31.585,
+        "iqr": 8.843499999999999,
+        "mad": 3.658999999999999,
+        "min": 22.517,
+        "max": 38.967,
+        "p95": 38.0528
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 41.131,
+        "iqr": 8.898500000000006,
+        "mad": 1.0690000000000026,
+        "min": 38.92,
+        "max": 51.516,
+        "p95": 50.5423
+      },
+      "speedup_ratio_of_medians": 1.0760369747063838,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0257401082197957,
+        "iqr": 0.15095447699817266,
+        "mad": 0.09315258409836535,
+        "min": 0.8030953020883274,
+        "max": 1.3991424748263113,
+        "p95": 1.3187549835373615
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 506.055277,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.122038,
+        "candidate_construction_ms": 5.384498,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          11.11083,
+          11.647658,
+          12.801766,
+          10.627643,
+          12.247552,
+          10.868315,
+          11.621109,
+          10.735986,
+          12.648896,
+          10.77185,
+          11.962338,
+          13.843955,
+          14.088584,
+          10.773011,
+          12.225719
+        ],
+        "baseline_cpu_samples_ms": [
+          26.036,
+          33.312,
+          31.585,
+          29.006,
+          33.722,
+          23.264,
+          23.669,
+          24.364,
+          37.661,
+          35.244,
+          30.008,
+          38.967,
+          34.365,
+          22.517,
+          31.981
+        ],
+        "samples_ms": [
+          10.934885,
+          10.615424,
+          10.816127,
+          10.360951,
+          12.718281,
+          12.565671,
+          12.600083,
+          13.368259,
+          12.789618,
+          10.953288,
+          10.691229,
+          10.779351,
+          10.069442,
+          10.499495,
+          10.824589
+        ],
+        "cpu_samples_ms": [
+          40.062,
+          41.131,
+          41.151,
+          40.341,
+          49.87,
+          49.18,
+          49.603,
+          51.516,
+          50.125,
+          42.237,
+          40.844,
+          40.936,
+          38.92,
+          40.495,
+          40.491
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.065148,
+            "worker_jobs": [
+              4,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 10.675475,
+            "worker_jobs": [
+              448,
+              384,
+              352,
+              416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.675475,
+            "worker_jobs": [
+              448,
+              384,
+              352,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 10.675475,
+            "worker_jobs": [
+              347,
+              365,
+              418,
+              470
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "0a16282747cab68851cc0649a78176029340e36edf5ce66bcfd0795c30f66812",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 4,
+      "policy": "baseline",
+      "baseline_ms": {
+        "n": 15,
+        "median": 13.18918,
+        "iqr": 1.1820644999999992,
+        "mad": 0.6129319999999989,
+        "min": 10.879787,
+        "max": 45.680204,
+        "p95": 24.57504299999997
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 12.397308,
+        "iqr": 1.1303870000000007,
+        "mad": 0.7086890000000015,
+        "min": 10.906282,
+        "max": 16.167174,
+        "p95": 14.485678099999998
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 33.826,
+        "iqr": 8.353499999999997,
+        "mad": 4.053000000000001,
+        "min": 24.567,
+        "max": 76.536,
+        "p95": 53.262399999999964
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 33.75,
+        "iqr": 11.677,
+        "mad": 5.931000000000001,
+        "min": 23.412,
+        "max": 45.665,
+        "p95": 43.117
+      },
+      "speedup_ratio_of_medians": 1.063874512111823,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0681966005472914,
+        "iqr": 0.17763222221209074,
+        "mad": 0.09263991529956295,
+        "min": 0.9496894301629325,
+        "max": 3.594518698220336,
+        "p95": 1.9248792918722566
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 582.13561,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "baseline",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.860054,
+        "candidate_construction_ms": 7.021167,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          13.340467,
+          13.410994,
+          13.802112,
+          13.05668,
+          12.80451,
+          11.92716,
+          13.672827,
+          15.529974,
+          45.680204,
+          13.166215,
+          13.18918,
+          10.879787,
+          12.3063,
+          13.832879,
+          11.531754
+        ],
+        "baseline_cpu_samples_ms": [
+          32.545,
+          33.826,
+          41.135,
+          36.013,
+          37.26,
+          29.773,
+          37.71,
+          41.257,
+          76.536,
+          32.365,
+          43.288,
+          25.13,
+          26.502,
+          33.171,
+          24.567
+        ],
+        "samples_ms": [
+          12.488775,
+          13.765037,
+          11.730252,
+          11.389831,
+          11.688619,
+          12.559011,
+          11.778426,
+          16.167174,
+          12.708295,
+          13.751175,
+          10.906282,
+          11.128647,
+          12.397308,
+          12.879873,
+          11.638775
+        ],
+        "cpu_samples_ms": [
+          35.032,
+          39.314,
+          33.75,
+          27.677,
+          35.558,
+          28.505,
+          32.541,
+          45.665,
+          39.536,
+          42.025,
+          27.819,
+          23.412,
+          27.117,
+          41.331,
+          27.3
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.11893,
+            "worker_jobs": [
+              0,
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 6.130071,
+            "worker_jobs": [
+              448,
+              448,
+              320,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.420999,
+            "worker_jobs": [
+              352,
+              480,
+              416,
+              352
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.962847,
+            "worker_jobs": [
+              448,
+              416,
+              416,
+              320
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "0ccbd59815758ffb5ea06ba57ce2fb8e39d6df333d6231e82965cbe1d70a5b1a",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "large4",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 4,
+      "workers": 1,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 37.656942,
+        "iqr": 1.344146000000002,
+        "mad": 0.5945660000000004,
+        "min": 36.479979,
+        "max": 46.18278,
+        "p95": 41.60936639999999
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 37.298162,
+        "iqr": 1.3935034999999942,
+        "mad": 0.7240599999999944,
+        "min": 35.920017,
+        "max": 55.518727,
+        "p95": 45.063891699999985
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 37.66,
+        "iqr": 1.356499999999997,
+        "mad": 0.5939999999999941,
+        "min": 36.485,
+        "max": 46.186,
+        "p95": 41.61289999999999
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 37.305,
+        "iqr": 1.3910000000000053,
+        "mad": 0.7250000000000014,
+        "min": 35.923,
+        "max": 55.524,
+        "p95": 45.06809999999999
+      },
+      "speedup_ratio_of_medians": 1.0096192407550808,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0130751604556603,
+        "iqr": 0.04354365170940788,
+        "mad": 0.022464254932808014,
+        "min": 0.7080286441005753,
+        "max": 1.1379764379627773,
+        "p95": 1.083561388684615
+      },
+      "all_buffers_sha256": "c285fec7d6ee200c29a5c5174a9ade83f41b7219c8b9bf114bbd801a68884900",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 1467.50295,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 1,
+        "frame": 0,
+        "triangles": 4,
+        "tile": 16,
+        "rooms_executed": 4804,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 1,
+        "baseline_construction_ms": 5.477778,
+        "candidate_construction_ms": 5.513081,
+        "spatial_references": 3764,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          37.043809,
+          38.178588,
+          39.308849,
+          38.146279,
+          37.171902,
+          39.649332,
+          37.656942,
+          38.70535,
+          36.479979,
+          37.062376,
+          36.892891,
+          37.405142,
+          37.314677,
+          38.21722,
+          46.18278
+        ],
+        "baseline_cpu_samples_ms": [
+          37.05,
+          38.181,
+          39.312,
+          38.135,
+          37.148,
+          39.653,
+          37.66,
+          38.707,
+          36.485,
+          37.066,
+          36.89,
+          37.408,
+          37.318,
+          38.22,
+          46.186
+        ],
+        "samples_ms": [
+          36.879751,
+          37.298162,
+          55.518727,
+          39.086615,
+          36.762555,
+          37.39654,
+          37.946438,
+          36.986042,
+          36.574102,
+          36.369934,
+          38.177226,
+          35.920017,
+          36.034048,
+          37.723973,
+          40.583248
+        ],
+        "cpu_samples_ms": [
+          36.885,
+          37.305,
+          55.524,
+          39.09,
+          36.769,
+          37.402,
+          37.95,
+          36.99,
+          36.58,
+          36.366,
+          38.181,
+          35.923,
+          36.035,
+          37.72,
+          40.587
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 4,
+            "sample_writes": 0,
+            "last_ms": 0.003395,
+            "worker_jobs": [
+              4
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 1547093,
+            "last_ms": 40.559092,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 40.559092,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 40.559092,
+            "worker_jobs": [
+              1600
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "0cad4f983d816ee9777f4fb65cfc5e04cf54a3d53577d69d099bd280718f9c4a",
+        "response_sha256": "41534e7cfdc8c1181a07a8e7a53523044f3dc1c6795af932cee2ee6dcd5fbf94",
+        "rgba_sha256": "ba0ace0583f04bc150116ef8948483a62d7ae70de7a39b1fb605d3f253d57874"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 7.807407,
+        "iqr": 0.7976915000000009,
+        "mad": 0.35447500000000076,
+        "min": 7.141674,
+        "max": 9.474897,
+        "p95": 9.1438166
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.512062,
+        "iqr": 0.708578000000001,
+        "mad": 0.40553099999999986,
+        "min": 6.56159,
+        "max": 8.980993,
+        "p95": 8.3888182
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 16.952,
+        "iqr": 8.357500000000002,
+        "mad": 6.008999999999997,
+        "min": 7.472,
+        "max": 22.961,
+        "p95": 21.4301
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 28.491,
+        "iqr": 3.0165000000000006,
+        "mad": 1.7169999999999987,
+        "min": 25.023,
+        "max": 33.915,
+        "p95": 31.684099999999997
+      },
+      "speedup_ratio_of_medians": 1.039316102556129,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.037576137498513,
+        "iqr": 0.1645070999489211,
+        "mad": 0.09626329153636282,
+        "min": 0.7951987046421259,
+        "max": 1.35904200195446,
+        "p95": 1.3143597209619498
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 351.45276,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.015729,
+        "candidate_construction_ms": 6.180245,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.050712,
+          7.452932,
+          9.001925,
+          8.033366,
+          7.732643,
+          7.627695,
+          8.561702,
+          7.621736,
+          7.141674,
+          7.287043,
+          8.201108,
+          7.807407,
+          7.516107,
+          8.532118,
+          9.474897
+        ],
+        "baseline_cpu_samples_ms": [
+          10.106,
+          9.925,
+          20.774,
+          18.812,
+          18.248,
+          10.239,
+          19.26,
+          10.273,
+          7.472,
+          18.02,
+          16.952,
+          10.336,
+          8.712,
+          22.961,
+          18.168
+        ],
+        "samples_ms": [
+          7.759153,
+          7.917593,
+          7.676048,
+          7.935299,
+          7.512062,
+          7.427754,
+          7.287843,
+          7.575157,
+          8.980993,
+          8.135029,
+          7.392932,
+          6.56159,
+          6.812097,
+          6.587439,
+          6.971747
+        ],
+        "cpu_samples_ms": [
+          29.181,
+          29.765,
+          28.263,
+          30.208,
+          28.491,
+          28.716,
+          27.336,
+          29.142,
+          33.915,
+          30.728,
+          26.474,
+          25.305,
+          25.715,
+          25.023,
+          26.439
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.057186,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 2.332653,
+            "worker_jobs": [
+              384,
+              384,
+              448,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.078163,
+            "worker_jobs": [
+              416,
+              352,
+              416,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.500791,
+            "worker_jobs": [
+              416,
+              384,
+              384,
+              416
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "dfe6899e073d96b2e1d6285e4474a93858c5ba682ead7b32edea9e939047e5cf",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 7.886575,
+        "iqr": 0.6395120000000007,
+        "mad": 0.29440299999999997,
+        "min": 7.227933,
+        "max": 9.401406,
+        "p95": 9.1706678
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.613103,
+        "iqr": 1.3738284999999983,
+        "mad": 0.7029480000000001,
+        "min": 6.687701,
+        "max": 9.876522,
+        "p95": 9.071113899999999
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 19.554,
+        "iqr": 5.772500000000001,
+        "mad": 2.432000000000002,
+        "min": 7.645,
+        "max": 24.995,
+        "p95": 23.2583
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 23.877,
+        "iqr": 5.9659999999999975,
+        "mad": 2.5839999999999996,
+        "min": 15.653,
+        "max": 29.564,
+        "p95": 28.703
+      },
+      "speedup_ratio_of_medians": 1.0359212268637374,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0774090902996227,
+        "iqr": 0.12864293421125828,
+        "mad": 0.07283431750378666,
+        "min": 0.7985174335661885,
+        "max": 1.2907420651730692,
+        "p95": 1.2327193703483934
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 359.205383,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.430553,
+        "candidate_construction_ms": 5.537068,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          7.886575,
+          8.346448,
+          9.401406,
+          7.61728,
+          8.469282,
+          7.899074,
+          7.227933,
+          7.755338,
+          7.592172,
+          7.867477,
+          8.383082,
+          7.880956,
+          7.818002,
+          9.07178,
+          8.632097
+        ],
+        "baseline_cpu_samples_ms": [
+          8.756,
+          19.554,
+          21.395,
+          19.474,
+          24.995,
+          22.514,
+          21.746,
+          21.103,
+          19.065,
+          7.645,
+          19.245,
+          8.799,
+          13.122,
+          22.073,
+          21.986
+        ],
+        "samples_ms": [
+          9.876522,
+          6.910155,
+          8.725939,
+          8.282411,
+          8.236742,
+          7.454875,
+          8.338816,
+          7.797791,
+          6.884757,
+          6.963415,
+          7.14555,
+          7.613103,
+          6.796824,
+          8.399257,
+          6.687701
+        ],
+        "cpu_samples_ms": [
+          29.564,
+          23.877,
+          22.196,
+          26.209,
+          27.88,
+          25.123,
+          28.334,
+          25.302,
+          21.399,
+          15.653,
+          16.8,
+          18.27,
+          18.286,
+          21.293,
+          24.624
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.081953,
+            "worker_jobs": [
+              0,
+              64,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 6.597554,
+            "worker_jobs": [
+              416,
+              416,
+              384,
+              384
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.597554,
+            "worker_jobs": [
+              416,
+              416,
+              384,
+              384
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.597554,
+            "worker_jobs": [
+              408,
+              371,
+              415,
+              406
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "b301f23b2aa00ad58ae6a533abb785da1ddb2ae031fde53b354c9fa65ed9b566",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 8.195571,
+        "iqr": 0.38405799999999957,
+        "mad": 0.17659599999999998,
+        "min": 7.301234,
+        "max": 9.571052,
+        "p95": 9.3691412
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 8.264915,
+        "iqr": 1.038318499999999,
+        "mad": 0.6337440000000001,
+        "min": 7.306733,
+        "max": 10.583385,
+        "p95": 9.871757299999999
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 18.311,
+        "iqr": 5.869499999999999,
+        "mad": 2.876999999999999,
+        "min": 8.813,
+        "max": 22.765,
+        "p95": 21.979599999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 18.655,
+        "iqr": 7.244999999999999,
+        "mad": 3.6660000000000004,
+        "min": 8.737,
+        "max": 23.917,
+        "p95": 23.4361
+      },
+      "speedup_ratio_of_medians": 0.9916098350678741,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.995973295858137,
+        "iqr": 0.11349419996414012,
+        "mad": 0.05499151759759513,
+        "min": 0.865142523488064,
+        "max": 1.214386050021199,
+        "p95": 1.1493589115585396
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 375.391931,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.540532,
+        "candidate_construction_ms": 5.673863,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.274539,
+          8.276623,
+          8.195571,
+          7.301234,
+          8.30805,
+          8.125434,
+          9.282608,
+          9.571052,
+          8.510485,
+          7.542246,
+          9.036787,
+          8.018975,
+          8.031444,
+          8.194429,
+          7.997021
+        ],
+        "baseline_cpu_samples_ms": [
+          15.024,
+          22.765,
+          19.448,
+          9.589,
+          17.774,
+          20.716,
+          17.53,
+          21.643,
+          21.188,
+          18.805,
+          13.201,
+          14.26,
+          20.307,
+          8.813,
+          18.311
+        ],
+        "samples_ms": [
+          8.264915,
+          9.566774,
+          9.386088,
+          8.343974,
+          8.52729,
+          8.158285,
+          8.957277,
+          10.583385,
+          8.097783,
+          7.631171,
+          7.441445,
+          8.38849,
+          7.546453,
+          7.306733,
+          7.776759
+        ],
+        "cpu_samples_ms": [
+          14.989,
+          23.917,
+          18.655,
+          19.918,
+          21.028,
+          20.939,
+          21.771,
+          23.23,
+          16.992,
+          13.907,
+          9.27,
+          10.994,
+          13.57,
+          8.737,
+          19.859
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.092229,
+            "worker_jobs": [
+              0,
+              64,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 2.600656,
+            "worker_jobs": [
+              384,
+              352,
+              384,
+              480
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.16845,
+            "worker_jobs": [
+              448,
+              384,
+              352,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.908264,
+            "worker_jobs": [
+              384,
+              384,
+              416,
+              416
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "5c63aa20fe52b0db24b38a348fdf3a1a424bebdb89861385ba00561d006d29ee",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 8.626489,
+        "iqr": 0.9347485000000013,
+        "mad": 0.4992819999999991,
+        "min": 7.709649,
+        "max": 9.821939,
+        "p95": 9.307378799999999
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 6.749984,
+        "iqr": 0.24352149999999995,
+        "mad": 0.11970999999999954,
+        "min": 6.413247,
+        "max": 7.009985,
+        "p95": 6.9264827
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 18.388,
+        "iqr": 4.532500000000002,
+        "mad": 2.1300000000000026,
+        "min": 12.285,
+        "max": 26.039,
+        "p95": 23.275399999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 25.145,
+        "iqr": 0.6589999999999989,
+        "mad": 0.30700000000000216,
+        "min": 23.862,
+        "max": 26.417,
+        "p95": 26.3281
+      },
+      "speedup_ratio_of_medians": 1.2780013997070214,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.2597949781234974,
+        "iqr": 0.11763694214197162,
+        "mad": 0.055575895257196306,
+        "min": 1.1557555141103182,
+        "max": 1.455105523213092,
+        "p95": 1.3950770226876164
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 350.88174,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.437708,
+        "candidate_construction_ms": 5.573512,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          7.986014,
+          8.974994,
+          9.821939,
+          8.926021,
+          8.813511,
+          7.709649,
+          7.723169,
+          8.667331,
+          8.626489,
+          8.127207,
+          8.045504,
+          7.940787,
+          8.089521,
+          9.014644,
+          9.086853
+        ],
+        "baseline_cpu_samples_ms": [
+          18.388,
+          15.438,
+          26.039,
+          20.446,
+          19.167,
+          13.783,
+          20.315,
+          20.991,
+          12.285,
+          16.258,
+          18.129,
+          14.59,
+          19.049,
+          16.628,
+          22.091
+        ],
+        "samples_ms": [
+          6.869694,
+          6.844346,
+          6.749984,
+          6.890696,
+          6.7004,
+          6.494278,
+          6.413247,
+          6.68092,
+          7.009985,
+          6.451214,
+          6.643844,
+          6.870646,
+          6.821121,
+          6.583153,
+          6.796834
+        ],
+        "cpu_samples_ms": [
+          26.417,
+          26.29,
+          25.399,
+          24.859,
+          25.593,
+          24.868,
+          23.928,
+          24.779,
+          25.142,
+          24.941,
+          25.452,
+          25.446,
+          25.618,
+          23.862,
+          25.145
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.080301,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 6.69434,
+            "worker_jobs": [
+              384,
+              352,
+              352,
+              512
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.69434,
+            "worker_jobs": [
+              384,
+              352,
+              352,
+              512
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.69434,
+            "worker_jobs": [
+              436,
+              384,
+              373,
+              407
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "ea666d494af6d748ebe1bc0a01f91443951bb766c1417c459bf51c50451727db",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "without-locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 7.884121,
+        "iqr": 0.7392380000000003,
+        "mad": 0.28621099999999977,
+        "min": 7.293121,
+        "max": 15.270303,
+        "p95": 11.468318099999994
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.02721,
+        "iqr": 0.39522049999999975,
+        "mad": 0.14081100000000024,
+        "min": 6.703834,
+        "max": 7.874237,
+        "p95": 7.5781041
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 16.05,
+        "iqr": 4.4510000000000005,
+        "mad": 2.997,
+        "min": 7.631,
+        "max": 27.34,
+        "p95": 23.457799999999995
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 26.96,
+        "iqr": 1.0754999999999981,
+        "mad": 0.6159999999999997,
+        "min": 25.718,
+        "max": 29.673,
+        "p95": 28.4809
+      },
+      "speedup_ratio_of_medians": 1.1219418517448603,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.1022772907028535,
+        "iqr": 0.08160089777591395,
+        "mad": 0.03915438039807695,
+        "min": 1.0304014310053593,
+        "max": 2.180411242816887,
+        "p95": 1.6446567633044162
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 358.363355,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 6.212695,
+        "candidate_construction_ms": 7.50768,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.584926,
+          7.745934,
+          7.884121,
+          8.304504,
+          7.710991,
+          8.438226,
+          15.270303,
+          8.170332,
+          7.639744,
+          7.293121,
+          7.62451,
+          7.60431,
+          8.170002,
+          7.43799,
+          9.838896
+        ],
+        "baseline_cpu_samples_ms": [
+          15.476,
+          9.51,
+          10.181,
+          18.743,
+          15.38,
+          21.36,
+          27.34,
+          16.801,
+          19.047,
+          14.035,
+          16.05,
+          15.778,
+          21.794,
+          7.631,
+          19.27
+        ],
+        "samples_ms": [
+          7.874237,
+          7.02721,
+          6.886399,
+          6.789794,
+          7.253151,
+          7.400363,
+          7.003405,
+          7.45119,
+          6.909214,
+          6.703834,
+          7.399553,
+          7.142114,
+          6.977326,
+          7.028382,
+          6.953049
+        ],
+        "cpu_samples_ms": [
+          29.673,
+          27.576,
+          26.509,
+          26.135,
+          27.397,
+          27.659,
+          27.392,
+          27.97,
+          25.718,
+          25.888,
+          26.96,
+          27.344,
+          26.595,
+          26.313,
+          26.697
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.06628,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 6.874782,
+            "worker_jobs": [
+              352,
+              384,
+              416,
+              448
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.874782,
+            "worker_jobs": [
+              352,
+              384,
+              416,
+              448
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.874782,
+            "worker_jobs": [
+              464,
+              378,
+              365,
+              393
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "2a81938692c7048a58efd9666a24dd4dcb3ca44ec5c7c13a0ec318b3abf8905f",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "without-reuse",
+      "baseline_ms": {
+        "n": 15,
+        "median": 8.620791,
+        "iqr": 1.2363914999999999,
+        "mad": 0.8261540000000007,
+        "min": 7.372641,
+        "max": 10.494872,
+        "p95": 10.0916321
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 6.978208,
+        "iqr": 1.0234060000000014,
+        "mad": 0.2980779999999994,
+        "min": 6.136159,
+        "max": 8.77279,
+        "p95": 8.748028900000001
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 17.459,
+        "iqr": 7.203999999999999,
+        "mad": 3.067,
+        "min": 7.851,
+        "max": 22.867,
+        "p95": 21.952099999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 20.16,
+        "iqr": 4.166499999999999,
+        "mad": 2.068999999999999,
+        "min": 15.591,
+        "max": 27.378,
+        "p95": 25.015499999999996
+      },
+      "speedup_ratio_of_medians": 1.2353875092287303,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.1755399020061543,
+        "iqr": 0.2474338471850921,
+        "mad": 0.12243631194447602,
+        "min": 0.8868576524758522,
+        "max": 1.4508861780772642,
+        "p95": 1.4254880720518626
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 354.723023,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-reuse",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.736528,
+        "candidate_construction_ms": 5.35916,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          9.057548,
+          8.09566,
+          8.917928,
+          7.794637,
+          8.922775,
+          7.706464,
+          9.918815,
+          7.372641,
+          8.624226,
+          10.494872,
+          9.525613,
+          8.620791,
+          7.903932,
+          7.694987,
+          7.712903
+        ],
+        "baseline_cpu_samples_ms": [
+          22.867,
+          7.851,
+          20.091,
+          11.056,
+          20.526,
+          21.35,
+          20.414,
+          9.314,
+          15.476,
+          19.399,
+          21.56,
+          16.443,
+          8.017,
+          17.459,
+          17.089
+        ],
+        "samples_ms": [
+          6.978208,
+          6.886759,
+          8.664526,
+          8.737417,
+          6.307617,
+          6.329911,
+          7.24549,
+          8.313218,
+          6.716974,
+          7.233422,
+          8.77279,
+          6.136159,
+          7.276286,
+          6.825718,
+          6.880571
+        ],
+        "cpu_samples_ms": [
+          21.126,
+          15.591,
+          27.378,
+          24.003,
+          16.421,
+          19.984,
+          19.366,
+          21.258,
+          18.091,
+          21.936,
+          23.249,
+          15.976,
+          18.761,
+          20.16,
+          23.813
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.083676,
+            "worker_jobs": [
+              0,
+              64,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 6.777696,
+            "worker_jobs": [
+              416,
+              256,
+              512,
+              416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.777696,
+            "worker_jobs": [
+              416,
+              256,
+              512,
+              416
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 6.777696,
+            "worker_jobs": [
+              417,
+              381,
+              445,
+              357
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "f5fdcd2bc514db94c1188feb84ab2478c4cf5284dce64e3ac81d1d1a80162cb6",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "without-frontier",
+      "baseline_ms": {
+        "n": 15,
+        "median": 8.495572,
+        "iqr": 0.4715250000000015,
+        "mad": 0.23958999999999975,
+        "min": 7.295215,
+        "max": 11.314667,
+        "p95": 9.617677999999998
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 8.153938,
+        "iqr": 1.104165,
+        "mad": 0.6440000000000001,
+        "min": 6.496021,
+        "max": 21.005749,
+        "p95": 18.655685199999997
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 17.75,
+        "iqr": 5.294499999999999,
+        "mad": 1.8130000000000006,
+        "min": 11.254,
+        "max": 25.094,
+        "p95": 24.8952
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 31.112,
+        "iqr": 3.326999999999998,
+        "mad": 1.4499999999999993,
+        "min": 24.431,
+        "max": 48.838,
+        "p95": 43.00629999999999
+      },
+      "speedup_ratio_of_medians": 1.0418980374881437,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0495151245392234,
+        "iqr": 0.2748202511583586,
+        "mad": 0.1405890010823868,
+        "min": 0.3996715851455713,
+        "max": 1.5066258869247655,
+        "p95": 1.3384933053914188
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 386.1003,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-frontier",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.480383,
+        "candidate_construction_ms": 5.560613,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.255982,
+          8.88586,
+          8.262231,
+          8.226798,
+          8.512538,
+          8.714973,
+          8.495572,
+          11.314667,
+          8.395401,
+          7.295215,
+          7.66382,
+          8.593409,
+          7.725643,
+          8.710857,
+          8.890397
+        ],
+        "baseline_cpu_samples_ms": [
+          17.578,
+          23.285,
+          16.039,
+          17.07,
+          21.483,
+          24.81,
+          16.491,
+          25.094,
+          14.639,
+          19.554,
+          18.673,
+          15.937,
+          11.254,
+          17.75,
+          21.636
+        ],
+        "samples_ms": [
+          17.648515,
+          8.491686,
+          7.054181,
+          6.496021,
+          7.16583,
+          7.290963,
+          8.094759,
+          7.509938,
+          21.005749,
+          9.174424,
+          8.509483,
+          8.307259,
+          8.499748,
+          7.98927,
+          8.153938
+        ],
+        "cpu_samples_ms": [
+          40.507,
+          31.401,
+          26.796,
+          24.431,
+          27.186,
+          28.035,
+          30.899,
+          29.189,
+          48.838,
+          31.858,
+          32.562,
+          31.52,
+          32.02,
+          30.921,
+          31.112
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.055343,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 2.390179,
+            "worker_jobs": [
+              320,
+              448,
+              352,
+              480
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.041749,
+            "worker_jobs": [
+              320,
+              480,
+              320,
+              480
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 4.649941,
+            "worker_jobs": [
+              288,
+              544,
+              288,
+              480
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "b2c3922d5dd6d22ccba2b2ca05f842cebacbda98b7a78bee3ab9d01e46a4ab0c",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "without-checkpoints",
+      "baseline_ms": {
+        "n": 15,
+        "median": 7.797702,
+        "iqr": 1.6432894999999998,
+        "mad": 0.7247700000000004,
+        "min": 6.713208,
+        "max": 10.227009,
+        "p95": 9.751013899999998
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.553624,
+        "iqr": 0.30115849999999966,
+        "mad": 0.20467799999999947,
+        "min": 7.08641,
+        "max": 8.732309,
+        "p95": 8.7081436
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 18.31,
+        "iqr": 4.6235,
+        "mad": 3.2950000000000017,
+        "min": 8.147,
+        "max": 25.663,
+        "p95": 24.6704
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 29.103,
+        "iqr": 1.4874999999999972,
+        "mad": 0.6900000000000013,
+        "min": 27.379,
+        "max": 33.195,
+        "p95": 32.2521
+      },
+      "speedup_ratio_of_medians": 1.0323127018236544,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.046735296575934,
+        "iqr": 0.14964471241374167,
+        "mad": 0.06689157310926364,
+        "min": 0.8652934624096871,
+        "max": 1.3539208464705155,
+        "p95": 1.3002408108628107
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 361.278093,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "without-checkpoints",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.813764,
+        "candidate_construction_ms": 5.594173,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          8.522472,
+          9.547016,
+          9.305882,
+          10.227009,
+          9.21133,
+          7.514094,
+          6.713208,
+          7.063947,
+          7.331499,
+          8.310253,
+          7.563528,
+          7.780085,
+          7.433663,
+          7.797702,
+          9.023006
+        ],
+        "baseline_cpu_samples_ms": [
+          21.708,
+          24.245,
+          18.601,
+          25.663,
+          21.442,
+          21.605,
+          16.768,
+          8.147,
+          9.654,
+          17.269,
+          11.626,
+          18.31,
+          17.477,
+          17.77,
+          21.679
+        ],
+        "samples_ms": [
+          8.697787,
+          7.807135,
+          8.732309,
+          7.553624,
+          7.21193,
+          7.1786,
+          7.758302,
+          7.490749,
+          7.584069,
+          7.495906,
+          7.671793,
+          7.08641,
+          7.510189,
+          7.468025,
+          7.802789
+        ],
+        "cpu_samples_ms": [
+          31.848,
+          30.219,
+          33.195,
+          28.413,
+          27.379,
+          27.801,
+          29.677,
+          29.062,
+          28.908,
+          28.492,
+          29.478,
+          27.472,
+          29.196,
+          29.103,
+          30.203
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.054112,
+            "worker_jobs": [
+              64,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 7.727996,
+            "worker_jobs": [
+              256,
+              480,
+              352,
+              512
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 7.727996,
+            "worker_jobs": [
+              256,
+              480,
+              352,
+              512
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 7.727996,
+            "worker_jobs": [
+              360,
+              446,
+              354,
+              440
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "2da70e9f11075257f7f89d0c22ac271b4cebf649a85071e66a8e86bb5f536b59",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "baseline",
+      "baseline_ms": {
+        "n": 15,
+        "median": 8.214679,
+        "iqr": 0.9785989999999991,
+        "mad": 0.6001840000000005,
+        "min": 7.080151,
+        "max": 9.561057,
+        "p95": 9.5126422
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 8.701282,
+        "iqr": 0.9633749999999992,
+        "mad": 0.33523500000000084,
+        "min": 7.238249,
+        "max": 9.6964,
+        "p95": 9.5896367
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 18.25,
+        "iqr": 6.017500000000002,
+        "mad": 2.9510000000000005,
+        "min": 11.975,
+        "max": 26.117,
+        "p95": 23.967299999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 18.355,
+        "iqr": 4.9725,
+        "mad": 2.532,
+        "min": 13.175,
+        "max": 24.8,
+        "p95": 23.126299999999997
+      },
+      "speedup_ratio_of_medians": 0.944076861317677,
+      "speedup_paired": {
+        "n": 15,
+        "median": 0.982192503998331,
+        "iqr": 0.14174002781061623,
+        "mad": 0.0707482393643305,
+        "min": 0.7725433150447588,
+        "max": 1.1285581278168275,
+        "p95": 1.1136920397468588
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 373.612411,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "baseline",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 5.630258,
+        "candidate_construction_ms": 5.307341,
+        "spatial_references": 0,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          7.080151,
+          7.871813,
+          8.111453,
+          8.214679,
+          8.828069,
+          7.490889,
+          8.165896,
+          8.561882,
+          8.329252,
+          8.814863,
+          9.491893,
+          9.561057,
+          8.475221,
+          7.547734,
+          7.491621
+        ],
+        "baseline_cpu_samples_ms": [
+          14.534,
+          14.814,
+          11.975,
+          21.201,
+          15.539,
+          16.035,
+          14.258,
+          21.187,
+          23.046,
+          20.159,
+          21.545,
+          26.117,
+          18.429,
+          17.145,
+          18.25
+        ],
+        "samples_ms": [
+          7.768057,
+          8.366047,
+          8.701282,
+          9.543881,
+          8.988125,
+          9.6964,
+          8.051964,
+          8.784727,
+          7.521986,
+          8.408871,
+          8.781332,
+          8.862214,
+          7.509778,
+          8.884557,
+          7.238249
+        ],
+        "cpu_samples_ms": [
+          19.728,
+          15.445,
+          15.057,
+          17.126,
+          22.345,
+          24.8,
+          13.175,
+          18.355,
+          22.409,
+          20.59,
+          18.277,
+          16.829,
+          22.007,
+          15.823,
+          20.148
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.094893,
+            "worker_jobs": [
+              0,
+              64,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 2.539363,
+            "worker_jobs": [
+              288,
+              512,
+              448,
+              352
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 0.944892,
+            "worker_jobs": [
+              416,
+              416,
+              320,
+              448
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 3.65302,
+            "worker_jobs": [
+              384,
+              416,
+              384,
+              416
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "59302fa6e65455fa6105b7b1c3dd11431839bf22a8c8dcb0b895ca48d272c48a",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 4,
+      "policy": "locality",
+      "baseline_ms": {
+        "n": 15,
+        "median": 7.720235,
+        "iqr": 0.9641015,
+        "mad": 0.45314299999999985,
+        "min": 6.862693,
+        "max": 9.030498,
+        "p95": 8.976957800000001
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 7.727626,
+        "iqr": 0.8294744999999999,
+        "mad": 0.4046700000000003,
+        "min": 6.394208,
+        "max": 32.270581,
+        "p95": 16.146007499999975
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 16.906,
+        "iqr": 5.628000000000002,
+        "mad": 3.1530000000000022,
+        "min": 10.118,
+        "max": 21.713,
+        "p95": 21.3749
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 16.429,
+        "iqr": 3.9620000000000033,
+        "mad": 2.2939999999999987,
+        "min": 7.395,
+        "max": 20.354,
+        "p95": 19.224899999999998
+      },
+      "speedup_ratio_of_medians": 0.9990435613731824,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0097350449853308,
+        "iqr": 0.15168650872426848,
+        "mad": 0.08000397319217156,
+        "min": 0.26069803329540303,
+        "max": 1.2286112682881898,
+        "p95": 1.1732666531976408
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 382.62673,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 4,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "locality",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 4,
+        "baseline_construction_ms": 7.552652,
+        "candidate_construction_ms": 6.492627,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": false,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          7.361124,
+          8.954012,
+          7.267092,
+          8.412877,
+          7.563779,
+          7.142284,
+          6.862693,
+          9.030498,
+          7.720235,
+          8.586509,
+          7.980967,
+          7.541636,
+          8.059185,
+          8.418086,
+          7.598552
+        ],
+        "baseline_cpu_samples_ms": [
+          21.23,
+          17.663,
+          16.906,
+          16.112,
+          10.118,
+          20.059,
+          18.015,
+          15.478,
+          20.578,
+          21.713,
+          15.621,
+          11.53,
+          13.219,
+          19.894,
+          13.107
+        ],
+        "samples_ms": [
+          7.014952,
+          8.137193,
+          8.086827,
+          32.270581,
+          6.877897,
+          7.550519,
+          6.394208,
+          7.350167,
+          7.727626,
+          9.235476,
+          7.904021,
+          7.931904,
+          7.036826,
+          7.322956,
+          7.842634
+        ],
+        "cpu_samples_ms": [
+          18.741,
+          20.354,
+          16.429,
+          17.588,
+          14.135,
+          18.594,
+          7.883,
+          13.626,
+          7.395,
+          17.197,
+          16.527,
+          13.609,
+          12.581,
+          15.423,
+          17.571
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.104367,
+            "worker_jobs": [
+              0,
+              64,
+              0,
+              0
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 2.076251,
+            "worker_jobs": [
+              352,
+              448,
+              384,
+              416
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 1.038043,
+            "worker_jobs": [
+              480,
+              320,
+              480,
+              320
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 4.613307,
+            "worker_jobs": [
+              288,
+              512,
+              512,
+              288
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "f127db1ea47c474457b6682a1cab47fa09774bbd3acc0fd29125f53d3d4473fe",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    },
+    {
+      "scene": "sparse64",
+      "width": 640,
+      "height": 640,
+      "tile": 16,
+      "triangles": 64,
+      "workers": 1,
+      "policy": "combined",
+      "baseline_ms": {
+        "n": 15,
+        "median": 24.337456,
+        "iqr": 0.7236490000000018,
+        "mad": 0.3816039999999994,
+        "min": 23.534537,
+        "max": 29.658198,
+        "p95": 27.341727899999995
+      },
+      "candidate_ms": {
+        "n": 15,
+        "median": 23.171881,
+        "iqr": 0.9925994999999972,
+        "mad": 0.4957560000000001,
+        "min": 21.938333,
+        "max": 24.730578,
+        "p95": 24.2938137
+      },
+      "baseline_cpu_ms": {
+        "n": 15,
+        "median": 24.341,
+        "iqr": 0.7295000000000016,
+        "mad": 0.3940000000000019,
+        "min": 23.538,
+        "max": 29.663,
+        "p95": 27.345299999999998
+      },
+      "candidate_cpu_ms": {
+        "n": 15,
+        "median": 23.179,
+        "iqr": 0.9954999999999998,
+        "mad": 0.5,
+        "min": 21.941,
+        "max": 24.735,
+        "p95": 24.299599999999998
+      },
+      "speedup_ratio_of_medians": 1.0503012681620452,
+      "speedup_paired": {
+        "n": 15,
+        "median": 1.0698698035971048,
+        "iqr": 0.05789138583857878,
+        "mad": 0.04476305680814252,
+        "min": 1.0015497024618936,
+        "max": 1.2302922154731795,
+        "p95": 1.1610141250525965
+      },
+      "all_buffers_sha256": "35aed8fb47def5d297116345bcf3574cea0ff4bf8e3c3a9d777ff0fa43885014",
+      "full_buffer_parity_every_frame": true,
+      "process_ms_including_startup_allocations_oracle_warmups_all_pairs_and_serialization": 936.223253,
+      "native": {
+        "protocol": "are.workrooms.receipt.v1",
+        "python_in_runtime": false,
+        "workers": 1,
+        "frame": 0,
+        "triangles": 64,
+        "tile": 16,
+        "rooms_executed": 4864,
+        "handoff_ready": true,
+        "hardware_gpu_submitted": false,
+        "worker_parity": true,
+        "policy": "combined",
+        "paired_order": "alternating-baseline-first",
+        "baseline_workers": 1,
+        "baseline_construction_ms": 5.527893,
+        "candidate_construction_ms": 5.335124,
+        "spatial_references": 1188,
+        "frontier_shared_stage_interval": true,
+        "warmups": 3,
+        "baseline_samples_ms": [
+          23.955852,
+          25.82814,
+          23.773387,
+          26.348955,
+          24.003955,
+          24.044235,
+          23.534537,
+          24.337456,
+          29.658198,
+          24.538699,
+          24.587753,
+          24.819352,
+          23.78189,
+          24.429745,
+          24.268473
+        ],
+        "baseline_cpu_samples_ms": [
+          23.947,
+          25.833,
+          23.778,
+          26.352,
+          24.008,
+          24.045,
+          23.538,
+          24.341,
+          29.663,
+          24.54,
+          24.592,
+          24.822,
+          23.784,
+          24.432,
+          24.271
+        ],
+        "samples_ms": [
+          23.918785,
+          23.171881,
+          23.28375,
+          24.730578,
+          23.516961,
+          22.422262,
+          23.202077,
+          23.827939,
+          24.106629,
+          22.763076,
+          22.823186,
+          21.938333,
+          22.676125,
+          22.616144,
+          22.683576
+        ],
+        "cpu_samples_ms": [
+          23.924,
+          23.179,
+          23.287,
+          24.735,
+          23.523,
+          22.425,
+          23.205,
+          23.833,
+          24.113,
+          22.766,
+          22.825,
+          21.941,
+          22.679,
+          22.619,
+          22.686
+        ],
+        "waves": [
+          {
+            "kind": "render",
+            "color": "green",
+            "executed": 64,
+            "sample_writes": 0,
+            "last_ms": 0.004707,
+            "worker_jobs": [
+              64
+            ]
+          },
+          {
+            "kind": "raster",
+            "color": "blue",
+            "executed": 1600,
+            "sample_writes": 346245,
+            "last_ms": 22.659409,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "msaa",
+            "color": "orange",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 22.659409,
+            "worker_jobs": [
+              1600
+            ]
+          },
+          {
+            "kind": "aa",
+            "color": "purple",
+            "executed": 1600,
+            "sample_writes": 0,
+            "last_ms": 22.659409,
+            "worker_jobs": [
+              1600
+            ]
+          }
+        ],
+        "address_examples": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            39,
+            39,
+            3,
+            0
+          ]
+        ],
+        "request_sha256": "4d85d490e354665d6916b04917a0331550c092fe78e1e731c450f8a687541c0f",
+        "response_sha256": "486ae9f59e62b1020a8f158be2400e3e4177c56380ba12d1c404a0a9583b1783",
+        "rgba_sha256": "546ff6b6f655657692eac0dbda7d7e05ae32586202c8cab9054b773d7d340eb5"
+      }
+    }
+  ],
+  "timing_contract": {
+    "included": [
+      "all native rendering",
+      "spatial bins rebuilt each frame",
+      "scheduling and dependency publication",
+      "native worker synchronization",
+      "checkpoint/handoff verification"
+    ],
+    "excluded": [
+      "process startup",
+      "binary parsing",
+      "initial buffer allocation and resident worker creation",
+      "full-buffer parity comparison",
+      "response serialization",
+      "Python transport"
+    ],
+    "construction": "measured separately for each baseline and candidate; not part of frame speed ratio",
+    "frontier_stage_ms": "one shared overlapping interval, do not sum stages 1..3"
+  },
+  "limitations": [
+    "CPU versus CPU on one host, no hardware GPU or game FPS comparison",
+    "Small fixed flat-shaded already-clipped scenes, 4x MSAA and existing FXAA; not arbitrary games",
+    "Four principles are implementation hypotheses, not biological simulation or imported biological code",
+    "Ratios describe these runs; no guaranteed factor and no additive/multiplicative combination assumption",
+    "No temperature, energy or thermal safety measurements",
+    "Checkpoint overhead may make combined slower; all regressions retained",
+    "Only one bounded fixed candidate; no performance-driven tuning after measurement"
+  ]
+}

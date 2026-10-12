@@ -13,6 +13,9 @@ class VertexColorShader(Shader):
     def vertex_shader(self, vertex):
         return vertex.position, {"color": vertex.color}
 
+    # Bind admission to this exact pure function, even if a method is replaced.
+    vertex_preparation_equivalent_to = vertex_shader
+
     def fragment_shader(self, varyings):
         rgb = np.clip(np.asarray(varyings["color"]) * 255, 0, 255).astype(np.uint8)
         return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255

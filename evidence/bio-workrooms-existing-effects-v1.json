@@ -1,0 +1,124 @@
+{
+  "cases": [
+    {
+      "artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+      "batch_gain_without_scan": {
+        "mad": 0.10549826947525132,
+        "median": 1.3621967544976654
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.09110773576266129,
+        "median": 1.115512100044934
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.10142747421806186,
+        "median": 0.9888871119872324
+      },
+      "scan_gain_scalar": {
+        "mad": 0.0369376424643626,
+        "median": 1.0225407978491723
+      },
+      "scene": "tiny",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+      "batch_gain_without_scan": {
+        "mad": 0.06406252264614887,
+        "median": 3.0995620096728094
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.06305559416581952,
+        "median": 2.9906896280082966
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.01932093480247765,
+        "median": 0.7845788049184903
+      },
+      "scan_gain_scalar": {
+        "mad": 0.013583327892793484,
+        "median": 0.9221372795803782
+      },
+      "scene": "small-triangles",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+      "batch_gain_without_scan": {
+        "mad": 0.38674523668507277,
+        "median": 13.134750116397973
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.4284637227470185,
+        "median": 13.088620016066564
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.020227333745707732,
+        "median": 0.7574943101451523
+      },
+      "scan_gain_scalar": {
+        "mad": 0.012757376971798351,
+        "median": 0.9629976415567
+      },
+      "scene": "large-surfaces",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+      "batch_gain_without_scan": {
+        "mad": 0.05818082097405286,
+        "median": 2.521440684094925
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.05957901666598797,
+        "median": 2.4534758373196697
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.0072265834384313,
+        "median": 0.7567782923774133
+      },
+      "scan_gain_scalar": {
+        "mad": 0.017999911963722526,
+        "median": 0.913557757057386
+      },
+      "scene": "procedural400",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "22df10a62123a7fa944fe0014882b1bb4519cc95430ac7b3bed1fc0d9237fd66",
+      "batch_gain_without_scan": {
+        "mad": 0.05138377676001449,
+        "median": 1.2599710813555645
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.030312442399122785,
+        "median": 1.240714339181684
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.03961967876214201,
+        "median": 0.8394027804822047
+      },
+      "scan_gain_scalar": {
+        "mad": 0.02780484891806112,
+        "median": 0.8722775123275645
+      },
+      "scene": "procedural5k",
+      "source_verification": "all-declared-sources-match-checkout"
+    }
+  ],
+  "coefficients_deployed": false,
+  "next_step": "size/triangle sweeps and scene-family holdout before fitting any pre-execution gate",
+  "runtime_gate_calibrated": false,
+  "scope": "paired descriptive effects from supplied artifacts",
+  "status": "PASS"
+}

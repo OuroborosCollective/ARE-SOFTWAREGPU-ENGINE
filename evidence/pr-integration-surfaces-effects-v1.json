@@ -1,0 +1,124 @@
+{
+  "cases": [
+    {
+      "artifact_sha256": "51d1763d03b0ca161996db21d2000f3c914fd771c56903d86f68ab44196b919b",
+      "batch_gain_without_scan": {
+        "mad": 0.07631576704686038,
+        "median": 1.3404546078616062
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.15300688181509892,
+        "median": 1.0729657093810239
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.1547399844195837,
+        "median": 1.0144564558674503
+      },
+      "scan_gain_scalar": {
+        "mad": 0.10850418473629941,
+        "median": 1.0035380162609437
+      },
+      "scene": "tiny",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "51d1763d03b0ca161996db21d2000f3c914fd771c56903d86f68ab44196b919b",
+      "batch_gain_without_scan": {
+        "mad": 0.048081192062270794,
+        "median": 3.160052879749976
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.11228444297883522,
+        "median": 3.0526241298581107
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.04680310520973918,
+        "median": 0.7686651221291981
+      },
+      "scan_gain_scalar": {
+        "mad": 0.03533538499501043,
+        "median": 0.8985083103753373
+      },
+      "scene": "small-triangles",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "51d1763d03b0ca161996db21d2000f3c914fd771c56903d86f68ab44196b919b",
+      "batch_gain_without_scan": {
+        "mad": 0.18967091428767624,
+        "median": 13.598022886423813
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.36847245406174345,
+        "median": 13.329109752152604
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.041172730141514235,
+        "median": 0.7531757441319579
+      },
+      "scan_gain_scalar": {
+        "mad": 0.008798103009152958,
+        "median": 0.9609440510284885
+      },
+      "scene": "large-surfaces",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "51d1763d03b0ca161996db21d2000f3c914fd771c56903d86f68ab44196b919b",
+      "batch_gain_without_scan": {
+        "mad": 0.04473618779284072,
+        "median": 2.528375817092586
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.04236434399333033,
+        "median": 2.471510558960489
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.02384091770997654,
+        "median": 0.7532579676294144
+      },
+      "scan_gain_scalar": {
+        "mad": 0.033710623570462395,
+        "median": 0.8811077314352103
+      },
+      "scene": "procedural400",
+      "source_verification": "all-declared-sources-match-checkout"
+    },
+    {
+      "artifact_sha256": "51d1763d03b0ca161996db21d2000f3c914fd771c56903d86f68ab44196b919b",
+      "batch_gain_without_scan": {
+        "mad": 0.03084408266307337,
+        "median": 1.2821973310064665
+      },
+      "noscan_batch_vs_tiles": {
+        "mad": 0.048831720935170075,
+        "median": 1.2892605684413259
+      },
+      "pixels": 256,
+      "repeats": 15,
+      "scan_gain_batch": {
+        "mad": 0.04866259143662144,
+        "median": 0.8371862026226236
+      },
+      "scan_gain_scalar": {
+        "mad": 0.025784590266142104,
+        "median": 0.8752001383639149
+      },
+      "scene": "procedural5k",
+      "source_verification": "all-declared-sources-match-checkout"
+    }
+  ],
+  "coefficients_deployed": false,
+  "next_step": "size/triangle sweeps and scene-family holdout before fitting any pre-execution gate",
+  "runtime_gate_calibrated": false,
+  "scope": "paired descriptive effects from supplied artifacts",
+  "status": "PASS"
+}

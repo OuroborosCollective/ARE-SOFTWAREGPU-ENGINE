@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections import Counter
 from concurrent.futures import Executor
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -36,28 +37,27 @@ def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
                       if w * h < scan_min_samples)
 
 
-def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
-                    executor: Executor, workers: int, compiled: bool = False,
-                    planned: bool = False, plan_policy=None):
-    """Bin triangles by 2-D tiles, then shade each independent tile in order.
+@dataclass(frozen=True)
+class TileBins:
+    """Prepared candidate order only; no coverage, visibility or depth results."""
+    triangles: Any
+    width: int
+    height: int
+    tile_size: int
+    scan_min_samples: Any
+    tasks: tuple
+    bbox_samples: int
+    binned_pairs: int
+    small_pairs: int
 
-    This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
-    execution. Workers can safely write separate tiles of the same framebuffer.
-    """
-    if planned and compiled:
-        raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
-    requested_plan = planned
-    if planned:
-        from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
-                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY)
-        policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
-        if not isinstance(policy, SurfacePlanPolicy):
-            raise ValueError("SURFACE_PLAN_POLICY_INVALID")
+
+def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
+    """Pure setup shared by uncached draws and the explicit preparation cache."""
     bins = defaultdict(list)
     bbox_samples = 0
     binned_pairs = 0
     small_pairs = 0
-    frame_w, frame_h = fb.width, fb.height
+    frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
         x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
@@ -66,11 +66,11 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
         if x0 > x1 or y0 > y1:
             continue
-        if planned:
+        if scan_min_samples is not None:
             bbox_samples += (x1 - x0 + 1) * (y1 - y0 + 1)
             # Pre-execution gate features: pair count and pairs below the scan
             # threshold, using the same clipped bounds draw_tile derives.
-            pairs, small = _pair_features(x0, x1, y0, y1, tile_size, policy.scan_min_samples)
+            pairs, small = _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples)
             binned_pairs += pairs
             small_pairs += small
         # Row-major deterministic tile iteration; no per-pixel bin storage.
@@ -78,18 +78,53 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             for tx in range(x0 // tile_size, x1 // tile_size + 1):
                 bins[(ty, tx)].append((tri, x0, x1, y0, y1))
 
+    tasks = tuple((coordinate, tuple(candidates)) for coordinate, candidates in sorted(bins.items()))
+    return TileBins(triangles, width, height, tile_size, scan_min_samples,
+                    tasks, bbox_samples, binned_pairs, small_pairs)
+
+
+def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
+                    executor: Executor, workers: int, compiled: bool = False,
+                    planned: bool = False, plan_policy=None, prepared_bins=None):
+    """Bin triangles by 2-D tiles, then shade each independent tile in order.
+
+    This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
+    execution. Workers can safely write separate tiles of the same framebuffer.
+    """
+    if planned and compiled:
+        raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
+    requested_plan = planned
+    scan_min_samples = None
+    if planned:
+        from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
+                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY)
+        policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
+        if not isinstance(policy, SurfacePlanPolicy):
+            raise ValueError("SURFACE_PLAN_POLICY_INVALID")
+        scan_min_samples = policy.scan_min_samples
+    prepared = (bin_triangles(triangles, fb.width, fb.height, tile_size, scan_min_samples)
+                if prepared_bins is None else prepared_bins)
+    if (not isinstance(prepared, TileBins) or prepared.triangles is not triangles
+            or (prepared.width, prepared.height, prepared.tile_size, prepared.scan_min_samples)
+            != (fb.width, fb.height, tile_size, scan_min_samples)):
+        raise ValueError("PREPARED_TILE_BINS_MISMATCH")
+    tasks = prepared.tasks
+    frame_w, frame_h = fb.width, fb.height
+    bbox_samples, binned_pairs, small_pairs = (prepared.bbox_samples,
+                                              prepared.binned_pairs, prepared.small_pairs)
+
     trace = None
     batch = None
     if planned:
         reason = None
-        if bins and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
+        if tasks and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
             reason = "small-primitive-cost-threshold"
             planned = False
-        trace = PlanTrace(bins, reason, bbox_samples, len(triangles),
+        trace = PlanTrace(tuple(coordinate for coordinate, _ in tasks), reason, bbox_samples, len(triangles),
                           binned_pairs, small_pairs, policy=policy)
         if planned:
             batch = equivalent_batch(shader)
-    if not bins:
+    if not tasks:
         return trace.receipt() if trace is not None else None
 
     # Lazy optional native kernel, intentionally never loaded by the default
@@ -208,7 +243,6 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         if trace is not None and planned:
             trace.record((ty, tx), counts)
 
-    tasks = sorted(bins.items())
     if workers == 1 or len(tasks) == 1:
         for task in tasks:
             draw_tile(task)

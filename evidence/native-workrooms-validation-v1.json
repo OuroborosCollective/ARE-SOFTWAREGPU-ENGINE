@@ -1,0 +1,42 @@
+{
+  "protocol": "are.workrooms.validation.v1",
+  "base_commit": "f6633bc54e63ffb7478b1b82c2c7e4d74b52b39a",
+  "full_suite": {
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "software_gpu/tests",
+      "-v"
+    ],
+    "status": "HOST_BLOCKED",
+    "tests": 231,
+    "blocker": "AF_UNIX socket creation: PermissionError errno 1, also fails nested coverage suite",
+    "failures": 1,
+    "errors": 1,
+    "log_sha256": "7f5f547072fd652f8aa3f8a7bb7ac58bd00ec6eb3ee12017cc8d0b7e252d5a7d"
+  },
+  "host_filtered_suite": {
+    "status": "PASS",
+    "tests": 230,
+    "skips": 3,
+    "omitted": [
+      "TestGamingAndMobile.test_android_unix_domain_socket_ipc"
+    ],
+    "overall_line_coverage_percent": 68.7,
+    "covered_lines": 4502,
+    "executable_lines": 6557,
+    "per_file_floors_passed": 16,
+    "new_python_boundary_line_coverage_percent": 98.5,
+    "repository_tests_and_floors_unchanged": true,
+    "log_sha256": "72fb61206b8cd46d8679adec8f72da824922e14842b5139c91e74af61137254e"
+  },
+  "native_cpp_coverage": "not measured; Python coverage does not measure C++",
+  "standalone_sanitizers": "ASan+UBSan: passed two real 640x640 worker/tile cases plus invalid-wire cases; LeakSanitizer unavailable",
+  "source_stable_during_full_suite": true,
+  "canonical_final_head_ci": "required before integration",
+  "measurements": "native-workrooms-v1.json",
+  "symbolic_oracle": "workrooms-wolfram-v1.json"
+}
