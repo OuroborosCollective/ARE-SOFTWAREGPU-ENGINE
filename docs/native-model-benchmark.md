@@ -68,11 +68,11 @@ interval from repeated identical frames.
 ## Reproduce
 
 Keep the supplied original GLBs together in a local directory. The repository
-does not contain the private original-file manifest or the original assets. Place
-the separately delivered `original-model-manifest-v1.json` under `evidence/`
-before running the original-model harness. The generated-fixture unit tests do
-not require that manifest. With Python/NumPy for offline preparation and a C++17
-compiler installed:
+contains the owner-approved original-file metadata manifest at
+`evidence/original-model-manifest-v1.json`: filenames, SHA-256 checksums, sizes
+and animation metadata. The original GLB binaries are not included. The
+generated-fixture unit tests do not require the originals. With Python/NumPy
+for offline preparation and a C++17 compiler installed:
 
 ```sh
 python tools/benchmark_models.py --assets /path/to/originals --output-dir /path/to/evidence --phase all --repeats 15 --seconds 1800

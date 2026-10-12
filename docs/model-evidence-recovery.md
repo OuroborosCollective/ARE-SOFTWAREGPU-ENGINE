@@ -17,8 +17,12 @@ and the last 2026-10-11 Memory entry retain historical claims; their missing
 underlying model receipts must not be treated as available proof.
 
 A new full run checks every clip against the independent pose oracle and measures
-all eleven workloads. Its full receipt and regenerated asset manifest are delivered privately with the
-user report. They are not published in this repository. This is a new measurement,
+all eleven workloads. Its full receipt is delivered privately with the user
+report. On 2026-10-12 the owner explicitly approved public publication of the
+GLB filenames, checksums and animation metadata in PR #46. The regenerated
+manifest is now published as `evidence/original-model-manifest-v1.json`, with
+its bytes unchanged from the fresh benchmark input. The original binaries and
+full new raw buffers remain outside this repository. This is a new measurement,
 with its own environment, binary/input/source hashes and raw timings. No old
 observations are invented or copied into it. Full current raw buffers accompany
 the separately delivered report rather than the Git repository.

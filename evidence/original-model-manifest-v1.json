@@ -1,0 +1,322 @@
+{
+  "protocol": "are.original-model-manifest.v1",
+  "recovered_at": "2026-10-12",
+  "note": "Rebuilt from the ten original Library files after workspace maintenance; this is a new manifest, not a reconstruction of lost original bytes. Native code is unchanged.",
+  "files": [
+    {
+      "file": "Meshy_AI_Chibi_mage_Fighter_t__All_Animations (1).glb",
+      "sha256": "c2064ea7f1834983d4ec13b81e60da6fc1bf89e4780bf0c1a65da68cebdc5434",
+      "bytes": 24578196,
+      "vertices": 15157,
+      "triangles": 11487,
+      "nodes": 68,
+      "joints": 66,
+      "influences_per_vertex": 12,
+      "maximum_nonzero_influences": 11,
+      "weight_sum_max_error": 1.4156103134155273e-07,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [
+        {
+          "name": "Running",
+          "duration": 0.6666666865348816,
+          "channels": 132
+        },
+        {
+          "name": "Walking",
+          "duration": 1.0416666269302368,
+          "channels": 132
+        },
+        {
+          "name": "Block9",
+          "duration": 2.8333332538604736,
+          "channels": 132
+        },
+        {
+          "name": "Charged_Ground_Slam",
+          "duration": 3.0,
+          "channels": 132
+        },
+        {
+          "name": "Charged_Spell_Cast",
+          "duration": 2.7083332538604736,
+          "channels": 132
+        },
+        {
+          "name": "Charged_Spell_Cast_1",
+          "duration": 4.333333492279053,
+          "channels": 132
+        },
+        {
+          "name": "Electrocuted_Fall",
+          "duration": 6.333333492279053,
+          "channels": 132
+        },
+        {
+          "name": "Wake_Up_and_Look_Up",
+          "duration": 3.5,
+          "channels": 132
+        }
+      ],
+      "alias": "mage"
+    },
+    {
+      "file": "Meshy_AI_Chibi_mage_Fighter_t__All_Animations(1).glb",
+      "sha256": "c2064ea7f1834983d4ec13b81e60da6fc1bf89e4780bf0c1a65da68cebdc5434",
+      "bytes": 24578196,
+      "alias": "mage_duplicate",
+      "duplicate_of": "Meshy_AI_Chibi_mage_Fighter_t__All_Animations (1).glb"
+    },
+    {
+      "file": "Meshy_AI_Cracked_Granite_Bould_1010215236_texture.glb",
+      "sha256": "aeab1a6ae1a66208f09eaa546318a66261c74cc8ba13056d47b923f502a56958",
+      "bytes": 5187548,
+      "vertices": 7992,
+      "triangles": 10478,
+      "nodes": 1,
+      "joints": 0,
+      "influences_per_vertex": 0,
+      "maximum_nonzero_influences": 0,
+      "weight_sum_max_error": 0,
+      "images": 1,
+      "material": "opaque-double-sided",
+      "animations": [],
+      "alias": "boulder"
+    },
+    {
+      "file": "Meshy_AI_Crystal_Starburst_1011194057_texture.glb",
+      "sha256": "7dfb6b3ccdd66025b1a94b58305aa29536630b04636ebf7ddd79f0590b3714bb",
+      "bytes": 42470820,
+      "vertices": 628353,
+      "triangles": 1104486,
+      "nodes": 1,
+      "joints": 0,
+      "influences_per_vertex": 0,
+      "maximum_nonzero_influences": 0,
+      "weight_sum_max_error": 0,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [],
+      "alias": "crystal"
+    },
+    {
+      "file": "Meshy_AI_Enchanted_Wisteria_Tr_1011190640_texture.glb",
+      "sha256": "2928bd82b1215d511d343dd1df6871b5a9fe3b7877b1b7b67dd8b45f5b8ced7e",
+      "bytes": 193663584,
+      "vertices": 4001328,
+      "triangles": 4233077,
+      "nodes": 1,
+      "joints": 0,
+      "influences_per_vertex": 0,
+      "maximum_nonzero_influences": 0,
+      "weight_sum_max_error": 0,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [],
+      "alias": "wisteria"
+    },
+    {
+      "file": "Meshy_AI_Female_Assassin_Chibi_All_Animations(1).glb",
+      "sha256": "daec8f2e72d3d6795794cb79fc0c33f9752b0eadad36fd35850f9bbd419bb810",
+      "bytes": 22079580,
+      "vertices": 7720,
+      "triangles": 5000,
+      "nodes": 70,
+      "joints": 68,
+      "influences_per_vertex": 12,
+      "maximum_nonzero_influences": 12,
+      "weight_sum_max_error": 1.2852251529693604e-07,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [
+        {
+          "name": "Running",
+          "duration": 0.6666666865348816,
+          "channels": 136
+        },
+        {
+          "name": "Walking",
+          "duration": 1.0416666269302368,
+          "channels": 136
+        },
+        {
+          "name": "Dodge_and_Counter",
+          "duration": 9.333333015441895,
+          "channels": 136
+        },
+        {
+          "name": "Flying_Fist_Kick",
+          "duration": 4.708333492279053,
+          "channels": 136
+        },
+        {
+          "name": "Left_Hook_from_Guard",
+          "duration": 1.0,
+          "channels": 136
+        },
+        {
+          "name": "Left_Jab_from_Guard",
+          "duration": 1.75,
+          "channels": 136
+        },
+        {
+          "name": "Lunge_Roundhouse_Kick",
+          "duration": 3.0,
+          "channels": 136
+        },
+        {
+          "name": "Roundhouse_Kick",
+          "duration": 2.7083332538604736,
+          "channels": 136
+        },
+        {
+          "name": "bicycle_crunch",
+          "duration": 1.1666666269302368,
+          "channels": 136
+        }
+      ],
+      "alias": "assassin"
+    },
+    {
+      "file": "Meshy_AI_Mini_Chibi_Fighter_Ca_All_Animations(1).glb",
+      "sha256": "e5f0e95716c337d7212a65cba685258d9feb336fac3d874e3bd99ec03849cb4e",
+      "bytes": 30050296,
+      "vertices": 41479,
+      "triangles": 38477,
+      "nodes": 37,
+      "joints": 35,
+      "influences_per_vertex": 4,
+      "maximum_nonzero_influences": 4,
+      "weight_sum_max_error": 1.360895112156868e-07,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [
+        {
+          "name": "Running",
+          "duration": 0.6666666865348816,
+          "channels": 70
+        },
+        {
+          "name": "Walking",
+          "duration": 1.0416666269302368,
+          "channels": 70
+        },
+        {
+          "name": "Arise",
+          "duration": 1.8333333730697632,
+          "channels": 70
+        },
+        {
+          "name": "Axe_Breathe_and_Look_Around",
+          "duration": 11.291666984558105,
+          "channels": 70
+        },
+        {
+          "name": "Axe_Spin_Attack",
+          "duration": 2.5,
+          "channels": 70
+        },
+        {
+          "name": "Block10",
+          "duration": 0.5416666865348816,
+          "channels": 70
+        },
+        {
+          "name": "Boxing_Guard_Prep_Straight_Punch",
+          "duration": 4.0,
+          "channels": 70
+        },
+        {
+          "name": "Chest_Pound_Taunt",
+          "duration": 4.833333492279053,
+          "channels": 70
+        },
+        {
+          "name": "Strangled_and_Fall_Forward",
+          "duration": 9.333333015441895,
+          "channels": 70
+        }
+      ],
+      "alias": "axe"
+    },
+    {
+      "file": "Meshy_AI_Mini_Chibi_Fighter_re_All_Animations(1).glb",
+      "sha256": "febd50da5f541e844ac89fb03b8c0498ec699362f7ffabd6319e24fb8c93befd",
+      "bytes": 25923140,
+      "vertices": 18782,
+      "triangles": 13811,
+      "nodes": 86,
+      "joints": 84,
+      "influences_per_vertex": 12,
+      "maximum_nonzero_influences": 9,
+      "weight_sum_max_error": 1.3783574104309082e-07,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [
+        {
+          "name": "Running",
+          "duration": 0.6666666865348816,
+          "channels": 168
+        },
+        {
+          "name": "Walking",
+          "duration": 1.0416666269302368,
+          "channels": 168
+        },
+        {
+          "name": "Dead",
+          "duration": 3.0,
+          "channels": 168
+        },
+        {
+          "name": "Hit_Reaction",
+          "duration": 1.6666666269302368,
+          "channels": 168
+        },
+        {
+          "name": "Shield_Push_Left",
+          "duration": 2.375,
+          "channels": 168
+        },
+        {
+          "name": "Sword_Judgment",
+          "duration": 4.333333492279053,
+          "channels": 168
+        }
+      ],
+      "alias": "sword"
+    },
+    {
+      "file": "Meshy_AI_tree_log_for_sitting__1011194141_texture.glb",
+      "sha256": "7f308ab672ed20e10323233e16083a0342d9e767b0ece3c82ce993b0e8d99f3f",
+      "bytes": 1760808,
+      "vertices": 7798,
+      "triangles": 9999,
+      "nodes": 1,
+      "joints": 0,
+      "influences_per_vertex": 0,
+      "maximum_nonzero_influences": 0,
+      "weight_sum_max_error": 0,
+      "images": 1,
+      "material": "opaque-double-sided",
+      "animations": [],
+      "alias": "log"
+    },
+    {
+      "file": "deep dark polished darksteel plate armor, rough texturized engraved metal surface, glowing red flickering hellfire cracks, burning red eyes, flaming sword, lava-glow boo_Meshy_AI_2026-10-11_d98f9c(1).glb",
+      "sha256": "0f868ab4876418eb5e3d66fba0831be93a08b00d970c469942fcda57cfd02105",
+      "bytes": 99935220,
+      "vertices": 1285353,
+      "triangles": 2431898,
+      "nodes": 1,
+      "joints": 0,
+      "influences_per_vertex": 0,
+      "maximum_nonzero_influences": 0,
+      "weight_sum_max_error": 0,
+      "images": 3,
+      "material": "opaque-double-sided",
+      "animations": [],
+      "alias": "armor"
+    }
+  ]
+}
