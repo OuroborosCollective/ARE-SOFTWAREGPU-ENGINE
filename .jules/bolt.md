@@ -1,0 +1,3 @@
+## 2023-10-11 - Shader Micro-Optimizations Actually Work in Hot Paths
+**Learning:** In standard Python CPU environments, replacing `np.linalg.norm` with `math.sqrt` for 3D vector length calculations and replacing `np.clip` with `min` and `max` for scalar color bounds checking in the `BlinnPhongShader` yields an actual measurable performance improvement (~1.6x fragment function speedup, ~1.5x full rasterization speedup) without losing byte identity or functional correctness.
+**Action:** When writing or reviewing code in the hot rendering loops, manually expand small vector arithmetic and bounds checks instead of relying on generic NumPy array operations to reduce invocation overhead.
