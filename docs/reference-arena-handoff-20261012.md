@@ -77,6 +77,7 @@ Der vorhandene native GLB-Renderpfad bleibt dagegen absichtlich ein kontrolliert
 ## Validierung dieses Changesets
 
 - **26 Tests bestanden:** Workrooms, Bio-Workrooms, Native-Raster, GLB-Laden/Skinning/Animation, nativer Puffer, fehlerhafte Receipts und exakte Workerparität.
+- **Vollständige Projektsuite bestanden:** `python -m unittest discover -s software_gpu/tests -p 'test_*.py'` → 282 Tests bestanden, 2 übersprungen (184,2 s).
 - Python- und Viewer-JavaScript-Syntaxprüfung bestanden.
 - Der Viewer wurde im Sandbox-Browser geprüft: **6/6** Modelle geladen; vier Animation-Dropdowns, geladene Originalmodelle und sichtbare Arena.
 - Beide Benchmarkläufe enthielten `animated4`, `static2`, `arena6`, je 15 Paare und exakt gleiche finale Puffer; vor/nach den Messungen bestand jeweils Quell-/Asset-Hashkonsistenz.
