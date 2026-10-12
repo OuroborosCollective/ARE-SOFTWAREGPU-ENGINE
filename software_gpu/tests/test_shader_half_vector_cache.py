@@ -201,5 +201,18 @@ class TestBlinnPhongHalfVectorCache(unittest.TestCase):
                 engine.executor.shutdown(wait=True)
 
 
+    def test_nonfinite_material_does_not_become_valid_white_or_black(self):
+        # PR audit: scalar min/max silently swallowed NaN in ten candidates.
+        # Keep the reference exception contract for live material mutation.
+        for field in ("ambient_color", "diffuse_color", "specular_color"):
+            ref, opt = self._pair()
+            for shader in (ref, opt):
+                getattr(shader, field)[:] = np.nan
+                with self.subTest(field=field, shader=type(shader).__name__):
+                    with self.assertRaises(ValueError):
+                        shader.fragment_shader({"normal": np.zeros(3, dtype=np.float32),
+                                                "uv": np.zeros(2, dtype=np.float32)})
+
+
 if __name__ == "__main__":
     unittest.main()

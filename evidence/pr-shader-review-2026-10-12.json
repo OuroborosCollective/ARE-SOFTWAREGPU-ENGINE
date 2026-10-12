@@ -1,0 +1,167 @@
+{
+  "numpy": "2.3.5",
+  "results": [
+    {
+      "pr": 33,
+      "head": "956f691af17dbd113e2682a25bb669b3c9e8b321",
+      "shader_sha256": "87ca98c491dd4a963ecd89044cfd2e2e9d5808330c7b906b471d2931e6f5b2b9",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 34,
+      "head": "3a32d3714fda879a8ddc2a76b1992547984701fd",
+      "shader_sha256": "7c21e8558a940d2a645cff8edcf2916835cbeeb412b3082cae132ed7c1923888",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 36,
+      "head": "5c46d0f46a5b10fe3e4fea7f19e9d37d1d34266c",
+      "shader_sha256": "a57942e8a55a4d6ea32558559af885d730e12e3be2fbb58ae5176fdc92594e9c",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 38,
+      "head": "ef17dfe8b16b065c613d6f4b754d8de54e72d99e",
+      "shader_sha256": "13ba493f696b6b9c02d3c606e556ecc0b6edcd2dad0df2f12fc5a4704ef9221a",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 40,
+      "head": "82c493591fa3f02791f892cc86041e049f2c5061",
+      "shader_sha256": "3748e036be49855285756628ae597026991884ba227737e2df2ac28b16bfffb6",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 41,
+      "head": "96364d7a1e3c8f1ae83e14f065c8c20a81fcd341",
+      "shader_sha256": "fa95662e5c4ca6011344f1e4e462b62ab39d17b117c8dbf144129549378ae943",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 42,
+      "head": "470dbdd529cfbefe3cf448ea77526122d12046a9",
+      "shader_sha256": "081cde84f29ff1ff7de71fccc21d8472d4be6e21af53b2c780f3f5e6d952dcf5",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 43,
+      "head": "a81f051e4282d1e0086d4807acbf973b4e647a26",
+      "shader_sha256": "8f926a32dd46925d424e7d4396e74a26351da81dcae6cdb8d11bb5a6f7bd4769",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 44,
+      "head": "9ae92b070f355912288bdf9b55be5498e6b5c197",
+      "shader_sha256": "9642b94c28ee7066a5c8f789e49162118bc1c2a4267272e1c45cc42b80dd17e9",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          0,
+          0,
+          0,
+          255
+        ]
+      }
+    },
+    {
+      "pr": 45,
+      "head": "881e8a2581a27ae0b0f70da85cf1c89ee1c0ecd0",
+      "shader_sha256": "7f3f099e8bbf8df30cb685371ab2205b1bd66c5e47de85676063d9c54a2c2eca",
+      "color_boundary_mismatches": 0,
+      "first": [],
+      "nonfinite": {
+        "reference": "ValueError",
+        "candidate": [
+          255,
+          255,
+          255,
+          255
+        ]
+      }
+    }
+  ],
+  "baseline_commit": "45046dd298a307bfff4b93feb7a1a74fe9046815",
+  "scope": "Isolated candidate shader execution; not a throughput benchmark"
+}

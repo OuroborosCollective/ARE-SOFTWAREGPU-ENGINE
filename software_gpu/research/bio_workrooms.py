@@ -24,7 +24,10 @@ def build_bio_workrooms(directory):
     sources['frozen_workrooms.hpp'] = (NATIVE.parents[1]/'software_gpu/tests/fixtures/workrooms-baseline-87ff.hpp').read_bytes()
     if hashlib.sha256(sources['frozen_workrooms.hpp']).hexdigest() != BASELINE_SOURCE_SHA256:
         raise ValueError('ROOM_FROZEN_BASELINE_MISMATCH')
-    if hashlib.sha256(sources['core.hpp']).hexdigest() != '24b7f7ed3beb41387dbbbbde0026935b61a522ecb501d58f7a26107640261cc8':
+    # Reviewed PR #35 integration: shared validation extracted unchanged;
+    # DirectEngine is additive. Existing room arithmetic is unchanged.
+    # Historical receipts retain their original hashes; this build binds the new core.
+    if hashlib.sha256(sources['core.hpp']).hexdigest() != '6728fedbef7f48f9db8e02d3ee082136c89f18ce83195b1bbcd1a4af348ac649':
         raise ValueError('ROOM_FROZEN_CORE_MISMATCH')
     for name, data in sources.items():
         (target/name).write_bytes(data)

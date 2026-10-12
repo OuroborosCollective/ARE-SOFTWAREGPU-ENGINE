@@ -44,14 +44,17 @@ FLOORS = {
     "software_gpu/graphics/shader.py": 88.0,
     "software_gpu/graphics/surface_plan.py": 95.0,
     "software_gpu/graphics/batch_shader.py": 95.0,
+    "software_gpu/graphics/native_raster.py": 95.0,
     "software_gpu/research/symbolic_wave.py": 95.0,
     "software_gpu/research/native_symbolic.py": 90.0,
     "software_gpu/research/pre_delivery_scan.py": 95.0,
     "software_gpu/benchmarks/compare_symbolic_waves.py": 95.0,
+    "software_gpu/graphics/preparation_cache.py": 95.0,
     "software_gpu/graphics/postprocess.py": 95.0,
     "software_gpu/network/security.py": 88.0,
     "software_gpu/integrations/aurion/offline_render_worker.py": 75.0,
     "software_gpu/benchmarks/compare_surface_plans.py": 85.0,
+    "software_gpu/benchmarks/compare_preparation_cache.py": 95.0,
     "main.py": 35.0,
 }
 OVERALL_FLOOR = 62.0  # percent of all package lines (incl. demos/benchmarks)

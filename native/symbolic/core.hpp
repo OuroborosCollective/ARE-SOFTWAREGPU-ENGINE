@@ -29,11 +29,14 @@ namespace are {
 enum class Op { input, add, sub, mul };
 struct Node { Op op; std::size_t a, b, cells; };
 using Fused = bool (*)(const float* const*, float* const*);
+using CheckedFused = std::uint32_t (*)(const float* const*, float* const*);
+inline constexpr std::uint32_t invalid_input = 1u, invalid_result = 2u;
 struct Graph {
     std::vector<Node> nodes;
     std::vector<std::size_t> inputs, outputs;
     Fused fused;
     const char* sha256;
+    CheckedFused checked_fused = nullptr;
 };
 inline std::uint32_t bits(float value) {
     std::uint32_t result; std::memcpy(&result, &value, 4); return result;
@@ -49,9 +52,34 @@ inline void require_environment() {
 #endif
 }
 struct Counts { std::size_t changed = 0, executed = 0; };
+// Separate result type keeps the existing Engine/Counts calling convention.
+struct DirectCounts { std::size_t executed = 0; };
 
-// Owns all buffers. Input memory is never retained. No allocation or Python
-// callback is needed during evaluate(). Invalid frames cannot commit state.
+inline void validate_graph(const Graph& graph) {
+    if (graph.nodes.empty() || graph.nodes.size() > 128 || !graph.fused ||
+        graph.outputs.empty()) throw std::runtime_error("GRAPH_SCHEMA");
+    std::size_t total = 0;
+    std::vector<std::size_t> expected_inputs;
+    for (std::size_t i = 0; i < graph.nodes.size(); ++i) {
+        const auto& n = graph.nodes[i];
+        if (!n.cells || n.cells > 1048576 || total > 1048576 - n.cells)
+            throw std::runtime_error("GRAPH_BUDGET");
+        total += n.cells;
+        if (n.op == Op::input) expected_inputs.push_back(i);
+        else if ((n.op != Op::add && n.op != Op::sub && n.op != Op::mul) ||
+                 n.a >= i || n.b >= i || graph.nodes[n.a].cells != n.cells ||
+                 graph.nodes[n.b].cells != n.cells)
+            throw std::runtime_error("GRAPH_DEPENDENCY");
+    }
+    if (expected_inputs != graph.inputs) throw std::runtime_error("GRAPH_INPUTS");
+    auto outputs = graph.outputs;
+    std::sort(outputs.begin(), outputs.end());
+    if (outputs.back() >= graph.nodes.size() ||
+        std::adjacent_find(outputs.begin(), outputs.end()) != outputs.end())
+        throw std::runtime_error("GRAPH_OUTPUTS");
+}
+
+// Owns all node buffers. Invalid frames cannot commit state.
 class Engine {
     const Graph& graph_;
     std::vector<std::vector<float>> values_, staging_;
@@ -63,28 +91,10 @@ class Engine {
     std::size_t input_cells_ = 0;
 public:
     explicit Engine(const Graph& graph, bool incremental) : graph_(graph), incremental_(incremental) {
-        if (graph.nodes.empty() || graph.nodes.size() > 128 || !graph.fused ||
-            graph.outputs.empty()) throw std::runtime_error("GRAPH_SCHEMA");
-        std::size_t total = 0;
-        std::vector<std::size_t> expected_inputs;
-        for (std::size_t i = 0; i < graph.nodes.size(); ++i) {
-            const auto& n = graph.nodes[i];
-            if (!n.cells || n.cells > 1048576 || total > 1048576 - n.cells)
-                throw std::runtime_error("GRAPH_BUDGET");
-            total += n.cells;
-            if (n.op == Op::input) expected_inputs.push_back(i);
-            else if ((n.op != Op::add && n.op != Op::sub && n.op != Op::mul) ||
-                     n.a >= i || n.b >= i || graph.nodes[n.a].cells != n.cells ||
-                     graph.nodes[n.b].cells != n.cells)
-                throw std::runtime_error("GRAPH_DEPENDENCY");
+        validate_graph(graph);
+        for (const auto& n : graph.nodes) {
             values_.emplace_back(n.cells); staging_.emplace_back(n.cells);
         }
-        if (expected_inputs != graph.inputs) throw std::runtime_error("GRAPH_INPUTS");
-        auto outputs = graph.outputs;
-        std::sort(outputs.begin(), outputs.end());
-        if (outputs.back() >= graph.nodes.size() ||
-            std::adjacent_find(outputs.begin(), outputs.end()) != outputs.end())
-            throw std::runtime_error("GRAPH_OUTPUTS");
         for (auto id : graph.inputs) {
             offsets_.push_back(input_cells_); input_cells_ += graph.nodes[id].cells;
             input_ptrs_.push_back(nullptr);
@@ -148,6 +158,53 @@ public:
             if (dirty[id]) values_[id].swap(staging_[id]);
         initialized_ = true;
         return counts;
+    }
+};
+
+// Synchronous borrowed inputs; owns only two buffers per output. The generated
+// checked kernel validates every input and intermediate in its arithmetic pass.
+// No input pointer survives evaluate(), and no change detection is performed.
+// Graph and compiled function must remain immutable and outlive the engine.
+class DirectEngine {
+    const Graph& graph_;
+    std::vector<std::vector<float>> values_, staging_;
+    std::vector<std::size_t> offsets_;
+    std::vector<float*> output_ptrs_;
+    std::size_t input_cells_ = 0;
+    bool initialized_ = false;
+public:
+    explicit DirectEngine(const Graph& graph) : graph_(graph) {
+        validate_graph(graph);
+        if (!graph.checked_fused) throw std::runtime_error("CHECKED_KERNEL_REQUIRED");
+        for (auto id : graph.inputs) {
+            offsets_.push_back(input_cells_); input_cells_ += graph.nodes[id].cells;
+        }
+        for (auto id : graph.outputs) {
+            values_.emplace_back(graph.nodes[id].cells);
+            staging_.emplace_back(graph.nodes[id].cells);
+            output_ptrs_.push_back(nullptr);
+        }
+        require_environment();
+    }
+    std::size_t input_cells() const { return input_cells_; }
+    const std::vector<float>& output(std::size_t index) const {
+        if (!initialized_) throw std::runtime_error("NO_VALID_FRAME");
+        return values_.at(index);
+    }
+    ARE_NOINLINE DirectCounts evaluate(const std::vector<float>& frame) {
+        require_environment();
+        if (frame.size() != input_cells_) throw std::runtime_error("INPUT_SIZE");
+        std::array<const float*,128> input_ptrs;
+        for (std::size_t j=0; j<graph_.inputs.size(); ++j)
+            input_ptrs[j] = frame.data() + offsets_[j];
+        for (std::size_t j=0; j<staging_.size(); ++j)
+            output_ptrs_[j] = staging_[j].data();
+        const auto invalid = graph_.checked_fused(input_ptrs.data(), output_ptrs_.data());
+        if (invalid & invalid_input) throw std::runtime_error("NONFINITE_INPUT");
+        if (invalid) throw std::runtime_error("NONFINITE_RESULT");
+        for (std::size_t j=0; j<values_.size(); ++j) values_[j].swap(staging_[j]);
+        initialized_ = true;
+        return {graph_.nodes.size() - graph_.inputs.size()};
     }
 };
 } // namespace are

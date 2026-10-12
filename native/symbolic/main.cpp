@@ -42,7 +42,7 @@ std::vector<std::vector<float>> read_frames(std::size_t cells) {
     if (std::cin.peek() != std::char_traits<char>::eof()) throw std::runtime_error("TRAILING_DATA");
     return frames;
 }
-void output_bits(std::ostream& out, const are::Engine& engine) {
+template<class Engine> void output_bits(std::ostream& out, const Engine& engine) {
     out << '[';
     for (std::size_t j=0; j<generated_graph.outputs.size(); ++j) {
         if (j) out << ',';
@@ -53,7 +53,7 @@ void output_bits(std::ostream& out, const are::Engine& engine) {
     }
     out << ']';
 }
-std::uint32_t consume(const are::Engine& engine) {
+template<class Engine> std::uint32_t consume(const Engine& engine) {
     std::uint32_t checksum = 0;
     for (std::size_t i=0; i<generated_graph.outputs.size(); ++i) {
         const auto& out = engine.output(i);
@@ -61,8 +61,9 @@ std::uint32_t consume(const are::Engine& engine) {
     }
     sink = checksum; return checksum;
 }
-void run(const std::vector<std::vector<float>>& frames, bool incremental) {
-    are::Engine engine(generated_graph,incremental);
+void changed_inputs(std::ostream& out, const are::Counts& counts) { out << counts.changed; }
+void changed_inputs(std::ostream& out, const are::DirectCounts&) { out << "null"; }
+template<class Engine> void run(const std::vector<std::vector<float>>& frames, Engine& engine) {
     std::cout << "{\"protocol\":\"are.native-frames.v1\",\"graph_sha256\":\""
               << generated_graph.sha256 << "\",\"frames\":[";
     bool first=true;
@@ -71,8 +72,9 @@ void run(const std::vector<std::vector<float>>& frames, bool incremental) {
         first=false;
         try {
             auto counts=engine.evaluate(frame);
-            std::cout << "{\"status\":\"PASS\",\"changed_inputs\":" << counts.changed
-                      << ",\"executed_nodes\":" << counts.executed << ",\"bits\":";
+            std::cout << "{\"status\":\"PASS\",\"changed_inputs\":";
+            changed_inputs(std::cout,counts);
+            std::cout << ",\"executed_nodes\":" << counts.executed << ",\"bits\":";
             output_bits(std::cout,engine); std::cout << '}';
         } catch (const std::runtime_error& e) {
             std::cout << "{\"status\":\"ERROR\",\"reason\":\"" << e.what() << "\"}";
@@ -109,29 +111,32 @@ struct Raw {
 void benchmark(const std::vector<std::vector<float>>& frames, int repeats, int loops) {
     if(frames.size()!=2) throw std::runtime_error("BENCHMARK_TWO_FRAMES");
     are::Engine fused(generated_graph,false), incremental(generated_graph,true);
+    are::DirectEngine direct(generated_graph);
     Raw raw(frames);
     // Actual byte comparison outside timed batches, including local edits.
     for(std::size_t f: {0u,1u,0u}) {
-        fused.evaluate(frames[f]); incremental.evaluate(frames[f]); raw.evaluate(f);
+        fused.evaluate(frames[f]); incremental.evaluate(frames[f]); direct.evaluate(frames[f]); raw.evaluate(f);
         for(std::size_t j=0;j<generated_graph.outputs.size();++j) {
             auto& a=fused.output(j); auto& b=incremental.output(j);
             if(std::memcmp(a.data(),b.data(),a.size()*4) ||
+               std::memcmp(a.data(),direct.output(j).data(),a.size()*4) ||
                std::memcmp(a.data(),raw.outputs[j].data(),a.size()*4))
                 throw std::runtime_error("NATIVE_PARITY");
         }
     }
-    std::array<std::vector<double>,3> samples;
+    std::array<std::vector<double>,4> samples;
     std::array<are::Counts,2> last{};
     // One untimed warm-up batch and rotated per-repeat order.
     for(int repeat=-1;repeat<repeats;++repeat) {
-        for(int slot=0;slot<3;++slot) {
-            int mode=(slot+repeat+3)%3;
+        for(int slot=0;slot<4;++slot) {
+            int mode=(slot+repeat+4)%4;
             const auto start=Clock::now();
             for(int i=0;i<loops*2;++i) {
                 const std::size_t f=(i+1)%2;
                 if(mode==0)raw.evaluate(f);
                 else if(mode==1) {last[0]=fused.evaluate(frames[f]);consume(fused);}
-                else {last[1]=incremental.evaluate(frames[f]);consume(incremental);}
+                else if(mode==2) {last[1]=incremental.evaluate(frames[f]);consume(incremental);}
+                else {direct.evaluate(frames[f]);consume(direct);}
             }
             double ns=std::chrono::duration<double,std::nano>(Clock::now()-start).count()/(loops*2);
             if(repeat>=0)samples[mode].push_back(ns);
@@ -140,8 +145,8 @@ void benchmark(const std::vector<std::vector<float>>& frames, int repeats, int l
     std::cout<<std::setprecision(17)<<"{\"protocol\":\"are.native-benchmark.v1\",\"graph_sha256\":\""
              <<generated_graph.sha256<<"\",\"repeats\":"<<repeats<<",\"frames_per_sample\":"<<loops*2
              <<",\"warmup_batches\":1,\"workers\":1,\"native_parity\":true,\"samples_ns\":{";
-    const char* names[]={"fused-kernel","fused-checked","incremental-checked"};
-    for(int mode=0;mode<3;++mode) {
+    const char* names[]={"fused-kernel","fused-checked","incremental-checked","direct-checked"};
+    for(int mode=0;mode<4;++mode) {
         if(mode)std::cout<<',';
         std::cout<<'"'<<names[mode]<<"\":[";
         for(int r=0;r<repeats;++r){if(r)std::cout<<',';std::cout<<samples[mode][r];}
@@ -166,13 +171,18 @@ int main(int argc,char** argv) {
             std::cout<<"{\"language\":\"C++17\",\"python_in_runtime\":false,\"graph_sha256\":\""
                      <<generated_graph.sha256<<"\",\"contract\":\"ordered-f32-v1\"}\n";return 0;
         }
-        if(argc!=3&&argc!=4)throw std::runtime_error("USAGE: run fused|incremental OR bench repeats loops");
+        if(argc!=3&&argc!=4)throw std::runtime_error("USAGE: run fused|incremental|direct OR bench repeats loops");
         const std::string command=argv[1];
         if(command=="run"&&argc==3) {
             const std::string mode=argv[2];
-            if(mode!="fused"&&mode!="incremental")throw std::runtime_error("CLI_MODE");
-            are::Engine schema(generated_graph,mode=="incremental");
-            run(read_frames(schema.input_cells()),mode=="incremental");
+            if(mode=="direct") {
+                are::DirectEngine engine(generated_graph);
+                run(read_frames(engine.input_cells()),engine);
+            } else {
+                if(mode!="fused"&&mode!="incremental")throw std::runtime_error("CLI_MODE");
+                are::Engine engine(generated_graph,mode=="incremental");
+                run(read_frames(engine.input_cells()),engine);
+            }
         } else if(command=="bench"&&argc==4) {
             int repeats=bounded_integer(argv[2],15,30), loops=bounded_integer(argv[3],1,10000);
             are::Engine schema(generated_graph,false);

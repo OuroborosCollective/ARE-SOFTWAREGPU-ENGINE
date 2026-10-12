@@ -13,6 +13,9 @@ class VertexColorShader(Shader):
     def vertex_shader(self, vertex):
         return vertex.position, {"color": vertex.color}
 
+    # Bind admission to this exact pure function, even if a method is replaced.
+    vertex_preparation_equivalent_to = vertex_shader
+
     def fragment_shader(self, varyings):
         rgb = np.clip(np.asarray(varyings["color"]) * 255, 0, 255).astype(np.uint8)
         return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
@@ -28,3 +31,7 @@ class VertexColorShader(Shader):
         rgba[:, :3] = rgb
         rgba[:, 3] = 255
         return rgba
+
+
+# Captured implementation identity for the opt-in native specialization.
+_NATIVE_VERTEX_COLOR_METHODS = (VertexColorShader.vertex_shader, VertexColorShader.fragment_shader)

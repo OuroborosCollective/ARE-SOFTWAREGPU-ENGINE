@@ -184,6 +184,8 @@ class BlinnPhongShader(Shader):
         }
         return clip_pos, varyings
 
+    vertex_preparation_equivalent_to = vertex_shader
+
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
         n_len = np.linalg.norm(normal)

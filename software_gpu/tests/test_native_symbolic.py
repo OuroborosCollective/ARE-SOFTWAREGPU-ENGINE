@@ -46,7 +46,7 @@ class TestNativeSymbolic(unittest.TestCase):
 
     def test_real_fused_and_incremental_edge_fuzz_and_standalone_binary(self):
         frames=[inputs(self.ir,seed) for seed in range(24)]
-        for mode in ('fused','incremental'):
+        for mode in ('fused','incremental','direct'):
             self.assert_oracle(self.execute(self.ir,frames,mode=mode),frames,oracle)
         self.assertEqual(self.build['binary_sha256'],hashlib.sha256(self.exe.read_bytes()).hexdigest())
         # Execute a copied native binary with no Python/module/source paths.
@@ -77,7 +77,7 @@ class TestNativeSymbolic(unittest.TestCase):
             data['px'].flat[:4]=np.array([0.,-0.,1e-45,-1e-45],np.float32)
             data['ax'].fill(0);data['ay'].fill(0);data['py'].fill(0);data['bx'].fill(1);data['by'].fill(1)
             frames.append(data)
-        for mode in ('fused','incremental'):
+        for mode in ('fused','incremental','direct'):
             self.assert_oracle(self.execute(self.ir,frames,mode=mode),frames,oracle)
         # (1e20 + -1e20) + 3 differs from 1e20 + (-1e20 + 3).
         ir=room_graph(2)
@@ -87,7 +87,7 @@ class TestNativeSymbolic(unittest.TestCase):
             if n['id'].startswith('sum'):n['deps']=['r0','x1']
         exe,_=build_native(ir,Path(self.temp.name)/'rounding')
         data={'x0':np.array([1e20],np.float32),'y0':np.array([-1e20],np.float32),'x1':np.array([3],np.float32)}
-        for mode in ('fused','incremental'):
+        for mode in ('fused','incremental','direct'):
             actual=self.execute(ir,[data],exe,mode)
             self.assertEqual(actual[0]['bits'],[[1077936128]])
 
@@ -96,11 +96,11 @@ class TestNativeSymbolic(unittest.TestCase):
         overflow={k:v.copy() for k,v in good.items()}
         overflow['bx'].fill(1e30);overflow['py'].fill(1e30)
         frames=[good,overflow,good]
-        for mode in ('fused','incremental'):
+        for mode in ('fused','incremental','direct'):
             actual=self.execute(self.ir,frames,mode=mode)
             self.assertEqual(actual[1],{'status':'ERROR','reason':'NONFINITE_RESULT'})
             self.assertEqual(actual[0]['bits'],actual[2]['bits'])
-            self.assertEqual(actual[2]['changed_inputs'],0)
+            self.assertEqual(actual[2]['changed_inputs'],None if mode=='direct' else 0)
             if mode=='incremental':self.assertEqual(actual[2]['executed_nodes'],0)
         payload=bytearray(encode_frames(self.ir,[good,good,good]))
         cells=sum(v.size for v in good.values())
@@ -129,7 +129,7 @@ class TestNativeSymbolic(unittest.TestCase):
         ir['nodes'].append(extra);ir['outputs']+=['ax','extra']
         exe,_=build_native(ir,Path(self.temp.name)/'multiple')
         data=inputs(ir)
-        for mode in ('fused','incremental'):
+        for mode in ('fused','incremental','direct'):
             results=self.execute(ir,[data,data],exe,mode)
             self.assert_oracle(results,[data,data],oracle,3)
             self.assertEqual(results[0]['bits'][1],data['ax'].view(np.uint32).ravel().tolist())
@@ -140,16 +140,62 @@ class TestNativeSymbolic(unittest.TestCase):
 
     def test_benchmark_is_native_batched_and_reports_all_samples(self):
         a=inputs(self.ir,991);b={k:v.copy() for k,v in a.items()};b['px'].flat[0]+=np.float32(.25)
-        # Four tiny frames can fall below steady_clock's effective resolution
-        # on Windows. Measure a real batch; never fabricate positive durations.
-        result=subprocess.run([str(self.exe),'bench','15','1000'],input=encode_frames(self.ir,[a,b]),
+        # Two tiny frame pairs can fall within one Windows clock tick. Keep
+        # the positive-time assertion and batch enough real evaluations.
+        loops = 1024
+        result=subprocess.run([str(self.exe),'bench','15',str(loops)],input=encode_frames(self.ir,[a,b]),
                               capture_output=True,check=True,timeout=20)
         data=json.loads(result.stdout)
         self.assertEqual(data['last_incremental_executed_nodes'],3)
-        self.assertEqual(data['frames_per_sample'],2000)
-        self.assertEqual(set(data['samples_ns']),{'fused-kernel','fused-checked','incremental-checked'})
-        self.assertTrue(all(len(v)==15 and min(v)>0 for v in data['samples_ns'].values()), data['samples_ns'])
+        self.assertEqual(data['frames_per_sample'],loops*2)
+        self.assertEqual(set(data['samples_ns']),{'fused-kernel','fused-checked','incremental-checked','direct-checked'})
+        self.assertTrue(all(len(v)==15 and min(v)>0 for v in data['samples_ns'].values()))
         self.assertEqual(data['result_bits'],[oracle(a).view(np.uint32).ravel().tolist()])
+
+    def test_direct_checks_unused_inputs_and_preserves_input_error_priority(self):
+        ir=fixture()
+        extra=copy.deepcopy(ir['nodes'][0]);extra.update(id='unused',shape=[3])
+        ir['nodes'].append(extra)
+        exe,_=build_native(ir,Path(self.temp.name)/'unused-input')
+        good=inputs(ir,991)
+        plan=plan_ir(ir)
+        offsets={};offset=0
+        for name in plan.inputs:
+            offsets[name]=offset;offset+=good[name].size
+        # Raw wire injection bypasses offline finite validation deliberately.
+        # Cover NaN/Inf in every input, including the unconsumed, other-shape one.
+        for name in plan.inputs:
+            for bits in (0x7fc00000,0x7f800000,0xff800000):
+                payload=bytearray(encode_frames(ir,[good,good,good]))
+                struct.pack_into('<I',payload,48+4*(offset+offsets[name]),bits)
+                result=subprocess.run([str(exe),'run','direct'],input=payload,capture_output=True,check=True)
+                rows=json.loads(result.stdout)['frames']
+                self.assertEqual(rows[1],{'status':'ERROR','reason':'NONFINITE_INPUT'})
+                self.assertEqual(rows[0]['bits'],rows[2]['bits'])
+                self.assertIsNone(rows[2]['changed_inputs'])
+        # Even when arithmetic overflows, an invalid input wins classification.
+        overflow={k:v.copy() for k,v in good.items()}
+        overflow['bx'].fill(1e30);overflow['py'].fill(1e30)
+        payload=bytearray(encode_frames(ir,[overflow]))
+        struct.pack_into('<I',payload,48+4*offsets['unused'],0x7fc00000)
+        result=subprocess.run([str(exe),'run','direct'],input=payload,capture_output=True,check=True)
+        self.assertEqual(json.loads(result.stdout)['frames'][0]['reason'],'NONFINITE_INPUT')
+        only={**ir,'nodes':[extra],'outputs':['unused']}
+        exe,_=build_native(only,Path(self.temp.name)/'direct-input-only')
+        payload=bytearray(encode_frames(only,[{'unused':good['unused']}]))
+        struct.pack_into('<I',payload,48,0x7fc00000)
+        result=subprocess.run([str(exe),'run','direct'],input=payload,capture_output=True,check=True)
+        self.assertEqual(json.loads(result.stdout)['frames'][0]['reason'],'NONFINITE_INPUT')
+
+    def test_direct_recomputes_all_nodes_with_unknown_change_count(self):
+        for ir,exe,reference in ((self.ir,self.exe,oracle),(self.rooms,self.room_exe,room_oracle)):
+            a=inputs(ir,991);b={k:v+np.float32(.25) for k,v in a.items()}
+            frames=[a,a,b,a]
+            actual=self.execute(ir,frames,exe,'direct')
+            self.assert_oracle(actual,frames,reference)
+            for row in actual:
+                self.assertIsNone(row['changed_inputs'])
+                self.assertEqual(row['executed_nodes'],sum(n['op']!='input' for n in ir['nodes']))
 
     def test_offline_build_and_input_validation(self):
         with self.assertRaises(ValueError):emit_cpp({})
