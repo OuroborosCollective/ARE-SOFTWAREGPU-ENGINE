@@ -5,6 +5,7 @@ Implements standard GPU pipeline shading stages.
 
 from dataclasses import dataclass
 from typing import Tuple, Optional
+import math
 import numpy as np
 
 
@@ -173,7 +174,8 @@ class BlinnPhongShader(Shader):
 
         # World normal
         world_normal = self.normal_matrix @ vertex.normal
-        norm_len = np.linalg.norm(world_normal)
+        # Performance optimization: Replace np.linalg.norm with scalar math for small vectors
+        norm_len = math.sqrt(world_normal[0]*world_normal[0] + world_normal[1]*world_normal[1] + world_normal[2]*world_normal[2])
         if norm_len > 1e-6:
             world_normal /= norm_len
 
@@ -186,7 +188,8 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = np.linalg.norm(normal)
+        # Performance optimization: Replace np.linalg.norm with scalar math for small vectors
+        n_len = math.sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
         if n_len > 1e-6:
             normal = normal / n_len
 
@@ -217,7 +220,8 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            # Performance optimization: Replace np.linalg.norm with scalar math for small vectors
+            half_len = math.sqrt(half_dir[0]*half_dir[0] + half_dir[1]*half_dir[1] + half_dir[2]*half_dir[2])
             valid = bool(half_len > 1e-6)
             if valid:
                 half_dir /= half_len
@@ -229,5 +233,9 @@ class BlinnPhongShader(Shader):
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        # Performance optimization: Replace np.clip with scalar min/max operations
+        c = ambient + diffuse + specular
+        r = int(max(0.0, min(1.0, float(c[0]))) * 255.0)
+        g = int(max(0.0, min(1.0, float(c[1]))) * 255.0)
+        b = int(max(0.0, min(1.0, float(c[2]))) * 255.0)
+        return r, g, b, 255
