@@ -17,6 +17,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from software_gpu.research.model_probe import build_model_probe, load_asset, write_scene, run_model, SOURCES
+from software_gpu.research.bio_workrooms import POLICIES
 from tools.model_reference import pose
 from tools.benchmark_bio_workrooms import stats, environment
 
@@ -59,6 +60,8 @@ def main():
                    help='perspective selects AREMDL02 with explicit camera and native homogeneous clipping')
     p.add_argument('--render-profile', choices=('diagnostic','pbr'), default='diagnostic',
                    help='pbr selects AREMDL03 perspective-correct UVs, glTF textures and Cook-Torrance shading')
+    p.add_argument('--bio-policy', choices=POLICIES, default='combined',
+                   help='native Bio scheduler policy; locality avoids frontier/checkpoint overhead for large PBR scenes')
     p.add_argument('--repeats', type=int, default=15)
     p.add_argument('--seconds', type=int, default=1800)
     p.add_argument('--cases', help='comma-separated case names: animated4, static2, arena6, all9, or individual aliases')
@@ -76,7 +79,7 @@ def main():
     report = dict(protocol='are.original-model-benchmark.v1', phase=a.phase, environment=environment(), build=build,
         source_sha256_before=before, source_sha256_after=None, originals_modified=False,
         config=dict(pixels=256, tile=32, workers=4, repeats=a.repeats, warmups=3, paired_order='alternating',
-                    policy='combined', projection=a.projection,render_profile=a.render_profile,
+                    policy=a.bio_policy, projection=a.projection,render_profile=a.render_profile,
                     camera=('AREMDL02 explicit view/projection; default eye=(0,0,4), target=(0,0,0), fov_y=43deg, near=0.1, far=80'
                             if a.projection=='perspective' else 'fixed orthographic fit over declared sample times')),
         scope=dict(shader=('opaque double-sided per-face diagnostic lighting; original textures/PBR ignored'
@@ -154,7 +157,8 @@ def main():
             gc.collect()
             print('RENDER_START',name,metadata['triangles'],flush=True)
             try:
-                result = run_model(exe, request, workers=4, repeats=a.repeats, timeout=remaining(),render_profile=a.render_profile)
+                result = run_model(exe, request, workers=4, repeats=a.repeats, policy=a.bio_policy,
+                                   timeout=remaining(),render_profile=a.render_profile)
                 receipt = result['receipt']
                 if (receipt['triangles'] != metadata['triangles'] or receipt['vertices'] != metadata['vertices']
                         or receipt['projection'] != metadata['projection']

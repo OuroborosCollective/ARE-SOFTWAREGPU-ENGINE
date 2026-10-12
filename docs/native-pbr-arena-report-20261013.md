@@ -51,6 +51,36 @@ python tools/benchmark_models.py \
 python -m unittest discover -s software_gpu/tests -p 'test_*.py' -v
 ```
 
+Für große PBR-Szenen kann die Bio-Lane explizit auf die räumliche
+`locality`-Policy gestellt werden. Sie behält dieselbe vorbereitete Geometrie,
+dieselben Worker und vollständige Pufferparität bei, vermeidet aber die in
+`animated4` teurere Frontier-/Checkpoint-Orchestrierung:
+
+```sh
+python tools/benchmark_models.py ... --bio-policy locality
+```
+
 ## Bewusste Grenzen / nächste Schritte
 
 Nicht enthalten sind Hardware-GPU-Ausführung, alpha blending/masking, mehrere GLB-Primitives, zusätzliche UV-Sets, beliebige glTF-Erweiterungen/Transforms, HDR-IBL, Schatten, Morph Targets, pixelgleiche Three.js-Reproduktion sowie eine 60-FPS-Leistungsfreigabe. Der nächste Schritt ist Profiler-getriebene Optimierung bei unveränderter Vollpufferparität; zusätzliche Materialfeatures benötigen jeweils einen expliziten, versionierten Vertrag und eigene Fixtures/Oracles.
+
+## Aktualisierung 2026-10-13: Bio-Lane locality optimization
+
+Ein kontrollierter 15-Paar-Lauf mit identischem Source-Stand und identischer
+`animated4`-Szene verglich `combined` und die vorhandene `locality`-Policy. Die
+`locality`-Lane nutzt weiterhin den Bio-Scheduler und räumliches Tile-Binning,
+vermeidet aber Frontier-, Checkpoint- und Resident-Worker-Overhead für diesen
+großen Workload. Die Ausgabe bleibt vollständig identisch.
+
+| Policy | Bio Median / p95 / Max (ms) | Median-Speedup zur Baseline | Full-buffer parity |
+|---|---:|---:|:---:|
+| `combined` (Kontrolle) | 60,631 / 67,230 / 75,941 | 1,627× | `true` |
+| `locality` (optimierte Lane) | 56,058 / 60,473 / 63,919 | 1,633× | `true` |
+
+Das entspricht im selben Hostlauf **7,5 % weniger medianer Bio-Wandzeit**.
+Zusätzliche Regressionen auf `static2` und `arena6` blieben ebenfalls bei
+`full_buffer_parity=true`; ihre locality-Mediane betrugen 11,884 ms bzw.
+58,103 ms. Die neue CLI-Option ist opt-in; der bisherige `combined`-Default
+bleibt unverändert. Receipts und Frame-Arrays liegen unter
+`evidence/native-pbr-20261013-locality/` und der Combined-Kontrolllauf unter
+`evidence/native-pbr-20261013-combined-control/`.

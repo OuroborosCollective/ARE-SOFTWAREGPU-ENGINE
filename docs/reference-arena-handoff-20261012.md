@@ -116,7 +116,23 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 |---|---:|---:|---:|---:|
 | `animated4` | 96,420 / 104,613 / 113,601 ms | 60,774 / 63,451 / 65,621 ms | 1,587× | 15/15 |
 | `static2` | 21,167 / 22,388 / 22,666 ms | 13,621 / 14,186 / 14,343 ms | 1,554× | 0/15 |
-| `arena6` | 105,482 / 114,309 / 117,084 ms | 61,723 / 75,595 / 89,437 ms | 1,709× | 15/15 |
+| `arena6` | 6 / 89.252 | 105,482 / 114,309 / 117,084 ms | 61,723 / 75,595 / 89,437 ms | 1,709× | 15/15 |
+
+## Aktualisierung 2026-10-13: schnellere Bio-Lane für große PBR-Szenen
+
+Der Benchmark unterstützt jetzt `--bio-policy`, ohne den bisherigen
+`combined`-Default zu verändern. Ein kontrollierter 15-Paar-Lauf auf demselben
+Source-Stand ergab für `animated4` mit der vorhandenen räumlichen `locality`-
+Policy 56,058 ms Bio-Median gegenüber 60,631 ms mit `combined`; das sind 7,5 %
+weniger mediane Bio-Wandzeit bei `full_buffer_parity=true`. `static2` und
+`arena6` wurden ebenfalls mit locality geprüft und blieben vollständig paritätisch.
+
+Die locality-Lane nutzt weiterhin das Bio-Tile-Binning, lässt für diesen großen
+Workload aber Frontier-, Checkpoint- und Resident-Worker-Overhead aus. Die
+Optimierung ist opt-in und wird nicht als allgemeine 60-FPS-Zusage interpretiert.
+Die Kontroll- und locality-Receipts liegen unter
+`evidence/native-pbr-20261013-combined-control/` bzw.
+`evidence/native-pbr-20261013-locality/`.
 
 ## Aktualisierung 2026-10-13: native Texturen und PBR
 
