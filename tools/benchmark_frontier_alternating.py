@@ -82,15 +82,28 @@ def verify_report(report):
         raise ValueError("ABBA_CASE_COUNT")
     seen = set()
     per_scene = {}
+    per_request = {}
+    expected_metadata = {
+        name: (pixels, tile, len(factory()))
+        for name, pixels, tile, factory in CASES
+    }
     for case in cases:
         name, w = case.get("scene"), case.get("workers")
         if (name, w) in seen or name not in {s[0] for s in CASES} or w not in workers:
             raise ValueError("ABBA_CASE_DUPLICATE")
         seen.add((name, w))
+        if (case.get("pixels"), case.get("tile"), case.get("triangles")) != expected_metadata[name]:
+            raise ValueError("ABBA_CASE_METADATA")
+        request = case.get("request_sha256")
+        if not isinstance(request, str) or len(request) != 64 or any(ch not in "0123456789abcdef" for ch in request):
+            raise ValueError("ABBA_REQUEST_HASH")
+        if name in per_request and per_request[name] != request:
+            raise ValueError("ABBA_REQUEST_DRIFT")
+        per_request[name] = request
         if len(case.get("pairs", [])) != repeats:
             raise ValueError("ABBA_PAIR_COUNT")
         frame = case.get("image_depth_sha256")
-        if not isinstance(frame, str) or len(frame) != 64:
+        if not isinstance(frame, str) or len(frame) != 64 or any(ch not in "0123456789abcdef" for ch in frame):
             raise ValueError("ABBA_FRAME_HASH")
         if name in per_scene and per_scene[name] != frame:
             raise ValueError("ABBA_WORKER_FRAME_MISMATCH")
@@ -113,8 +126,12 @@ def verify_report(report):
             static.append(samples["static-frontier-chunks"])
         median_diff = statistics.median(s - d for d, s in zip(default, static))
         median_ratio = statistics.median(s / d for d, s in zip(default, static))
-        if (not math.isclose(case["median_paired_delta_ms"], median_diff, abs_tol=1e-9)
-            or not math.isclose(case["median_paired_static_over_default"], median_ratio, abs_tol=1e-10)):
+        if (not math.isclose(case["median_paired_delta_ms"], median_diff, rel_tol=0, abs_tol=1e-9)
+            or not math.isclose(case["median_paired_static_over_default"], median_ratio, rel_tol=0, abs_tol=1e-10)
+            or not math.isclose(case["median_default_ms"], statistics.median(default), rel_tol=0, abs_tol=1e-9)
+            or not math.isclose(case["median_static_ms"], statistics.median(static), rel_tol=0, abs_tol=1e-9)
+            or type(case.get("faster_static_pairs")) is not int
+            or case["faster_static_pairs"] != sum(s < d for d, s in zip(default, static))):
             raise ValueError("ABBA_SUMMARY_MISMATCH")
     return True
 
