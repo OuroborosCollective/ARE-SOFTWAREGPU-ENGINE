@@ -1,0 +1,73 @@
+name: Android Gradio APK prerelease
+on:
+  workflow_run:
+    workflows: ["CPU regressions"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gradio-android-apk-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exactly tested main revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - name: Install JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK Platform 35
+        run: |
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build real debug APK
+        run: gradle -p android :app:assembleDebug --no-daemon
+      - name: Verify APK archive and native Android package metadata
+        run: |
+          set -euo pipefail
+          apk=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$apk"
+          unzip -t "$apk" >/dev/null
+          "${ANDROID_HOME}/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='de.arelorian.softwaregpu'"
+          sha256sum "$apk" | tee android-apk.sha256
+          cp "$apk" ARE-SoftwareGPU-Gradio-Android-preview.apk
+          sha256sum ARE-SoftwareGPU-Gradio-Android-preview.apk > ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
+      - name: Publish immutable SHA-tagged preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          tag="gradio-android-${SHA}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release exists for exact commit: $tag"
+            exit 0
+          fi
+          gh release create "$tag" \
+            ARE-SoftwareGPU-Gradio-Android-preview.apk \
+            ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256 \
+            --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "Gradio Android preview ${SHA:0:12}" \
+            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion. Ephemeral debug signing: preview only; not update-stable. No embedded native GPU/renderer, no demo endpoint configured." \
+            --prerelease
