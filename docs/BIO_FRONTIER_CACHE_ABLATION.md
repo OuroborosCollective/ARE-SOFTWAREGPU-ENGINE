@@ -129,3 +129,22 @@ Performance admission requires comparing candidate medians *on the same GitHub
 runner* per scene and workers with the default (not ratios against the
 frozen historic renderer), inspecting negative cases, raw 15-sample timings
 and output identity; otherwise no production activation.
+
+## Static frontier 32-tile cyclic partition (research only)
+
+New opt-in build switch `ARE_BIO_STATIC_FRONTIER_CHUNKS=1` maps disjoint
+32-tile chunks to workers by round-robin worker index instead of fetching
+from a shared atomic cursor. The AA predecessor completion counters, release
+sequences, checkpoint ledger, per-tile rendering, shader and Float32 contracts
+are unchanged. This switch is **not active in production**.
+
+The additional native test uses 1/2/4/8 workers, >32 real chunks, independently
+computed exact per-worker raster job ownership and independent Python oracle
+resolved/RGBA/depth buffers. GitHub-hosted research workflow builds every
+variant, then runs true 15-pair native measurements for default and static
+variant on identical scenes. Variant builds run sequentially; their timings
+are **not pairwise alternated across the two builds**. Consequently a successful
+run establishes parity but not controlled performance superiority. The first
+objective is to validate the ownership and shared-dependency model. Full
+scheduler promotion remains blocked pending alternating-variant A/B and a
+controlled CPU-affinity comparison with negative cases retained.
