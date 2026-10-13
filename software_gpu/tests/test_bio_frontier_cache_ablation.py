@@ -1,4 +1,5 @@
 """Compile and execute real C++17 bio-frontier ablations, exact framebuffer parity."""
+import os
 import tempfile
 import unittest
 
@@ -8,6 +9,8 @@ from software_gpu.tests.test_bio_workrooms import sparse_scene
 from software_gpu.tests.test_workrooms import renderer_oracle, scene_fixture
 
 
+@unittest.skipUnless(os.environ.get('ARE_BIO_CACHE_ABLATION_TEST') == '1',
+                     'Dedicated native cache-ablation CI job')
 class TestBioFrontierAblations(unittest.TestCase):
     def test_unknown_variant_rejected_before_file_access(self):
         with self.assertRaisesRegex(ValueError, "ROOM_ABLATION_UNKNOWN"):
