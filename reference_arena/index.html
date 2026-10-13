@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ARE SoftwareGPU · Referenzarena</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+  </script>
+  <script type="module" src="./arena.js"></script>
+</head>
+<body>
+  <main id="view" aria-label="Dreidimensionale Referenzarena"></main>
+  <header class="topbar">
+    <div><p class="eyebrow">ARE SOFTWAREGPU · VISUAL REFERENCE</p><h1>Referenzarena</h1></div>
+    <div class="top-actions"><span id="load-state" class="status">Lade GLB-Modelle …</span><button id="play-toggle" type="button" disabled>Animation pausieren</button></div>
+  </header>
+  <aside class="panel roster">
+    <h2>Animierte Figuren</h2>
+    <div id="characters" class="character-list"></div>
+    <p class="hint">Original-GLB-Clips · freie Perspektivkamera · originale Materialien/Texturen</p>
+  </aside>
+  <aside class="panel metrics">
+    <p class="metric-label">Browser-Ansicht</p><strong id="fps">— FPS</strong>
+    <span id="triangles">Lade Geometrie …</span>
+    <span class="notice">Keine native Renderer-Messung</span>
+  </aside>
+  <footer class="footer"><span>Three.js r180 · Originalmodelle unverändert</span><span>Maus: drehen · Rad: zoomen · Rechtsklick: verschieben</span></footer>
+  <section id="asset-help" class="asset-help" hidden>
+    <strong>Modelle noch nicht installiert</strong>
+    <span>Im Projektroot ausführen:</span>
+    <code>python tools/install_reference_arena_assets.py /pfad/SoftwareGPU_Referenzarena_GLB_Modelle.zip</code>
+    <button id="dismiss-help" type="button">Schließen</button>
+  </section>
+</body>
+</html>

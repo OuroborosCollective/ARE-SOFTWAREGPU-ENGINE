@@ -130,6 +130,7 @@ class BioPipeline {
     std::vector<Bounds> bounds_;
     std::vector<std::size_t> offsets_,cursor_;
     std::vector<std::uint32_t> ids_;
+    double binning_ms_=0;
     using Counts=std::array<std::uint64_t,4>;
     std::array<Counts,8> jobs_{};
     std::array<std::uint64_t,8> samples_{};
@@ -189,19 +190,22 @@ class BioPipeline {
         return samples;
     }
     void visit(unsigned kind,std::size_t i,unsigned worker) {
-        const auto n=base_.triangles_.size();const auto room=kind==0?i:n+(kind-1)*base_.tiles_+i;
+        const auto n=base_.triangle_count();const auto room=kind==0?i:n+(kind-1)*base_.tiles_+i;
         if(ledger_) {
             if(kind==2)ledger_->require_done(n+i,epoch_);
             if(kind==3)neighbors(i,[&](auto tile){ledger_->require_done(n+base_.tiles_+tile,epoch_);});
             ledger_->claim(room,epoch_);
         }
         base_.states_[room]=State::ready;base_.states_[room]=State::running;
+        const auto operation_begin=std::chrono::steady_clock::now();
         switch(static_cast<Kind>(kind)) {
             case Kind::render:base_.render(i);break;
             case Kind::raster:samples_[worker]+=policy_.locality?raster_local(i):base_.raster(i);break;
             case Kind::msaa:base_.msaa(i);break;
             case Kind::aa:base_.aa(i);break;
         }
+        base_.operation_work_ms_[kind][worker]+=std::chrono::duration<double,std::milli>(
+            std::chrono::steady_clock::now()-operation_begin).count();
         base_.states_[room]=State::done;if(ledger_)ledger_->finish(room,epoch_);
         ++jobs_[worker][kind];
     }
@@ -209,7 +213,7 @@ class BioPipeline {
         auto& wave=base_.waves_[kind];wave.executed=0;wave.samples=0;wave.milliseconds=elapsed;
         for(unsigned w=0;w<base_.workers_;++w){wave.worker_jobs[w]=jobs_[w][kind];
             wave.executed+=jobs_[w][kind];if(kind==1)wave.samples+=samples_[w];}
-        if(wave.executed!=(kind==0?base_.triangles_.size():base_.tiles_))
+        if(wave.executed!=(kind==0?base_.triangle_count():base_.tiles_))
             throw std::runtime_error("ROOM_INCOMPLETE_WAVE");
     }
     void stage(unsigned kind,std::size_t count) {
@@ -254,15 +258,44 @@ public:
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
-    void update_scene(const std::vector<Triangle>& scene){base_.update_scene(scene);}
+    BioPipeline(Config c,const std::vector<SurfaceTriangle>& scene,unsigned workers,BioPolicy policy,
+                const std::vector<SurfaceMaterial>& materials,const std::vector<SurfaceTexture>& textures,
+                SurfaceLighting lighting,Admission admission=Admission::model_probe):
+        base_(c,scene,workers,materials,textures,lighting,admission),policy_(policy) {
+        const auto admitted=bio_policy(policy.name);
+        if(admitted.locality!=policy.locality||admitted.reuse!=policy.reuse||admitted.frontier!=policy.frontier||
+           admitted.checkpoints!=policy.checkpoints)throw std::runtime_error("ROOM_POLICY_SCHEMA");
+        if(policy.reuse)resident_=std::make_unique<ResidentWorkers>(workers);
+        if(policy.checkpoints)ledger_=std::make_unique<CheckpointLedger>(base_.room_count());
+        if(policy.frontier)pending_.reset(new std::atomic<unsigned char>[base_.tiles_]);
+        if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
+        for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
+    }
+    void update_scene(const std::vector<Triangle>& scene){
+        const bool topology_changed=scene.size()!=base_.triangle_count();
+        base_.update_scene(scene);
+        if(topology_changed){
+            if(policy_.locality)bounds_.resize(scene.size());
+            if(ledger_){ledger_=std::make_unique<CheckpointLedger>(base_.room_count());epoch_=0;}
+        }
+    }
+    void update_scene(const std::vector<SurfaceTriangle>& scene){
+        const bool topology_changed=scene.size()!=base_.triangle_count();
+        base_.update_scene(scene);
+        if(topology_changed){if(policy_.locality)bounds_.resize(scene.size());
+            if(ledger_){ledger_=std::make_unique<CheckpointLedger>(base_.room_count());epoch_=0;}}
+    }
     void execute() {
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
         base_.delivered_=false;require_environment();
         std::fill(base_.states_.begin(),base_.states_.end(),State::waiting);jobs_={};samples_={};
+        base_.operation_work_ms_={};
+        binning_ms_=0;
         if(ledger_)epoch_=ledger_->begin();
-        stage(0,base_.triangles_.size());
-        if(ledger_)for(std::size_t i=0;i<base_.triangles_.size();++i)ledger_->require_done(i,epoch_);
-        if(policy_.locality)make_bins(); // recomputed each frame, included in timing
+        stage(0,base_.triangle_count());
+        if(ledger_)for(std::size_t i=0;i<base_.triangle_count();++i)ledger_->require_done(i,epoch_);
+        if(policy_.locality){const auto begin=std::chrono::steady_clock::now();make_bins();
+            binning_ms_=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count();} // recomputed each frame, included in timing
         if(policy_.frontier)frontier();else for(unsigned k=1;k<4;++k)stage(k,base_.tiles_);
         for(auto state:base_.states_)if(state!=State::done)throw std::runtime_error("ROOM_HANDOFF_INCOMPLETE");
         if(ledger_)ledger_->seal(epoch_);
@@ -272,8 +305,10 @@ public:
     const auto& resolved()const{return base_.resolved();}
     const auto& depth()const{return base_.depth();}
     const auto& waves()const{return base_.waves();}
+    std::array<double,4> stage_work_ms()const{return base_.stage_work_ms();}
     auto room_count()const{return base_.room_count();}
     auto tiles()const{return base_.tiles();}
+    double binning_ms()const{return binning_ms_;}
     auto address(std::size_t room)const{return base_.address(room);}
     std::size_t spatial_references()const{return ids_.size();}
 };

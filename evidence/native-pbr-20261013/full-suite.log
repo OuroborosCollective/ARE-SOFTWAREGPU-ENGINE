@@ -1,0 +1,663 @@
+test_fake_additional_lod_is_not_permitted (test_aurion_npc_fallback.TestNpcFallback.test_fake_additional_lod_is_not_permitted) ... ok
+test_manifest_fail_closed_for_path_traversal (test_aurion_npc_fallback.TestNpcFallback.test_manifest_fail_closed_for_path_traversal) ... ok
+test_receipt_digest_stable (test_aurion_npc_fallback.TestNpcFallback.test_receipt_digest_stable) ... ok
+test_ten_pinned_originals_and_rig_clips (test_aurion_npc_fallback.TestNpcFallback.test_ten_pinned_originals_and_rig_clips) ... ok
+test_unavailable_original_must_not_count_as_pass (test_aurion_npc_fallback.TestNpcFallback.test_unavailable_original_must_not_count_as_pass) ... ok
+test_isolated_worker_real_process (test_aurion_offline_lod.TestAurionOffline.test_isolated_worker_real_process) ... ok
+test_limits (test_aurion_offline_lod.TestAurionOffline.test_limits) ... ok
+test_pinned_original_fixture_manifest (test_aurion_offline_lod.TestAurionOffline.test_pinned_original_fixture_manifest) ... ok
+test_real_glb_geometry_and_image_replay (test_aurion_offline_lod.TestAurionOffline.test_real_glb_geometry_and_image_replay) ... ok
+test_truncated_and_malformed_glb_fail (test_aurion_offline_lod.TestAurionOffline.test_truncated_and_malformed_glb_fail) ... ok
+test_wrong_hash_fails_closed (test_aurion_offline_lod.TestAurionOffline.test_wrong_hash_fails_closed) ... ok
+test_activation_decision_branches (test_aurion_offline_phase4.TestBenchmarkGate.test_activation_decision_branches) ... ok
+test_bands_vs_tiles_identical_and_timed (test_aurion_offline_phase4.TestBenchmarkGate.test_bands_vs_tiles_identical_and_timed) ... ok
+test_glb_hash_mismatch_fails_closed (test_aurion_offline_phase4.TestGlbFixtureMode.test_glb_hash_mismatch_fails_closed) ... ok
+test_glb_job_renders_pinned_source (test_aurion_offline_phase4.TestGlbFixtureMode.test_glb_job_renders_pinned_source) ... ok
+test_glb_path_escape_fails_closed (test_aurion_offline_phase4.TestGlbFixtureMode.test_glb_path_escape_fails_closed) ... ok
+test_cpu_budget_fails_closed (test_aurion_offline_phase4.TestIsolatedRun.test_cpu_budget_fails_closed) ... ok
+test_deadline_exceeded_fails_closed_with_receipt (test_aurion_offline_phase4.TestIsolatedRun.test_deadline_exceeded_fails_closed_with_receipt) ... ok
+test_memory_budget_fails_closed (test_aurion_offline_phase4.TestIsolatedRun.test_memory_budget_fails_closed) ... ok
+test_replay_hash_readback_and_resource_receipt (test_aurion_offline_phase4.TestIsolatedRun.test_replay_hash_readback_and_resource_receipt) ... ok
+test_second_identical_job_replays_same_hashes (test_aurion_offline_phase4.TestIsolatedRun.test_second_identical_job_replays_same_hashes) ... ok
+test_input_contract_negative_matrix (test_aurion_offline_phase4.TestJobContract.test_input_contract_negative_matrix) ... ok
+test_protocol_and_authority_fail_closed (test_aurion_offline_phase4.TestJobContract.test_protocol_and_authority_fail_closed) ... ok
+test_valid_job_passes (test_aurion_offline_phase4.TestJobContract.test_valid_job_passes) ... ok
+test_seeded_mesh_is_deterministic (test_aurion_offline_phase4.TestProceduralFixture.test_seeded_mesh_is_deterministic) ... ok
+test_extra_nonexistent_lod_rejected (test_aurion_original_batch2.TestAurionOriginalBatch2.test_extra_nonexistent_lod_rejected) ... ok
+test_original_pairs_are_complete_with_two_lods (test_aurion_original_batch2.TestAurionOriginalBatch2.test_original_pairs_are_complete_with_two_lods) ... ok
+test_street_lamp_four_lods_remain_supported (test_aurion_original_batch2.TestAurionOriginalBatch2.test_street_lamp_four_lods_remain_supported) ... ok
+test_complete_two_families_four_real_lods (test_aurion_production_male.TestMaleProductionFixtures.test_complete_two_families_four_real_lods) ... ok
+test_fail_closed_on_invented_fifth_lod (test_aurion_production_male.TestMaleProductionFixtures.test_fail_closed_on_invented_fifth_lod) ... ok
+test_no_mock_binary_substitute (test_aurion_production_male.TestMaleProductionFixtures.test_no_mock_binary_substitute) ... ok
+test_build_rejects_corrupted_reference_core_and_real_compiler_failure (test_bio_workrooms.TestBioWorkRooms.test_build_rejects_corrupted_reference_core_and_real_compiler_failure) ... ok
+test_checkpoint_rejections_and_sleeping_worker_generation_recovery (test_bio_workrooms.TestBioWorkRooms.test_checkpoint_rejections_and_sleeping_worker_generation_recovery) ... ok
+test_every_policy_matches_independent_oracle_and_repeated_frames (test_bio_workrooms.TestBioWorkRooms.test_every_policy_matches_independent_oracle_and_repeated_frames) ... ok
+test_halos_culling_geometry_and_first_submission_ties (test_bio_workrooms.TestBioWorkRooms.test_halos_culling_geometry_and_first_submission_ties) ... ok
+test_native_and_boundary_reject_invalid_policies_and_evidence (test_bio_workrooms.TestBioWorkRooms.test_native_and_boundary_reject_invalid_policies_and_evidence) ... ok
+test_blender_command_writes_valid_bmp_file (test_cli_contract.TestCLIContract.test_blender_command_writes_valid_bmp_file) ... ok
+test_help_exits_zero_and_lists_every_command (test_cli_contract.TestCLIContract.test_help_exits_zero_and_lists_every_command) ... ok
+test_info_prints_real_device_and_governor_telemetry (test_cli_contract.TestCLIContract.test_info_prints_real_device_and_governor_telemetry) ... ok
+test_server_fails_closed_without_auth_token_before_binding (test_cli_contract.TestCLIContract.test_server_fails_closed_without_auth_token_before_binding) ... ok
+test_server_rejects_non_loopback_host_before_token_check (test_cli_contract.TestCLIContract.test_server_rejects_non_loopback_host_before_token_check) ... ok
+test_unknown_flag_exits_with_argparse_code_two (test_cli_contract.TestCLIContract.test_unknown_flag_exits_with_argparse_code_two) ... ok
+test_compiled_cpu_matches_numpy_coverage (test_compiled_tiles.TestLLVMCompiledTiles.test_compiled_cpu_matches_numpy_coverage) ... skipped 'optional jit extra not installed'
+test_compiled_cpu_multiworker_repeatable (test_compiled_tiles.TestLLVMCompiledTiles.test_compiled_cpu_multiworker_repeatable) ... skipped 'optional jit extra not installed'
+test_coverage_floors_hold (test_coverage_gate.TestCoverageGate.test_coverage_floors_hold) ... ok
+test_coverage_gate_detects_missing_coverage (test_coverage_gate.TestCoverageGate.test_coverage_gate_detects_missing_coverage) ... ok
+test_directx11_pipeline_execution (test_directx_and_governor.TestDirectXAndGovernor.test_directx11_pipeline_execution)
+Test Direct3D 11 device creation, buffer binding, DrawIndexed, and DXGI Present. ... ok
+test_vps_governor_detection (test_directx_and_governor.TestDirectXAndGovernor.test_vps_governor_detection)
+Test VPS CPU core detection, cgroups inspection, and safe concurrency calculation. ... ok
+test_fail_closed_empty_or_invalid_format (test_external_cpu_benchmark.TestExternalCpuBenchmark.test_fail_closed_empty_or_invalid_format) ... ok
+test_fixture_identity_and_repeatability (test_external_cpu_benchmark.TestExternalCpuBenchmark.test_fixture_identity_and_repeatability) ... ok
+test_mismatched_coverage_not_comparable (test_external_cpu_benchmark.TestExternalCpuBenchmark.test_mismatched_coverage_not_comparable) ... ok
+test_noncomparable_msaa_never_gets_speed_ratio (test_external_cpu_benchmark.TestExternalCpuBenchmark.test_noncomparable_msaa_never_gets_speed_ratio) ... ok
+test_clear_sets_every_channel_and_depth (test_fail_closed_gaps.TestFramebufferContract.test_clear_sets_every_channel_and_depth) ... ok
+test_save_bmp_deterministic_bytes (test_fail_closed_gaps.TestFramebufferContract.test_save_bmp_deterministic_bytes) ... ok
+test_save_bmp_layout_padding_and_bottom_up_bgr (test_fail_closed_gaps.TestFramebufferContract.test_save_bmp_layout_padding_and_bottom_up_bgr) ... ok
+test_save_ppm_binary_layout_and_alpha_dropped (test_fail_closed_gaps.TestFramebufferContract.test_save_ppm_binary_layout_and_alpha_dropped) ... ok
+test_set_pixel_depth_test_tie_break_and_bounds (test_fail_closed_gaps.TestFramebufferContract.test_set_pixel_depth_test_tie_break_and_bounds) ... ok
+test_non_dict_varyings_raise_type_error (test_fail_closed_gaps.TestGeometryDefensivePaths.test_non_dict_varyings_raise_type_error) ... ok
+test_non_integer_face_records_fail_fast_with_index_error (test_fail_closed_gaps.TestGeometryDefensivePaths.test_non_integer_face_records_fail_fast_with_index_error) ... ok
+test_ragged_face_records_fail_fast_with_index_error (test_fail_closed_gaps.TestGeometryDefensivePaths.test_ragged_face_records_fail_fast_with_index_error) ... ok
+test_sliver_crossing_near_plane_discarded_deterministically (test_fail_closed_gaps.TestGeometryDefensivePaths.test_sliver_crossing_near_plane_discarded_deterministically) ... ok
+test_authorized_constant_time_comparison_contract (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_authorized_constant_time_comparison_contract) ... ok
+test_bounded_json_rejects_hostile_structures (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_bounded_json_rejects_hostile_structures) ... ok
+test_ensure_loopback_rejects_everything_but_ipv4_loopback (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_ensure_loopback_rejects_everything_but_ipv4_loopback) ... ok
+test_get_token_entropy_and_charset_policy (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_get_token_entropy_and_charset_policy) ... ok
+test_security_limits_reject_out_of_cap_values (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_security_limits_reject_out_of_cap_values) ... ok
+test_tensor_shape_dict_encoding_validation (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_tensor_shape_dict_encoding_validation) ... ok
+test_tensor_shape_list_encoding_validation (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_tensor_shape_list_encoding_validation) ... ok
+test_validate_request_activation_type_whitelist (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_validate_request_activation_type_whitelist) ... ok
+test_validate_request_compute_ops_limit_with_tight_limits (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_validate_request_compute_ops_limit_with_tight_limits) ... ok
+test_validate_request_method_and_shape_contracts (test_fail_closed_gaps.TestNetworkAdmissionUnitGaps.test_validate_request_method_and_shape_contracts) ... ok
+test_boids_swarm_max_speed_and_no_world_bounds_requirement (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_boids_swarm_max_speed_and_no_world_bounds_requirement) ... ok
+test_physics_step_entity_shapes_and_dt (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_physics_step_entity_shapes_and_dt) ... ok
+test_render_mesh_cost_limit_with_tight_limits (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_render_mesh_cost_limit_with_tight_limits) ... ok
+test_render_mesh_happy_path_and_dimension_limits (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_render_mesh_happy_path_and_dimension_limits) ... ok
+test_render_mesh_triangle_index_validation (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_render_mesh_triangle_index_validation) ... ok
+test_render_mesh_vertex_and_triangle_caps (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_render_mesh_vertex_and_triangle_caps) ... ok
+test_render_mesh_vertex_attribute_validation (test_fail_closed_gaps.TestRenderAndPhysicsAdmissionGaps.test_render_mesh_vertex_attribute_validation) ... ok
+test_base_shader_stages_raise_not_implemented (test_fail_closed_gaps.TestShaderMathContract.test_base_shader_stages_raise_not_implemented) ... ok
+test_look_at_identity_for_canonical_camera (test_fail_closed_gaps.TestShaderMathContract.test_look_at_identity_for_canonical_camera) ... ok
+test_matrix_transforms_act_on_points (test_fail_closed_gaps.TestShaderMathContract.test_matrix_transforms_act_on_points) ... ok
+test_perspective_maps_near_to_minus_one_and_far_to_plus_one (test_fail_closed_gaps.TestShaderMathContract.test_perspective_maps_near_to_minus_one_and_far_to_plus_one) ... ok
+test_vertex_defaults_are_float32_and_filled (test_fail_closed_gaps.TestShaderMathContract.test_vertex_defaults_are_float32_and_filled) ... ok
+test_empty_index_list_returns_without_touching_framebuffer (test_fail_closed_gaps.TestTileBackendEarlyExits.test_empty_index_list_returns_without_touching_framebuffer) ... ok
+test_fully_outside_frustum_hits_empty_bins_early_return (test_fail_closed_gaps.TestTileBackendEarlyExits.test_fully_outside_frustum_hits_empty_bins_early_return) ... ok
+test_android_unix_domain_socket_ipc (test_gaming_and_mobile.TestGamingAndMobile.test_android_unix_domain_socket_ipc)
+Test Android UDS / LocalSocket IPC server and client communication. ... ok
+test_fxaa_filter (test_gaming_and_mobile.TestGamingAndMobile.test_fxaa_filter)
+Test FXAA post-processing filter. ... ok
+test_hdr_bloom_and_aces (test_gaming_and_mobile.TestGamingAndMobile.test_hdr_bloom_and_aces)
+Test HDR Bloom and ACES tone mapping. ... ok
+test_msaa_resolve_smooths_edges (test_gaming_and_mobile.TestGamingAndMobile.test_msaa_resolve_smooths_edges)
+Test that 4x MSAA sub-pixel sampling resolves into smooth pixels. ... ok
+test_opengles_mobile_context (test_gaming_and_mobile.TestGamingAndMobile.test_opengles_mobile_context)
+Test OpenGL ES 3.0 / EGL mobile graphics interface. ... ok
+test_msaa_near_clip_and_finite (test_issue3_clipping.TestClippingContract.test_msaa_near_clip_and_finite) ... ok
+test_near_plane_triangle_is_clipped_not_discarded (test_issue3_clipping.TestClippingContract.test_near_plane_triangle_is_clipped_not_discarded) ... ok
+test_rejects_nonfinite_and_fully_outside (test_issue3_clipping.TestClippingContract.test_rejects_nonfinite_and_fully_outside) ... /home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/graphics/geometry.py:169: RuntimeWarning: divide by zero encountered in divide
+  inv_w = 1.0 / w
+/home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/graphics/geometry.py:170: RuntimeWarning: invalid value encountered in multiply
+  ndc = fpos[..., :3] * inv_w[..., None]
+/home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/graphics/geometry.py:177: RuntimeWarning: invalid value encountered in subtract
+  area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
+ok
+test_shared_edge_is_owned_once (test_issue3_clipping.TestClippingContract.test_shared_edge_is_owned_once) ... ok
+test_capped_velocity_matches_displacement (test_mmorpg_swarms.TestSwarmVelocity.test_capped_velocity_matches_displacement) ... ok
+test_empty_swarm (test_mmorpg_swarms.TestSwarmVelocity.test_empty_swarm) ... ok
+test_cook_torrance_ggx_and_normal_map_match_independent_oracle (test_model_material.TestNativeModelMaterial.test_cook_torrance_ggx_and_normal_map_match_independent_oracle) ... ok
+test_perspective_correct_uv_differs_from_affine_interpolation (test_model_material.TestNativeModelMaterial.test_perspective_correct_uv_differs_from_affine_interpolation) ... ok
+test_srgb_bilinear_repeat_wrap_and_linear_mip_generation (test_model_material.TestNativeModelMaterial.test_srgb_bilinear_repeat_wrap_and_linear_mip_generation) ... ok
+test_aremdl03_importer_rejects_external_and_transformed_textures (test_model_probe.TestModelProbe.test_aremdl03_importer_rejects_external_and_transformed_textures) ... ok
+test_aremdl03_imports_glb_maps_and_keeps_serial_baseline_bio_parity (test_model_probe.TestModelProbe.test_aremdl03_imports_glb_maps_and_keeps_serial_baseline_bio_parity) ... ok
+test_boundary_rejects_invalid_configuration (test_model_probe.TestModelProbe.test_boundary_rejects_invalid_configuration) ... ok
+test_corrupt_actual_native_response_rejected (test_model_probe.TestModelProbe.test_corrupt_actual_native_response_rejected) ... ok
+test_glb_failures_hash_bounds_scene_skin_and_animation (test_model_probe.TestModelProbe.test_glb_failures_hash_bounds_scene_skin_and_animation) ... ok
+test_inverse_transpose_normal_for_nonuniform_weighted_skin_matrix (test_model_probe.TestModelProbe.test_inverse_transpose_normal_for_nonuniform_weighted_skin_matrix) ... ok
+test_native_animation_frames_and_worker_parity (test_model_probe.TestModelProbe.test_native_animation_frames_and_worker_parity) ... ok
+test_native_rejects_invalid_graph_indices_weights_and_key_times (test_model_probe.TestModelProbe.test_native_rejects_invalid_graph_indices_weights_and_key_times) ... ok
+test_parent_and_inverse_bind_and_static_matrix (test_model_probe.TestModelProbe.test_parent_and_inverse_bind_and_static_matrix) ... ok
+test_perspective_profile_and_dynamic_clipping_keep_worker_parity (test_model_probe.TestModelProbe.test_perspective_profile_and_dynamic_clipping_keep_worker_parity) ... ok
+test_twelve_influences_clamping_step_slerp_and_mesh_cancellation (test_model_probe.TestModelProbe.test_twelve_influences_clamping_step_slerp_and_mesh_cancellation) ... ok
+test_uint32_primitive_ids_beyond_65535 (test_model_probe.TestModelProbe.test_uint32_primitive_ids_beyond_65535) ... ok
+test_all_six_frustum_planes_clip_and_fully_outside_triangle_culls (test_model_projection.TestNativeModelProjection.test_all_six_frustum_planes_clip_and_fully_outside_triangle_culls) ... ok
+test_camera_rejects_invalid_clip_range (test_model_projection.TestNativeModelProjection.test_camera_rejects_invalid_clip_range) ... ok
+test_perspective_projection_maps_near_and_far_to_opengl_clip_depth (test_model_projection.TestNativeModelProjection.test_perspective_projection_maps_near_and_far_to_opengl_clip_depth) ... ok
+test_all_eight_mixed_precision_color_patterns (test_native_raster.TestNativeRaster.test_all_eight_mixed_precision_color_patterns) ... ok
+test_buffer_validation_and_no_implicit_copy (test_native_raster.TestNativeRaster.test_buffer_validation_and_no_implicit_copy) ... ok
+test_explicit_backend_and_callback_rejection (test_native_raster.TestNativeRaster.test_explicit_backend_and_callback_rejection) ... ok
+test_hash_abi_and_build_errors (test_native_raster.TestNativeRaster.test_hash_abi_and_build_errors) ... ok
+test_late_invalid_record_and_work_budget_are_atomic (test_native_raster.TestNativeRaster.test_late_invalid_record_and_work_budget_are_atomic) ... ok
+test_real_scenes_and_rectangular_frames (test_native_raster.TestNativeRaster.test_real_scenes_and_rectangular_frames) ... ok
+test_seeded_clipping_perspective_slivers_and_nonfinite (test_native_raster.TestNativeRaster.test_seeded_clipping_perspective_slivers_and_nonfinite) ... ok
+test_standalone_cpp_contract_and_fastmath_rejection (test_native_raster.TestNativeRaster.test_standalone_cpp_contract_and_fastmath_rejection) ... ok
+test_top_left_shared_edges_and_submission_ties (test_native_raster.TestNativeRaster.test_top_left_shared_edges_and_submission_ties) ... ok
+test_benchmark_is_native_batched_and_reports_all_samples (test_native_symbolic.TestNativeSymbolic.test_benchmark_is_native_batched_and_reports_all_samples) ... ok
+test_direct_checks_unused_inputs_and_preserves_input_error_priority (test_native_symbolic.TestNativeSymbolic.test_direct_checks_unused_inputs_and_preserves_input_error_priority) ... ok
+test_direct_recomputes_all_nodes_with_unknown_change_count (test_native_symbolic.TestNativeSymbolic.test_direct_recomputes_all_nodes_with_unknown_change_count) ... ok
+test_failed_frame_does_not_poison_cache (test_native_symbolic.TestNativeSymbolic.test_failed_frame_does_not_poison_cache) ... ok
+test_multiple_shapes_and_input_outputs (test_native_symbolic.TestNativeSymbolic.test_multiple_shapes_and_input_outputs) ... ok
+test_native_invariants_without_python_callbacks (test_native_symbolic.TestNativeSymbolic.test_native_invariants_without_python_callbacks) ... ok
+test_native_local_edits_cache_and_room_reduction (test_native_symbolic.TestNativeSymbolic.test_native_local_edits_cache_and_room_reduction) ... ok
+test_offline_build_and_input_validation (test_native_symbolic.TestNativeSymbolic.test_offline_build_and_input_validation) ... ok
+test_real_fused_and_incremental_edge_fuzz_and_standalone_binary (test_native_symbolic.TestNativeSymbolic.test_real_fused_and_incremental_edge_fuzz_and_standalone_binary) ... ok
+test_signed_zero_subnormal_and_rounding_order (test_native_symbolic.TestNativeSymbolic.test_signed_zero_subnormal_and_rounding_order) ... ok
+test_wire_and_cli_reject_malformed_bounded_inputs (test_native_symbolic.TestNativeSymbolic.test_wire_and_cli_reject_malformed_bounded_inputs) ... ok
+test_http_device_info (test_network_and_integrations.TestNetworkAndIntegrations.test_http_device_info)
+Test querying device status via HTTP REST endpoint. ... ok
+test_http_gemm_offload (test_network_and_integrations.TestNetworkAndIntegrations.test_http_gemm_offload)
+Test matrix multiplication offloaded via HTTP REST. ... ok
+test_image_filter_pipeline (test_network_and_integrations.TestNetworkAndIntegrations.test_image_filter_pipeline)
+Test ImageFilterPipeline filters on synthetic image. ... ok
+test_mmorpg_physics_engine (test_network_and_integrations.TestNetworkAndIntegrations.test_mmorpg_physics_engine)
+Test MMORPG physics compute integration. ... ok
+test_tcp_activation_relu (test_network_and_integrations.TestNetworkAndIntegrations.test_tcp_activation_relu)
+Test ReLU activation offloaded via TCP Binary Socket. ... ok
+test_tcp_gemm_offload (test_network_and_integrations.TestNetworkAndIntegrations.test_tcp_gemm_offload)
+Test matrix multiplication offloaded via High-Speed TCP Binary Socket. ... ok
+test_deadline_kills_spawned_worker (test_network_security.TestSecurity.test_deadline_kills_spawned_worker) ... ok
+test_dimension_rejection_before_numpy_allocation (test_network_security.TestSecurity.test_dimension_rejection_before_numpy_allocation) ... ok
+test_job_capacity_guard (test_network_security.TestSecurity.test_job_capacity_guard) ... ok
+test_missing_wrong_token_and_no_cors (test_network_security.TestSecurity.test_missing_wrong_token_and_no_cors) ... ok
+test_nonloopback_and_missing_key_refused (test_network_security.TestSecurity.test_nonloopback_and_missing_key_refused) ... ok
+test_real_authenticated_health_and_gemm (test_network_security.TestSecurity.test_real_authenticated_health_and_gemm) ... ok
+test_reject_nonfinite_encoded_tensor (test_network_security.TestSecurity.test_reject_nonfinite_encoded_tensor) ... ok
+test_reject_oversize_json_and_integer (test_network_security.TestSecurity.test_reject_oversize_json_and_integer) ... ok
+test_tcp_large_unsigned_length_cannot_allocate (test_network_security.TestSecurity.test_tcp_large_unsigned_length_cannot_allocate) ... ok
+test_tcp_unauthorized_and_authenticated (test_network_security.TestSecurity.test_tcp_unauthorized_and_authenticated) ... ok
+test_equivalent_scalar_and_array_edge_decisions (test_performance_edge_covered.TestEdgeCoveredPerformance.test_equivalent_scalar_and_array_edge_decisions) ... ok
+test_paired_array_timing_guard (test_performance_edge_covered.TestEdgeCoveredPerformance.test_paired_array_timing_guard) ... EDGE_COVERED_PAIRED_CPU_EVIDENCE {"inner_loops": 40, "new_median_ms": 2.905912, "numpy": "2.5.3", "old_median_ms": 26.615318, "python": "3.12.3", "repeats": 15, "scope": "array edge predicate only", "seed": 1234, "shape": [1000, 1000], "speedup": 9.159}
+ok
+test_real_cpu_rasterizer_writes_bmp (test_portable_output.TestPortableOutput.test_real_cpu_rasterizer_writes_bmp) ... === Software GPU 3D Graphics Pipeline Demo ===
+Generating 3D Sphere geometry (stacks=20, slices=20)...
+Total vertices: 441, Triangles: 800
+Rasterizing 3D scene using multi-threaded CPU SoftwareRasterizer...
+Render completed! Image saved to: /tmp/tmp_l7jqy91/software_gpu_sphere.bmp
+ok
+test_refuses_directory_traversal (test_portable_output.TestPortableOutput.test_refuses_directory_traversal) ... ok
+test_respects_real_output_directory (test_portable_output.TestPortableOutput.test_respects_real_output_directory) ... ok
+test_actual_cross_language_delivery_and_javascript_only (test_pre_delivery_scan.TestPreDeliveryScan.test_actual_cross_language_delivery_and_javascript_only) ... ok
+test_fail_closed_bad_or_missing_oracles (test_pre_delivery_scan.TestPreDeliveryScan.test_fail_closed_bad_or_missing_oracles) ... ok
+test_language_budgets_and_missing_requested_runtime_block_delivery (test_pre_delivery_scan.TestPreDeliveryScan.test_language_budgets_and_missing_requested_runtime_block_delivery) ... ok
+test_python_delivery_receipt_binds_the_executed_source (test_pre_delivery_scan.TestPreDeliveryScan.test_python_delivery_receipt_binds_the_executed_source) ... ok
+test_target_failure_timeout_or_wrong_output_blocks_delivery (test_pre_delivery_scan.TestPreDeliveryScan.test_target_failure_timeout_or_wrong_output_blocks_delivery) ... ok
+test_budget_and_lru_evictions_are_bounded (test_preparation_cache.TestPreparationCache.test_budget_and_lru_evictions_are_bounded) ... ok
+test_clipping_slivers_nonfinite_and_empty_geometry (test_preparation_cache.TestPreparationCache.test_clipping_slivers_nonfinite_and_empty_geometry) ... ok
+test_configuration_is_opt_in_and_rejects_bad_budgets_backends (test_preparation_cache.TestPreparationCache.test_configuration_is_opt_in_and_rejects_bad_budgets_backends) ... ok
+test_content_edits_and_submissions_invalidate_without_versions (test_preparation_cache.TestPreparationCache.test_content_edits_and_submissions_invalidate_without_versions) ... ok
+test_depth_ties_and_removed_foreground_after_clear (test_preparation_cache.TestPreparationCache.test_depth_ties_and_removed_foreground_after_clear) ... ok
+test_fragment_uniforms_texture_and_light_reexecute_on_hit (test_preparation_cache.TestPreparationCache.test_fragment_uniforms_texture_and_light_reexecute_on_hit) ... ok
+test_fragment_work_and_current_depth_are_never_reused (test_preparation_cache.TestPreparationCache.test_fragment_work_and_current_depth_are_never_reused) ... ok
+test_input_layout_and_dtype_are_distinct_keys (test_preparation_cache.TestPreparationCache.test_input_layout_and_dtype_are_distinct_keys) ... ok
+test_instance_replacement_cannot_inherit_pure_admission (test_preparation_cache.TestPreparationCache.test_instance_replacement_cannot_inherit_pure_admission) ... ok
+test_invalid_indices_still_raise_and_do_not_poison_entries (test_preparation_cache.TestPreparationCache.test_invalid_indices_still_raise_and_do_not_poison_entries) ... ok
+test_iterators_bypass_without_being_consumed_by_key (test_preparation_cache.TestPreparationCache.test_iterators_bypass_without_being_consumed_by_key) ... ok
+test_key_bypasses_unsupported_arrays_and_vertex_subclasses (test_preparation_cache.TestPreparationCache.test_key_bypasses_unsupported_arrays_and_vertex_subclasses) ... ok
+test_numpy_tiles_and_rectangular_viewport (test_preparation_cache.TestPreparationCache.test_numpy_tiles_and_rectangular_viewport) ... ok
+test_oversize_entry_runs_correctly_without_retention (test_preparation_cache.TestPreparationCache.test_oversize_entry_runs_correctly_without_retention) ... ok
+test_prepared_bins_cannot_be_reused_with_different_context (test_preparation_cache.TestPreparationCache.test_prepared_bins_cannot_be_reused_with_different_context) ... ok
+test_random_real_geometry_edits_and_strided_varyings (test_preparation_cache.TestPreparationCache.test_random_real_geometry_edits_and_strided_varyings) ... ok
+test_retained_arrays_and_attribute_maps_have_no_mutable_alias (test_preparation_cache.TestPreparationCache.test_retained_arrays_and_attribute_maps_have_no_mutable_alias) ... ok
+test_shader_mvp_normal_and_vertex_attributes_are_dependencies (test_preparation_cache.TestPreparationCache.test_shader_mvp_normal_and_vertex_attributes_are_dependencies) ... ok
+test_tile_policy_dependency_reuses_only_matching_bins (test_preparation_cache.TestPreparationCache.test_tile_policy_dependency_reuses_only_matching_bins) ... ok
+test_unchanged_content_with_new_objects_hits (test_preparation_cache.TestPreparationCache.test_unchanged_content_with_new_objects_hits) ... ok
+test_unknown_or_overridden_vertex_function_bypasses_effects (test_preparation_cache.TestPreparationCache.test_unknown_or_overridden_vertex_function_bypasses_effects) ... ok
+test_warm_hits_are_real_byte_identical_draws_all_scenes (test_preparation_cache.TestPreparationCache.test_warm_hits_are_real_byte_identical_draws_all_scenes) ... ok
+test_bounded_child_completes_and_timeout_preserves_existing_artifact (test_preparation_cache_benchmark.TestPreparationCacheBenchmark.test_bounded_child_completes_and_timeout_preserves_existing_artifact) ... warning: fewer than 15 repeats
+PREPARATION_CACHE_CASE_OK:tiny:static
+{"status": "PREPARATION_CACHE_BENCHMARK_OK", "cases": 1, "byte_identical": true}
+warning: fewer than 15 repeats
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/benchmarks/compare_preparation_cache.py", line 232, in <module>
+    main()
+  File "/home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/benchmarks/compare_preparation_cache.py", line 214, in main
+    results.append(measure_case(name, spec, args.pixels, args.repeats, args.workers,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ARE-SOFTWAREGPU-ENGINE/software_gpu/benchmarks/compare_preparation_cache.py", line 88, in measure_case
+    raise AssertionError("PREPARATION_CACHE_EXPECTED_" + expected + ":" + str(receipt))
+AssertionError: PREPARATION_CACHE_EXPECTED_miss:{'protocol': 'are.preparation-cache.v1', 'authority': 'derived-render-only', 'status': 'bypass', 'reason': 'entry-exceeds-budget', 'key_sha256': '23b42ae9c785211a9a69b80b04deb411c73da9b87c5810b0dbfdfb9d7873a58f', 'entries': 0, 'retained_bytes': 0, 'max_bytes': 1048576, 'max_entries': 8, 'evicted': 0, 'triangles': 5120, 'tiles': 1, 'key_ms': 6.88171, 'setup_ms': 108.626346}
+ok
+test_cli_rejects_invalid_limits (test_preparation_cache_benchmark.TestPreparationCacheBenchmark.test_cli_rejects_invalid_limits) ... usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: pixels 32-1024, workers 1-16, repeats 1-30, cache-mib 1-256, finite budget >=0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--pixels PIXELS]
+                           [--workers WORKERS] [--repeats REPEATS]
+                           [--cache-mib CACHE_MIB]
+                           [--scenes {tiny,small-triangles,large-surfaces,procedural400,procedural5k} [{tiny,small-triangles,large-surfaces,procedural400,procedural5k} ...]]
+                           [--scenarios {static,one-vertex,all-vertices} [{static,one-vertex,all-vertices} ...]]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: argument --scenarios: invalid choice: 'wave' (choose from 'static', 'one-vertex', 'all-vertices')
+ok
+test_deadline_rejects_late_case_without_output (test_preparation_cache_benchmark.TestPreparationCacheBenchmark.test_deadline_rejects_late_case_without_output) ... ok
+test_real_cli_exports_stats_frames_and_auditable_sources (test_preparation_cache_benchmark.TestPreparationCacheBenchmark.test_real_cli_exports_stats_frames_and_auditable_sources) ... warning: fewer than 15 repeats
+PREPARATION_CACHE_CASE_OK:tiny:static
+PREPARATION_CACHE_CASE_OK:tiny:one-vertex
+PREPARATION_CACHE_CASE_OK:tiny:all-vertices
+PREPARATION_CACHE_CASE_OK:small-triangles:static
+PREPARATION_CACHE_CASE_OK:small-triangles:one-vertex
+PREPARATION_CACHE_CASE_OK:small-triangles:all-vertices
+{"status": "PREPARATION_CACHE_BENCHMARK_OK", "cases": 6, "byte_identical": true}
+ok
+test_attrs_dicts_are_shared_per_vertex_within_a_call (test_prepare_triangles_setup.TestSetupFastPathEquivalence.test_attrs_dicts_are_shared_per_vertex_within_a_call)
+Faces referencing the same vertex must get the identical attrs ... ok
+test_empty_and_invalid_faces_behave_like_the_oracle (test_prepare_triangles_setup.TestSetupFastPathEquivalence.test_empty_and_invalid_faces_behave_like_the_oracle) ... ok
+test_matches_oracle_across_seeds_zooms_and_aspect (test_prepare_triangles_setup.TestSetupFastPathEquivalence.test_matches_oracle_across_seeds_zooms_and_aspect) ... ok
+test_nonfinite_vertices_discard_parity (test_prepare_triangles_setup.TestSetupFastPathEquivalence.test_nonfinite_vertices_discard_parity) ... ok
+test_render_output_byte_identical_both_backends (test_prepare_triangles_setup.TestSetupFastPathEquivalence.test_render_output_byte_identical_both_backends)
+End-to-end: bands and tiles digests equal oracle-driven output. ... ok
+test_alpha_is_stored_verbatim_and_ignored_for_composition (test_raster_correctness_contract.TestAlphaNonGoal.test_alpha_is_stored_verbatim_and_ignored_for_composition)
+Pins the documented non-goal: no alpha blending exists. A 'fully ... ok
+test_equal_depth_keeps_first_submission (test_raster_correctness_contract.TestDepthContract.test_equal_depth_keeps_first_submission)
+Strict '<' depth compare: later equal-depth fragments never replace. ... ok
+test_nearer_triangle_wins_regardless_of_submission_order (test_raster_correctness_contract.TestDepthContract.test_nearer_triangle_wins_regardless_of_submission_order) ... ok
+test_extreme_coordinates_clip_without_crash (test_raster_correctness_contract.TestNumericFailClosed.test_extreme_coordinates_clip_without_crash) ... ok
+test_inf_varying_discards_primitive (test_raster_correctness_contract.TestNumericFailClosed.test_inf_varying_discards_primitive) ... ok
+test_invalid_indices_raise_programming_error (test_raster_correctness_contract.TestNumericFailClosed.test_invalid_indices_raise_programming_error) ... ok
+test_nan_vertex_discards_only_that_primitive (test_raster_correctness_contract.TestNumericFailClosed.test_nan_vertex_discards_only_that_primitive) ... ok
+test_both_backends_byte_identical_on_receding_quad (test_raster_correctness_contract.TestPerspectiveInterpolation.test_both_backends_byte_identical_on_receding_quad) ... ok
+test_receding_quad_matches_perspective_not_affine (test_raster_correctness_contract.TestPerspectiveInterpolation.test_receding_quad_matches_perspective_not_affine)
+Slanted-surface ramp: at screen center the perspective-correct value ... ok
+test_exact_randomized_colors_with_live_material_mutation (test_shader_half_vector_cache.TestBlinnPhongHalfVectorCache.test_exact_randomized_colors_with_live_material_mutation) ... ok
+test_nonfinite_material_does_not_become_valid_white_or_black (test_shader_half_vector_cache.TestBlinnPhongHalfVectorCache.test_nonfinite_material_does_not_become_valid_white_or_black) ... ok
+test_paired_real_cpu_raster_time_and_byte_parity (test_shader_half_vector_cache.TestBlinnPhongHalfVectorCache.test_paired_real_cpu_raster_time_and_byte_parity) ... BLINN_PHONG_RASTER_CPU_EVIDENCE {"after_median_ms": 61.4684, "backend": "tiles", "before_median_ms": 72.08542, "byte_identical": true, "median_ratio": 1.1727, "numpy": "2.5.3", "pixels": 72, "python": "3.12.3", "repeats": 15, "scene": "make_fixture(8,0.8)", "scope": "full draw_mesh CPU rasterization on same host", "workers": 1}
+ok
+test_paired_true_fragment_execution_no_material_regression (test_shader_half_vector_cache.TestBlinnPhongHalfVectorCache.test_paired_true_fragment_execution_no_material_regression) ... BLINN_PHONG_PAIRED_CPU_EVIDENCE {"after_median_ms": 5.95478, "before_median_ms": 7.29866, "median_ratio": 1.2257, "normals_per_round": 800, "numpy": "2.5.3", "paired_speedup": 1.2242, "python": "3.12.3", "rounds": 15, "scope": "fragment function only"}
+ok
+test_real_framebuffer_pixel_and_depth_byte_parity (test_shader_half_vector_cache.TestBlinnPhongHalfVectorCache.test_real_framebuffer_pixel_and_depth_byte_parity) ... ok
+test_cuda_dropin_runtime (test_software_gpu.TestSoftwareGPU.test_cuda_dropin_runtime)
+Test drop-in CUDA runtime interface. ... ok
+test_graphics_software_rasterization_pipeline (test_software_gpu.TestSoftwareGPU.test_graphics_software_rasterization_pipeline)
+Test full 3D Graphics rasterization pipeline with early-Z buffering and shading. ... ok
+test_memory_allocation_and_transfers (test_software_gpu.TestSoftwareGPU.test_memory_allocation_and_transfers)
+Test real virtual VRAM allocation and Host-to-Device / Device-to-Host transfers. ... ok
+test_simt_conv2d_image_filter (test_software_gpu.TestSoftwareGPU.test_simt_conv2d_image_filter)
+Test real 2D Image Convolution kernel on 2D grid. ... ok
+test_simt_parallel_reduction_tree (test_software_gpu.TestSoftwareGPU.test_simt_parallel_reduction_tree)
+Test real CUDA-style Tree Reduction with shared memory and barriers. ... ok
+test_simt_tiled_matmul_with_shared_memory_and_barriers (test_software_gpu.TestSoftwareGPU.test_simt_tiled_matmul_with_shared_memory_and_barriers)
+Test real CUDA-style Tiled GEMM using cooperative shared memory and barrier synchronization. ... ok
+test_simt_vector_add_kernel (test_software_gpu.TestSoftwareGPU.test_simt_vector_add_kernel)
+Test real SIMT kernel launch across grid and blocks for vector addition. ... ok
+test_task_redirection (test_software_gpu.TestSoftwareGPU.test_task_redirection)
+Test GPU task interceptor and redirection engine. ... ok
+test_vectorized_high_throughput_kernels (test_software_gpu.TestSoftwareGPU.test_vectorized_high_throughput_kernels)
+Test SIMD-accelerated GEMM and activation functions. ... ok
+test_checkout_source_binding_rejects_old_or_unbound_reports (test_softwaregpu_workbench.TestWorkbench.test_checkout_source_binding_rejects_old_or_unbound_reports) ... ok
+test_inventory_is_static_and_pins_real_head (test_softwaregpu_workbench.TestWorkbench.test_inventory_is_static_and_pins_real_head) ... ok
+test_manifest_identity_and_skills_match (test_softwaregpu_workbench.TestWorkbench.test_manifest_identity_and_skills_match) ... ok
+test_mutated_real_receipt_is_rejected (test_softwaregpu_workbench.TestWorkbench.test_mutated_real_receipt_is_rejected) ... ok
+test_mutated_real_stats_are_rejected (test_softwaregpu_workbench.TestWorkbench.test_mutated_real_stats_are_rejected) ... ok
+test_mutated_real_timing_and_claim_are_rejected (test_softwaregpu_workbench.TestWorkbench.test_mutated_real_timing_and_claim_are_rejected) ... ok
+test_real_artifact_audit_and_effects (test_softwaregpu_workbench.TestWorkbench.test_real_artifact_audit_and_effects) ... {"cases": [{"artifact_sha256": "6802e83fecfcb4f566509a7204ef51bd2dfe46d1e8d39244e86ef6fed7d014cb", "batch_gain_without_scan": {"mad": 0.33636462882943396, "median": 3.118042269633409}, "noscan_batch_vs_tiles": {"mad": 0.4727558222068329, "median": 2.8995338927402248}, "pixels": 32, "repeats": 2, "scan_gain_batch": {"mad": 0.21902514857459937, "median": 1.0938985816403002}, "scan_gain_scalar": {"mad": 0.037116704003017864, "median": 0.9460139154391167}, "scene": "real", "source_verification": "declared-artifact-only"}], "coefficients_deployed": false, "next_step": "size/triangle sweeps and scene-family holdout before fitting any pre-execution gate", "runtime_gate_calibrated": false, "scope": "paired descriptive effects from supplied artifacts", "status": "PASS"}
+ok
+test_batch_rgba_negative_contracts (test_surface_plan.TestSurfacePlan.test_batch_rgba_negative_contracts) ... ok
+test_benchmark_cli_argument_limits (test_surface_plan.TestSurfacePlan.test_benchmark_cli_argument_limits) ... usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+ok
+test_corner_classification_against_dense_float32 (test_surface_plan.TestSurfacePlan.test_corner_classification_against_dense_float32) ... ok
+test_deterministic_workers_and_bounded_graph (test_surface_plan.TestSurfacePlan.test_deterministic_workers_and_bounded_graph) ... ok
+test_empty_draw_resets_receipt (test_surface_plan.TestSurfacePlan.test_empty_draw_resets_receipt) ... ok
+test_explicit_batch_opt_in_and_override_guard (test_surface_plan.TestSurfacePlan.test_explicit_batch_opt_in_and_override_guard) ... ok
+test_failed_geometry_does_not_reuse_old_receipt (test_surface_plan.TestSurfacePlan.test_failed_geometry_does_not_reuse_old_receipt) ... ok
+test_invalid_batch_does_not_write_its_tile (test_surface_plan.TestSurfacePlan.test_invalid_batch_does_not_write_its_tile) ... ok
+test_isolated_job_receipt_readback (test_surface_plan.TestSurfacePlan.test_isolated_job_receipt_readback) ... ok
+test_jit_is_not_silently_combined (test_surface_plan.TestSurfacePlan.test_jit_is_not_silently_combined) ... ok
+test_nonfinite_corners_fall_back (test_surface_plan.TestSurfacePlan.test_nonfinite_corners_fall_back) ... ok
+test_offline_worker_planned_backend_is_real (test_surface_plan.TestSurfacePlan.test_offline_worker_planned_backend_is_real) ... ok
+test_perspective_clipping_and_invalid_primitives (test_surface_plan.TestSurfacePlan.test_perspective_clipping_and_invalid_primitives) ... ok
+test_planned_batches_match_reference_on_real_meshes (test_surface_plan.TestSurfacePlan.test_planned_batches_match_reference_on_real_meshes) ... ok
+test_real_benchmark_and_colored_report (test_surface_plan.TestSurfacePlan.test_real_benchmark_and_colored_report) ... ok
+test_scan_and_batch_bypass_for_small_work (test_surface_plan.TestSurfacePlan.test_scan_and_batch_bypass_for_small_work) ... ok
+test_scan_and_batch_tile_thresholds (test_surface_plan.TestSurfacePlan.test_scan_and_batch_tile_thresholds) ... ok
+test_shader_batch_matches_scalar_and_rejects_invalid_input (test_surface_plan.TestSurfacePlan.test_shader_batch_matches_scalar_and_rejects_invalid_input) ... ok
+test_shared_edges_depth_ties_and_alpha (test_surface_plan.TestSurfacePlan.test_shared_edges_depth_ties_and_alpha) ... ok
+test_tensor_and_zero_dimensional_varyings (test_surface_plan.TestSurfacePlan.test_tensor_and_zero_dimensional_varyings) ... ok
+test_tensor_varyings_work_after_small_draw_fallback (test_surface_plan.TestSurfacePlan.test_tensor_varyings_work_after_small_draw_fallback) ... ok
+test_wolfram_golden_has_independent_exact_readback (test_surface_plan.TestSurfacePlan.test_wolfram_golden_has_independent_exact_readback) ... ok
+test_actual_budgeted_cli_exports_complete_receipt (test_surface_plan_calibration.TestCalibration.test_actual_budgeted_cli_exports_complete_receipt) ... warning: fewer than 15 repeats; borderline cases are not reliable
+SURFACE_PLAN_SCENE_OK:tiny
+SURFACE_PLAN_SCENE_OK:small-triangles
+SURFACE_PLAN_SCENE_OK:large-surfaces
+SURFACE_PLAN_SCENE_OK:procedural400
+SURFACE_PLAN_SCENE_OK:procedural5k
+{
+  "status": "SURFACE_PLAN_BENCHMARK_OK",
+  "results": [
+    {
+      "scene": "tiny",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 0.095235,
+        "plan-scalar": 0.188706,
+        "plan-batch": 0.130537
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.5046739372357,
+        "plan-batch": 0.7295632655875346
+      }
+    },
+    {
+      "scene": "small-triangles",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 7.080066,
+        "plan-scalar": 8.103885,
+        "plan-batch": 7.376715
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.8736631874711944,
+        "plan-batch": 0.9597857582948508
+      }
+    },
+    {
+      "scene": "large-surfaces",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 5.458273,
+        "plan-scalar": 5.947814,
+        "plan-batch": 2.172966
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.9176939628576146,
+        "plan-batch": 2.5118998640567773
+      }
+    },
+    {
+      "scene": "procedural400",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 13.037265,
+        "plan-scalar": 12.944194,
+        "plan-batch": 12.880088
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 1.0071901734476476,
+        "plan-batch": 1.0122030998545972
+      }
+    },
+    {
+      "scene": "procedural5k",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 123.972785,
+        "plan-scalar": 123.529142,
+        "plan-batch": 122.400937
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 1.003591403557227,
+        "plan-batch": 1.012841797117942
+      }
+    }
+  ]
+}
+ok
+test_actual_subprocess_budget_publishes_no_partial_files (test_surface_plan_calibration.TestCalibration.test_actual_subprocess_budget_publishes_no_partial_files) ... ok
+test_bounded_pair_features_against_independent_tile_rectangles (test_surface_plan_calibration.TestCalibration.test_bounded_pair_features_against_independent_tile_rectangles) ... ok
+test_cli_rejects_nonfinite_budget_and_expanded_invalid_bounds (test_surface_plan_calibration.TestCalibration.test_cli_rejects_nonfinite_budget_and_expanded_invalid_bounds) ... usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+usage: python3 -m unittest [-h] --output-dir OUTPUT_DIR [--repeats REPEATS]
+                           [--pixels PIXELS] [--workers WORKERS] [--ablation]
+                           [--max-seconds MAX_SECONDS]
+python3 -m unittest: error: repeats 1-30, pixels 32-1024, workers 1-16, max-seconds >= 0 required
+ok
+test_counters_equal_actual_shader_calls_and_samples (test_surface_plan_calibration.TestCalibration.test_counters_equal_actual_shader_calls_and_samples) ... ok
+test_explicit_unbounded_cli_exports_real_ablation (test_surface_plan_calibration.TestCalibration.test_explicit_unbounded_cli_exports_real_ablation) ... warning: fewer than 15 repeats; borderline cases are not reliable
+SURFACE_PLAN_SCENE_OK:tiny
+SURFACE_PLAN_SCENE_OK:small-triangles
+SURFACE_PLAN_SCENE_OK:large-surfaces
+SURFACE_PLAN_SCENE_OK:procedural400
+SURFACE_PLAN_SCENE_OK:procedural5k
+{
+  "status": "SURFACE_PLAN_BENCHMARK_OK",
+  "results": [
+    {
+      "scene": "tiny",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 0.088314,
+        "plan-scalar": 0.136496,
+        "plan-batch": 0.116025,
+        "abl-noscan-scalar": 0.115094,
+        "abl-noscan-batch": 0.1129,
+        "abl-scan-scalar": 0.173742,
+        "abl-scan-batch": 0.155764,
+        "batch-first": 0.11261
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.6470079709295511,
+        "plan-batch": 0.7611635423400129,
+        "abl-noscan-scalar": 0.7673206248805324,
+        "abl-noscan-batch": 0.7822320637732507,
+        "abl-scan-scalar": 0.5083054183789757,
+        "abl-scan-batch": 0.5669731131712077,
+        "batch-first": 0.7842465145191369
+      }
+    },
+    {
+      "scene": "small-triangles",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 6.877828,
+        "plan-scalar": 7.085441,
+        "plan-batch": 7.116417,
+        "abl-noscan-scalar": 7.12498,
+        "abl-noscan-batch": 7.03847,
+        "abl-scan-scalar": 7.171271,
+        "abl-scan-batch": 7.074003,
+        "batch-first": 7.065149
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.9706986481151985,
+        "plan-batch": 0.9664734374053684,
+        "abl-noscan-scalar": 0.9653119026299022,
+        "abl-noscan-batch": 0.977176573886086,
+        "abl-scan-scalar": 0.9590807543042231,
+        "abl-scan-batch": 0.9722681768724157,
+        "batch-first": 0.9734866171966083
+      }
+    },
+    {
+      "scene": "large-surfaces",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 5.334085,
+        "plan-scalar": 6.087573,
+        "plan-batch": 2.205211,
+        "abl-noscan-scalar": 5.532165,
+        "abl-noscan-batch": 1.765707,
+        "abl-scan-scalar": 5.792898,
+        "abl-scan-batch": 2.115515,
+        "batch-first": 1.730244
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.8762252214470364,
+        "plan-batch": 2.4188547036995556,
+        "abl-noscan-scalar": 0.9641948495751663,
+        "abl-noscan-batch": 3.020934390586887,
+        "abl-scan-scalar": 0.9207973280385741,
+        "abl-scan-batch": 2.5214120438758414,
+        "batch-first": 3.082851320391806
+      }
+    },
+    {
+      "scene": "procedural400",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 12.711526,
+        "plan-scalar": 13.23037,
+        "plan-batch": 12.973503,
+        "abl-noscan-scalar": 13.037189,
+        "abl-noscan-batch": 12.894013,
+        "abl-scan-scalar": 13.002567,
+        "abl-scan-batch": 12.888745,
+        "batch-first": 12.945019
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 0.9607838631874995,
+        "plan-batch": 0.979806764603207,
+        "abl-noscan-scalar": 0.9750204587814136,
+        "abl-noscan-batch": 0.9858471524730121,
+        "abl-scan-scalar": 0.9776166506198352,
+        "abl-scan-batch": 0.986250096498922,
+        "batch-first": 0.9819627147708319
+      }
+    },
+    {
+      "scene": "procedural5k",
+      "byte_identical": true,
+      "median_frame_ms": {
+        "tiles": 126.410811,
+        "plan-scalar": 116.269135,
+        "plan-batch": 125.475608,
+        "abl-noscan-scalar": 116.049153,
+        "abl-noscan-batch": 117.126662,
+        "abl-scan-scalar": 126.275998,
+        "abl-scan-batch": 118.720757,
+        "batch-first": 116.190498
+      },
+      "speedup_vs_tiles": {
+        "tiles": 1.0,
+        "plan-scalar": 1.0872258660907728,
+        "plan-batch": 1.0074532653390291,
+        "abl-noscan-scalar": 1.0892868041871877,
+        "abl-noscan-batch": 1.0792658890936377,
+        "abl-scan-scalar": 1.0010676058960943,
+        "abl-scan-batch": 1.0647743005883965,
+        "batch-first": 1.0879616937350591
+      }
+    }
+  ]
+}
+ok
+test_fallback_still_exposes_features_without_fabricated_execution_counts (test_surface_plan_calibration.TestCalibration.test_fallback_still_exposes_features_without_fabricated_execution_counts) ... ok
+test_inline_expired_deadline (test_surface_plan_calibration.TestCalibration.test_inline_expired_deadline) ... ok
+test_new_valid_upper_cli_bounds_reach_the_real_budget_guard (test_surface_plan_calibration.TestCalibration.test_new_valid_upper_cli_bounds_reach_the_real_budget_guard) ... ok
+test_policies_do_not_leak_between_concurrent_renderers (test_surface_plan_calibration.TestCalibration.test_policies_do_not_leak_between_concurrent_renderers) ... ok
+test_policy_validates_and_is_immutable (test_surface_plan_calibration.TestCalibration.test_policy_validates_and_is_immutable) ... ok
+test_real_ablation_and_both_direction_guards (test_surface_plan_calibration.TestCalibration.test_real_ablation_and_both_direction_guards) ... ok
+test_shipped_offline_examples_activate_the_measured_profile (test_surface_plan_calibration.TestCalibration.test_shipped_offline_examples_activate_the_measured_profile) ... ok
+test_statistics_and_fixture_seed_contract (test_surface_plan_calibration.TestCalibration.test_statistics_and_fixture_seed_contract) ... ok
+test_actual_javascript_float32_bits_against_renderer (test_symbolic_wave.TestSymbolicWave.test_actual_javascript_float32_bits_against_renderer) ... ok
+test_addition_and_multiple_colored_regions (test_symbolic_wave.TestSymbolicWave.test_addition_and_multiple_colored_regions) ... ok
+test_empty_operator_waves_and_language_registry (test_symbolic_wave.TestSymbolicWave.test_empty_operator_waves_and_language_registry) ... ok
+test_input_contract_both_runtime_and_generated_code (test_symbolic_wave.TestSymbolicWave.test_input_contract_both_runtime_and_generated_code) ... ok
+test_javascript_rejects_names_overflow_and_handles_identifier_collision (test_symbolic_wave.TestSymbolicWave.test_javascript_rejects_names_overflow_and_handles_identifier_collision) ... ok
+test_overflow_is_transactional_and_does_not_claim_numeric_truth (test_symbolic_wave.TestSymbolicWave.test_overflow_is_transactional_and_does_not_claim_numeric_truth) ... ok
+test_real_randomized_multidimensional_byte_parity (test_symbolic_wave.TestSymbolicWave.test_real_randomized_multidimensional_byte_parity) ... ok
+test_recorded_wolfram_parser_and_independent_wave_plan (test_symbolic_wave.TestSymbolicWave.test_recorded_wolfram_parser_and_independent_wave_plan) ... ok
+test_reject_invalid_graphs_and_false_color_equivalence (test_symbolic_wave.TestSymbolicWave.test_reject_invalid_graphs_and_false_color_equivalence) ... ok
+test_room_map_reduction_and_local_change (test_symbolic_wave.TestSymbolicWave.test_room_map_reduction_and_local_change) ... ok
+test_room_reduction_javascript_actual_bits (test_symbolic_wave.TestSymbolicWave.test_room_reduction_javascript_actual_bits) ... ok
+test_scan_local_edit_only_invalidates_dependency_descendants (test_symbolic_wave.TestSymbolicWave.test_scan_local_edit_only_invalidates_dependency_descendants) ... ok
+test_actual_receipt_parity_statistics_and_source_binding (test_symbolic_wave_benchmark.TestSymbolicWaveBenchmark.test_actual_receipt_parity_statistics_and_source_binding) ... ok
+test_cli_rejects_unbounded_repeat_values (test_symbolic_wave_benchmark.TestSymbolicWaveBenchmark.test_cli_rejects_unbounded_repeat_values) ... ok
+test_msaa_uint16_resolve_matches_float_reference (test_tile_backend.TestTileRasterizer.test_msaa_uint16_resolve_matches_float_reference) ... ok
+test_repeatable_byte_identical_parallel (test_tile_backend.TestTileRasterizer.test_repeatable_byte_identical_parallel) ... ok
+test_tile_validation (test_tile_backend.TestTileRasterizer.test_tile_validation) ... ok
+test_tiled_matches_band_reference_for_overlap (test_tile_backend.TestTileRasterizer.test_tiled_matches_band_reference_for_overlap) ... ok
+test_huge_quad_scene_tiles_match_bands (test_tile_backend_vectorized.TestVectorizedVaryingsByteIdentity.test_huge_quad_scene_tiles_match_bands) ... ok
+test_repeated_renders_are_deterministic (test_tile_backend_vectorized.TestVectorizedVaryingsByteIdentity.test_repeated_renders_are_deterministic) ... ok
+test_sphere_scene_tiles_match_bands (test_tile_backend_vectorized.TestVectorizedVaryingsByteIdentity.test_sphere_scene_tiles_match_bands) ... ok
+test_tile_size_does_not_change_output (test_tile_backend_vectorized.TestVectorizedVaryingsByteIdentity.test_tile_size_does_not_change_output)
+Tile size is a pure performance knob: 8/16/32/64 must agree. ... ok
+test_zoomed_big_triangle_scene_tiles_match_bands (test_tile_backend_vectorized.TestVectorizedVaryingsByteIdentity.test_zoomed_big_triangle_scene_tiles_match_bands) ... ok
+test_no_overwrite_or_mutable_revision (test_training_metrics.TrainingMetricsTests.test_no_overwrite_or_mutable_revision) ... ok
+test_real_rasterizer_deterministic_hash_readback (test_training_metrics.TrainingMetricsTests.test_real_rasterizer_deterministic_hash_readback) ... ok
+test_reject_invalid_observations_without_writing (test_training_metrics.TrainingMetricsTests.test_reject_invalid_observations_without_writing) ... ok
+test_exact_near_plane_intersections (test_wolfram_cag_oracle.TestWolframCagOracle.test_exact_near_plane_intersections) ... ok
+test_fail_closed_on_fake_or_oversized_evidence (test_wolfram_cag_oracle.TestWolframCagOracle.test_fail_closed_on_fake_or_oversized_evidence) ... ok
+test_msaa_exact_wolfram_coverage (test_wolfram_cag_oracle.TestWolframCagOracle.test_msaa_exact_wolfram_coverage) ... ok
+test_perspective_interpolation_in_real_renderer (test_wolfram_cag_oracle.TestWolframCagOracle.test_perspective_interpolation_in_real_renderer) ... ok
+test_top_left_partition_matches_wolfram_counts (test_wolfram_cag_oracle.TestWolframCagOracle.test_top_left_partition_matches_wolfram_counts) ... ok
+test_framebuffer_oracle_tiling_workers_and_handoff (test_workrooms.TestWorkRooms.test_framebuffer_oracle_tiling_workers_and_handoff) ... ok
+test_native_rejects_untrusted_wire_before_handoff (test_workrooms.TestWorkRooms.test_native_rejects_untrusted_wire_before_handoff) ... ok
+test_parser_and_transport_fail_closed (test_workrooms.TestWorkRooms.test_parser_and_transport_fail_closed) ... ok
+test_seeded_geometry_culling_and_strict_depth (test_workrooms.TestWorkRooms.test_seeded_geometry_culling_and_strict_depth) ... ok
+
+----------------------------------------------------------------------
+Ran 292 tests in 119.112s
+
+OK (skipped=2)

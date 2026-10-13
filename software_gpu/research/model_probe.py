@@ -2,7 +2,7 @@
 
 Admitted subset: one indexed triangle primitive/instance, opaque double-sided
 geometry, optional one skin with all 1..3 influence sets, TRS/matrix nodes and
-STEP/LINEAR TRS animation. This diagnostic renderer does not evaluate textures.
+STEP/LINEAR TRS animation. Textures are not yet evaluated.
 """
 from __future__ import annotations
 import hashlib
@@ -14,11 +14,16 @@ import subprocess
 import sys
 import numpy as np
 from .native_symbolic import FLAGS, NATIVE, compiler
+from .model_material_import import load_surface_subset
 
 MAX_BYTES = 256 * 1024 * 1024
-DTYPES = {5121: '<u1', 5123: '<u2', 5125: '<u4', 5126: '<f4'}
+DTYPES = {5120: '<i1', 5121: '<u1', 5122: '<i2', 5123: '<u2', 5125: '<u4', 5126: '<f4'}
 DIMS = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}
-SOURCES = ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp', 'model_scene.hpp', 'model_main.cpp')
+SOURCES = ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'bio_workrooms.hpp',
+           'model_material.hpp', 'model_projection.hpp', 'model_scene.hpp', 'model_main.cpp')
+
+DEFAULT_PERSPECTIVE_CAMERA = dict(eye=[0.0,0.0,4.0], target=[0.0,0.0,0.0], up=[0.0,1.0,0.0],
+                                  fov_y_degrees=43.0, near=0.1, far=80.0)
 
 
 def require(ok, code):
@@ -89,12 +94,17 @@ def accessor(doc, binary, index):
     out = np.ndarray((count, dims), dtype=dtype, buffer=binary, offset=base+inner,
                      strides=(stride, dtype.itemsize)).copy()
     if a.get('normalized', False):
-        require(a['componentType'] in (5121, 5123), 'MODEL_NORMALIZED_TYPE')
-        out = out.astype('<f4') / np.iinfo(dtype).max
+        require(a['componentType'] in (5120, 5121, 5122, 5123), 'MODEL_NORMALIZED_TYPE')
+        values = out.astype('<f4')
+        if dtype.kind == 'i':
+            out = np.maximum(values / np.iinfo(dtype).max, -1.0)
+        else:
+            out = values / np.iinfo(dtype).max
     return out
 
 
-def load_asset(path, entry):
+def load_asset(path, entry, profile='diagnostic'):
+    require(profile in ('diagnostic', 'pbr'), 'MODEL_RENDER_PROFILE')
     doc, binary = read_glb(path, entry['sha256'], entry['bytes'])
     meshes, nodes = doc.get('meshes', []), doc.get('nodes', [])
     require(len(meshes) == 1 and len(meshes[0]['primitives']) == 1 and 1 <= len(nodes) <= 256, 'MODEL_MESH_SUBSET')
@@ -204,32 +214,115 @@ def load_asset(path, entry):
                           duration=max(float(c['times'][-1]) for c in channels)))
     material = doc.get('materials', [])[ _uint(primitive.get('material'), len(doc.get('materials', []))-1)]
     require(material.get('doubleSided', False) is True and material.get('alphaMode', 'OPAQUE') == 'OPAQUE', 'MODEL_MATERIAL_SUBSET')
+    surface = load_surface_subset(doc, binary, primitive, accessor) if profile == 'pbr' else None
     metadata = dict(file=Path(path).name, sha256=entry['sha256'], bytes=entry['bytes'], vertices=len(xyz), triangles=len(faces),
                     nodes=len(nodes), joints=len(joints), influences_per_vertex=weights.shape[1],
                     maximum_nonzero_influences=int((weights > 0).sum(axis=1).max()) if weights.size else 0,
                     weight_sum_max_error=float(np.abs(weights.astype('f8').sum(axis=1)-1).max()) if weights.size else 0,
-                    images=len(doc.get('images', [])), material='opaque-double-sided',
+                    images=len(doc.get('images', [])), material='opaque-double-sided', render_profile=profile,
                     animations=[dict(name=c['name'], duration=c['duration'], channels=len(c['channels'])) for c in clips])
-    return dict(positions=xyz, faces=faces, nodes=typed_nodes, joints=joints, inverse_bind=ibm,
-                joint_data=joint_data, weights=weights, mesh_node=mesh_node, clips=clips, metadata=metadata)
+    result = dict(positions=xyz, faces=faces, nodes=typed_nodes, joints=joints, inverse_bind=ibm,
+                 joint_data=joint_data, weights=weights, mesh_node=mesh_node, clips=clips, metadata=metadata)
+    if surface is not None:
+        result.update(normals=surface['normals'], uvs=surface['uvs'], textures=surface['textures'],
+                      material=surface['material'])
+        metadata['material'] = 'gltf-metallic-roughness-pbr-v1'
+        metadata['decoded_image_bytes'] = surface['decoded_image_bytes']
+    return result
 
 
-def write_scene(path, instances, times, pixels=256, tile=32):
+def write_scene(path, instances, times, pixels=256, tile=32, projection='orthographic', camera=None,
+                render_profile='diagnostic'):
     require(1 <= len(instances) <= 12 and 1 <= len(times) <= 60, 'MODEL_SCENE_COUNT')
+    require(projection in ('orthographic','perspective'), 'MODEL_PROJECTION_MODE')
+    require(render_profile in ('diagnostic','pbr'), 'MODEL_RENDER_PROFILE')
+    require(render_profile!='pbr' or projection=='perspective', 'MODEL_PBR_REQUIRES_PERSPECTIVE')
     _uint(pixels, 512, 2); _uint(tile, 64, 16)
     require(all(type(t) in (int, float) and np.isfinite(t) and 0 <= t <= 3600 for t in times), 'MODEL_FRAME_TIME')
+    camera_record = None
+    if projection == 'perspective':
+        camera_record = dict(DEFAULT_PERSPECTIVE_CAMERA if camera is None else camera)
+        require(set(camera_record)=={'eye','target','up','fov_y_degrees','near','far'}, 'MODEL_CAMERA_FIELDS')
+        eye = _vec(camera_record.get('eye'),3); target = _vec(camera_record.get('target'),3); up = _vec(camera_record.get('up'),3)
+        fov = camera_record.get('fov_y_degrees'); near = camera_record.get('near'); far = camera_record.get('far')
+        require(type(fov) in (int,float) and np.isfinite(fov) and 1 <= fov <= 179, 'MODEL_CAMERA_BOUNDS')
+        require(type(near) in (int,float) and np.isfinite(near) and near > 0 and
+                type(far) in (int,float) and np.isfinite(far) and far > near, 'MODEL_CAMERA_BOUNDS')
+        forward = target-eye
+        cross = np.cross(forward,up)
+        require(float(np.dot(forward,forward)) > 1e-24 and float(np.dot(up,up)) > 1e-24 and
+                float(np.dot(cross,cross)) > 1e-24, 'MODEL_CAMERA_DIRECTION')
+        camera_record = dict(eye=eye.tolist(),target=target.tolist(),up=up.tolist(),
+                             fov_y_degrees=float(fov),near=float(near),far=float(far))
+    else:
+        require(camera is None, 'MODEL_CAMERA_ORTHOGRAPHIC')
     total_vertices = sum(len(x['asset']['positions']) for x in instances)
     total_faces = sum(len(x['asset']['faces']) for x in instances)
     require(total_vertices <= 6100000 and total_faces <= 8000000
             and ((pixels+tile-1)//tile)**2 * total_faces <= 536870912, 'MODEL_SCENE_BUDGET')
-    with Path(path).open('wb') as out:
-        out.write(b'AREMDL01'+struct.pack('<5I', len(instances), len(times), pixels, pixels, tile))
-        out.write(np.asarray(times, '<f8').tobytes())
+    texture_records, material_records = [], []
+    if render_profile == 'pbr':
+        total_base_bytes = total_mip_bytes = 0
         for instance in instances:
+            asset = instance['asset']
+            require('normals' in asset and 'uvs' in asset and 'material' in asset
+                    and asset['normals'].shape == (len(asset['positions']), 3)
+                    and asset['uvs'].shape == (len(asset['positions']), 2), 'MODEL_SURFACE_ASSET')
+            texture_base = len(texture_records)
+            for texture in asset['textures']:
+                width, height = int(texture['width']), int(texture['height'])
+                pixels_rgba = np.asarray(texture['rgba'], dtype='u1')
+                require(1 <= width <= 4096 and 1 <= height <= 4096
+                        and pixels_rgba.shape == (height, width, 4), 'MODEL_TEXTURE_SHAPE')
+                size = width*height*4; total_base_bytes += size
+                w, h = width, height; chain = 0
+                while True:
+                    chain += w*h*4
+                    if w == 1 and h == 1: break
+                    w, h = max(1, w//2), max(1, h//2)
+                total_mip_bytes += chain
+                record = dict(texture)
+                record['rgba'] = np.ascontiguousarray(pixels_rgba)
+                texture_records.append(record)
+            material = dict(asset['material'])
+            for slot in ('base_texture','mr_texture','normal_texture','emissive_texture','occlusion_texture'):
+                if material[slot] >= 0:
+                    require(material[slot] < len(asset['textures']), 'MODEL_MATERIAL_TEXTURE_INDEX')
+                    material[slot] += texture_base
+            material_records.append(material)
+        require(len(texture_records) <= 64 and len(material_records) <= 12
+                and total_base_bytes <= 512*1024*1024 and total_mip_bytes <= 768*1024*1024,
+                'MODEL_TEXTURE_SCENE_BUDGET')
+    with Path(path).open('wb') as out:
+        magic = b'AREMDL03' if render_profile=='pbr' else (b'AREMDL02' if projection=='perspective' else b'AREMDL01')
+        out.write(magic+
+                  struct.pack('<5I', len(instances), len(times), pixels, pixels, tile))
+        out.write(np.asarray(times, '<f8').tobytes())
+        if camera_record is not None:
+            out.write(np.asarray(camera_record['eye']+camera_record['target']+camera_record['up']+
+                                 [camera_record['fov_y_degrees'],camera_record['near'],camera_record['far']], '<f8').tobytes())
+        if render_profile == 'pbr':
+            out.write(struct.pack('<2I', len(texture_records), len(material_records)))
+            for texture in texture_records:
+                out.write(struct.pack('<7I', int(texture['width']), int(texture['height']),
+                    int(texture['wrap_s']), int(texture['wrap_t']), int(texture['min_filter']),
+                    int(texture['mag_filter']), int(bool(texture['srgb']))))
+            for material in material_records:
+                floats = [*material['base_color'], *material['emissive'], material['metallic'],
+                          material['roughness'], material['normal_scale'], material['occlusion_strength']]
+                slots = [material['base_texture'], material['mr_texture'], material['normal_texture'],
+                         material['emissive_texture'], material['occlusion_texture']]
+                require(len(floats)==11 and np.isfinite(floats).all(), 'MODEL_MATERIAL_NUMBER')
+                out.write(struct.pack('<11f5iI', *floats, *slots, int(material['double_sided'])))
+            for texture in texture_records:
+                out.write(memoryview(texture['rgba']).cast('B'))
+        for model_index, instance in enumerate(instances):
             a = instance['asset']; clip = instance.get('clip')
             channels = [] if clip is None else a['clips'][_uint(clip, len(a['clips'])-1)]['channels']
             nv, nt, nn, nj = len(a['positions']), len(a['faces']), len(a['nodes']), len(a['joints'])
-            out.write(struct.pack('<7I', nv, nt, nn, nj, a['weights'].shape[1], a['mesh_node'], len(channels)))
+            model_header = [nv, nt, nn, nj, a['weights'].shape[1], a['mesh_node'], len(channels)]
+            if render_profile=='pbr': model_header.append(model_index)
+            out.write(struct.pack('<8I' if render_profile=='pbr' else '<7I', *model_header))
             matrix = np.asarray(instance.get('placement', np.eye(4)), '<f8')
             require(matrix.shape == (4, 4) and np.isfinite(matrix).all() and np.array_equal(matrix[3], [0, 0, 0, 1]), 'MODEL_PLACEMENT')
             color = instance.get('color', [185, 195, 215, 255])
@@ -244,12 +337,18 @@ def write_scene(path, instances, times, pixels=256, tile=32):
             out.write(np.asarray(a['joints'], '<u4').tobytes()); out.write(a['inverse_bind'].astype('<f8').tobytes())
             for key, dtype in (('positions', '<f4'), ('faces', '<u4'), ('joint_data', '<u4'), ('weights', '<f4')):
                 out.write(np.asarray(a[key], dtype).tobytes())
+            if render_profile=='pbr':
+                out.write(np.asarray(a['normals'], '<f4').tobytes())
+                out.write(np.asarray(a['uvs'], '<f4').tobytes())
             for c in channels:
                 out.write(struct.pack('<4I', c['node'], c['path'], c['interpolation'], len(c['times'])))
                 out.write(c['times'].astype('<f8').tobytes()); out.write(c['values'].astype('<f8').tobytes())
     require(Path(path).stat().st_size <= 536870912, 'MODEL_INPUT_BYTES')
-    return dict(protocol='are.model-input.v1', sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+    protocol = 'are.model-input.v3' if render_profile=='pbr' else ('are.model-input.v2' if projection=='perspective' else 'are.model-input.v1')
+    return dict(protocol=protocol,projection=projection,render_profile=render_profile,camera=camera_record,
+                sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
                 bytes=Path(path).stat().st_size, vertices=total_vertices, triangles=total_faces, pixels=pixels, tile=tile,
+                materials=len(material_records),textures=len(texture_records),
                 times=list(times), instances=[dict(source=x['asset']['metadata']['sha256'], clip=x.get('clip'),
                 color=x.get('color', [185, 195, 215, 255]), placement=np.asarray(x.get('placement', np.eye(4))).tolist()) for x in instances])
 
@@ -270,18 +369,20 @@ def build_model_probe(directory):
     return exe, receipt
 
 
-def run_model(executable, request, workers=4, repeats=15, policy='combined', mode='render', timeout=600):
+def run_model(executable, request, workers=4, repeats=15, policy='combined', mode='render', timeout=600,
+              render_profile='diagnostic'):
     from .bio_workrooms import POLICIES
     _uint(workers, 8, 1); _uint(repeats, 30, 1); _uint(timeout, 1800, 1)
-    require(policy in POLICIES and mode in ('pose', 'render'), 'MODEL_RUN_POLICY')
+    require(policy in POLICIES and mode in ('pose', 'render')
+            and render_profile in ('diagnostic','pbr'), 'MODEL_RUN_POLICY')
     result = subprocess.run([str(executable), str(request), str(workers), str(repeats), policy, mode],
                             capture_output=True, timeout=timeout)
     if result.returncode:
         raise RuntimeError(result.stderr.decode('utf-8', errors='replace')[-2000:])
-    return decode_output(result.stdout, workers, repeats, policy, mode)
+    return decode_output(result.stdout, workers, repeats, policy, mode, render_profile)
 
 
-def decode_output(raw, workers, repeats, policy, mode='render'):
+def decode_output(raw, workers, repeats, policy, mode='render', render_profile='diagnostic'):
     """Validate the untrusted binary/JSON process boundary before exposing buffers."""
     if mode == 'pose':
         require(raw[:8] == b'AREPOSE1' and len(raw) >= 16, 'MODEL_POSE_PROTOCOL')
@@ -303,23 +404,70 @@ def decode_output(raw, workers, repeats, policy, mode='render'):
     require(2 <= w <= 512 and 2 <= h <= 512 and nf == repeats and 2 <= nj <= 131072
             and len(raw) == 24+nj+w*h*(4*nf+8), 'MODEL_OUTPUT_LENGTH')
     receipt = json.loads(raw[24:24+nj], object_pairs_hook=_object); start = 24+nj
-    require(receipt.get('protocol') == 'are.model-probe.receipt.v1' and receipt.get('workers') == workers
+    expected_receipt='are.model-probe.receipt.v2' if render_profile=='pbr' else 'are.model-probe.receipt.v1'
+    require(receipt.get('protocol') == expected_receipt and receipt.get('render_profile')==render_profile
+            and receipt.get('workers') == workers
             and receipt.get('policy') == policy and receipt.get('full_buffer_parity') is True
             and receipt.get('python_in_runtime') is False and receipt.get('warmups') == 3
             and receipt.get('hardware_gpu_submitted') is False
             and receipt.get('serial_reference_first_frame') is True, 'MODEL_OUTPUT_RECEIPT')
+    require(receipt.get('projection') in ('orthographic','perspective'), 'MODEL_OUTPUT_RECEIPT')
+    for field in ('camera_eye','camera_target','camera_up'):
+        value = np.asarray(receipt.get(field),dtype='<f8')
+        require(value.shape==(3,) and np.isfinite(value).all(), 'MODEL_OUTPUT_RECEIPT')
+    for field in ('fov_y_degrees','near_plane','far_plane'):
+        value=receipt.get(field)
+        require(type(value) in (int,float) and np.isfinite(value), 'MODEL_OUTPUT_RECEIPT')
+    if receipt['projection']=='perspective':
+        require(1<=receipt['fov_y_degrees']<=179 and 0<receipt['near_plane']<receipt['far_plane'],
+            'MODEL_OUTPUT_RECEIPT')
+    if render_profile=='pbr':
+        _uint(receipt.get('materials'),12,1);_uint(receipt.get('textures'),64,0)
+        require(receipt.get('color_pipeline')=='linear-msaa>exposure>reinhard>srgb>fxaa-srgb' and
+                receipt.get('material_model')=='gltf-metallic-roughness-cook-torrance-ggx-v1',
+                'MODEL_OUTPUT_SURFACE_PROFILE')
     for field, limit in [('triangles',8000000),('vertices',6100000),('models',12),('spatial_references',67108864)]:
         _uint(receipt.get(field),limit,0 if field == 'spatial_references' else 1)
     construction = receipt.get('construction_fit_and_serial_reference_ms')
     require(type(construction) in (int,float) and np.isfinite(construction) and construction >= 0, 'MODEL_OUTPUT_TIMING')
     writes = receipt.get('sample_writes')
     require(isinstance(writes,list) and len(writes) == repeats
-            and all(type(x) is int and 0 <= x <= 4*w*h*receipt['triangles'] for x in writes), 'MODEL_OUTPUT_WRITES')
+            and all(type(x) is int and x >= 0 for x in writes), 'MODEL_OUTPUT_WRITES')
     for prefix in ('baseline_', 'candidate_'):
         for field in ('total_ms', 'geometry_ms', 'render_ms', 'cpu_ms'):
             values = receipt.get(prefix+field)
             require(isinstance(values,list) and len(values) == repeats
                     and all(type(x) in (int, float) and np.isfinite(x) and x >= 0 for x in values), 'MODEL_OUTPUT_TIMING')
+    detail_fields = ('animated_pose_ms','static_pose_ms','triangle_prepare_ms','handoff_ms',
+                     'render_setup_ms','rasterization_ms','msaa_ms','aa_ms','scheduler_binning_ms','frame_total_ms')
+    for field in ('baseline_frame_timings','candidate_frame_timings'):
+        timing_prefix='baseline_' if field=='baseline_frame_timings' else 'candidate_'
+        detail = receipt.get(field)
+        require(isinstance(detail,list) and len(detail)==repeats, 'MODEL_OUTPUT_TIMING')
+        for index,frame in enumerate(detail):
+            require(isinstance(frame,dict) and frame.get('frame')==index
+                    and all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
+                            for k in detail_fields), 'MODEL_OUTPUT_TIMING')
+            for field,limit in (('projected_triangles',8000000),('clipped_input_triangles',8000000),
+                                ('culled_input_triangles',receipt['triangles'])):
+                _uint(frame.get(field),limit,0)
+            require(frame['clipped_input_triangles']+frame['culled_input_triangles']<=receipt['triangles'] and
+                    (receipt['projection']=='perspective' or frame['projected_triangles']==receipt['triangles']),
+                    'MODEL_OUTPUT_PROJECTION')
+            require(writes[index] <= 4*w*h*max(receipt['triangles'],frame['projected_triangles']),
+                    'MODEL_OUTPUT_WRITES')
+            work_fields=('render_setup_worker_work_ms','rasterization_worker_work_ms',
+                         'msaa_worker_work_ms','aa_worker_work_ms')
+            require(all(type(frame.get(k)) in (int,float) and np.isfinite(frame[k]) and frame[k]>=0
+                        for k in work_fields), 'MODEL_OUTPUT_TIMING')
+            require(abs(frame['frame_total_ms']-receipt[timing_prefix+'total_ms'][index])<=1e-9,
+                    'MODEL_OUTPUT_TIMING')
+    for base,candidate in zip(receipt['baseline_frame_timings'],receipt['candidate_frame_timings']):
+        require(all(base[k]==candidate[k] for k in
+                    ('projected_triangles','clipped_input_triangles','culled_input_triangles')),
+                'MODEL_OUTPUT_PROJECTION_PARITY')
+    require(isinstance(receipt.get('stage_timing_semantics'),str)
+            and 'must not be summed' in receipt['stage_timing_semantics'], 'MODEL_OUTPUT_TIMING')
     frames = np.frombuffer(raw, dtype='u1', count=w*h*nf*4, offset=start).reshape(nf, h, w, 4)
     resolved = np.frombuffer(raw, dtype='u1', count=w*h*4, offset=start+w*h*nf*4).reshape(h, w, 4)
     depth = np.frombuffer(raw, dtype='<f4', count=w*h, offset=start+w*h*(nf*4+4)).reshape(h, w)

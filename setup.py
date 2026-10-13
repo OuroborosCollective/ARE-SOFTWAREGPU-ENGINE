@@ -15,6 +15,8 @@ setup(
         # CPU LLVM JIT acceleration is opt-in. The default distribution
         # remains minimal and runs without Numba or a GPU.
         "jit": ["numba>=0.61.2,<0.67"],
+        # Offline PNG/JPEG decoding is only needed for the opt-in AREMDL03 profile.
+        "model-pbr": ["Pillow>=9.0"],
     },
     entry_points={
         "console_scripts": [

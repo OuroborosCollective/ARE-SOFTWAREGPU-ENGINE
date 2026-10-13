@@ -45,7 +45,7 @@ def build_workrooms(directory):
     target = Path(directory).resolve()
     target.mkdir(parents=True, exist_ok=True)
     sources = {name: (NATIVE/name).read_bytes() for name in
-               ('core.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'workrooms_main.cpp')}
+               ('core.hpp', 'model_material.hpp', 'workrooms.hpp', 'workrooms_wire.hpp', 'workrooms_main.cpp')}
     for name, data in sources.items():
         (target/name).write_bytes(data)
     cxx = compiler()
