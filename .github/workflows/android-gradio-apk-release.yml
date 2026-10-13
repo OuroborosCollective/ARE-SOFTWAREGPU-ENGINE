@@ -1,12 +1,17 @@
 name: Android Gradio APK prerelease
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-gradio-apk-release.yml'
   workflow_run:
     workflows: ["CPU regressions"]
     types: [completed]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: gradio-android-apk-${{ github.event.workflow_run.head_sha || github.sha }}
@@ -14,13 +19,16 @@ concurrency:
 
 jobs:
   apk:
+    permissions:
+      contents: write
     if: >-
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_branch == 'main' &&
        github.event.workflow_run.head_repository.full_name == github.repository &&
        github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -55,6 +63,7 @@ jobs:
           cp "$apk" ARE-SoftwareGPU-Gradio-Android-preview.apk
           sha256sum ARE-SoftwareGPU-Gradio-Android-preview.apk > ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
       - name: Publish immutable SHA-tagged preview release
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
