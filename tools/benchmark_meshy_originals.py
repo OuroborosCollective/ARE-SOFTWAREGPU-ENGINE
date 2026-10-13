@@ -42,7 +42,7 @@ def main():
         result=run_model(exe,req,workers=2,repeats=1,mode="render",
                          timeout=min(remain,300),render_profile="diagnostic")
         digest=hashlib.sha256()
-        for key in ("rgba","depth"):
+        for key in ("frames","resolved","depth"):
             # Fail closed on absent output fields; no synthetic frame substitutions.
             value=result[key]
             digest.update(value.tobytes() if isinstance(value,np.ndarray) else value)
