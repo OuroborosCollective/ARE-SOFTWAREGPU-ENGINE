@@ -1,27 +1,24 @@
-# Vorgeschlagene GitHub-Repository-Metadaten
+# Repository About / Discoverability — verifizierter Stand 2026-10-13
 
-Diese Datei ist **eine vorbereitete Vorlage**, kein Beweis, dass das GitHub-`About`-Feld oder Topics bereits geändert wurden.
+**Repository ist bereits PUBLIC**, nicht privat. API-/GitHub-Readback:
+- **Description:** `Are-Engine SoftwareGPU : CPU-only software renderer and graphics-compute research engine with tiled rasterization, optional LLVM JIT and reproducible benchmarks`
+- **Homepage:** https://arelogic.space (organisationsweite Website; kein Nachweis einer dedizierten SoftwareGPU-Landingpage)
+- **Topics:** `computer-graphics`, `cpu-rendering`, `fxaa`, `llvm`, `msaa`, `numba`, `software-gpu`, `software-rasterizer`
+- **GitHub Pages:** derzeit **nicht aktiviert**; **Discussions:** ebenfalls deaktiviert
+- **Lizenz auf GitHub:** `NOASSERTION`/Other; der tatsächlich geltende Text steht in [LICENSE.md](../LICENSE.md). Nicht als MIT/Apache/OSI-Open-Source bewerben.
 
-## Repository description (GitHub → About → Edit)
+## Sachliche Discoverability-Verbesserung
 
-```text
-CPU-only SoftwareGPU research engine: tiled rasterizer, LLVM JIT, 4x MSAA/FXAA and reproducible graphics benchmarks. Noncommercial license.
-```
+Eine belegte Vorschau mit Bild und Links ist jetzt in [SHOWCASE.md](SHOWCASE.md) vorhanden; das [Haupt-README](../README.md) verlinkt sie. Die Workflow-Status-Badges zeigen den tatsächlichen Build-/Release-Status. Veröffentliche **keine** Erfolgsmeldung über eine Gradio-Live-Site oder APK, solange deren URL bzw. GitHub-Release nicht wirklich funktioniert.
 
-## Untertitel auf Deutsch
+**Mögliche zukünftige About-Description**, noch nicht in den Profilmetadaten gesetzt:
 
-> CPU-Grafik-Engine ohne dedizierte GPU – deterministische Rastertests, optionaler LLVM-CPU-Kern und reproduzierbare Benchmarks.
+> CPU software renderer with native C++17 PBR/GLB research, deterministic benchmarks and optional Gradio/Android/Node clients. Noncommercial.
 
-## Topics
+**Mögliche zusätzliche Topics:** `cpp17`, `software-rendering`, `glb`, `pbr`, `gradio`, `android`, `reproducible-research`. Das Ändern der Repository-Metadaten erfordert einen GitHub-Admin-Schreibzugriff; die hier verfügbaren GitHub-Aktionen liefern nur Lesen/Datei- und PR-Änderungen.
 
-```text
-software-rasterizer, cpu-rendering, computer-graphics, llvm, numba, msaa, fxaa, python, reproducible-benchmarks, noncommercial
-```
+## Ehrliche Grenzen
 
-## Homepage
+CPU-vs.-CPU ist kein Hardware-GPU-Nachweis, private Modellbinaries liegen nicht im Repository, kommerzielle Nutzung benötigt separate schriftliche Lizenz, und die Android-APK ist ein Debug-WebView-Client, kein installierter nativer Renderer.
 
-Repository-Homepage: https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE
-
-## Vermarktungshinweis
-
-Source-available, nichtkommerzielle PolyForm-Lizenz mit Pflichtvermerk; kommerzielle Nutzung nur nach schriftlicher Genehmigung. Keine nachgewiesene native DirectX-, CUDA- oder universelle GPU-Treiberkompatibilität.
+[Projekt-Showcase](SHOWCASE.md) · [GitHub-Releases](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases) · [Release-Prüfung](RELEASE_STATUS.md) · [Lizenz](LICENSING.md).
