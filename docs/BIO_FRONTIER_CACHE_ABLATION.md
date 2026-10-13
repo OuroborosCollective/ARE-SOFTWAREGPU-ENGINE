@@ -23,7 +23,7 @@ formal C++ happens-before proof is claimed from a successful test alone.
 
 ## Compile-time A/B controls
 
-`build_bio_workrooms(path, ablation=...)` explicitly allows exactly four
+`build_bio_workrooms(path, ablation=...)` explicitly allows exactly five
 variants and records the compiler flags and binary SHA-256:
 
 | Variant | Per-AA-tile `pending_` layout | Handoff |
@@ -32,6 +32,7 @@ variants and records the compiler flags and binary SHA-256:
 | `padded-pending` | `alignas(64)` one atomic per 64-byte stride | `fetch_sub(acq_rel)` |
 | `release-fence` | packed | `fetch_sub(release)`, acquire fence only when old==1 |
 | `padded-release-fence` | padded | release plus conditional acquire fence |
+| `padded-worker-stats` | packed | `acq_rel`, disjoint 64-byte-aligned worker jobs/sample counters |
 
 The last two variants rely on the **C++17 release-sequence and atomic-fence
 synchronization contract**: all predecessors must publish resolved tiles before
@@ -115,3 +116,16 @@ not prove absence of contention or perfect multicore scaling.
 
 The isolated research branch intentionally does **not** select a winning
 policy or claim higher speed before those measurements exist.
+
+## Follow-up: isolated per-worker stats variant
+
+`padded-worker-stats` isolates only the `jobs` and `samples` counters of
+individual workers behind 64-byte alignment (verified at native compile time).
+The default layout and scheduler remain unchanged. This does **not** pad the
+shared checkpoint or pending counters and does not claim to solve genuine
+contention. The normal native oracle suite builds the additional variant and
+checks resolved, RGBA and float32 depth against the independent renderer.
+Performance admission requires comparing candidate medians *on the same GitHub
+runner* per scene and workers with the default (not ratios against the
+frozen historic renderer), inspecting negative cases, raw 15-sample timings
+and output identity; otherwise no production activation.

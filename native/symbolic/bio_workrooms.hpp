@@ -149,8 +149,28 @@ class BioPipeline {
     std::vector<std::uint32_t> ids_;
     double binning_ms_=0;
     using Counts=std::array<std::uint64_t,4>;
+#ifdef ARE_BIO_PAD_WORKER_STATS
+    struct alignas(64) WorkerStats {
+        Counts jobs{};
+        std::uint64_t samples=0;
+    };
+    static_assert(alignof(WorkerStats)>=64 && sizeof(WorkerStats)%64==0,
+                  "per-worker stats must occupy disjoint 64-byte cache lines");
+    std::array<WorkerStats,8> worker_stats_{};
+    Counts& jobs(unsigned w) {return worker_stats_[w].jobs;}
+    const Counts& jobs(unsigned w)const{return worker_stats_[w].jobs;}
+    std::uint64_t& samples(unsigned w) {return worker_stats_[w].samples;}
+    const std::uint64_t& samples(unsigned w)const{return worker_stats_[w].samples;}
+    void clear_worker_stats() {worker_stats_={};}
+#else
     std::array<Counts,8> jobs_{};
     std::array<std::uint64_t,8> samples_{};
+    Counts& jobs(unsigned w){return jobs_[w];}
+    const Counts& jobs(unsigned w)const{return jobs_[w];}
+    std::uint64_t& samples(unsigned w){return samples(w);}
+    const std::uint64_t& samples(unsigned w)const{return samples_[w];}
+    void clear_worker_stats(){jobs_={};samples_={};}
+#endif
     template<class F> void neighbors(std::size_t tile,F f)const {
         const auto x=int(tile%base_.tiles_x_),y=int(tile/base_.tiles_x_);
         for(int dy=-1;dy<=1;++dy)for(int dx=-1;dx<=1;++dx)
@@ -217,18 +237,18 @@ class BioPipeline {
         const auto operation_begin=std::chrono::steady_clock::now();
         switch(static_cast<Kind>(kind)) {
             case Kind::render:base_.render(i);break;
-            case Kind::raster:samples_[worker]+=policy_.locality?raster_local(i):base_.raster(i);break;
+            case Kind::raster:samples(worker)+=policy_.locality?raster_local(i):base_.raster(i);break;
             case Kind::msaa:base_.msaa(i);break;
             case Kind::aa:base_.aa(i);break;
         }
         base_.operation_work_ms_[kind][worker]+=std::chrono::duration<double,std::milli>(
             std::chrono::steady_clock::now()-operation_begin).count();
         base_.states_[room]=State::done;if(ledger_)ledger_->finish(room,epoch_);
-        ++jobs_[worker][kind];
+        ++jobs(worker)[kind];
     }
     void summarize(unsigned kind,double elapsed) {
         auto& wave=base_.waves_[kind];wave.executed=0;wave.samples=0;wave.milliseconds=elapsed;
-        for(unsigned w=0;w<base_.workers_;++w){wave.worker_jobs[w]=jobs_[w][kind];
+        for(unsigned w=0;w<base_.workers_;++w){wave.worker_jobs[w]=jobs(w)[kind];
             wave.executed+=jobs_[w][kind];if(kind==1)wave.samples+=samples_[w];}
         if(wave.executed!=(kind==0?base_.triangle_count():base_.tiles_))
             throw std::runtime_error("ROOM_INCOMPLETE_WAVE");
@@ -317,7 +337,7 @@ public:
     void execute() {
         if(std::string(policy_.name)=="baseline"){base_.execute();return;}
         base_.delivered_=false;require_environment();
-        std::fill(base_.states_.begin(),base_.states_.end(),State::waiting);jobs_={};samples_={};
+        std::fill(base_.states_.begin(),base_.states_.end(),State::waiting);clear_worker_stats();
         base_.operation_work_ms_={};
         binning_ms_=0;
         if(ledger_)epoch_=ledger_->begin();

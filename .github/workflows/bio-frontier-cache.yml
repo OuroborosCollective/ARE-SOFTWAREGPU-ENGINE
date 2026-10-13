@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
-      - name: Real C++17 build for four variants; independent framebuffer and depth oracle
+      - name: Real C++17 build for five variants; independent framebuffer and depth oracle
         env:
           ARE_BIO_CACHE_ABLATION_TEST: '1'
         run: python -m unittest software_gpu.tests.test_bio_frontier_cache_ablation -v
@@ -51,8 +51,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
-      - name: True native 15-pair default versus padded-pending (1/2 workers)
-        run: python tools/benchmark_frontier_cache.py --output-dir "$RUNNER_TEMP/bio-cache-pilot" --repeats 15 --max-seconds 600 --workers 1 2 --variants default padded-pending
+      - name: True native 15-pair default versus padded-worker-stats (1/2 workers)
+        run: python tools/benchmark_frontier_cache.py --output-dir "$RUNNER_TEMP/bio-cache-pilot" --repeats 15 --max-seconds 600 --workers 1 2 --variants default padded-worker-stats
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
