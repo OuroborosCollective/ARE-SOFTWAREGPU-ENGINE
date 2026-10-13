@@ -50,6 +50,28 @@ jobs:
         run: |
           yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and test portable Node client
+        run: |
+          set -euo pipefail
+          cd clients/node
+          npm test
+          npm pack --pack-destination "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p dist/linux dist/windows
+          cp clients/node/bin/are-gradio.mjs dist/linux/are-gradio.mjs
+          cp clients/node/bin/are-gradio.mjs dist/windows/are-gradio.mjs
+          printf '#!/bin/sh\\nexec node "$(dirname "$0")/are-gradio.mjs" "$@"\\n' > dist/linux/are-gradio
+          chmod +x dist/linux/are-gradio
+          printf '@echo off\\r\\nnode "%%~dp0are-gradio.mjs" %%*\\r\\n' > dist/windows/are-gradio.cmd
+          cp clients/node/README.md dist/linux/README.md
+          cp clients/node/README.md dist/windows/README.md
+          (cd dist && zip -qr "$GITHUB_WORKSPACE/ARE-Gradio-Linux.zip" linux)
+          (cd dist && zip -qr "$GITHUB_WORKSPACE/ARE-Gradio-Windows.zip" windows)
+          sha256sum ARE-Gradio-Linux.zip ARE-Gradio-Windows.zip *.tgz > desktop-node.sha256
       - name: Build real debug APK
         run: gradle -p android :app:assembleDebug --no-daemon
       - name: Verify APK archive and native Android package metadata
@@ -62,6 +84,13 @@ jobs:
           sha256sum "$apk" | tee android-apk.sha256
           cp "$apk" ARE-SoftwareGPU-Gradio-Android-preview.apk
           sha256sum ARE-SoftwareGPU-Gradio-Android-preview.apk > ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
+      - name: Verify Node packages and platform archives
+        run: |
+          set -euo pipefail
+          tar -tzf ouroboroscollective-softwaregpu-gradio-client-*.tgz | grep -F 'package/bin/are-gradio.mjs'
+          unzip -t ARE-Gradio-Linux.zip >/dev/null
+          unzip -t ARE-Gradio-Windows.zip >/dev/null
+          sha256sum -c desktop-node.sha256
       - name: Publish immutable SHA-tagged preview release
         if: github.event_name != 'pull_request'
         env:
@@ -77,6 +106,8 @@ jobs:
           gh release create "$tag" \
             ARE-SoftwareGPU-Gradio-Android-preview.apk \
             ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256 \
+            ARE-Gradio-Linux.zip ARE-Gradio-Windows.zip \
+            ouroboroscollective-softwaregpu-gradio-client-*.tgz desktop-node.sha256 \
             --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "Gradio Android preview ${SHA:0:12}" \
-            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion. Ephemeral debug signing: preview only; not update-stable. No embedded native GPU/renderer, no demo endpoint configured." \
+            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion plus Linux/Windows portable Node launchers and npm tarball. Linux/Windows require Node 20+. Ephemeral APK debug signing: preview only. Registry publish is separate; no embedded renderer or demo endpoint." \
             --prerelease
