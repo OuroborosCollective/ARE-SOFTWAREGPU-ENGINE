@@ -1,0 +1,3 @@
+## 2026-10-14 - [NumPy Float64 Promotion in Scalar Math]
+**Learning:** [When converting NumPy operations to Python scalar math (like math.sqrt) for performance, Python's built-in math functions output float64 by default. In a codebase with strict byte-parity checks for framebuffers, this higher precision can lead to minuscule differences that cause tests to fail. You must explicitly cast the results back to np.float32 to preserve exact parity with the original numpy functions.]
+**Action:** [When replacing np.linalg.norm with math.sqrt in hot loops, always ensure the final normalization step divides by an explicitly cast np.float32 length, e.g., `half_dir = half_dir / np.float32(half_len)` to maintain strict byte-for-byte output compatibility.]

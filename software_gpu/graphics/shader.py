@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -219,10 +220,12 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            hx, hy, hz = half_dir[0], half_dir[1], half_dir[2]
+            half_len = math.sqrt(hx*hx + hy*hy + hz*hz)
             valid = bool(half_len > 1e-6)
             if valid:
-                half_dir /= half_len
+                # Use np.float32 to preserve exact precision from previous implementation
+                half_dir = half_dir / np.float32(half_len)
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
