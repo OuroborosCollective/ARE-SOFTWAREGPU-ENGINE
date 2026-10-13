@@ -119,12 +119,29 @@ public:
     }
 };
 
+// Opt-in research variants. Default byte-sized, acquire/release frontier unchanged.
+// Padded stride trades cache sharing against footprint: 64x bytes per tile.
+// These switches are never selected by production policy names.
+#ifdef ARE_BIO_PAD_PENDING
+struct alignas(64) PendingCounter {
+    std::atomic<unsigned char> value{0};
+    void store(unsigned char v, std::memory_order order) noexcept { value.store(v,order); }
+    unsigned char fetch_sub(unsigned char v, std::memory_order order) noexcept {
+        return value.fetch_sub(v,order);
+    }
+};
+static_assert(alignof(PendingCounter)>=64 && sizeof(PendingCounter)%64==0,
+              "per-tile pending controls require cacheline stride");
+#else
+using PendingCounter=std::atomic<unsigned char>;
+#endif
+
 class BioPipeline {
     Pipeline base_;
     BioPolicy policy_;
     std::unique_ptr<ResidentWorkers> resident_;
     std::unique_ptr<CheckpointLedger> ledger_;
-    std::unique_ptr<std::atomic<unsigned char>[]> pending_;
+    std::unique_ptr<PendingCounter[]> pending_;
     std::uint64_t epoch_=0;
     struct Bounds {int x0,y0,x1,y1;float inv;bool active;};
     std::vector<Bounds> bounds_;
@@ -234,9 +251,21 @@ class BioPipeline {
                 neighbors(i,[&](auto target){
                     // Each predecessor publishes its entire immutable resolved tile.
                     // The acq_rel RMW chain carries ALL halo writes to the last worker.
+                    #ifdef ARE_BIO_FENCE_HANDOFF
+                    // C++17 atomic-fence synchronization: all predecessor RMWs
+                    // form a release sequence. The winning RMW reads the last
+                    // value, then acquires the predecessor-published writes.
+                    const auto old=pending_[target].fetch_sub(1,std::memory_order_release);
+                    if(old==0)throw std::runtime_error("ROOM_DUPLICATE_DEPENDENCY");
+                    if(old==1) {
+                        std::atomic_thread_fence(std::memory_order_acquire);
+                        visit(3,target,w);
+                    }
+#else
                     const auto old=pending_[target].fetch_sub(1,std::memory_order_acq_rel);
                     if(old==0)throw std::runtime_error("ROOM_DUPLICATE_DEPENDENCY");
                     if(old==1)visit(3,target,w);
+#endif
                 });
             }
         }});
@@ -254,7 +283,7 @@ public:
             throw std::runtime_error("ROOM_POLICY_SCHEMA");
         if(policy.reuse)resident_=std::make_unique<ResidentWorkers>(workers);
         if(policy.checkpoints)ledger_=std::make_unique<CheckpointLedger>(base_.room_count());
-        if(policy.frontier)pending_.reset(new std::atomic<unsigned char>[base_.tiles_]);
+        if(policy.frontier)pending_.reset(new PendingCounter[base_.tiles_]);
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
@@ -267,7 +296,7 @@ public:
            admitted.checkpoints!=policy.checkpoints)throw std::runtime_error("ROOM_POLICY_SCHEMA");
         if(policy.reuse)resident_=std::make_unique<ResidentWorkers>(workers);
         if(policy.checkpoints)ledger_=std::make_unique<CheckpointLedger>(base_.room_count());
-        if(policy.frontier)pending_.reset(new std::atomic<unsigned char>[base_.tiles_]);
+        if(policy.frontier)pending_.reset(new PendingCounter[base_.tiles_]);
         if(policy.locality){bounds_.resize(scene.size());offsets_.resize(base_.tiles_+1);cursor_.resize(base_.tiles_);}
         for(auto& wave:base_.waves_)wave.worker_jobs.resize(workers);
     }
