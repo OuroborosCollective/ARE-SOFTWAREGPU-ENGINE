@@ -34,7 +34,7 @@ variants and records the compiler flags and binary SHA-256:
 | `padded-release-fence` | padded | release plus conditional acquire fence |
 | `padded-worker-stats` | packed | `acq_rel`, disjoint 64-byte-aligned worker jobs/sample counters |
 
-The last two variants rely on the **C++17 release-sequence and atomic-fence
+The `release-fence` and `padded-release-fence` variants rely on the **C++17 release-sequence and atomic-fence
 synchronization contract**: all predecessors must publish resolved tiles before
 the release RMW, every decrement must participate in the same release sequence,
 and the winning RMW reading the last predecessor value must precede the acquire

@@ -19,7 +19,8 @@ permissions:
   contents: read
 concurrency:
   group: bio-frontier-cache-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: false
+  # Supersede an obsolete PR commit, but do not interrupt manual research runs.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   native-parity:
