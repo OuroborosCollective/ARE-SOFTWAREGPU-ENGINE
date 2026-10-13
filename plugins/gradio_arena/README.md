@@ -31,6 +31,12 @@ converted into successful previews. No temporary asset is preserved.
 
 ## Verify
 
+The dedicated GitHub Actions `Authenticated Gradio live smoke` job installs
+`.[gradio-arena]`, instantiates the actual Blocks layout and launches a real
+loopback listener, rejecting unauthenticated API/config requests with HTTP 401.
+The default CPU regression matrix deliberately remains independent of Gradio.
+
+
 ```sh
 python -m unittest software_gpu.tests.test_gradio_arena -v
 python -m unittest discover -s software_gpu/tests -v
