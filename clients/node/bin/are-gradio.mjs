@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 export function parseEndpoint(raw) {
   if (typeof raw !== "string" || raw.length > 2048) throw new Error("ENDPOINT_INVALID");
@@ -41,7 +43,7 @@ export function openEndpoint(raw, platform = process.platform, launcher = spawn)
   child.unref();
   return target;
 }
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1]).href) {
+if (process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1])) {
   const [command, endpoint] = process.argv.slice(2);
   if (!["probe", "open"].includes(command) || !endpoint) {
     console.error("Usage: are-gradio probe|open https://gradio.example.org/");
