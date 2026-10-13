@@ -1,0 +1,42 @@
+{
+  "protocol": "are.meshy-owner-approved-public-assets.v1",
+  "publication_note": "Owner explicitly authorized public distribution of these GLBs on 2026-10-13. URLs for first two are external CDN media uploads; public download and long-term persistence not yet independently established; maize remains local-only because upload >100MiB; do not treat remote URLs as canonical immutable storage.",
+  "assets": [
+    {
+      "alias": "azure-knight",
+      "file": "Meshy_AI_Azure_Dawn_Knight_All_Animations.glb",
+      "bytes": 34812540,
+      "sha256": "ed8aa74ff78e8bfd8ff58086ecddc4a27119302705fb01b4536afd81fa8b7141",
+      "triangles": 107798,
+      "vertices": 126017,
+      "joints": 39,
+      "animations": 8,
+      "source_url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3KLChvsOSiFJobi5uzuDf5JPH0L/075079c2-3d58-42c5-9b5c-bdf77f895a82.glb",
+      "upload_status": "uploaded-unverified-public-reachability"
+    },
+    {
+      "alias": "crimson-dragon",
+      "file": "Meshy_AI_Character_output.glb",
+      "bytes": 34114068,
+      "sha256": "9e54af64ddc63c6c342492892c480c875ba81c960c6dd7e2514fd8395d455bb7",
+      "triangles": 91084,
+      "vertices": 105525,
+      "joints": 81,
+      "animations": 0,
+      "source_url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3KLChvsOSiFJobi5uzuDf5JPH0L/2034dcdc-48dd-4eb7-a53f-8c60ec5cb699.glb",
+      "upload_status": "uploaded-unverified-public-reachability"
+    },
+    {
+      "alias": "maize-field",
+      "file": "Meshy_AI_Ein_kleines_Feld_grü_1013070149_texture.glb",
+      "bytes": 235861308,
+      "sha256": "fafedf17dc2b1e9ab4a4843c69e89a51254ea99463ca7e78e3d334b7149b131a",
+      "triangles": 7653974,
+      "vertices": 4173287,
+      "joints": 0,
+      "animations": 0,
+      "source_url": null,
+      "upload_status": "pending-large-asset-host"
+    }
+  ]
+}
