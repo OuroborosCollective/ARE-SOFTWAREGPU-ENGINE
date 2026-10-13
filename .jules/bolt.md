@@ -1,4 +1,4 @@
-
-## 2024-10-13 - [Optimize BlinnPhongShader Fragment Overhead]
-**Learning:** Extracting standard Python floats manually from NumPy arrays (e.g. `u, v = float(uv[0]), float(uv[1])` instead of `u, v = uv[0], uv[1]`) before passing them to Python's builtin `min`/`max` prevents internal scalar dispatch overhead from NumPy inside tight loops. It reduces per-fragment execution times without breaking exact byte parity.
-**Action:** In exact-bound exact parity tested shaders, always extract array variables directly into native floats for math blocks without completely swapping NumPy functions like `np.clip` that cause parity failure.
+## 2026-10-13 - Blinn-Phong fragment contract audit
+**Finding:** Converting a NumPy float32 UV coordinate to a Python float before multiplying by the texture extent can alter truncation at a texel boundary, so byte parity does not hold for the proposed float conversion.
+**Change:** Keep native NumPy UV arithmetic, read the mutable texture once per fragment, and add differential texel-boundary and in-place-resize tests.
+**Evidence:** Previous draft head 89e126b CI passes (CPU regressions 38452257413, Mesa 38452257025). A controlled new head-versus-main performance gain is *not* established; no general speedup claim.
