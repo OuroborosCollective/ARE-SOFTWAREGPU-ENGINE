@@ -167,3 +167,38 @@ free speedup, PBR workload generalization, absence of false sharing or any
 hardware-GPU equivalence. No production default switch is authorized from
 these CPU-only experiments. Negative cases and 8-worker CPU oversubscription
 must be reported without filtering.
+
+## Actual alternating AB/BA native receipt (PR #61)
+
+At head `7523b00baba995266787a69a3841db89d366b274`, GitHub Actions
+[38356963320](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38356963320)
+completed the serial 15-pair × 2-scene × 1/2/4/8-worker **real C++17**
+AB/BA benchmark, including SHA256 checked complete JSON artifact
+[11793108409](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38356963320/artifacts/11793108409).
+The GitHub artifact ZIP SHA256 is
+`53ee92ebdef6d9b20ac519c607cb4f8fb4b7d96f3accd1d62705862bbc4a5701`,
+and the source-/order-/data-verified JSON receipt digest is
+`d215325b1f2d9ae23e6b90f246d903f0f00bf998055fe8921ddbb8677f64f217`.
+Each paired round alternates the order (AB, BA), executes the two pinned native
+binaries, warms the pipeline and verifies identical resolved, RGBA and depth
+output bytes; negative pairs are retained. No claim of hardware GPU parity.
+
+| Native scene | Workers | Default median ms | Static median ms | Static faster pairs / 15 |
+|---|---:|---:|---:|---:|
+| sparse64-tile1 | 1 | 5.854 | 5.901 | 0 |
+| sparse64-tile1 | 2 | 5.382 | 4.891 | 13 |
+| sparse64-tile1 | 4 | 3.574 | 3.519 | 11 |
+| sparse64-tile1 | 8 | 3.855 | 4.090 | 2 |
+| large4-tile16 | 1 | 6.695 | 6.700 | 6 |
+| large4-tile16 | 2 | 3.822 | 4.354 | 2 |
+| large4-tile16 | 4 | 3.221 | 3.376 | 3 |
+| large4-tile16 | 8 | 3.395 | 3.863 | 4 |
+
+**Disposition:** The optional research build is functionally valid, but
+performance is workload-dependent, with six of eight scene/worker cells slower
+by the median comparison. **Do not activate the static scheduler by default.**
+The GitHub runner exposes four logical CPUs; eight workers oversubscribe it.
+The AB/BA sampling is ordered, not randomized, and does not control frequency,
+thermal or background contention. Native framebuffer parity does not establish
+independent GLB/PBR or hardware-GPU parity. This remains a research observation,
+not an authorization to change production policy.
