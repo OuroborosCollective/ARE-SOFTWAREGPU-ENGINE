@@ -5,7 +5,7 @@ The exact changes live in `native/symbolic/bio_workrooms.hpp`, built through
 `software_gpu/research/bio_workrooms.py`. No release, renderer speedup or
 formal C++ happens-before proof is claimed from a successful test alone.
 
-**First real 32-case exploratory results:** [source-bound benchmark, medians and negative cases](BIO_FRONTIER_CACHE_PILOT_20261013.md). The measured GitHub host had four logical CPUs and 8-worker oversubscription; no production improvement is inferred.
+**Follow-up actual worker-stats measurements:** [40-case evidence and negative results](BIO_WORKER_STATS_CACHE_PILOT_20261013.md).\n\n**First real 32-case exploratory results:** [source-bound benchmark, medians and negative cases](BIO_FRONTIER_CACHE_PILOT_20261013.md). The measured GitHub host had four logical CPUs and 8-worker oversubscription; no production improvement is inferred.
 
 ## Current real code / hypotheses
 
