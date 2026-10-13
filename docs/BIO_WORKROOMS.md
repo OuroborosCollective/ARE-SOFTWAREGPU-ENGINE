@@ -54,7 +54,9 @@ modes, the combined mode and four leave-one-out modes allow observation of
 interactions. They are fixed before measurement; no adaptive tuning or
 performance-based removal of checks occurs in this experiment.
 
-**Further research:** [cache-line layout, acquire-fence and 1/2/4/8 worker ablation](BIO_FRONTIER_CACHE_ABLATION.md) isolates potential false sharing without switching the production scheduler. The new variant performance is intentionally **not** asserted before actual timing and parity receipts.\n\n## Reproduce and admit results
+**Further research:** [cache-line layout, acquire-fence and 1/2/4/8 worker ablation](BIO_FRONTIER_CACHE_ABLATION.md) isolates potential false sharing without switching the production scheduler. The new variant performance is intentionally **not** asserted before actual timing and parity receipts.
+
+## Reproduce and admit results
 
 From a source checkout with NumPy and a C++17 compiler:
 
