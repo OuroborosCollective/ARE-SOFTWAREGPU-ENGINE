@@ -25,8 +25,8 @@ def validate_deferred_shader(shader):
             or getattr(shader.fragment_shader, "__func__", None) is not VertexColorShader.fragment_shader
             or getattr(shader.fragment_shader_batch, "__func__", None)
             is not VertexColorShader.fragment_shader_batch
-            or getattr(shader, "batch_fragment_equivalent_to", None)
-            is not VertexColorShader.fragment_shader):
+            or getattr(getattr(shader, "batch_fragment_equivalent_to", None),
+                       "__func__", None) is not VertexColorShader.fragment_shader):
         raise ValueError("DEFERRED_SHADER_NOT_PURE")
 
 
