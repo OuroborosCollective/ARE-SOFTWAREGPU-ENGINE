@@ -15,7 +15,19 @@ BASELINE_COMMIT = '87ff610cd9419dd4b465e60bc19eb367a6b1a8f2'
 BASELINE_SOURCE_SHA256 = '8645f2f2bc824107ecf9f7e80c155b84622f099c0aacb0c4870d580ba91b48ca'
 
 
-def build_bio_workrooms(directory):
+# Native code/flags are pinned per build; the default continues to compile
+# identically to the previously admitted renderer.
+ABLATIONS = {
+    "default": (),
+    "padded-pending": ("-DARE_BIO_PAD_PENDING=1",),
+    "release-fence": ("-DARE_BIO_FENCE_HANDOFF=1",),
+    "padded-release-fence": ("-DARE_BIO_PAD_PENDING=1", "-DARE_BIO_FENCE_HANDOFF=1"),
+}
+
+
+def build_bio_workrooms(directory, *, ablation="default"):
+    if type(ablation) is not str or ablation not in ABLATIONS:
+        raise ValueError("ROOM_ABLATION_UNKNOWN")
     target = Path(directory).resolve()
     target.mkdir(parents=True, exist_ok=True)
     sources = {name: (NATIVE/name).read_bytes() for name in
@@ -32,13 +44,13 @@ def build_bio_workrooms(directory):
     for name, data in sources.items():
         (target/name).write_bytes(data)
     cxx = compiler()
-    flags = [*FLAGS, '-pthread']
+    flags = [*FLAGS, '-pthread', *ABLATIONS[ablation]]
     exe = target/('bio_workrooms.exe' if sys.platform == 'win32' else 'bio_workrooms')
     result = subprocess.run([cxx, *flags, str(target/'bio_workrooms_main.cpp'), '-o', str(exe)],
                             capture_output=True, text=True, timeout=120)
     if result.returncode:
         raise RuntimeError('ROOM_BIO_BUILD_FAILED:' + result.stderr[-6000:])
-    receipt = dict(protocol='are.bio-workrooms.build.v1', flags=flags,
+    receipt = dict(protocol='are.bio-workrooms.build.v1', ablation=ablation, flags=flags,
                    compiler=subprocess.check_output([cxx, '--version'], text=True).splitlines()[0],
                    source_sha256={k: hashlib.sha256(v).hexdigest() for k, v in sources.items()},
                    binary_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
