@@ -209,11 +209,14 @@ class BlinnPhongShader(Shader):
         if self._texture is not None:
             # OPTIMIZATION: Extract coordinates as standard Python floats to reduce object overhead during min/max.
             # Performance Impact: Removes NumPy scalar dispatch inside tight loop.
-            u, v = float(varyings['uv'][0]), float(varyings['uv'][1])
+            # Preserve NumPy scalar promotion/rounding for byte-identical texel selection.
+            u, v = varyings['uv'][0], varyings['uv'][1]
             u = max(0.0, min(1.0, u))
             v = max(0.0, min(1.0, v))
-            tx = int(u * self._tex_w_minus_1)
-            ty = int(v * self._tex_h_minus_1)
+            # Texture arrays are public and can be resized in place.
+            th, tw = self._texture.shape[0], self._texture.shape[1]
+            tx = int(u * (tw - 1))
+            ty = int(v * (th - 1))
             tex_sample = self._texture[ty, tx, :3] / 255.0
             base_color = tex_sample
 
