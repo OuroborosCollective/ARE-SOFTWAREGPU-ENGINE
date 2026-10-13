@@ -3,7 +3,7 @@
 #ifndef ARE_STREAM_PROBE
 #error Compile with ARE_STREAM_PROBE=1; production renderer is unchanged.
 #endif
-#include "workrooms.hpp"
+#include "workrooms_wire.hpp"
 #include <chrono>
 #include <cstdio>
 #include <iomanip>
