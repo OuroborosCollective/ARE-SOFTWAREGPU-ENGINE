@@ -129,3 +129,76 @@ Performance admission requires comparing candidate medians *on the same GitHub
 runner* per scene and workers with the default (not ratios against the
 frozen historic renderer), inspecting negative cases, raw 15-sample timings
 and output identity; otherwise no production activation.
+
+## Static frontier 32-tile cyclic partition (research only)
+
+New opt-in build switch `ARE_BIO_STATIC_FRONTIER_CHUNKS=1` maps disjoint
+32-tile chunks to workers by round-robin worker index instead of fetching
+from a shared atomic cursor. The AA predecessor completion counters, release
+sequences, checkpoint ledger, per-tile rendering, shader and Float32 contracts
+are unchanged. This switch is **not active in production**.
+
+The additional native test uses 1/2/4/8 workers, >32 real chunks, independently
+computed exact per-worker raster job ownership and independent Python oracle
+resolved/RGBA/depth buffers. GitHub-hosted research workflow builds every
+variant, then runs true 15-pair native measurements for default and static
+variant on identical scenes. Variant builds run sequentially; their timings
+are **not pairwise alternated across the two builds**. Consequently a successful
+run establishes parity but not controlled performance superiority. The first
+objective is to validate the ownership and shared-dependency model. Full
+scheduler promotion remains blocked pending alternating-variant A/B and a
+controlled CPU-affinity comparison with negative cases retained.
+
+## Reproducible alternating default/static C++17 runs (PR #61)
+
+The `tools/benchmark_frontier_alternating.py` evidence worker now performs **15 actual
+AB/BA rounds** per native scene and worker count, instead of merely sweeping
+all default frames before the entire static variant. Each C++17 child process
+runs the recorded three warmups and exactly one timed frame, then alternates
+which variant runs first on the next pair. The tool checks exact resolved/RGBA/
+Depth bytes, handoff state, the source input hash, build binary hashes, and
+all raw candidate timing samples before saving a SHA256-signed JSON report.
+
+The benchmark uses the same GitHub-hosted runner per AB/BA test (1/2/4/8 workers)
+and serial execution across native test, alternating benchmark, older pilot and
+full variant sweep. Each phase has independently captured source and binary
+SHA256s. **A/B alternation is not randomization**; this does not prove noise-
+free speedup, PBR workload generalization, absence of false sharing or any
+hardware-GPU equivalence. No production default switch is authorized from
+these CPU-only experiments. Negative cases and 8-worker CPU oversubscription
+must be reported without filtering.
+
+## Actual alternating AB/BA native receipt (PR #61)
+
+At head `7523b00baba995266787a69a3841db89d366b274`, GitHub Actions
+[38356963320](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38356963320)
+completed the serial 15-pair × 2-scene × 1/2/4/8-worker **real C++17**
+AB/BA benchmark, including SHA256 checked complete JSON artifact
+[11793108409](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38356963320/artifacts/11793108409).
+The GitHub artifact ZIP SHA256 is
+`53ee92ebdef6d9b20ac519c607cb4f8fb4b7d96f3accd1d62705862bbc4a5701`,
+and the source-/order-/data-verified JSON receipt digest is
+`d215325b1f2d9ae23e6b90f246d903f0f00bf998055fe8921ddbb8677f64f217`.
+Each paired round alternates the order (AB, BA), executes the two pinned native
+binaries, warms the pipeline and verifies identical resolved, RGBA and depth
+output bytes; negative pairs are retained. No claim of hardware GPU parity.
+
+| Native scene | Workers | Default median ms | Static median ms | Static faster pairs / 15 |
+|---|---:|---:|---:|---:|
+| sparse64-tile1 | 1 | 5.854 | 5.901 | 0 |
+| sparse64-tile1 | 2 | 5.382 | 4.891 | 13 |
+| sparse64-tile1 | 4 | 3.574 | 3.519 | 11 |
+| sparse64-tile1 | 8 | 3.855 | 4.090 | 2 |
+| large4-tile16 | 1 | 6.695 | 6.700 | 6 |
+| large4-tile16 | 2 | 3.822 | 4.354 | 2 |
+| large4-tile16 | 4 | 3.221 | 3.376 | 3 |
+| large4-tile16 | 8 | 3.395 | 3.863 | 4 |
+
+**Disposition:** The optional research build is functionally valid, but
+performance is workload-dependent, with six of eight scene/worker cells slower
+by the median comparison. **Do not activate the static scheduler by default.**
+The GitHub runner exposes four logical CPUs; eight workers oversubscribe it.
+The AB/BA sampling is ordered, not randomized, and does not control frequency,
+thermal or background contention. Native framebuffer parity does not establish
+independent GLB/PBR or hardware-GPU parity. This remains a research observation,
+not an authorization to change production policy.

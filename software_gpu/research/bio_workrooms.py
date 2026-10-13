@@ -23,6 +23,7 @@ ABLATIONS = {
     "release-fence": ("-DARE_BIO_FENCE_HANDOFF=1",),
     "padded-release-fence": ("-DARE_BIO_PAD_PENDING=1", "-DARE_BIO_FENCE_HANDOFF=1"),
     "padded-worker-stats": ("-DARE_BIO_PAD_WORKER_STATS=1",),
+    "static-frontier-chunks": ("-DARE_BIO_STATIC_FRONTIER_CHUNKS=1",),
 }
 
 

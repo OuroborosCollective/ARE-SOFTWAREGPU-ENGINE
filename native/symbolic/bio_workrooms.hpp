@@ -263,9 +263,21 @@ class BioPipeline {
     void frontier() {
         for(std::size_t i=0;i<base_.tiles_;++i){unsigned char count=0;
             neighbors(i,[&](auto){++count;});pending_[i].store(count,std::memory_order_relaxed);}
-        std::atomic<std::size_t> cursor{0};const auto start=std::chrono::steady_clock::now();
-        run_workers([&](unsigned w){for(;;){const auto first=cursor.fetch_add(32,std::memory_order_relaxed);
-            if(first>=base_.tiles_)break;
+#ifndef ARE_BIO_STATIC_FRONTIER_CHUNKS
+        std::atomic<std::size_t> cursor{0};
+#endif
+        const auto start=std::chrono::steady_clock::now();
+        run_workers([&](unsigned w){
+#ifdef ARE_BIO_STATIC_FRONTIER_CHUNKS
+            // Research only: disjoint cyclic 32-tile chunks, no shared claim cursor.
+            // Each tile belongs to one worker; AA halo handoff remains acq_rel.
+            constexpr std::size_t chunk=32;
+            for(std::size_t first=std::size_t(w)*chunk;first<base_.tiles_;
+                    first+=std::size_t(base_.workers_)*chunk) {
+#else
+            for(;;){const auto first=cursor.fetch_add(32,std::memory_order_relaxed);
+                if(first>=base_.tiles_)break;
+#endif
             for(auto i=first;i<std::min(first+32,base_.tiles_);++i) {
                 visit(1,i,w);visit(2,i,w);
                 neighbors(i,[&](auto target){

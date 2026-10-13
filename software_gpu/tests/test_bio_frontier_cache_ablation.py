@@ -35,3 +35,29 @@ class TestBioFrontierAblations(unittest.TestCase):
                             self.assertEqual(result["depth"],expected_final.depth_buffer.astype("<f4").tobytes())
                             self.assertEqual(result["receipt"]["workers"],workers)
                             self.assertTrue(result["receipt"]["handoff_ready"])
+
+    def test_static_frontier_uses_disjoint_chunks_and_matches_oracle(self):
+        self.assertEqual(ABLATIONS["default"], ())
+        self.assertEqual(ABLATIONS["static-frontier-chunks"],
+                         ("-DARE_BIO_STATIC_FRONTIER_CHUNKS=1",))
+        width, height, tile = 40, 32, 1
+        scene = sparse_scene()
+        reference, final = renderer_oracle(width, height, scene)
+        n_tiles = width * height
+        n_chunks = (n_tiles + 31) // 32
+        with tempfile.TemporaryDirectory(prefix="are-static-frontier-") as tmp:
+            executable, build = build_bio_workrooms(tmp, ablation="static-frontier-chunks")
+            self.assertEqual(build["flags"][-1], "-DARE_BIO_STATIC_FRONTIER_CHUNKS=1")
+            for workers in (1, 2, 4, 8):
+                with self.subTest(workers=workers):
+                    out = run_bio_workrooms(executable, descriptor(width, height, tile, 17),
+                                            scene, workers, 3, "combined")
+                    expected = [sum(min(32, n_tiles - chunk * 32)
+                                    for chunk in range(w, n_chunks, workers))
+                                for w in range(workers)]
+                    self.assertEqual(out["receipt"]["waves"][1]["worker_jobs"], expected)
+                    self.assertEqual(out["resolved"], reference.color_buffer.tobytes())
+                    self.assertEqual(out["rgba"], final.color_buffer.tobytes())
+                    self.assertEqual(out["depth"],
+                                     final.depth_buffer.astype("<f4").tobytes())
+                    self.assertTrue(out["receipt"]["handoff_ready"])
