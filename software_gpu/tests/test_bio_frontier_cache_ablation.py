@@ -61,3 +61,99 @@ class TestBioFrontierAblations(unittest.TestCase):
                     self.assertEqual(out["depth"],
                                      final.depth_buffer.astype("<f4").tobytes())
                     self.assertTrue(out["receipt"]["handoff_ready"])
+
+
+class TestBioFrontierReceiptReadback(unittest.TestCase):
+    """Signed report mutations must not certify fabricated benchmark summaries.
+
+    These are pure receipt-contract tests, NOT performance or raster evidence.
+    The native shader/framebuffer oracle runs in TestBioFrontierAblations.
+    """
+
+    def _report(self, workers=(1,)):
+        from tools.benchmark_frontier_alternating import (
+            CASES, PROTOCOL, VARIANTS, canonical, digest, order_for_pair,
+        )
+        cases = []
+        for name, pixels, tile, factory in CASES:
+            for worker in workers:
+                pairs = [
+                    {
+                        "pair": i,
+                        "order": list(order_for_pair(i)),
+                        "measured_ms": {"default": 3.0, "static-frontier-chunks": 2.0},
+                        "cpu_ms": {"default": 1.0, "static-frontier-chunks": 1.0},
+                    }
+                    for i in range(15)
+                ]
+                cases.append({
+                    "scene": name, "workers": worker, "pixels": pixels,
+                    "tile": tile, "triangles": len(factory()),
+                    "request_sha256": "a" * 64,
+                    "image_depth_sha256": "b" * 64,
+                    "pairs": pairs,
+                    "median_default_ms": 3.0,
+                    "median_static_ms": 2.0,
+                    "median_paired_delta_ms": -1.0,
+                    "median_paired_static_over_default": 2.0 / 3.0,
+                    "faster_static_pairs": 15,
+                })
+        report = {
+            "protocol": PROTOCOL, "status": "PASS",
+            "variants": list(VARIANTS),
+            "builds": {variant: {} for variant in VARIANTS},
+            "repeats": 15, "workers": list(workers), "cases": cases,
+        }
+        report["report_sha256"] = digest(canonical(report))
+        return report
+
+    @staticmethod
+    def _resign(report):
+        from tools.benchmark_frontier_alternating import canonical, digest
+        report["report_sha256"] = digest(canonical({
+            k: v for k, v in report.items() if k != "report_sha256"
+        }))
+
+    def test_reference_receipt_passes_integrity_gate(self):
+        from tools.benchmark_frontier_alternating import verify_report
+        self.assertTrue(verify_report(self._report()))
+
+    def test_re_signed_inaccurate_summaries_are_rejected(self):
+        from tools.benchmark_frontier_alternating import verify_report
+        for key, bad in (
+            ("median_default_ms", 30.0),
+            ("median_static_ms", 20.0),
+            ("faster_static_pairs", 0),
+        ):
+            with self.subTest(field=key):
+                report = self._report()
+                report["cases"][0][key] = bad
+                self._resign(report)
+                with self.assertRaisesRegex(ValueError, "ABBA_SUMMARY_MISMATCH"):
+                    verify_report(report)
+
+    def test_re_signed_scene_metadata_drift_is_rejected(self):
+        from tools.benchmark_frontier_alternating import verify_report
+        for key, bad in (("pixels", 512), ("tile", 8), ("triangles", 999)):
+            with self.subTest(field=key):
+                report = self._report()
+                report["cases"][0][key] = bad
+                self._resign(report)
+                with self.assertRaisesRegex(ValueError, "ABBA_CASE_METADATA"):
+                    verify_report(report)
+
+    def test_re_signed_cross_worker_request_drift_is_rejected(self):
+        from tools.benchmark_frontier_alternating import verify_report
+        report = self._report(workers=(1, 2))
+        report["cases"][1]["request_sha256"] = "c" * 64
+        self._resign(report)
+        with self.assertRaisesRegex(ValueError, "ABBA_REQUEST_DRIFT"):
+            verify_report(report)
+
+    def test_re_signed_invalid_digest_encoding_is_rejected(self):
+        from tools.benchmark_frontier_alternating import verify_report
+        report = self._report()
+        report["cases"][0]["image_depth_sha256"] = "z" * 64
+        self._resign(report)
+        with self.assertRaisesRegex(ValueError, "ABBA_FRAME_HASH"):
+            verify_report(report)
