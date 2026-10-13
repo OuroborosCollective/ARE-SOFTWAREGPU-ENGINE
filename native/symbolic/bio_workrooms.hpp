@@ -167,7 +167,7 @@ class BioPipeline {
     std::array<std::uint64_t,8> samples_{};
     Counts& jobs(unsigned w){return jobs_[w];}
     const Counts& jobs(unsigned w)const{return jobs_[w];}
-    std::uint64_t& samples(unsigned w){return samples(w);}
+    std::uint64_t& samples(unsigned w){return samples_[w];}
     const std::uint64_t& samples(unsigned w)const{return samples_[w];}
     void clear_worker_stats(){jobs_={};samples_={};}
 #endif
@@ -249,7 +249,7 @@ class BioPipeline {
     void summarize(unsigned kind,double elapsed) {
         auto& wave=base_.waves_[kind];wave.executed=0;wave.samples=0;wave.milliseconds=elapsed;
         for(unsigned w=0;w<base_.workers_;++w){wave.worker_jobs[w]=jobs(w)[kind];
-            wave.executed+=jobs_[w][kind];if(kind==1)wave.samples+=samples_[w];}
+            wave.executed+=jobs(w)[kind];if(kind==1)wave.samples+=samples(w);}
         if(wave.executed!=(kind==0?base_.triangle_count():base_.tiles_))
             throw std::runtime_error("ROOM_INCOMPLETE_WAVE");
     }

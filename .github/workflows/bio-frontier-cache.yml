@@ -40,6 +40,7 @@ jobs:
         run: python -m unittest software_gpu.tests.test_bio_frontier_cache_ablation -v
 
   paired-pilot:
+    needs: native-parity
     name: Native cache A/B 15-pair source-bound pilot
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -62,6 +63,7 @@ jobs:
           retention-days: 30
 
   sampled-benchmark:
+    needs: paired-pilot
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.full_benchmark)
     name: Bounded native serial worker sweep (diagnostic; noisy CI hardware)
     runs-on: ubuntu-latest

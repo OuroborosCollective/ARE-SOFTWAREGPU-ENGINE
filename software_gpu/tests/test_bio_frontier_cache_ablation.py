@@ -17,7 +17,8 @@ class TestBioFrontierAblations(unittest.TestCase):
             build_bio_workrooms("not-a-directory", ablation="../../untrusted")
 
     def test_real_native_variants_match_python_oracle_across_workers(self):
-        cases = [(31,29,4,2,scene_fixture()), (37,35,1,4,sparse_scene())]
+        cases = [(31,29,4,1,scene_fixture()), (31,29,4,2,scene_fixture()),
+                 (37,35,1,4,sparse_scene()), (19,17,4,8,sparse_scene())]
         with tempfile.TemporaryDirectory(prefix="are-frontier-ablation-") as tmp:
             for name in ABLATIONS:
                 with self.subTest(ablation=name):
