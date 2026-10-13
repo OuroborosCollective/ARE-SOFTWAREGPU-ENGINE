@@ -18,6 +18,8 @@
 
 ## Nachvollziehbare Zahlen statt Werbeversprechen
 
+Der **Bio-PBR-C++17-Renderer** war auf den gemessenen Originalmodell-Szenen **1,554–1,709×** schneller als die **native PBR-Baseline**, bei vollständiger Farb-/Tiefen-Parität (15 gepaarte Frames je Szene). Ein **separater C++17-Rastertest gegen Python/NumPy-Batch-first** dokumentiert **7,00×** für 13.312 statische Dreiecke bei 256 px. Diese Werte gehören zu **verschiedenen Workloads und unterschiedlichen Referenzen**; sie dürfen nicht miteinander multipliziert oder als universeller „Bio über NumPy“-Wert ausgegeben werden. [Bio-Raster-Leistungsnachweis](BIO_RENDERER_PERFORMANCE_EVIDENCE.md).
+
 Der [PBR-Arenabericht](native-pbr-arena-report-20261013.md) protokolliert gepaarte CPU-vs.-CPU-Wandzeiten, komplette Frame-/Depth-Parität, Quellhashes und Umgebungsmerkmale. Die große animierte Arena verfehlt im berichteten Hostlauf weiterhin das 16,7-ms-Framebudget. Die Messwerte belegen **weder Hardware-GPU-Parität noch allgemeine 60 FPS**.
 
 ## Selbst ausprobieren
