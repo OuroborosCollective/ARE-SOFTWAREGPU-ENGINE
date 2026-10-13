@@ -66,7 +66,7 @@ class TestSharedHostResourceGate(unittest.TestCase):
              mock.patch.object(host, "snapshot", return_value=metrics()), \
              mock.patch.object(Path, "mkdir", side_effect=AssertionError("unexpected write")):
             opt = mock.Mock(action="inspect", profile="pilot", expected_sha="b"*40,
-                            output_base=Path("/tmp/does-not-exist"),
+                            output_base=Path.cwd() / "does-not-exist",
                             confirm_full_window=False)
             self.assertEqual(host.run(opt), 0)
             opt.action = "plan"
