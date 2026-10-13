@@ -110,7 +110,9 @@ jobs:
           printf '%s\n' '@ouroboroscollective:registry=https://npm.pkg.github.com' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
           test "$(wc -l < .npmrc)" -eq 2
           grep -qxF '@ouroboroscollective:registry=https://npm.pkg.github.com' .npmrc
-          npm config get @ouroboroscollective:registry | grep -Fx 'https://npm.pkg.github.com/'
+          configured_registry="$(npm config get @ouroboroscollective:registry)"
+          test "${configured_registry%/}" = 'https://npm.pkg.github.com'
+          trap 'rm -f .npmrc' EXIT
           npm publish --registry=https://npm.pkg.github.com --access public
           rm -f .npmrc
       - name: Verify GitHub registry publication
