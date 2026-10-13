@@ -7,8 +7,8 @@ orbited, panned, and zoomed.
 
 This viewer is **not** the native benchmark and its FPS display is not a renderer
 comparison or a game-performance claim. The reproducible CPU comparison remains
-`tools/benchmark_models.py`; its current native camera/material contract is
-orthographic, diagnostic-lit, and texture-free. See `docs/native-model-benchmark.md`.
+`tools/benchmark_models.py`; the native pipeline now has separate orthographic/diagnostic and opt-in
+AREMDL03 perspective/PBR modes. See [the measured PBR arena report](../docs/native-pbr-arena-report-20261013.md) and [the original-model benchmark](../docs/native-model-benchmark.md).
 
 ## Install and run
 

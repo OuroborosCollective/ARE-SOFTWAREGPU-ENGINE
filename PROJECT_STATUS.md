@@ -1,6 +1,15 @@
-# ARE SoftwareGPU Engine - Evidence status (2026-10-10)
+# ARE SoftwareGPU Engine - Evidence status (2026-10-13)
 
-## Integrated source
+> **2026-10-13 Nachtrag:** Der folgende Abschnitt dokumentiert historische Slices (8.–10. Oktober). Aktuelle Architektur-/Release-Nachweise siehe [Showcase](docs/SHOWCASE.md), [Release-Status](docs/RELEASE_STATUS.md) und [PBR-Bericht](docs/native-pbr-arena-report-20261013.md).
+
+## Verified state since 2026-10-10
+
+- **Native C++17/AREMDL03 PBR-Arena:** [PR #48](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/48) merged; offline model SHA, serial/baseline/Bio full-buffer parity, 15 repeated benchmark pairs and original-GLB manifest receipts. Not GPU parity or 60 FPS.
+- **Private Gradio CPU Arena:** [PR #50](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/50) merged; authenticated local UI, real child-worker/receipt hash readback and HTTP 401 denial in CI.
+- **Android/Node/Linux/Windows release lane:** [PR #51](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/51) merged. [Main CPU CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329465850) succeeded; [first release workflow](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329782084) built/validated APK and archives but npm registry auth failed (ENEEDAUTH) and release was skipped. Follow-up repair pending independent final CI/release verification.
+- **Public repository:** Visibility confirmed `public`, repository homepage `https://arelogic.space`, GitHub Topics already configured. **GitHub Pages not enabled**, no public Gradio service URL or installed Android device test verified.
+
+## Historical integrated source
 - Owner-supplied SoftwareGPU 1.2.0 TAR pinned to SHA-256 `b8b44a39b46ecfb50a2de121b2534c5d9912fccda2b1b0475faf194fe8e589b8`.
 - GitHub importer accepted and committed **62 UTF-8 source files**; rejected compiled caches, generated BMP/PPM and TAR links. Individual upstream hashes are preserved in `evidence/source-manifest.json` (import provenance, not hashes of later patches).
 - Import GitHub Actions: https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/37823687557 (**passed**; 22 original tests, source readback 62/62).

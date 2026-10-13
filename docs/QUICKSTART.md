@@ -48,6 +48,12 @@ python -m software_gpu.benchmarks.compare_tile_backends --workers 2 --repeats 3 
 
 JIT-Beschleunigung ist optional und nicht auf jeder CPU schneller. Der Benchmark führt einen Warm-up-Lauf aus; JIT-Kompilierungszeit gehört daher nicht zu den angegebenen Medianwerten.
 
+## C++17, Gradio und mobile/Node-Begleitclients
+
+- [Nativer C++17-Rasterizer](NATIVE_RASTER.md) und [AREMDL03 PBR-Originalmodell-Benchmark](native-pbr-arena-report-20261013.md): für die PBR-Dekodierung `python -m pip install -e ".[model-pbr]"`, zusätzlich verifizierte lokale Original-GLBs gemäß Modellmanifest.
+- [Private Gradio CPU Arena](../plugins/gradio_arena/README.md): `python -m pip install -e ".[gradio-arena]"` und `python -m plugins.gradio_arena.app` nach Setzen sicherer `ARE_GRADIO_USER`/`ARE_GRADIO_PASSWORD`-Umgebungsvariablen. Lokal auf `127.0.0.1:7860`, **kein öffentlicher Hosting-Readback**.
+- [Android-/Linux-/Windows- und npm-Release-Status](RELEASE_STATUS.md): Begleitclients verbinden sich mit einer separaten **HTTPS-Gradio-Instanz**; keine lokale native GPU im Android-Client, Linux/Windows brauchen Node 20+.
+
 ## Grafik-Demos
 
 ```bash

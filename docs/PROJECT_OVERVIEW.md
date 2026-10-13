@@ -27,9 +27,11 @@
 | LLVM/Numba CPU-Coverage-JIT | Optional | Linux/Windows CI, nicht allgemeine CPU-Beschleunigung |
 | 4× MSAA und FXAA | Ja | Funktionstests, keine API-Konformität |
 | Direct3D-11-/CUDA-artige Python-Adapter | Demo | Keine native API- oder Treiberkompatibilität |
-| Android-Beispiele und Sprachclients | Prototyp | Kein vollständiger Geräte-/ABI-Test |
+| Android-WebView und Node-Clients | HTTPS-Client und automatisierter Paketbau | Kein Emulator-/Gerätelauf, Serveradresse erforderlich |
 | LLM-Training ohne GPU | Kein vollständiger Stack | Kein PyTorch-Backend/Backprop-GPU-Ersatz |
-| Aurion-Offline-Worker | Nur Vertragsentwurf | Nicht produktiv verbunden |
+| Aurion-Offline-Worker | Isoliert implementiert und getestet | Keine kanonische Aurion-Runtime-Anbindung |
+| Native C++17 AREMDL03/PBR | Optional implementiert | CPU-Pufferparität, Original-GLB-Receipts; keine 60-FPS-Freigabe |
+| Gradio Evidence Arena | Optionales, authentifiziertes Loopback-Frontend | Echter 64px-Worker und unautorisierter HTTP-401-Regressionstest |
 
 Der CPU-Vergleich beobachtete in ausgewählten CI-Fixtures 1,51–1,73-fache Geschwindigkeit gegenüber einer älteren CPU-Streifenimplementierung. Daten und Einschränkungen: [Evidence](RENDER_OPTIMIZATION_EVIDENCE.md).
 

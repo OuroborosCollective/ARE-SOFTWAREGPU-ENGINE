@@ -12,7 +12,9 @@
   },
   "files": [
     "bin/",
-    "README.md"
+    "README.md",
+    "LICENSE.md",
+    "NOTICE"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs"

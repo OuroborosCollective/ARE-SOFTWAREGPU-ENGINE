@@ -13,7 +13,9 @@ are-gradio open https://your-real-gradio.example/
 ```
 
 The SHA-bound GitHub Release also ships npm `.tgz` and portable Linux/Windows
-bundles with their own Node runtime. Source and backend remain separate.
+bundles which **require an installed Node.js 20+ runtime**. Source and backend remain separate.
+
+GitHub Packages installation may require authentication and package visibility permissions. A public GitHub repository does not automatically imply an anonymously installable package.
 
 Publishing to a remote npm registry requires `packages:write` permissions
 and an authenticated owner GitHub Packages configuration. A packed `.tgz`
