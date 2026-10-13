@@ -28,8 +28,8 @@ class SoftwareRasterizer:
                  preparation_cache_entries: int = 8):
         if not isinstance(tile_size, int) or not 1 <= tile_size <= 256:
             raise ValueError("tile_size must be between 1 and 256 pixels")
-        if backend not in ("tiles", "tiles-jit", "tiles-plan", "bands", "native-cpp"):
-            raise ValueError("backend must be tiles, tiles-jit, tiles-plan, bands or native-cpp")
+        if backend not in ("tiles", "tiles-jit", "tiles-plan", "tiles-deferred", "bands", "native-cpp"):
+            raise ValueError("backend must be tiles, tiles-jit, tiles-plan, tiles-deferred, bands or native-cpp")
         if num_threads is not None and (not isinstance(num_threads, int) or num_threads < 1):
             raise ValueError("num_threads must be positive")
         if backend == "native-cpp":
@@ -53,6 +53,7 @@ class SoftwareRasterizer:
         self.backend = backend
         self.plan_policy = plan_policy
         self.last_plan_receipt = None
+        self.last_deferred_receipt = None
         self.native_kernel = native_kernel
         self.last_native_receipt = None
         self.last_preparation_receipt = None
@@ -69,6 +70,7 @@ class SoftwareRasterizer:
         device.total_draw_calls += 1
 
         self.last_plan_receipt = None
+        self.last_deferred_receipt = None
         self.last_native_receipt = None
         if self.native_kernel is not None:
             self.native_kernel.validate_shader(shader)
@@ -87,6 +89,14 @@ class SoftwareRasterizer:
             triangles, prepared_bins = prepared.triangles, prepared.bins
         if self.native_kernel is not None:
             self.last_native_receipt = self.native_kernel.draw(self.fb, triangles, shader)
+            return
+        if self.backend == "tiles-deferred":
+            from .deferred_visibility import rasterize_deferred, validate_deferred_shader
+            # Fail closed before rendering, even for empty draws.
+            validate_deferred_shader(shader)
+            self.last_deferred_receipt = rasterize_deferred(
+                self.fb, triangles, shader, self.tile_size, self.executor,
+                self.num_threads)
             return
         if self.backend in ("tiles", "tiles-jit", "tiles-plan"):
             self.last_plan_receipt = rasterize_tiles(
