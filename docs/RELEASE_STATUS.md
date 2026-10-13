@@ -4,6 +4,13 @@
 
 Die [CPU-regressions-Push-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329465850) war erfolgreich. Der automatische [Android-/Node-Release-Lauf](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329782084) hat **Android-APK, Linux-/Windows-Archive und npm-Tarball real gebaut und geprüft**, scheiterte aber danach an `npm ERR! ENEEDAUTH`. Somit wurden bei dieser Bestandsaufnahme **keine GitHub-Releases** angezeigt; ein npm-Registry-Publish ist ebenfalls nicht nachgewiesen.
 
+## Aktueller Live-Readback (2026-10-13)
+
+- Repository ist **public**; GitHub Pages ist nicht aktiviert. Die Projekt-Homepage-Metadaten verweisen auf `https://arelogic.space`, aber eine daraus resultierende SoftwareGPU-Demo wurde nicht nachgewiesen.
+- Bei dieser erneuten Prüfung meldete die GitHub-Releases-API **keine Releases/Assets**. Siehe [Releases](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases).
+- Der beobachtete `main`-Commit `14e7a3f39dbf06c61c0e9ae33fb4f41b5ed4d990` hatte noch eine laufende [CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38332519681). Damit ist die automatische Release-Kette für diesen Stand **nicht als abgeschlossen verifiziert**.
+- Die älteren Workflow-Ergebnisse mit `failure` und `skipped` zeigen, dass ein erfolgreicher App-/APK-Build nicht automatisch einen erfolgreichen npm-Publish oder ein veröffentlichtes Release bedeutet.
+
 ## Ursache und Nachbesserung
 
 Die Registry-`.npmrc` verwendete literal `\\n` statt echte Zeilenumbrüche, wodurch npm die GitHub-Packages-Anmeldung nicht erkennen konnte. Der Folge-PR korrigiert `printf` für die Registry und Linux-/Windows-Launcher, kontrolliert das Registry-URL-Parsing, prüft die veröffentlichten npm-Metadaten nach und liefert Lizenz/Required Notices mit. **Erfolg erst behaupten, wenn der neue Head vollständig grün und ein GitHub-Release samt npm-Paket durch Readback nachgewiesen ist.**
