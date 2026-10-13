@@ -68,9 +68,14 @@ jobs:
           mkdir -p dist/linux dist/windows
           cp clients/node/bin/are-gradio.mjs dist/linux/are-gradio.mjs
           cp clients/node/bin/are-gradio.mjs dist/windows/are-gradio.mjs
-          printf '#!/bin/sh\\nexec node "$(dirname "$0")/are-gradio.mjs" "$@"\\n' > dist/linux/are-gradio
+          printf '%s\\n' '#!/bin/sh' 'exec node "$(dirname "$0")/are-gradio.mjs" "$@"' > dist/linux/are-gradio
           chmod +x dist/linux/are-gradio
-          printf '@echo off\\r\\nnode "%%~dp0are-gradio.mjs" %%*\\r\\n' > dist/windows/are-gradio.cmd
+          printf '%s\\r\\n' '@echo off' 'node "%~dp0are-gradio.mjs" %*' > dist/windows/are-gradio.cmd
+          bash -n dist/linux/are-gradio
+          test "$(head -n1 dist/linux/are-gradio)" = '#!/bin/sh'
+          python -c 'from pathlib import Path; p=Path("dist/windows/are-gradio.cmd").read_bytes(); assert p.startswith(b"@echo off\\r\\nnode ")'
+          cp clients/node/LICENSE.md clients/node/NOTICE dist/linux/
+          cp clients/node/LICENSE.md clients/node/NOTICE dist/windows/
           cp clients/node/README.md dist/linux/README.md
           cp clients/node/README.md dist/windows/README.md
           (cd dist && zip -qr "$GITHUB_WORKSPACE/ARE-Gradio-Linux.zip" linux)
@@ -102,9 +107,22 @@ jobs:
         run: |
           set -euo pipefail
           cd clients/node
-          printf '@ouroboroscollective:registry=https://npm.pkg.github.com\\n//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\\n' > .npmrc
+          printf '%s\\n' '@ouroboroscollective:registry=https://npm.pkg.github.com' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
+          test "$(wc -l < .npmrc)" -eq 2
+          grep -qxF '@ouroboroscollective:registry=https://npm.pkg.github.com' .npmrc
+          npm config get @ouroboroscollective:registry | grep -Fx 'https://npm.pkg.github.com/'
           npm publish --registry=https://npm.pkg.github.com --access public
           rm -f .npmrc
+      - name: Verify GitHub registry publication
+        if: github.event_name != 'pull_request'
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd clients/node
+          version=$(node -p "require('./package.json').version")
+          published=$(npm view "@ouroboroscollective/softwaregpu-gradio-client@${version}" version --registry=https://npm.pkg.github.com)
+          test "$published" = "$version"
       - name: Publish immutable SHA-tagged preview release
         if: github.event_name != 'pull_request'
         env:
