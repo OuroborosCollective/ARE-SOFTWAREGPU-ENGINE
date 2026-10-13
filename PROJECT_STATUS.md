@@ -35,7 +35,7 @@
 - Android Kotlin code and Android hardware runtime have not been validated by an Android device/emulator CI run.
 - Multilingual clients are prototypes; not all language ABIs have compilation/interop regression coverage.
 - CPU benchmarks are cross-checked against Mesa llvmpipe in CI (runs 37852483597/37852483674); they remain single-host measurements, not independently audited hardware comparisons.
-- **Network service NOT production-safe**: no required authentication/TLS, access policy, payload/memory/CPU quotas or deadline enforcement; do not expose off-loopback.
+- **Network production exposure NOT approved**: the experimental server and private Gradio have separate loopback/authentication protections and some bounded worker paths; a complete production TLS, access-control, rate-limit, multi-user and remote deployment audit is not verified. Do not expose raw backend ports off-loopback.
 - Licensing proposal now documented: PolyForm Noncommercial 1.0.0 plus `Required Notice:` attribution and separate written commercial licensing; this is source-available, not OSI-open-source. Verify provenance and third-party rights before granting commercial rights.
 - Aurion read-only offline-worker contract is implemented in this repo (Phase 4, issue #6, PR #16), **not yet integrated** into the Aurion game runtime (separate repository, separate decision).
 
