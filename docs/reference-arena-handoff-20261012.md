@@ -66,7 +66,7 @@ In einer Bio-Frontier-Welle können Raster, MSAA und AA abhängig von Tile-Abhä
 2. Viewer aus dem Repositoryroot starten:
 
    ```sh
-   python -m http.server 8000 --directory reference_arena
+   python -m http.server 8000 --bind 127.0.0.1 --directory reference_arena
    ```
 
    Im Browser `http://localhost:8000/` öffnen (Three.js 0.180.0 und Addons werden von jsDelivr geladen).
