@@ -122,6 +122,8 @@ jobs:
         run: |
           set -euo pipefail
           cd clients/node
+          printf '%s\\n' '@ouroboroscollective:registry=https://npm.pkg.github.com' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
+          trap 'rm -f .npmrc' EXIT
           version=$(node -p "require('./package.json').version")
           published=$(npm view "@ouroboroscollective/softwaregpu-gradio-client@${version}" version --registry=https://npm.pkg.github.com)
           test "$published" = "$version"
