@@ -17,3 +17,19 @@ Release-Workflow: Nach erfolgreichem `CPU regressions`-Workflow auf
 `main` baut er die APK aus genau dessen Head-SHA, prüft APK/AAPT und SHA256
 und erstellt ein SHA-gebundenes GitHub Prerelease. Fehlgeschlagene CI und PRs
 lösen **keine** Veröffentlichung aus.
+
+## Gleichzeitige Node- und Desktop-Veröffentlichung
+
+Der SHA-gebundene GitHub-Prerelease bündelt Android-Debug-APK, Linux/Windows-
+Node-Launcher-ZIPs, den getesteten npm-Tarball und SHA256-Listen. Linux und
+Windows benötigen Node.js >=20; es handelt sich nicht um native Standalone-
+Binaries. Der Node-Client überprüft die echte HTTPS-`/config`-Route und meldet
+401/403 ehrlich als geschützte Instanz. Die ZIP-Clients sind ohne Gradio-Server
+nur Verbindungstests/Launcher, keine lokale GPU-Engine.
+
+Ein erfolgreicher `main`-Lauf soll zusätzlich eine commitgebundene Version nach
+GitHub Packages (`@ouroboroscollective/softwaregpu-gradio-client`) publizieren.
+Das erfordert gültige Organisationsrechte für `GITHUB_TOKEN` mit
+`packages: write`; falls das fehlschlägt, darf kein kompletter Release
+behauptet werden. Es erfolgt kein automatischer Publish zur öffentlichen
+`registry.npmjs.org` ohne gesonderte npm-Publisher-Autorisierung.
