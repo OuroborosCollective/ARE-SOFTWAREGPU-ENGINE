@@ -17,6 +17,8 @@ setup(
         "jit": ["numba>=0.61.2,<0.67"],
         # Offline PNG/JPEG decoding is only needed for the opt-in AREMDL03 profile.
         "model-pbr": ["Pillow>=9.0"],
+        # Private, opt-in research console. No web service in the default install.
+        "gradio-arena": ["gradio>=5,<7", "Pillow>=9.0"],
     },
     entry_points={
         "console_scripts": [
