@@ -1,5 +1,14 @@
 # Multi-Plattform-Releases: belegter Status und Prüfanleitung
 
+## Erfolgreicher Release-Readback (2026-10-13, neuer als die historische Bestandsaufnahme)
+
+**GitHub Release tatsächlich veröffentlicht:** [Gradio Android / Linux / Windows / npm für Commit `14e7a3f39dbf06c61c0e9ae33fb4f41b5ed4d990`](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases/tag/gradio-android-14e7a3f39dbf06c61c0e9ae33fb4f41b5ed4d990).
+
+Der [erfolgreiche Build-/Release-Lauf 38332775462](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38332775462) hat die echten APK-, Linux-/Windows-ZIP- und npm-tgz-Artefakte gebaut, geprüft, `npm publish` nach GitHub Packages **erfolgreich ausgeführt**, den GitHub-Packages-Registry-Readback bestanden und sechs Assets an den GitHub-Release-Tag gebunden. Der zugrunde liegende CPU-regressions-Lauf [38332519681](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38332519681) war grün. Es gibt weiterhin keinen bestätigten Live-Gradio-Server, Android-Gerätetest oder dauerhaft signierte Update-APK. Die Windows-/Linux-ZIPs benötigen Node.js 20+.
+
+**Chronologie:** Die nachfolgend genannte `ENEEDAUTH`-Fehlermeldung betrifft den älteren ersten Release-Lauf. Sie ist durch den späteren, erfolgreichen Run **überholt**, nicht weiterhin der aktuelle Veröffentlichungsstatus.
+
+
 **Stand der dokumentierten Bestandsaufnahme:** 2026-10-13, `main`-SHA `db9ba894f29254fc67f4d3c808807f89ab721103`.
 
 Die [CPU-regressions-Push-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329465850) war erfolgreich. Der automatische [Android-/Node-Release-Lauf](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/38329782084) hat **Android-APK, Linux-/Windows-Archive und npm-Tarball real gebaut und geprüft**, scheiterte aber danach an `npm ERR! ENEEDAUTH`. Somit wurden bei dieser Bestandsaufnahme **keine GitHub-Releases** angezeigt; ein npm-Registry-Publish ist ebenfalls nicht nachgewiesen.
