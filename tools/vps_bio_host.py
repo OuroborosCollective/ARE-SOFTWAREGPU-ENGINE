@@ -8,17 +8,20 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import fcntl
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
-import resource
 import shutil
 import signal
 import subprocess
 import sys
+
+# Importable on Windows for pure admission-unit tests; execution is Linux-only.
+if sys.platform == "linux":
+    import fcntl
+    import resource
 
 ROOT = Path(__file__).resolve().parents[1]
 GIB = 1024 ** 3
@@ -84,7 +87,7 @@ def admission(metrics, profile):
             "limits": {"nice": 15, "address_space_gib": 4,
                        "file_size_gib": 1, "cpu_seconds": 900,
                        "wall_seconds": p["wall_seconds"],
-                       "no_listening_ports": True}}
+                       "only_local_subprocess": True}}
 
 
 def verified_head(expected_sha: str):
@@ -131,7 +134,7 @@ def _run_bounded(cmd, cpus, seconds):
 
 
 def run(args):
-    if os.geteuid() == 0:
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise HostGateError("NONROOT_ONLY")
     head = verified_head(args.expected_sha)
     metrics = snapshot(ROOT)
