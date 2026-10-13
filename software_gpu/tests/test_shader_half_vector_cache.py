@@ -201,6 +201,32 @@ class TestBlinnPhongHalfVectorCache(unittest.TestCase):
                 engine.executor.shutdown(wait=True)
 
 
+    def test_textured_float32_texel_boundary_exact_parity(self):
+        # float32 UV * 127 rounds to 102; converting the UV to Python float
+        # first shifts the final truncation to 101 (NumPy 2.x).
+        texture = np.zeros((1, 128, 3), dtype=np.uint8)
+        texture[0, 101] = [255, 0, 0]
+        texture[0, 102] = [0, 255, 0]
+        ref, opt = self._pair(texture=texture)
+        varyings = {
+            "normal": np.array([0.0, 0.0, 1.0], dtype=np.float32),
+            "uv": np.array([0.8031496, 0.0], dtype=np.float32),
+        }
+        self.assertEqual(ref.fragment_shader(varyings), opt.fragment_shader(varyings))
+
+    def test_in_place_texture_resize_tracks_live_shape(self):
+        # The original public texture object is mutable. Shape metadata
+        # must not remain stale when the SAME ndarray is resized.
+        texture = np.zeros((1, 4, 3), dtype=np.uint8)
+        ref, opt = self._pair(texture=texture)
+        texture.resize((1, 2, 3), refcheck=False)
+        texture[0, 1] = [0, 255, 0]
+        varyings = {
+            "normal": np.array([0.0, 0.0, 1.0], dtype=np.float32),
+            "uv": np.array([1.0, 0.0], dtype=np.float32),
+        }
+        self.assertEqual(ref.fragment_shader(varyings), opt.fragment_shader(varyings))
+
     def test_nonfinite_material_does_not_become_valid_white_or_black(self):
         # PR audit: scalar min/max silently swallowed NaN in ten candidates.
         # Keep the reference exception contract for live material mutation.

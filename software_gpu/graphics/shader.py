@@ -194,14 +194,17 @@ class BlinnPhongShader(Shader):
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
-        if self.texture is not None:
+        # Read once per fragment, without storing mutable texture dimensions.
+        texture = self.texture
+        if texture is not None:
+            # Preserve NumPy float32 promotion/rounding for exact texel selection.
             u, v = varyings['uv'][0], varyings['uv'][1]
             u = max(0.0, min(1.0, u))
             v = max(0.0, min(1.0, v))
-            th, tw = self.texture.shape[0], self.texture.shape[1]
+            th, tw = texture.shape[0], texture.shape[1]
             tx = int(u * (tw - 1))
             ty = int(v * (th - 1))
-            tex_sample = self.texture[ty, tx, :3] / 255.0
+            tex_sample = texture[ty, tx, :3] / 255.0
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
