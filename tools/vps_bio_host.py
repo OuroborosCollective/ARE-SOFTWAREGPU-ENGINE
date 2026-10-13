@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GIB = 1024 ** 3
 PROFILES = {
     "pilot": {"workers": [1, 2], "variants": ["default", "padded-pending"],
-              "free_gib": 8, "memory_gib": 4, "max_disk_used": .90,
+              "free_gib": 8, "memory_gib": 4, "max_disk_used": .85,
               "max_load_per_cpu": .60, "min_cpus": 2, "limit_cpus": 2,
               "budget_seconds": 300, "wall_seconds": 420},
     "full": {"workers": [1, 2, 4, 8],
@@ -73,7 +73,7 @@ def admission(metrics, profile):
         failures.append("MEMORY_HEADROOM_LOW")
     if metrics["disk_free_bytes"] < p["free_gib"] * GIB:
         failures.append("DISK_FREE_LOW")
-    if metrics["disk_used_fraction"] > p["max_disk_used"]:
+    if metrics["disk_used_fraction"] >= p["max_disk_used"]:
         failures.append("DISK_PRESSURE_HIGH")
     load_ratio = metrics["load_1m"] / max(1, cpus)
     if load_ratio > p["max_load_per_cpu"]:
@@ -147,7 +147,22 @@ def run(args):
     if not args.output_base.is_absolute():
         raise HostGateError("OUTPUT_BASE_ABSOLUTE_REQUIRED")
     base = args.output_base.resolve()
+    # A plan is a read-only proposal; it must not create directories or lock files.
+    if args.action == "plan":
+        p = PROFILES[args.profile]
+        cmd = [sys.executable, str(ROOT / "tools/benchmark_frontier_cache.py"),
+               "--output-dir", str(base / ("<UTCSTAMP>-" + head[:12] + "-" + args.profile)),
+               "--repeats", "15", "--max-seconds", str(p["budget_seconds"]),
+               "--workers", *map(str, p["workers"]), "--variants", *p["variants"]]
+        print(json.dumps({"planned_command": cmd, "output_base": str(base),
+                          "executed": False, "writes": False}), flush=True)
+        return 0
+    # Existing shared-host disk must be below the stricter sovereign P0 threshold.
     base.mkdir(parents=True, exist_ok=True, mode=0o700)
+    output_disk = snapshot(base)
+    output_gate = admission(output_disk, args.profile)
+    if output_gate["status"] != "GO":
+        raise HostGateError("OUTPUT_FS_GATE_CLOSED:" + ",".join(output_gate["failures"]))
     with (base / ".single-run.lock").open("a+") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -161,10 +176,6 @@ def run(args):
                "--output-dir", str(dest), "--repeats", "15",
                "--max-seconds", str(p["budget_seconds"]), "--workers",
                *map(str, p["workers"]), "--variants", *p["variants"]]
-        if args.action == "plan":
-            print(json.dumps({"planned_command": cmd, "planned_dir": str(dest),
-                              "executed": False}), flush=True)
-            return 0
         log = _run_bounded(cmd, gate["selected_cpus"], p["wall_seconds"])
         (dest / "native-output.log").write_text(log, encoding="utf-8")
         receipt = dest / "benchmark.json"
