@@ -21,6 +21,7 @@ jobs:
   apk:
     permissions:
       contents: write
+      packages: write
     if: >-
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.event == 'push' &&
@@ -59,6 +60,9 @@ jobs:
           set -euo pipefail
           cd clients/node
           npm test
+          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
+          short="${sha:0:12}"
+          npm version "0.1.0-ci.${short}" --no-git-tag-version --allow-same-version
           npm pack --pack-destination "$GITHUB_WORKSPACE"
           cd "$GITHUB_WORKSPACE"
           mkdir -p dist/linux dist/windows
@@ -91,6 +95,16 @@ jobs:
           unzip -t ARE-Gradio-Linux.zip >/dev/null
           unzip -t ARE-Gradio-Windows.zip >/dev/null
           sha256sum -c desktop-node.sha256
+      - name: Publish npm package to GitHub Packages
+        if: github.event_name != 'pull_request'
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd clients/node
+          printf '@ouroboroscollective:registry=https://npm.pkg.github.com\\n//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\\n' > .npmrc
+          npm publish --registry=https://npm.pkg.github.com --access public
+          rm -f .npmrc
       - name: Publish immutable SHA-tagged preview release
         if: github.event_name != 'pull_request'
         env:
@@ -109,5 +123,5 @@ jobs:
             ARE-Gradio-Linux.zip ARE-Gradio-Windows.zip \
             ouroboroscollective-softwaregpu-gradio-client-*.tgz desktop-node.sha256 \
             --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "Gradio Android preview ${SHA:0:12}" \
-            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion plus Linux/Windows portable Node launchers and npm tarball. Linux/Windows require Node 20+. Ephemeral APK debug signing: preview only. Registry publish is separate; no embedded renderer or demo endpoint." \
+            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion plus Linux/Windows portable Node launchers and npm tarball. Linux/Windows require Node 20+. Ephemeral APK debug signing: preview only. GitHub Packages npm publish uses a SHA-specific package version; no embedded renderer or demo endpoint." \
             --prerelease
