@@ -62,7 +62,7 @@ jobs:
           retention-days: 30
 
   sampled-benchmark:
-    if: github.event_name == 'workflow_dispatch' && inputs.full_benchmark
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.full_benchmark)
     name: Bounded native serial worker sweep (diagnostic; noisy CI hardware)
     runs-on: ubuntu-latest
     timeout-minutes: 30
