@@ -195,7 +195,8 @@ class BlinnPhongShader(Shader):
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
         if self.texture is not None:
-            u, v = varyings['uv'][0], varyings['uv'][1]
+            # OPTIMIZATION: Extract coordinates using scalars to prevent object creation overhead in min/max
+            u, v = float(varyings['uv'][0]), float(varyings['uv'][1])
             u = max(0.0, min(1.0, u))
             v = max(0.0, min(1.0, v))
             th, tw = self.texture.shape[0], self.texture.shape[1]
@@ -206,7 +207,7 @@ class BlinnPhongShader(Shader):
 
         # Diffuse component (Lambertian)
         diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
+        diffuse = base_color * self.light_color * np.float32(diff)
 
         # Ambient component
         ambient = base_color * self.ambient_color
@@ -225,11 +226,12 @@ class BlinnPhongShader(Shader):
                 half_dir /= half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
+
         if cache[2]:
             spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
         else:
             spec = 0.0
-        specular = self.specular_color * self.light_color * spec
+        specular = self.specular_color * self.light_color * np.float32(spec)
 
         final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
         return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
