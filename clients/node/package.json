@@ -1,0 +1,20 @@
+{
+  "name": "@ouroboroscollective/softwaregpu-gradio-client",
+  "version": "0.1.0",
+  "description": "Cross-platform read-only Gradio endpoint probe and launcher for ARE SoftwareGPU",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "are-gradio": "./bin/are-gradio.mjs"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
