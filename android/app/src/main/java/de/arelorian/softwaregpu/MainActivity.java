@@ -19,13 +19,14 @@ import android.net.Uri;
 public final class MainActivity extends Activity {
     private WebView browser;
     private TextView status;
+    private String permittedHost = "";
     private static final String PREFS = "are_gradio_endpoint";
 
     static boolean validEndpoint(String value) {
         if (value == null) return false;
         Uri uri = Uri.parse(value.trim());
         return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
-            && !uri.getHost().isEmpty() && uri.getUserInfo() == null
+            && !uri.getHost().isEmpty() && uri.getEncodedAuthority() != null && !uri.getEncodedAuthority().contains("@")
             && uri.getPort() <= 65535 && uri.getPort() >= -1;
     }
     @Override public void onCreate(Bundle saved) {
@@ -51,8 +52,8 @@ public final class MainActivity extends Activity {
         browser.getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
         browser.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                if (!request.getUrl().getScheme().equalsIgnoreCase("https")) return true;
-                return false;
+                Uri target = request.getUrl();
+                return !("https".equalsIgnoreCase(target.getScheme()) && permittedHost.equalsIgnoreCase(target.getHost()));
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
                 if (req.isForMainFrame()) status.setText("Server nicht erreichbar. HTTPS-Adresse prüfen.");
@@ -66,6 +67,7 @@ public final class MainActivity extends Activity {
             }
             prefs.edit().putString("endpoint", url).apply();
             status.setText("Verbinde mit " + Uri.parse(url).getHost());
+            permittedHost = Uri.parse(url).getHost();
             browser.loadUrl(url);
         });
         container.addView(status);
