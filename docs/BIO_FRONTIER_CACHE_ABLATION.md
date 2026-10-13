@@ -148,3 +148,22 @@ run establishes parity but not controlled performance superiority. The first
 objective is to validate the ownership and shared-dependency model. Full
 scheduler promotion remains blocked pending alternating-variant A/B and a
 controlled CPU-affinity comparison with negative cases retained.
+
+## Reproducible alternating default/static C++17 runs (PR #61)
+
+The `tools/benchmark_frontier_alternating.py` evidence worker now performs **15 actual
+AB/BA rounds** per native scene and worker count, instead of merely sweeping
+all default frames before the entire static variant. Each C++17 child process
+runs the recorded three warmups and exactly one timed frame, then alternates
+which variant runs first on the next pair. The tool checks exact resolved/RGBA/
+Depth bytes, handoff state, the source input hash, build binary hashes, and
+all raw candidate timing samples before saving a SHA256-signed JSON report.
+
+The benchmark uses the same GitHub-hosted runner per AB/BA test (1/2/4/8 workers)
+and serial execution across native test, alternating benchmark, older pilot and
+full variant sweep. Each phase has independently captured source and binary
+SHA256s. **A/B alternation is not randomization**; this does not prove noise-
+free speedup, PBR workload generalization, absence of false sharing or any
+hardware-GPU equivalence. No production default switch is authorized from
+these CPU-only experiments. Negative cases and 8-worker CPU oversubscription
+must be reported without filtering.
