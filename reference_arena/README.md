@@ -16,7 +16,7 @@ From the repository root, using the supplied model archive:
 
 ```sh
 python tools/install_reference_arena_assets.py /path/to/SoftwareGPU_Referenzarena_GLB_Modelle.zip
-python -m http.server 8000 --directory reference_arena
+python -m http.server 8000 --bind 127.0.0.1 --directory reference_arena
 ```
 
 Open <http://localhost:8000>. The installer verifies every selected GLB against
