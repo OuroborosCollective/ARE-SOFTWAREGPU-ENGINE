@@ -161,7 +161,9 @@ class BlinnPhongShader(Shader):
         self.diffuse_color = diffuse_color
         self.specular_color = specular_color
         self.shininess = shininess
-        self.texture = texture
+        self._texture = texture
+        self._tex_h_minus_1 = self._texture.shape[0] - 1 if self._texture is not None else 0
+        self._tex_w_minus_1 = self._texture.shape[1] - 1 if self._texture is not None else 0
         # A single immutable cache record avoids mixed fields across threads.
         # light_dir is public/mutable: check its value before every lookup.
         self._view_dir = np.array([0.0, 0.0, 1.0], dtype=np.float32)
@@ -186,6 +188,16 @@ class BlinnPhongShader(Shader):
 
     vertex_preparation_equivalent_to = vertex_shader
 
+    @property
+    def texture(self):
+        return self._texture
+
+    @texture.setter
+    def texture(self, value):
+        self._texture = value
+        self._tex_h_minus_1 = self._texture.shape[0] - 1 if self._texture is not None else 0
+        self._tex_w_minus_1 = self._texture.shape[1] - 1 if self._texture is not None else 0
+
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
         n_len = np.linalg.norm(normal)
@@ -194,14 +206,15 @@ class BlinnPhongShader(Shader):
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
-        if self.texture is not None:
-            u, v = varyings['uv'][0], varyings['uv'][1]
+        if self._texture is not None:
+            # OPTIMIZATION: Extract coordinates as standard Python floats to reduce object overhead during min/max.
+            # Performance Impact: Removes NumPy scalar dispatch inside tight loop.
+            u, v = float(varyings['uv'][0]), float(varyings['uv'][1])
             u = max(0.0, min(1.0, u))
             v = max(0.0, min(1.0, v))
-            th, tw = self.texture.shape[0], self.texture.shape[1]
-            tx = int(u * (tw - 1))
-            ty = int(v * (th - 1))
-            tex_sample = self.texture[ty, tx, :3] / 255.0
+            tx = int(u * self._tex_w_minus_1)
+            ty = int(v * self._tex_h_minus_1)
+            tex_sample = self._texture[ty, tx, :3] / 255.0
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
@@ -214,8 +227,9 @@ class BlinnPhongShader(Shader):
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
         # A mutable light_dir must invalidate the value, not leave stale light.
-        light_key = (float(self.light_dir[0]), float(self.light_dir[1]),
-                     float(self.light_dir[2]))
+        # OPTIMIZATION: Extract coordinates directly to floats without extra index calls
+        lx, ly, lz = float(self.light_dir[0]), float(self.light_dir[1]), float(self.light_dir[2])
+        light_key = (lx, ly, lz)
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
