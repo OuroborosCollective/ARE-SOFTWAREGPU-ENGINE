@@ -27,10 +27,18 @@ struct Prepared {
 };
 struct Wave { std::uint64_t executed=0, samples=0; double milliseconds=0;
     std::vector<std::uint64_t> worker_jobs; };
-enum class Admission { legacy, model_probe };
+enum class Admission { legacy, model_probe
+#ifdef ARE_STREAM_PROBE
+    , stream_probe  // Research-only native RGBA output; never a default admission.
+#endif
+};
 inline std::size_t validate(Config c,std::size_t triangles,unsigned workers,
                             Admission admission=Admission::legacy) {
-    if(c.width<2 || c.height<2 || c.width>1024 || c.height>1024 ||
+    bool stream_probe=false;
+#ifdef ARE_STREAM_PROBE
+    stream_probe=admission==Admission::stream_probe;
+#endif
+    if(c.width<2 || c.height<2 || (!stream_probe && (c.width>1024 || c.height>1024)) ||
        c.tile<1 || c.tile>64 || c.frame>1000000 ||
        workers<1 || workers>8)
         throw std::runtime_error("ROOM_BUDGET");
@@ -41,6 +49,12 @@ inline std::size_t validate(Config c,std::size_t triangles,unsigned workers,
         const auto tiles=std::uint64_t((c.width+c.tile-1)/c.tile)*((c.height+c.tile-1)/c.tile);
         if(c.width>512 || c.height>512 || c.tile<16 || triangles>8000000 ||
            tiles*triangles>536870912)throw std::runtime_error("MODEL_RENDER_BUDGET");
+#ifdef ARE_STREAM_PROBE
+    } else if(admission==Admission::stream_probe) {
+        const auto tiles=std::uint64_t((c.width+c.tile-1)/c.tile)*((c.height+c.tile-1)/c.tile);
+        if(c.width>1280 || c.height>720 || c.tile<16 || triangles<1 || triangles>64 ||
+           tiles*triangles>1500000)throw std::runtime_error("STREAM_RENDER_BUDGET");
+#endif
     } else throw std::runtime_error("ROOM_ADMISSION");
     return std::size_t(c.width)*c.height;
 }
@@ -279,8 +293,11 @@ public:
     void update_scene(const std::vector<Triangle>& triangles) {
         delivered_=false;
         if(surface_mode_)throw std::runtime_error("MODEL_SURFACE_PROTOCOL");
-        if(admission_!=Admission::model_probe)
-            throw std::runtime_error("MODEL_TOPOLOGY_CHANGED");
+        if(admission_!=Admission::model_probe
+#ifdef ARE_STREAM_PROBE
+            && admission_!=Admission::stream_probe
+#endif
+        )throw std::runtime_error("MODEL_TOPOLOGY_CHANGED");
         validate(c_,triangles.size(),workers_,admission_);
         validate_geometry(triangles);
         triangles_=triangles;
