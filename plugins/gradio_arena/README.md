@@ -50,3 +50,13 @@ with source-hash audits use the existing SoftwareGPU Workbench and
 as a hardware performance claim. This opt-in UI intentionally does not
 expose original GLB assets or PBR rendering until the same safety and
 manifest gates can be implemented without exposing private source files.
+
+## Public visibility
+
+The owner approves public distribution of non-sensitive SoftwareGPU test scenes,
+source-backed benchmark receipts and UI screenshots. The public repository and
+Three.js reference documentation may be shared. This permission does not require
+opening a remote command/render endpoint: the computational Gradio process retains
+its password-protected loopback listener, fixed resource limits and finite queue.
+A later externally hosted demo must first provide an authenticated, rate-limited
+execution boundary and verify it with live readback before claiming it is online.
