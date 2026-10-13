@@ -32,8 +32,7 @@ class TestPrivateGradioRuntime(unittest.TestCase):
 
     def test_main_keeps_authentication_and_loopback(self):
         with mock.patch.dict(os.environ, {"ARE_GRADIO_USER": "owner",
-                                          "ARE_GRADIO_PASSWORD": "local-ci-demo-password-123"},
-                             clear=True):
+                                          "ARE_GRADIO_PASSWORD": "local-ci-demo-password-123"}):
             with mock.patch("gradio.blocks.Blocks.launch") as launch:
                 main()
         options = launch.call_args.kwargs
