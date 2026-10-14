@@ -34,6 +34,26 @@ def _trusted_snapshot_file(path, root):
             raise ValueError("AUTO_INVENTORY: symlink escapes HF cache")
 
 
+def pair_coverage(root):
+    """List possible pairs by filename only; never certify their contents.
+
+    This diagnostic is safe for incomplete live snapshots, but has no
+    training eligibility meaning until the full canonical/Viewer verifier,
+    source closure and Atomic/holdout audits have passed.
+    """
+    root = Path(root)
+    canonical = {p.stem for p in (root / "data" / "auto").glob("*.json")}
+    projections = {p.stem for p in (root / "data" / "auto_rows").glob("*.jsonl")}
+    return {
+        "canonical_count": len(canonical),
+        "viewer_count": len(projections),
+        "pair_count_unverified": len(canonical & projections),
+        "missing_canonical_ids": sorted(projections - canonical),
+        "missing_viewer_ids": sorted(canonical - projections),
+        "training_eligible": False,
+    }
+
+
 def inventory(root):
     root = Path(root)
     canonical = root / "data" / "auto"
@@ -112,6 +132,7 @@ def assess(pinned_revision, current_revision, pinned_root, current_root):
             "protocol": "are.miha.auto-readiness.v1",
             "status": "AUTO_SOURCE_INVALID",
             "diagnostic": str(exc),
+            "pair_coverage": pair_coverage(current_root),
             "pinned_evidence_sha": pinned_revision,
             "current_evidence_sha": current_revision,
             "pinned_canonical_records": old["canonical_records"],
