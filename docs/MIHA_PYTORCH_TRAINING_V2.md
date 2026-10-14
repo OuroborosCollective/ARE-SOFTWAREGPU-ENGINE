@@ -6,11 +6,11 @@ paid compute, GPU session, training job or Hugging Face publication is started.
 
 ## Available in this branch
 
-* `scripts/miha_v2.py plan --renderer-sha <40-hex> --output plan.json` verifies
+* `-m scripts.miha_v2 plan --renderer-sha <40-hex> --output plan.json` verifies
   pinned Atomic/Evidence/holdout/base revisions and emits nine rank × LR candidates:
   ranks 8/16/32 × learning rates 0.00005/0.0001/0.0002. These are **planned
   experiments**, not completed sweeps. No rows are synthesized and no weights load.
-* `scripts/miha_v2.py cpu-profile --threads 2 4 6 8 --width 256 --output profile.json`
+* `-m scripts.miha_v2 cpu-profile --threads 2 4 6 8 --width 256 --output profile.json`
   performs real CPU-only PyTorch matrix forward/backward operations and records
   profiler operator self-CPU times and 15 raw timings per thread count. It **does
   not** profile the full Qwen/LoRA model. CPU runtime and PyTorch must be installed.
@@ -21,12 +21,12 @@ paid compute, GPU session, training job or Hugging Face publication is started.
   run `Trainer.train(resume_from_checkpoint=...)`, migrate optimizer state,
   or promise working full-trainer resumption. The older pinned HF train_v2.py
   remains the only authorized training implementation until separately reviewed.
-* `scripts/miha_v2.py quality-gate --report eval.json --expected-ids
+* `-m scripts.miha_v2 quality-gate --report eval.json --expected-ids
   holdout-ids.json --bench-revision <40-hex> --output gate.json` checks the
   existing full holdout evaluator's report against actual expected task IDs,
   no regression and source-compliance scores. Passing means only eligibility
   for an **independent acceptance process**, never automatic publication.
-* `scripts/miha_v2.py gpu-preflight --policy training_config.json --allow
+* `-m scripts.miha_v2 gpu-preflight --policy training_config.json --allow
   --devices 1 --vram-gib 24 --bf16` checks explicit approval and minimum
   resources, without running any GPU workload. The **current pinned MIHA
   policy has `gpu_allowed: false`**: requests correctly fail closed. GPU-mode
