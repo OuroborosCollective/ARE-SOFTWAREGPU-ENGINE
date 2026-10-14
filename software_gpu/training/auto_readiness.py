@@ -1,6 +1,6 @@
 """Pinned-vs-current MIHA Auto canonical evidence inventory (read-only).
 
-The Hugging Face \`auto\` Viewer is a *projection* of canonical evidence,
+The Hugging Face `auto` Viewer is a *projection* of canonical evidence,
 not the actual SFT training rows. A live SHA change always requires a
 new approved canonical->Atomic build, strict holdout leak-audit and readback.
 """
@@ -40,8 +40,12 @@ def inventory(root):
     projection = root / "data" / "auto_rows"
     docs = sorted(canonical.glob("*.json"))
     rows = sorted(projection.glob("*.jsonl"))
-    if not docs or len(docs) != len(rows) or {p.stem for p in docs} != {p.stem for p in rows}:
-        raise ValueError("AUTO_INVENTORY: canonical/viewer paths differ or empty")
+    canonical_ids, row_ids = {p.stem for p in docs}, {p.stem for p in rows}
+    if not docs or len(docs) != len(rows) or canonical_ids != row_ids:
+        raise ValueError("AUTO_INVENTORY: canonical/viewer paths differ or empty; "
+                         + f"canonical={len(docs)},viewer={len(rows)},"
+                         + f"missing_viewers={sorted(canonical_ids-row_ids)[:10]},"
+                         + f"missing_canonical={sorted(row_ids-canonical_ids)[:10]}")
     for path in docs:
         _trusted_snapshot_file(path, root)
         try:
