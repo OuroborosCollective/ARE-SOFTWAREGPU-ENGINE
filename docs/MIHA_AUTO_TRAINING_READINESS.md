@@ -2,7 +2,23 @@
 
 The Hugging Face `Thorsu/miha-evidence` **auto** split contains projections of canonical
 research evidence. This is **not** the tokenizer-ready supervised training split.
-As of the 2026-10-14 hub overview, auto/train exposes 57 projected records.
+This is a continuously changing dataset: **never hard-code a live row count**.
+A Hugging Face Hub inspection on 2026-10-14 saw 61 current Auto
+projections but only 60 matching canonical JSON files. The independent
+historical [Notion Dataset-Abgleich (2026-10-09)](https://app.notion.com/p/3f45a669363581d48ec9fe3666403fd2)
+describes a different earlier Viewer repair (50 canonical / 51 Viewer,
+40 audit-eligible records in its *dated* allowlist). It does **not** certify
+the currently missing canonical file. The present missing-canonical ID is
+`miha-74d7b5264698de2e31d30b38`; never manufacture the canonical source
+from a compressed projection.
+Use `pair_coverage` only as an unverified *diagnostic* separating matched
+filenames from missing canonical/Viewer filenames. A positive filename
+pair count **never** authorizes training. The entire candidate remains
+`AUTO_SOURCE_INVALID` or `SOURCE_BLOCKED` until all source, schema,
+graph, and content checks pass. The approved historical Atomic snapshot
+remains independently auditable and unchanged.
+See also [MIHA SoftwareGPU research, 2026-10-14](https://app.notion.com/p/3f95a6693635810b96c2d76836d27c96).
+
 The existing approved frozen source `fixtures/miha/training.json` refers to a
 historical canonical snapshot (32 source records) which produced 557 immutable
 `Thorsu/miha-train-atomic` SFT examples. Those 557 rows are derived by the
