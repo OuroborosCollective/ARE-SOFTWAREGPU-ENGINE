@@ -5,6 +5,7 @@ Implements standard GPU pipeline shading stages.
 
 from dataclasses import dataclass
 from typing import Tuple, Optional
+import math
 import numpy as np
 
 
@@ -207,8 +208,11 @@ class BlinnPhongShader(Shader):
             tex_sample = texture[ty, tx, :3] / 255.0
             base_color = tex_sample
 
+        nx, ny, nz = float(normal[0]), float(normal[1]), float(normal[2])
+        lx, ly, lz = float(self.light_dir[0]), float(self.light_dir[1]), float(self.light_dir[2])
+
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
+        diff = max(0.0, nx * lx + ny * ly + nz * lz)
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -217,8 +221,7 @@ class BlinnPhongShader(Shader):
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
         # A mutable light_dir must invalidate the value, not leave stale light.
-        light_key = (float(self.light_dir[0]), float(self.light_dir[1]),
-                     float(self.light_dir[2]))
+        light_key = (lx, ly, lz)
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
@@ -229,10 +232,20 @@ class BlinnPhongShader(Shader):
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
+            hx, hy, hz = float(cache[1][0]), float(cache[1][1]), float(cache[1][2])
+            spec = max(0.0, nx * hx + ny * hy + nz * hz) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        total = ambient + diffuse + specular
+        if math.isnan(total[0]) or math.isnan(total[1]) or math.isnan(total[2]):
+            raise ValueError("cannot convert float NaN to integer")
+
+        # ⚡ Bolt: Fast manual scalar clip to replace expensive np.clip iteration
+        # Reduces overhead during heavy pixel shading. Preserves precision bounds.
+        r = min(1.0, max(0.0, float(total[0]))) * 255.0
+        g = min(1.0, max(0.0, float(total[1]))) * 255.0
+        b = min(1.0, max(0.0, float(total[2]))) * 255.0
+
+        return int(r), int(g), int(b), 255
