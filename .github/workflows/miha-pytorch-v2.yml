@@ -33,7 +33,7 @@ jobs:
         run: python -m unittest software_gpu.tests.test_training_v2_contracts -v
       - name: Read-only immutable 9-way LoRA optimization plan
         run: |
-          python scripts/miha_v2.py plan --renderer-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/miha-v2-plan.json"
+          python -m scripts.miha_v2 plan --renderer-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/miha-v2-plan.json"
           python - "$RUNNER_TEMP/miha-v2-plan.json" <<'PY'
           import hashlib, json, sys
           report = json.load(open(sys.argv[1]))
