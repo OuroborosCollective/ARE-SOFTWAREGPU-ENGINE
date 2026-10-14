@@ -82,11 +82,11 @@ class TestMIHAAutoReadiness(unittest.TestCase):
             raw = blobs / ("c" * 64)
             raw.write_text(json.dumps({"record_id": "a"}))
             canonical.symlink_to(raw)
-            projection.write_text('{"id": "a"}\\n')
+            projection.write_text('{"id": "a"}\n')
             self.assertEqual(inventory(snapshot)["canonical_records"], 1)
             projection.unlink()
             projected = blobs / ("d" * 64)
-            projected.write_text('{"id":"a"}\\n')
+            projected.write_text('{"id":"a"}\n')
             projection.symlink_to(projected)
             self.assertEqual(inventory(snapshot)["viewer_projection_rows"], 1)
 
