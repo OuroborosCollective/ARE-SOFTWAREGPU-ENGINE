@@ -19,6 +19,21 @@ def pinned_sha(value):
     return value
 
 
+
+def _trusted_snapshot_file(path, root):
+    if not path.is_file():
+        raise ValueError("AUTO_INVENTORY: canonical/viewer file not regular")
+    if path.is_symlink():
+        # snapshot_download uses regular symlinks into the content-addressed
+        # blobs/ folder of the *same* repository cache. Do not follow arbitrary
+        # paths, even if the linked file contains syntactically valid JSON.
+        if root.parent.name != "snapshots" or not HEX40.fullmatch(root.name):
+            raise ValueError("AUTO_INVENTORY: symlink outside HF snapshot")
+        blobs = (root.parent.parent / "blobs").resolve()
+        if not path.resolve().is_relative_to(blobs):
+            raise ValueError("AUTO_INVENTORY: symlink escapes HF cache")
+
+
 def inventory(root):
     root = Path(root)
     canonical = root / "data" / "auto"
@@ -28,8 +43,7 @@ def inventory(root):
     if not docs or len(docs) != len(rows) or {p.stem for p in docs} != {p.stem for p in rows}:
         raise ValueError("AUTO_INVENTORY: canonical/viewer paths differ or empty")
     for path in docs:
-        if path.is_symlink() or not path.is_file():
-            raise ValueError("AUTO_INVENTORY: canonical file invalid")
+        _trusted_snapshot_file(path, root)
         try:
             parsed = json.loads(path.read_text(encoding="utf-8"))
         except (ValueError, OSError) as error:
@@ -37,8 +51,7 @@ def inventory(root):
         if type(parsed) is not dict or parsed.get("record_id") != path.stem:
             raise ValueError("AUTO_INVENTORY: record-id mismatch")
     for path in rows:
-        if path.is_symlink() or not path.is_file():
-            raise ValueError("AUTO_INVENTORY: projection file invalid")
+        _trusted_snapshot_file(path, root)
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
             if len(lines) != 1 or not isinstance(json.loads(lines[0]), dict):
