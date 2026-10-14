@@ -96,6 +96,41 @@ def plan_refresh(previous, latest, renderer_sha):
     }
 
 
+
+def select_training_snapshot(settings, inspected_release, *, approved_atomic_sha,
+                             current_evidence_sha):
+    """Switch to an approved immutable Atomic release without changing code pins.
+
+    This is a proposed *input config*, not training or release acceptance.
+    The caller must verify approved_atomic_sha by a real Hub SHA-bound readback
+    and run scripts/miha_cpu_runner.py audit on the returned configuration.
+    """
+    def check_sha(s):
+        return type(s) is str and bool(H40.fullmatch(s))
+    if not check_sha(approved_atomic_sha) or not check_sha(current_evidence_sha):
+        raise ValueError("AUTO_DYNAMIC: unpinned dataset revision")
+    required=("code_revision","evidence_revision","atomic_revision",
+              "base_revision","bench_revision")
+    if (type(settings) is not dict or any(not check_sha(settings.get(n))
+                                          for n in required)
+        or settings.get("base_model")!="Qwen/Qwen2.5-0.5B-Instruct"):
+        raise ValueError("AUTO_DYNAMIC: invalid existing training pins")
+    manifest=inspected_release.get("manifest",{})
+    if (manifest.get("dataset_revision")!=current_evidence_sha
+        or manifest.get("benchmark_revision")!=settings["bench_revision"]
+        or manifest.get("source_dataset")!="Thorsu/miha-evidence"
+        or manifest.get("output_contract")!="miha-five-key-v1"
+        or manifest.get("overlap",{}).get("overlap")!=0
+        or inspected_release.get("sha256")!=manifest.get("train_jsonl_sha256")
+        or not inspected_release.get("example_ids")):
+        raise ValueError("AUTO_DYNAMIC: stale, unverified or mismatched SFT")
+    selected={k:settings[k] for k in ("code_revision","base_model","base_revision",
+                                      "evidence_revision","atomic_revision","bench_revision")}
+    selected["evidence_revision"]=current_evidence_sha
+    selected["atomic_revision"]=approved_atomic_sha
+    return selected
+
+
 def make_replay_shards(release,max_rows=2048,seed=42):
     if type(max_rows) is not int or max_rows<1 or type(seed) is not int:
         raise ValueError("AUTO_REPLAY_SHARD")
