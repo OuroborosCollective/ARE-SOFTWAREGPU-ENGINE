@@ -14,7 +14,6 @@ import json
 import os
 from pathlib import Path
 import re
-import secrets
 import subprocess
 import sys
 import tarfile
@@ -286,13 +285,14 @@ def main(argv: list[str] | None = None) -> None:
     validate_submission(plan, args.confirm_paid_job, token, args.max_usd)
     from huggingface_hub import run_job
     # Submission only: a job is not a completed training/benchmark.
-    run_id = secrets.token_hex(12)
+    # JOB_ID belongs to the provider. Never override its built-in value:
+    # the worker and this receipt must use the same immutable provider ID.
     launched = run_job(image=plan['image'], command=plan['command'],
                        flavor=plan['flavor'], timeout=plan['timeout'],
-                       name=plan['name'], env={**plan['env'], 'JOB_ID': run_id},
+                       name=plan['name'], env=plan['env'],
                        secrets={'HF_TOKEN': token})
     print(json.dumps({'submitted': True, 'job_id': launched.id, 'job_url': launched.url,
-                      'candidate_prefix': candidate_prefix(run_id),
+                      'candidate_prefix': candidate_prefix(launched.id),
                       'renderer_commit': args.renderer_sha,
                       'estimated_max_usd': plan['estimated_max_usd'],
                       'training_completed': False, 'release_accepted': False}), flush=True)

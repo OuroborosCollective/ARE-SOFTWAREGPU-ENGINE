@@ -3,6 +3,11 @@ import json
 import subprocess
 import sys
 import tempfile
+import io
+import contextlib
+import os
+from types import SimpleNamespace
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
@@ -94,6 +99,33 @@ class HuggiJobsContractTests(unittest.TestCase):
         for ident in ['x'*24, '123', '../other', 'a'*25]:
             with self.subTest(ident=ident), self.assertRaises(ValueError):
                 jobs.candidate_prefix(ident)
+
+    def test_paid_submission_uses_provider_job_id_without_overriding_builtin(self):
+        # The paid provider is the only replaced boundary; no request is sent.
+        # Hugging Face injects JOB_ID as a built-in environment variable.
+        calls = []
+        def capture_job(**kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(id='f' * 24, url='https://huggingface.co/jobs/test/' + 'f' * 24)
+        with tempfile.TemporaryDirectory() as td:
+            config = Path(td) / 'training.json'
+            config.write_text(json.dumps(CONFIG))
+            stream = io.StringIO()
+            fake_hub = SimpleNamespace(run_job=capture_job)
+            with patch.dict(sys.modules, {'huggingface_hub': fake_hub}):
+                with patch.dict(os.environ, {'HF_TOKEN': 'test-only-secret'}):
+                    with contextlib.redirect_stdout(stream):
+                        jobs.main(['submit', '--renderer-sha', SHA, '--mode', 'train',
+                                   '--flavor', 'cpu-upgrade', '--timeout-hours', '2',
+                                   '--max-usd', '0.10', '--confirm-paid-job',
+                                   '--config', str(config)])
+        self.assertEqual(len(calls), 1)
+        self.assertNotIn('JOB_ID', calls[0]['env'])
+        self.assertEqual(calls[0]['secrets'], {'HF_TOKEN': 'test-only-secret'})
+        response = json.loads(stream.getvalue())
+        self.assertEqual(response['job_id'], 'f' * 24)
+        self.assertEqual(response['candidate_prefix'], 'huggi/jobs/' + 'f' * 24)
+        self.assertFalse(response['training_completed'])
 
     def test_worker_early_rejects_missing_credential(self):
         with tempfile.TemporaryDirectory() as td:

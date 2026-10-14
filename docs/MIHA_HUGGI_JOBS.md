@@ -31,7 +31,7 @@ raster/receipt tests without model training. Choose `mode=train` for the same
 preflight and audit followed by a **complete** one-epoch CPU LoRA run; the
 longest-sequence backward gate must pass, with no data truncation or skipping.
 After actual optimizer steps, only a *candidate_unvalidated* adapter may be
-published under the unique `huggi/jobs/<JOB_ID>/` prefix. The pinned
+published under the unique `huggi/jobs/<JOB_ID>/` prefix, where `JOB_ID` is injected by Hugging Face and never overridden by the caller. The pinned
 `evaluate_v2.py` then runs the full held-out baseline/candidate comparison,
 reloads the adapter, records regressions, and saves immutable evaluator reports
 with remote readback. A job failing or timing out is **not** a trained model.
