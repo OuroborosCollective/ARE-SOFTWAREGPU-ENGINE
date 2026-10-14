@@ -58,23 +58,39 @@ class TestPreDeliveryScan(unittest.TestCase):
 
     @unittest.skipUnless(NODE, "Node.js needed for cross-language release proof")
     def test_actual_cross_language_delivery_and_javascript_only(self):
+        # This is an end-to-end cold Node process on shared CI runners, not
+        # the production release default (which remains 10 seconds). Allow
+        # the existing bounded maximum; any timeout still fails closed.
+        node_ci_seconds = 30
         executed_sources = []
         real_run = subprocess.run
         def capture_actual_file(command, **kwargs):
             executed_sources.append(Path(command[1]).read_bytes())
             return real_run(command, **kwargs)
         with patch("subprocess.run", side_effect=capture_actual_file):
-            result = scan_before_delivery(fixture(), cases())
+            result = scan_before_delivery(fixture(), cases(), seconds=node_ci_seconds)
         self.assertEqual(set(result["sources"]), {"python", "javascript"})
         self.assertEqual(len(result["receipt"]["checks"]), 4)
         self.assertTrue(all(source == result["sources"]["javascript"].encode("utf-8")
                             for source in executed_sources))
         self.assertTrue(all(hashlib.sha256(source).hexdigest() == result["receipt"]["source_sha256"]["javascript"]
                             for source in executed_sources))
-        self.assertEqual(scan_before_delivery(fixture(), cases(), ["javascript"])["status"], "PASS")
+        self.assertEqual(scan_before_delivery(fixture(), cases(), ["javascript"], seconds=node_ci_seconds)["status"], "PASS")
         bad = cases(); bad[0]["expected"]["edge"] = -bad[0]["expected"]["edge"]
         with self.assertRaisesRegex(ValueError, "ORACLE_MISMATCH"):
-            scan_before_delivery(fixture(), bad, ["javascript"])
+            scan_before_delivery(fixture(), bad, ["javascript"], seconds=node_ci_seconds)
+
+    def test_extended_ci_budget_still_fails_closed_on_target_timeout(self):
+        # Larger CI budget never turns a failed target into release evidence.
+        with patch.dict(os.environ, {"CODEX_PRIMARY_RUNTIME_NODE": NODE or "node"}):
+            for budget in (10, 30):
+                with self.subTest(seconds=budget):
+                    error = subprocess.TimeoutExpired(["node"], budget)
+                    with patch("subprocess.run", side_effect=error) as run:
+                        with self.assertRaisesRegex(ValueError, "PRE_DELIVERY_TARGET_FAILED"):
+                            scan_before_delivery(fixture(), cases()[:1],
+                                                 ["javascript"], seconds=budget)
+                        self.assertEqual(run.call_args.kwargs["timeout"], budget)
 
     def test_target_failure_timeout_or_wrong_output_blocks_delivery(self):
         # Fault injection tests delivery gates, not target numerical performance.
