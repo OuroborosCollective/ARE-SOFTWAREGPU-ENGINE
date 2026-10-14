@@ -6,6 +6,7 @@ Implements standard GPU pipeline shading stages.
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+import math
 
 
 @dataclass
@@ -192,6 +193,8 @@ class BlinnPhongShader(Shader):
         if n_len > 1e-6:
             normal = normal / n_len
 
+        nx, ny, nz = normal[0], normal[1], normal[2]
+
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
         # Read once per fragment, without storing mutable texture dimensions.
@@ -208,8 +211,14 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
+        ldx, ldy, ldz = float(self.light_dir[0]), float(self.light_dir[1]), float(self.light_dir[2])
+        # Performance optimization: Replace np.dot with scalar multiplication.
+        # Expected to reduce function call overhead during per-pixel operations.
+        diff = max(0.0, float(nx*ldx + ny*ldy + nz*ldz))
+
+        # Performance optimization: Explicitly cast float multiplier `diff` to np.float32
+        # to prevent automatic silent promotion to float64 that degrades memory and math speed.
+        diffuse = base_color * self.light_color * np.float32(diff)
 
         # Ambient component
         ambient = base_color * self.ambient_color
@@ -217,8 +226,7 @@ class BlinnPhongShader(Shader):
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
         # A mutable light_dir must invalidate the value, not leave stale light.
-        light_key = (float(self.light_dir[0]), float(self.light_dir[1]),
-                     float(self.light_dir[2]))
+        light_key = (ldx, ldy, ldz)
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
@@ -228,11 +236,26 @@ class BlinnPhongShader(Shader):
                 half_dir /= half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
+
         if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
+            hx, hy, hz = float(cache[1][0]), float(cache[1][1]), float(cache[1][2])
+            spec_dot = max(0.0, float(nx*hx + ny*hy + nz*hz))
+            spec = spec_dot ** self.shininess
         else:
             spec = 0.0
-        specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        specular = self.specular_color * self.light_color * np.float32(spec)
+
+        final_rgb = ambient + diffuse + specular
+
+        # Manually handle NaN behavior from scalar implementations like min/max.
+        if math.isnan(final_rgb[0]) or math.isnan(final_rgb[1]) or math.isnan(final_rgb[2]):
+            raise ValueError("NaN detected in output color")
+
+        # Performance optimization: Replace np.clip with pure scalar equivalents
+        # using min/max to reduce overhead, but checking for NaN above to maintain semantics.
+        final_rgb = final_rgb * 255.0
+        r = int(min(255.0, max(0.0, float(final_rgb[0]))))
+        g = int(min(255.0, max(0.0, float(final_rgb[1]))))
+        b = int(min(255.0, max(0.0, float(final_rgb[2]))))
+        return r, g, b, 255
