@@ -41,7 +41,11 @@ jobs:
           digest = hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
           assert digest == claimed
           assert receipt['training_started'] is False and receipt['release_accepted'] is False
-          assert receipt['status'] in ('AUTO_REFRESH_REQUIRED','PINNED_CURRENT')
+          assert receipt['status'] in ('AUTO_REFRESH_REQUIRED','PINNED_CURRENT','AUTO_SOURCE_INVALID')
+          assert receipt['atomic_approved_for_live_auto'] is False
+          if receipt['status'] == 'AUTO_SOURCE_INVALID':
+              assert receipt.get('diagnostic','').startswith('AUTO_INVENTORY:')
+              print('MIHA_AUTO_BLOCKED_INVALID_SOURCE', receipt['diagnostic'])
           print('MIHA_AUTO_READBACK_OK', receipt['status'], claimed)
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
