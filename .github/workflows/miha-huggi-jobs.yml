@@ -1,0 +1,82 @@
+name: MIHA Huggi CPU Jobs
+
+# No implicit paid training on push, PR or schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'plan is free; submit launches billable HF CPU compute'
+        type: choice
+        options: [plan, submit]
+        default: plan
+      mode:
+        description: 'audit inputs only or full LoRA plus holdout'
+        type: choice
+        options: [audit, train]
+        default: audit
+      flavor:
+        description: 'CPU only; each has >16 GiB advertised RAM'
+        type: choice
+        options: [cpu-upgrade, cpu-xl, cpu-performance]
+        default: cpu-upgrade
+      timeout_hours:
+        description: 'Hard HF Jobs timeout in whole hours (1-24)'
+        type: number
+        default: 6
+      max_usd:
+        description: 'Explicit USD maximum for the published-rate cost estimate'
+        type: string
+        default: '0.20'
+
+permissions:
+  contents: read
+
+jobs:
+  launch:
+    name: Validate and optionally submit immutable CPU Job
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Test fail-closed job and budget contracts (no paid calls)
+        run: python -m unittest discover -s software_gpu/tests -p 'test_miha_huggi_jobs.py' -v
+      - name: Create immutable job plan (no credentials or billing)
+        shell: bash
+        run: |
+          python scripts/miha_huggi_jobs.py plan \
+            --renderer-sha "$GITHUB_SHA" \
+            --mode "${{ inputs.mode }}" \
+            --flavor "${{ inputs.flavor }}" \
+            --timeout-hours "${{ inputs.timeout_hours }}" \
+            > miha-huggi-plan.json
+          cat miha-huggi-plan.json
+      - name: Install Hugging Face Jobs SDK only for explicit submission
+        if: inputs.action == 'submit'
+        run: python -m pip install 'huggingface_hub==0.35.3'
+      - name: Submit paid CPU job with capped timeout and explicit budget
+        if: inputs.action == 'submit'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        shell: bash
+        run: |
+          python scripts/miha_huggi_jobs.py submit \
+            --renderer-sha "$GITHUB_SHA" \
+            --mode "${{ inputs.mode }}" \
+            --flavor "${{ inputs.flavor }}" \
+            --timeout-hours "${{ inputs.timeout_hours }}" \
+            --max-usd "${{ inputs.max_usd }}" \
+            --confirm-paid-job > miha-huggi-submission.json
+          cat miha-huggi-submission.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: miha-huggi-launch-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            miha-huggi-plan.json
+            miha-huggi-submission.json
+          retention-days: 14
