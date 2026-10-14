@@ -135,6 +135,42 @@ class DynamicAutoTrainingContracts(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"AUTO_REPLAY_SHARD"):
                 make_replay_shards(inspect_release(root),max_rows=0)
 
+    def test_published_hub_style_data_subdirectory_is_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            local=build_release(root/"local", {"r0":"a"*64}, [("a0","r0")])
+            hub=root/"published"
+            (hub/"data").mkdir(parents=True)
+            (hub/"data/train.jsonl.gz").write_bytes(
+                __import__("gzip").compress((local/"train.jsonl").read_bytes()))
+            (hub/"build_manifest.json").write_bytes(
+                (local/"build_manifest.json").read_bytes())
+            actual=inspect_release(hub)
+            self.assertEqual(actual["example_ids"], ["a0"])
+            self.assertEqual(actual["sha256"],
+                             hashlib.sha256((local/"train.jsonl").read_bytes()).hexdigest())
+            # Any conflicting dual compressed/plain transport is rejected.
+            (hub/"data/train.jsonl").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "AUTO_RELEASE_HASH"):
+                inspect_release(hub)
+
+    def test_snapshot_selection_rejects_wrong_benchmark_builder_or_base(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            release=inspect_release(build_release(tmp, {"r0":"a"*64},
+                                                  [("a0","r0")], evidence="b"*40))
+            original={"code_revision":"c"*40,"base_revision":"d"*40,
+                      "base_model":"Qwen/Qwen2.5-0.5B-Instruct",
+                      "bench_revision":"c"*40,"atomic_revision":"e"*40,
+                      "evidence_revision":"a"*40}
+            for field, altered in (("bench_revision","f"*40),
+                                   ("base_model","Qwen/other")):
+                with self.subTest(field=field):
+                    modified=dict(original,**{field:altered})
+                    with self.assertRaisesRegex(ValueError,"AUTO_DYNAMIC"):
+                        select_training_snapshot(
+                            modified,release,approved_atomic_sha="f"*40,
+                            current_evidence_sha="b"*40)
+
     def test_plan_receipt_digest_and_exact_identity(self):
         with tempfile.TemporaryDirectory() as t:
             root=build_release(t,{"r0":"a"*64},[("a0","r0")])
