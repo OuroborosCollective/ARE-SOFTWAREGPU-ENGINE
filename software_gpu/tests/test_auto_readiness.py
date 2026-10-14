@@ -121,6 +121,36 @@ class TestMIHAAutoReadiness(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
                 assess("a"*40, "b"*40, pinned, live)
 
+    def test_pair_coverage_quarantines_only_missing_canonical_record(self):
+        from software_gpu.training.auto_readiness import pair_coverage
+        with tempfile.TemporaryDirectory() as pinned, tempfile.TemporaryDirectory() as live:
+            self.make_tree(pinned, ["a"])
+            self.make_tree(live, ["a", "b", "c"])
+            (Path(live) / "data/auto/b.json").unlink()
+            pairs = pair_coverage(live)
+            self.assertEqual(pairs["canonical_count"], 2)
+            self.assertEqual(pairs["viewer_count"], 3)
+            self.assertEqual(pairs["pair_count_unverified"], 2)
+            self.assertEqual(pairs["missing_canonical_ids"], ["b"])
+            self.assertEqual(pairs["missing_viewer_ids"], [])
+            self.assertFalse(pairs["training_eligible"])
+            receipt = assess("a"*40, "b"*40, pinned, live)
+            self.assertEqual(receipt["status"], "AUTO_SOURCE_INVALID")
+            self.assertEqual(receipt["pair_coverage"], pairs)
+            self.assertFalse(receipt["release_accepted"])
+            self.assertFalse(receipt["training_started"])
+            self.assertFalse(receipt["atomic_approved_for_live_auto"])
+
+    def test_pair_coverage_counts_do_not_suffice_for_training_admission(self):
+        from software_gpu.training.auto_readiness import pair_coverage
+        with tempfile.TemporaryDirectory() as live:
+            self.make_tree(live, ["a", "b"])
+            self.assertEqual(pair_coverage(live)["pair_count_unverified"], 2)
+            self.assertFalse(pair_coverage(live)["training_eligible"])
+            (Path(live)/"data/auto/a.json").write_text("invalid json")
+            with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
+                inventory(live)
+
     def test_invalid_sha_never_passes(self):
         for revision in ("main", "", "0"*39, True, None):
             with self.subTest(revision=revision):
