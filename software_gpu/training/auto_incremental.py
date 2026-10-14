@@ -22,7 +22,8 @@ def canonical(obj):
 def inspect_release(directory):
     root=Path(directory)
     manifest=json.loads((root/"build_manifest.json").read_text(encoding="utf-8"))
-    plain, zipped = root/"train.jsonl", root/"train.jsonl.gz"
+    data_dir = root/"data" if (root/"data").is_dir() else root
+    plain, zipped = data_dir/"train.jsonl", data_dir/"train.jsonl.gz"
     if not plain.is_file() and not zipped.is_file():
         raise ValueError("AUTO_RELEASE_HASH missing Atomic SFT")
     data=plain.read_bytes() if plain.is_file() else gzip.decompress(zipped.read_bytes())
