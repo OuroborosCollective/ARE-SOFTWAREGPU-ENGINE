@@ -5,6 +5,7 @@ For finite RGB triples both entry points use identical elementwise arithmetic
 and uint8 conversion. Invalid batch inputs are outside that equivalence domain.
 """
 import numpy as np
+import math
 
 from .shader import Shader
 
@@ -17,8 +18,10 @@ class VertexColorShader(Shader):
     vertex_preparation_equivalent_to = vertex_shader
 
     def fragment_shader(self, varyings):
-        rgb = np.clip(np.asarray(varyings["color"]) * 255, 0, 255).astype(np.uint8)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        color = varyings["color"]
+        if math.isnan(color[0]) or math.isnan(color[1]) or math.isnan(color[2]):
+            raise ValueError("NaN value in material color")
+        return int(max(0.0, min(255.0, float(color[0]) * 255.0))), int(max(0.0, min(255.0, float(color[1]) * 255.0))), int(max(0.0, min(255.0, float(color[2]) * 255.0))), 255
 
     batch_fragment_equivalent_to = fragment_shader
 
