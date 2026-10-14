@@ -11,7 +11,8 @@ import tempfile
 import unittest
 
 from software_gpu.training.auto_incremental import (
-    inspect_release, plan_refresh, make_replay_shards, seal_plan
+    inspect_release, plan_refresh, make_replay_shards, seal_plan,
+    select_training_snapshot
 )
 
 H40=lambda c: c*40
@@ -147,6 +148,51 @@ class DynamicAutoTrainingContracts(unittest.TestCase):
                     seal_plan(p,path)
             with self.assertRaisesRegex(ValueError,"AUTO_RELEASE_PIN"):
                 plan_refresh(inspect_release(root),inspect_release(root),"main")
+
+
+    def test_approved_new_atomic_release_creates_immutable_dynamic_training_config(self):
+        with tempfile.TemporaryDirectory() as t:
+            release=inspect_release(build_release(
+                t,{"r0":"a"*64,"r1":"b"*64},
+                [("a0","r0"),("b0","r1")],evidence="b"*40))
+            original={"code_revision":"c"*40,"base_revision":"d"*40,
+                      "base_model":"Qwen/Qwen2.5-0.5B-Instruct",
+                      "bench_revision":"c"*40,"atomic_revision":"e"*40,
+                      "evidence_revision":"a"*40}
+            cfg=select_training_snapshot(original,release,
+                                         approved_atomic_sha="f"*40,
+                                         current_evidence_sha="b"*40)
+            self.assertEqual(cfg["evidence_revision"],"b"*40)
+            self.assertEqual(cfg["atomic_revision"],"f"*40)
+            self.assertEqual(cfg["code_revision"],original["code_revision"])
+            self.assertEqual(cfg["base_revision"],original["base_revision"])
+            self.assertEqual(cfg["bench_revision"],original["bench_revision"])
+            self.assertEqual(original["evidence_revision"],"a"*40)
+
+    def test_unapproved_or_lagging_atomic_blocks_dynamic_training(self):
+        with tempfile.TemporaryDirectory() as t:
+            release=inspect_release(build_release(t,{"r0":"a"*64},
+                          [("a0","r0")], evidence="b"*40))
+            original={"code_revision":"c"*40,"base_revision":"d"*40,
+                      "base_model":"Qwen/Qwen2.5-0.5B-Instruct",
+                      "bench_revision":"c"*40,"atomic_revision":"e"*40,
+                      "evidence_revision":"a"*40}
+            for wrong_rev in ("a"*40, "main", ""):
+                with self.subTest(wrong_rev=wrong_rev), self.assertRaisesRegex(
+                        ValueError,"AUTO_DYNAMIC"):
+                    select_training_snapshot(original,release,
+                        approved_atomic_sha="f"*40,
+                        current_evidence_sha=wrong_rev)
+            bad=dict(release)
+            bad["sha256"]="0"*64
+            with self.assertRaisesRegex(ValueError,"AUTO_DYNAMIC"):
+                select_training_snapshot(original,bad,
+                    approved_atomic_sha="f"*40,
+                    current_evidence_sha="b"*40)
+            with self.assertRaisesRegex(ValueError,"AUTO_DYNAMIC"):
+                select_training_snapshot(original,release,
+                    approved_atomic_sha="main",
+                    current_evidence_sha="b"*40)
 
 
 if __name__ == "__main__":
