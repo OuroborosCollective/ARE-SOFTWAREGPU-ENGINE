@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from software_gpu.training.auto_readiness import inventory, compare, pinned_sha
+from software_gpu.training.auto_readiness import inventory, compare, pinned_sha, assess
 
 
 class TestMIHAAutoReadiness(unittest.TestCase):
@@ -102,6 +102,24 @@ class TestMIHAAutoReadiness(unittest.TestCase):
             canonical.symlink_to(outside)
             with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
                 inventory(snapshot)
+
+    def test_missing_live_canonical_produces_blocked_receipt_not_training(self):
+        with tempfile.TemporaryDirectory() as pinned, tempfile.TemporaryDirectory() as live:
+            self.make_tree(pinned, ["a", "b"])
+            self.make_tree(live, ["a", "b"], missing_projection=True)
+            outcome = assess("a"*40, "b"*40, pinned, live)
+            self.assertEqual(outcome["status"], "AUTO_SOURCE_INVALID")
+            self.assertIn("AUTO_INVENTORY", outcome["diagnostic"])
+            self.assertFalse(outcome["training_started"])
+            self.assertFalse(outcome["release_accepted"])
+            self.assertFalse(outcome["atomic_approved_for_live_auto"])
+
+    def test_corrupt_pinned_snapshot_is_not_downgraded_to_soft_warning(self):
+        with tempfile.TemporaryDirectory() as pinned, tempfile.TemporaryDirectory() as live:
+            self.make_tree(pinned, ["a"], missing_projection=True)
+            self.make_tree(live, ["a"])
+            with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
+                assess("a"*40, "b"*40, pinned, live)
 
     def test_invalid_sha_never_passes(self):
         for revision in ("main", "", "0"*39, True, None):
