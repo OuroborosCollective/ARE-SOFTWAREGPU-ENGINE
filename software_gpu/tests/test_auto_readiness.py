@@ -69,6 +69,40 @@ class TestMIHAAutoReadiness(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
                 inventory(p)
 
+    def test_genuine_hf_snapshot_symlink_cache_is_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "datasets--Thorsu--miha-evidence"
+            snapshot = root / "snapshots" / ("a" * 40)
+            blobs = root / "blobs"
+            blobs.mkdir(parents=True)
+            canonical = snapshot / "data/auto/a.json"
+            projection = snapshot / "data/auto_rows/a.jsonl"
+            canonical.parent.mkdir(parents=True)
+            projection.parent.mkdir(parents=True)
+            raw = blobs / ("c" * 64)
+            raw.write_text(json.dumps({"record_id": "a"}))
+            canonical.symlink_to(raw)
+            projection.write_text('{"id": "a"}\\n')
+            self.assertEqual(inventory(snapshot)["canonical_records"], 1)
+            projection.unlink()
+            projected = blobs / ("d" * 64)
+            projected.write_text('{"id":"a"}\\n')
+            projection.symlink_to(projected)
+            self.assertEqual(inventory(snapshot)["viewer_projection_rows"], 1)
+
+    def test_symlink_escape_remains_blocked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "datasets--Thorsu--miha-evidence"
+            snapshot = root / "snapshots" / ("a" * 40)
+            outside = Path(tmp) / "outside"
+            outside.write_text(json.dumps({"record_id": "a"}))
+            self.make_tree(snapshot, ["a"])
+            canonical = snapshot / "data/auto/a.json"
+            canonical.unlink()
+            canonical.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "AUTO_INVENTORY"):
+                inventory(snapshot)
+
     def test_invalid_sha_never_passes(self):
         for revision in ("main", "", "0"*39, True, None):
             with self.subTest(revision=revision):
