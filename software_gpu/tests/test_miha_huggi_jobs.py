@@ -127,6 +127,21 @@ class HuggiJobsContractTests(unittest.TestCase):
         self.assertEqual(response['candidate_prefix'], 'huggi/jobs/' + 'f' * 24)
         self.assertFalse(response['training_completed'])
 
+    def test_workflow_never_interpolates_dispatch_inputs_inside_shell(self):
+        # Workflow-dispatch strings are attacker-controlled data and must be
+        # passed as environment values rather than inlining into shell syntax.
+        workflow = (ROOT / '.github/workflows/miha-huggi-jobs.yml').read_text()
+        self.assertIn('MIHA_MAX_USD: ${{ inputs.max_usd }}', workflow)
+        in_shell = False
+        for line in workflow.splitlines():
+            if line.strip() == 'run: |':
+                in_shell = True
+                continue
+            if in_shell and line.strip() and not line.startswith('          '):
+                in_shell = False
+            if in_shell:
+                self.assertNotIn('${{ inputs.', line)
+
     def test_worker_early_rejects_missing_credential(self):
         with tempfile.TemporaryDirectory() as td:
             env = {'PATH': '/usr/bin:/bin'}

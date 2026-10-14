@@ -47,6 +47,10 @@ python scripts/miha_huggi_jobs.py submit --renderer-sha <FULL_GIT_SHA> \
   --max-usd 0.20 --confirm-paid-job
 ```
 
+All workflow-dispatch values, including `max_usd`, enter shell steps as
+quoted environment variables, not interpolated shell source. Budget validation
+remains in Python before any billable provider request.
+
 The existing `.github/workflows/miha-cpu-training.yml` remains an independent
 GitHub-runner route. The Huggi workflow is *manual only* to prevent accidental
 billing on commits, PRs, CI retry, or a schedule.

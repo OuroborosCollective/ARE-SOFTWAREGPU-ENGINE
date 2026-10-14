@@ -46,13 +46,17 @@ jobs:
       - name: Test fail-closed job and budget contracts (no paid calls)
         run: python -m unittest discover -s software_gpu/tests -p 'test_miha_huggi_jobs.py' -v
       - name: Create immutable job plan (no credentials or billing)
+        env:
+          MIHA_MODE: ${{ inputs.mode }}
+          MIHA_FLAVOR: ${{ inputs.flavor }}
+          MIHA_TIMEOUT_HOURS: ${{ inputs.timeout_hours }}
         shell: bash
         run: |
           python scripts/miha_huggi_jobs.py plan \
             --renderer-sha "$GITHUB_SHA" \
-            --mode "${{ inputs.mode }}" \
-            --flavor "${{ inputs.flavor }}" \
-            --timeout-hours "${{ inputs.timeout_hours }}" \
+            --mode "$MIHA_MODE" \
+            --flavor "$MIHA_FLAVOR" \
+            --timeout-hours "$MIHA_TIMEOUT_HOURS" \
             > miha-huggi-plan.json
           cat miha-huggi-plan.json
       - name: Install Hugging Face Jobs SDK only for explicit submission
@@ -62,14 +66,18 @@ jobs:
         if: inputs.action == 'submit'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MIHA_MODE: ${{ inputs.mode }}
+          MIHA_FLAVOR: ${{ inputs.flavor }}
+          MIHA_TIMEOUT_HOURS: ${{ inputs.timeout_hours }}
+          MIHA_MAX_USD: ${{ inputs.max_usd }}
         shell: bash
         run: |
           python scripts/miha_huggi_jobs.py submit \
             --renderer-sha "$GITHUB_SHA" \
-            --mode "${{ inputs.mode }}" \
-            --flavor "${{ inputs.flavor }}" \
-            --timeout-hours "${{ inputs.timeout_hours }}" \
-            --max-usd "${{ inputs.max_usd }}" \
+            --mode "$MIHA_MODE" \
+            --flavor "$MIHA_FLAVOR" \
+            --timeout-hours "$MIHA_TIMEOUT_HOURS" \
+            --max-usd "$MIHA_MAX_USD" \
             --confirm-paid-job > miha-huggi-submission.json
           cat miha-huggi-submission.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
