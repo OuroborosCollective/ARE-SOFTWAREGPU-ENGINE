@@ -209,7 +209,8 @@ class BlinnPhongShader(Shader):
 
         # Diffuse component (Lambertian)
         diff = max(0.0, float(np.dot(normal, self.light_dir)))
-        diffuse = base_color * self.light_color * diff
+        # Using np.float32 prevents scalar multiplication from promoting the array to float64
+        diffuse = base_color * self.light_color * np.float32(diff)
 
         # Ambient component
         ambient = base_color * self.ambient_color
@@ -232,7 +233,15 @@ class BlinnPhongShader(Shader):
             spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
         else:
             spec = 0.0
-        specular = self.specular_color * self.light_color * spec
+        # Using np.float32 prevents scalar multiplication from promoting the array to float64
+        specular = self.specular_color * self.light_color * np.float32(spec)
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        final_rgb = ambient + diffuse + specular
+        # Replacing np.clip with pure python max/min bounds improves performance,
+        # casting nan to int preserves the required ValueError semantic.
+        return (
+            max(0, min(255, int(final_rgb[0] * 255.0))),
+            max(0, min(255, int(final_rgb[1] * 255.0))),
+            max(0, min(255, int(final_rgb[2] * 255.0))),
+            255
+        )
