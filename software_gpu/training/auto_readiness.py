@@ -93,6 +93,38 @@ def compare(pinned_revision, current_revision, pinned, current):
     }
 
 
+
+def assess(pinned_revision, current_revision, pinned_root, current_root):
+    """Identify invalid live Auto without approving or modifying its records.
+
+    A damaged approved pinned snapshot is a hard failure. A damaged *newer*
+    live snapshot is a signed BLOCKED finding, never a usable training input.
+    """
+    pinned_sha(pinned_revision)
+    pinned_sha(current_revision)
+    old = inventory(pinned_root)
+    try:
+        new = inventory(current_root)
+    except ValueError as exc:
+        if not str(exc).startswith("AUTO_INVENTORY:"):
+            raise
+        return {
+            "protocol": "are.miha.auto-readiness.v1",
+            "status": "AUTO_SOURCE_INVALID",
+            "diagnostic": str(exc),
+            "pinned_evidence_sha": pinned_revision,
+            "current_evidence_sha": current_revision,
+            "pinned_canonical_records": old["canonical_records"],
+            "current_canonical_records": None,
+            "added_ids": [], "removed_ids": [],
+            "training_started": False, "release_accepted": False,
+            "atomic_approved_for_live_auto": False,
+            "notes": ["live source invalid; repair canonical/viewer pair before Atomic rebuild",
+                      "historical pinned Atomic training source remains unchanged"]
+        }
+    return compare(pinned_revision, current_revision, old, new)
+
+
 def run(config_file, output):
     from huggingface_hub import HfApi, snapshot_download
     cfg = json.loads(Path(config_file).read_text(encoding="utf-8"))
@@ -102,9 +134,9 @@ def run(config_file, output):
     current = pinned_sha(HfApi().dataset_info("Thorsu/miha-evidence").sha)
     kwargs = {"repo_id": "Thorsu/miha-evidence", "repo_type": "dataset",
               "allow_patterns": ["data/auto/*.json", "data/auto_rows/*.jsonl"]}
-    old = inventory(snapshot_download(revision=pinned, **kwargs))
-    new = inventory(snapshot_download(revision=current, **kwargs))
-    receipt = compare(pinned, current, old, new)
+    old_path = snapshot_download(revision=pinned, **kwargs)
+    new_path = snapshot_download(revision=current, **kwargs)
+    receipt = assess(pinned, current, old_path, new_path)
     receipt["base_model_revision"] = pinned_sha(cfg["base_revision"])
     receipt["code_revision"] = pinned_sha(cfg["code_revision"])
     receipt["atomic_revision"] = pinned_sha(cfg["atomic_revision"])
@@ -120,7 +152,7 @@ def run(config_file, output):
     if json.loads(dest.read_text(encoding="utf-8")) != receipt:
         raise ValueError("AUTO_READBACK")
     print(json.dumps({"status": receipt["status"], "sha256": digest,
-                      "pinned": old["canonical_records"], "current": new["canonical_records"],
+                      "pinned": receipt["pinned_canonical_records"], "current": receipt["current_canonical_records"],
                       "training_started": False}), flush=True)
     return receipt
 
