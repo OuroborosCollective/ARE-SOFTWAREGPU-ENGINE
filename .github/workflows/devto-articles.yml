@@ -37,6 +37,7 @@ jobs:
       - name: Validate article without API access
         run: python tools/devto_publish.py --check
       - name: Synchronize reviewed article with DEV.to
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && 'true' || 'false' }}
