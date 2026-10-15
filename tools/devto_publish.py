@@ -6,7 +6,7 @@ DEVTO_API_KEY and must never be committed to a repository or printed.
 """
 
 import argparse
-from datetime import date as calendar_date
+from datetime import date as calendar_date, datetime, timedelta, timezone
 import json
 import os
 import re
@@ -23,9 +23,18 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 RFC3339_TIMESTAMP = re.compile(
     r"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})[Tt]"
     r"(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})"
-    r"(?:[.][0-9]+)?(?:[Zz]|[+-](?P<offset_hour>[0-9]{2}):"
+    r"(?:[.][0-9]+)?(?:[Zz]|(?P<offset_sign>[+-])(?P<offset_hour>[0-9]{2}):"
     r"(?P<offset_minute>[0-9]{2}))"
 )
+LEAP_SECOND_DATES = frozenset({
+    "1972-06-30", "1972-12-31", "1973-12-31", "1974-12-31",
+    "1975-12-31", "1976-12-31", "1977-12-31", "1978-12-31",
+    "1979-12-31", "1981-06-30", "1982-06-30", "1983-06-30",
+    "1985-06-30", "1987-12-31", "1989-12-31", "1990-12-31",
+    "1992-06-30", "1993-06-30", "1994-06-30", "1995-12-31",
+    "1997-06-30", "1998-12-31", "2005-12-31", "2008-12-31",
+    "2012-06-30", "2015-06-30", "2016-12-31",
+})
 
 
 class DevtoError(Exception):
@@ -40,7 +49,7 @@ def is_rfc3339_timestamp(value):
     if match is None:
         return False
     try:
-        calendar_date.fromisoformat(match["date"])
+        parsed_date = calendar_date.fromisoformat(match["date"])
     except ValueError:
         return False
     if (int(match["hour"]) > 23 or int(match["minute"]) > 59
@@ -48,6 +57,22 @@ def is_rfc3339_timestamp(value):
         return False
     if match["offset_hour"] is not None:
         if int(match["offset_hour"]) > 23 or int(match["offset_minute"]) > 59:
+            return False
+    if int(match["second"]) == 60:
+        offset_minutes = 0
+        if match["offset_hour"] is not None:
+            offset_minutes = (int(match["offset_hour"]) * 60
+                              + int(match["offset_minute"]))
+            if match["offset_sign"] == "-":
+                offset_minutes = -offset_minutes
+        local = datetime(
+            parsed_date.year, parsed_date.month, parsed_date.day,
+            int(match["hour"]), int(match["minute"]), 59,
+            tzinfo=timezone(timedelta(minutes=offset_minutes)),
+        )
+        utc = local.astimezone(timezone.utc)
+        if (utc.date().isoformat() not in LEAP_SECOND_DATES
+                or (utc.hour, utc.minute, utc.second) != (23, 59, 59)):
             return False
     return True
 
