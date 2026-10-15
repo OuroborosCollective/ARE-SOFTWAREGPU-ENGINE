@@ -150,6 +150,16 @@ class DevtoPublishTest(unittest.TestCase):
         self.sync()
         self.assertFalse(DevtoServer.requests[-1][2]["article"]["published"])
 
+    def test_malformed_published_at_does_not_modify_article(self):
+        for value in ("not-a-timestamp", "2026-10-15", "2026-10-15T17:00:00"):
+            with self.subTest(value=value):
+                DevtoServer.articles = [{"id": 42, "published_at": value,
+                    "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+                DevtoServer.requests = []
+                with self.assertRaises(publisher.DevtoError):
+                    self.sync()
+                self.assertTrue(all(method == "GET" for method, _, _ in DevtoServer.requests))
+
     def test_unknown_publication_state_does_not_modify_article(self):
         DevtoServer.articles = [{"id": 42,
             "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
