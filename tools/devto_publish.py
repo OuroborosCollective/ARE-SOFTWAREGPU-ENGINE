@@ -6,6 +6,7 @@ DEVTO_API_KEY and must never be committed to a repository or printed.
 """
 
 import argparse
+from datetime import datetime
 import json
 import os
 import re
@@ -19,6 +20,9 @@ REPOSITORY_URL = "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
 DEFAULT_MANIFEST = "docs/devto/cpu-rendering-evidence.json"
 DEVTO_API_BASE = "https://dev.to/api"
 REPO_ROOT = Path(__file__).resolve().parents[1]
+RFC3339_TIMESTAMP = re.compile(
+    r"\\A\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})\\Z"
+)
 
 
 class DevtoError(Exception):
@@ -109,8 +113,13 @@ def publication_state(item):
     date = item.get("published_at")
     if explicit is not None and type(explicit) is not bool:
         raise DevtoError("Invalid DEV.to publication state; refusing update")
-    if has_date and date is not None and (not isinstance(date, str) or not date.strip()):
-        raise DevtoError("Invalid DEV.to publication timestamp; refusing update")
+    if has_date and date is not None:
+        try:
+            if not isinstance(date, str) or RFC3339_TIMESTAMP.fullmatch(date) is None:
+                raise ValueError
+            datetime.fromisoformat(date.replace("Z", "+00:00"))
+        except ValueError:
+            raise DevtoError("Invalid DEV.to publication timestamp; refusing update") from None
     dated = (date is not None) if has_date else None
     if explicit is None and dated is None:
         raise DevtoError("Missing DEV.to publication state; refusing update")
