@@ -97,6 +97,7 @@ class DevtoPublishTest(unittest.TestCase):
         self.assertEqual(("POST", "/articles"), action[:2])
         payload = action[2]["article"]
         self.assertFalse(payload["published"])
+        self.assertEqual("some_ai", payload["ai_disclosure_level"])
         self.assertEqual(publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md",
                          payload["canonical_url"])
 
