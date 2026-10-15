@@ -95,51 +95,39 @@ def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
     article = load_article(manifest_path, repo_root=repo_root)
     token = token.strip() if isinstance(token, str) else ""
     if not token:
-        if not publish:
-            return {"operation": "skipped", "id": None, "url": None, "published": False}
         raise DevtoError("DEVTO_API_KEY is missing; configure a GitHub Actions secret")
 
     matches = []
-    try:
-        # Scan all relevant pages before creating; duplicates are not safe to guess.
-        for page in range(1, 11):
-            found = request_json("GET", f"/articles/me/all?per_page=100&page={page}",
-                                 token, api_base=api_base)
-            if not isinstance(found, list) or len(found) > 100:
-                raise DevtoError("Unexpected DEV.to article list response")
-            matches.extend(item for item in found
-                           if isinstance(item, dict)
-                           and item.get("canonical_url") == article["canonical_url"])
-            if len(found) < 100:
-                break
-        else:
-            raise DevtoError("Article search exceeded safe pagination limit")
-    except DevtoError:
-        if not publish:
-            return {"operation": "skipped", "id": None, "url": None, "published": False}
-        raise
+    # Scan all relevant pages before creating; duplicates are not safe to guess.
+    for page in range(1, 11):
+        found = request_json("GET", f"/articles/me/all?per_page=100&page={page}",
+                             token, api_base=api_base)
+        if not isinstance(found, list) or len(found) > 100:
+            raise DevtoError("Unexpected DEV.to article list response")
+        matches.extend(item for item in found
+                       if isinstance(item, dict)
+                       and item.get("canonical_url") == article["canonical_url"])
+        if len(found) < 100:
+            break
+    else:
+        raise DevtoError("Article search exceeded safe pagination limit")
 
     if len(matches) > 1:
         raise DevtoError("Multiple articles have the same canonical URL; refusing update")
 
     existing = matches[0] if matches else None
     article["published"] = bool(publish or (existing and existing.get("published") is True))
-    try:
-        if existing:
-            article_id = existing.get("id")
-            if type(article_id) is not int or article_id < 1:
-                raise DevtoError("DEV.to article identity is invalid")
-            result = request_json("PUT", f"/articles/{article_id}", token, article,
-                                  api_base=api_base)
-            operation = "updated"
-        else:
-            result = request_json("POST", "/articles", token, article,
-                                  api_base=api_base)
-            operation = "created"
-    except DevtoError:
-        if not publish:
-            return {"operation": "skipped", "id": None, "url": None, "published": False}
-        raise
+    if existing:
+        article_id = existing.get("id")
+        if type(article_id) is not int or article_id < 1:
+            raise DevtoError("DEV.to article identity is invalid")
+        result = request_json("PUT", f"/articles/{article_id}", token, article,
+                              api_base=api_base)
+        operation = "updated"
+    else:
+        result = request_json("POST", "/articles", token, article,
+                              api_base=api_base)
+        operation = "created"
     if not isinstance(result, dict) or type(result.get("id")) is not int:
         raise DevtoError("DEV.to did not confirm an article ID")
     url = result.get("url")
