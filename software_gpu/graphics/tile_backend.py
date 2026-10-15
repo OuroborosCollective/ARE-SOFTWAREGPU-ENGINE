@@ -97,7 +97,8 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     scan_min_samples = None
     if planned:
         from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
-                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY)
+                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY,
+                                   ADAPTIVE_MAX_TRIANGLES)
         policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
         if not isinstance(policy, SurfacePlanPolicy):
             raise ValueError("SURFACE_PLAN_POLICY_INVALID")
@@ -117,9 +118,19 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     batch = None
     if planned:
         reason = None
-        if tasks and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
+        if policy.selection == "adaptive":
+            # Only static pre-draw facts are admissible: never time current draws.
+            if not tasks:
+                reason = "adaptive-no-binned-work"
+            elif equivalent_batch(shader) is None:
+                reason = "adaptive-no-batch-equivalence"
+            elif len(triangles) > ADAPTIVE_MAX_TRIANGLES:
+                reason = "adaptive-dense-triangle-count"
+            elif bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
+                reason = "adaptive-insufficient-bbox"
+        elif tasks and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
             reason = "small-primitive-cost-threshold"
-            planned = False
+        planned = reason is None
         trace = PlanTrace(tuple(coordinate for coordinate, _ in tasks), reason, bbox_samples, len(triangles),
                           binned_pairs, small_pairs, policy=policy)
         if planned:
