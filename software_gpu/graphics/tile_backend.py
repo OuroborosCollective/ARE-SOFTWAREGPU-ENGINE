@@ -213,7 +213,10 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             for key in v0:
                 va, vb, vc = v0[key], v1[key], v2[key]
                 if isinstance(va, np.ndarray):
-                    if requested_plan:
+                    # A reference fallback with ordinary 1-D varyings must
+                    # retain the original tile path without extra reshapes.
+                    # Scalar ndarrays and tensors still need their sample axis.
+                    if requested_plan and (planned or policy.selection != "adaptive" or va.ndim != 1):
                         # A sample axis plus the original varying shape,
                         # including scalar ndarrays and matrix/tensor varyings.
                         shape = (-1,) + (1,) * va.ndim

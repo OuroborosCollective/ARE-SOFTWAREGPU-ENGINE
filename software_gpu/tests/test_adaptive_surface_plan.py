@@ -94,6 +94,18 @@ class TestAdaptiveSurfacePlan(unittest.TestCase):
             self.assert_frames_equal(baseline, parallel)
             self.assertEqual(first, second)
 
+    def test_nonbatch_tensor_and_zero_dimensional_varyings_preserve_shapes(self):
+        # Regression for the compact 1-D adaptive reference interpolation:
+        # scalar ndarrays and rank-2 tensors still use generalized broadcasting.
+        from software_gpu.tests.test_surface_plan import TensorShader
+        mesh, faces = make_fixture(8, .8)
+        baseline, _ = render(mesh, faces, backend="tiles-plan", shader=TensorShader(), pixels=64)
+        actual, receipt = render(mesh, faces, backend="tiles-plan", shader=TensorShader(),
+                                 pixels=64, policy=ADAPTIVE_PLAN_POLICY)
+        self.assert_frames_equal(baseline, actual)
+        self.assertEqual(receipt["selected_route"], "tiles-reference")
+        self.assertEqual(receipt["reason"], "adaptive-no-batch-equivalence")
+
     def test_explicit_opt_in_does_not_change_existing_policy_receipts(self):
         mesh, faces = make_fixture(3, .6)
         default, prior = render(mesh, faces, backend="tiles-plan", pixels=48)
