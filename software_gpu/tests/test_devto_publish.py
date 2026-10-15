@@ -165,7 +165,9 @@ class DevtoPublishTest(unittest.TestCase):
         for value in ("not-a-timestamp", "2026-10-15", "2026-10-15T17:00:00",
                       "2026-10-15T17:00:00+00:60",
                       "2026-10-15T17:00:60Z",
-                      "1990-12-31T12:00:60Z"):
+                      "1990-12-31T12:00:60Z",
+                      "0001-01-01T00:00:60+23:59",
+                      "9999-12-31T23:59:60-23:59"):
             for publish in (False, True):
                 with self.subTest(value=value, publish=publish):
                     DevtoServer.articles = [{"id": 42, "published_at": value,
