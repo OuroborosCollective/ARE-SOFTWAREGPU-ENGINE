@@ -171,9 +171,12 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 # Native compiled NumPy ufuncs process coverage/depth by tile.
                 px = (np.arange(left, right + 1, dtype=np.float32) + np.float32(0.5))[None, :]
                 py = (np.arange(top, bottom + 1, dtype=np.float32) + np.float32(0.5))[:, None]
-                w0 = (px - s1[0]) * (s2[1] - s1[1]) - (py - s1[1]) * (s2[0] - s1[0])
-                w1 = (px - s2[0]) * (s0[1] - s2[1]) - (py - s2[1]) * (s0[0] - s2[0])
-                w2 = (px - s0[0]) * (s1[1] - s0[1]) - (py - s0[1]) * (s1[0] - s0[0])
+                # Cast multipliers to np.float32 to prevent silent promotion to float64
+                # Cast Python float multipliers to np.float32 before array multiplication to avoid silent
+                # float64 promotion that causes memory regression and byte-parity test failures.
+                w0 = (px - s1[0]) * np.float32(s2[1] - s1[1]) - (py - s1[1]) * np.float32(s2[0] - s1[0])
+                w1 = (px - s2[0]) * np.float32(s0[1] - s2[1]) - (py - s2[1]) * np.float32(s0[0] - s2[0])
+                w2 = (px - s0[0]) * np.float32(s1[1] - s0[1]) - (py - s0[1]) * np.float32(s1[0] - s0[0])
                 if planned and mode == "inside":
                     covered = True
                 else:

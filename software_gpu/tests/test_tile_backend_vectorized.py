@@ -9,6 +9,8 @@ array/scalar varyings and all supported tile sizes.
 import unittest
 
 import numpy as np
+import math
+
 
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
@@ -35,8 +37,12 @@ class MultiVaryingShader:
         }
 
     def fragment_shader(self, varyings):
-        rgb = np.clip(varyings["color"] * 255.0 + varyings["uv"][0], 0, 255)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        r = float(varyings["color"][0] * 255.0 + varyings["uv"][0])
+        g = float(varyings["color"][1] * 255.0 + varyings["uv"][0])
+        b = float(varyings["color"][2] * 255.0 + varyings["uv"][0])
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+            raise ValueError("NaN in material")
+        return int(min(255.0, max(0.0, r))), int(min(255.0, max(0.0, g))), int(min(255.0, max(0.0, b))), 255
 
 
 def sphere_scene(pixels, rings=10, segments=20, zoom=1.6, seed=686):

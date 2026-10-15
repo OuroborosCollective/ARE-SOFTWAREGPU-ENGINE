@@ -7,6 +7,8 @@ backends (bands reference and tiles) with analytic expectations, not mocks.
 import unittest
 
 import numpy as np
+import math
+
 
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
@@ -21,8 +23,11 @@ class FlatColorShader:
                 {"color": np.asarray(vertex.color, dtype=np.float64)})
 
     def fragment_shader(self, varyings):
-        rgb = np.clip(np.asarray(varyings["color"]) * 255.0, 0, 255)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        color = np.asarray(varyings["color"]) * 255.0
+        r, g, b = float(color[0]), float(color[1]), float(color[2])
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+            raise ValueError("NaN in material")
+        return int(min(255.0, max(0.0, r))), int(min(255.0, max(0.0, g))), int(min(255.0, max(0.0, b))), 255
 
 
 class AlphaShader(FlatColorShader):

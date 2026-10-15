@@ -7,6 +7,8 @@ import tempfile
 import unittest
 
 import numpy as np
+import math
+
 
 from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.framebuffer import Framebuffer
@@ -59,7 +61,9 @@ class TensorShader(ScalarColorShader):
                                  "flat": 9}
 
     def fragment_shader(self, varyings):
-        value = int(np.clip(varyings["matrix"].sum() * 32, 0, 255))
+        val = float(varyings["matrix"].sum() * 32)
+        if math.isnan(val): raise ValueError("NaN in material")
+        value = int(min(255.0, max(0.0, val)))
         return value, int(varyings["scalar_array"] * 100), varyings["flat"], 127
 
 
