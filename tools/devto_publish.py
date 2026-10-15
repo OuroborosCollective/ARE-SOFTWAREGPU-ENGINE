@@ -21,7 +21,8 @@ DEFAULT_MANIFEST = "docs/devto/cpu-rendering-evidence.json"
 DEVTO_API_BASE = "https://dev.to/api"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RFC3339_TIMESTAMP = re.compile(
-    r"\\A\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})\\Z"
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})"
 )
 
 
