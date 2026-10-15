@@ -56,6 +56,11 @@ jobs:
           assert scenes['procedural5k']['plans']['adaptive']['selected_route'] == 'tiles-reference'
           print('ADAPTIVE_SOURCE_BOUND_COLOR_DEPTH_READBACK_OK')
           PY
+      - name: Verify complete receipt through the canonical Workbench auditor
+        run: |
+          python plugins/softwaregpu-workbench/skills/softwaregpu-workbench/scripts/workbench.py audit \
+            evidence/adaptive-holdout/surface-plan-benchmark.json \
+            --root . --output evidence/adaptive-holdout/workbench-audit.json
       - name: Archive tested source for independent local replay
         if: always()
         run: |
@@ -66,4 +71,4 @@ jobs:
         with:
           name: adaptive-surface-receipts-${{ github.run_id }}-${{ github.run_attempt }}
           path: evidence/adaptive-holdout/
-          retention-days: 7
+          retention-days: 30

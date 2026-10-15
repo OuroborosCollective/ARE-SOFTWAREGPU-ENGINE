@@ -95,6 +95,8 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
     requested_plan = planned
     scan_min_samples = None
+    dense_fallback = False
+    dense_fallback_without_features = False
     if planned:
         from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
                                    checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY,
@@ -102,7 +104,14 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
         if not isinstance(policy, SurfacePlanPolicy):
             raise ValueError("SURFACE_PLAN_POLICY_INVALID")
-        scan_min_samples = policy.scan_min_samples
+        # For a guaranteed dense reference fallback, collecting scan/gate
+        # statistics adds work but cannot change the decision. Keep cache
+        # contracts unchanged: cached bins retain their configured key.
+        dense_fallback = (policy.selection == "adaptive"
+                          and len(triangles) > ADAPTIVE_MAX_TRIANGLES)
+        dense_fallback_without_features = dense_fallback and prepared_bins is None
+        scan_min_samples = (None if dense_fallback_without_features
+                            else policy.scan_min_samples)
     prepared = (bin_triangles(triangles, fb.width, fb.height, tile_size, scan_min_samples)
                 if prepared_bins is None else prepared_bins)
     if (not isinstance(prepared, TileBins) or prepared.triangles is not triangles
@@ -113,6 +122,11 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     frame_w, frame_h = fb.width, fb.height
     bbox_samples, binned_pairs, small_pairs = (prepared.bbox_samples,
                                               prepared.binned_pairs, prepared.small_pairs)
+    if dense_fallback:
+        # Null means "not part of the selection receipt", never zero coverage.
+        # Cached bins may already carry the unused gate metrics; do not expose
+        # different plan digests for cached and uncached identical geometry.
+        bbox_samples = binned_pairs = small_pairs = None
 
     trace = None
     batch = None

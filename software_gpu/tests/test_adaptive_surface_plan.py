@@ -71,6 +71,42 @@ class TestAdaptiveSurfacePlan(unittest.TestCase):
         self.assertEqual(receipt["selected_route"], "tiles-reference")
         self.assertEqual(receipt["reason"], "adaptive-dense-triangle-count")
 
+    def test_dense_fallback_omits_unneeded_feature_scan(self):
+        mesh, faces = make_fixture(300, .2)
+        baseline, _ = render(mesh, faces, pixels=48)
+        candidate, receipt = render(mesh, faces, backend="tiles-plan", pixels=48,
+                                    policy=ADAPTIVE_PLAN_POLICY)
+        self.assert_frames_equal(baseline, candidate)
+        self.assertEqual(receipt["reason"], "adaptive-dense-triangle-count")
+        self.assertEqual(receipt["decision"], "tiles-reference")
+        self.assertIsNone(receipt["estimated_bbox_samples"])
+        self.assertNotIn("binned_pairs", receipt)
+        self.assertNotIn("small_pairs", receipt)
+        self.assertFalse(receipt["adaptive_gate_metrics_available"])
+
+    def test_dense_fallback_cache_and_uncached_have_identical_receipts(self):
+        # Preparation-cache bins use the original policy key, but must not
+        # leak unused gate metrics into a reference-fallback receipt.
+        mesh, faces = make_fixture(300, .2)
+        reference, _ = render(mesh, faces, pixels=48)
+        uncached, expected = render(mesh, faces, pixels=48, backend="tiles-plan",
+                                    policy=ADAPTIVE_PLAN_POLICY)
+        self.assert_frames_equal(reference, uncached)
+        cached_fb = Framebuffer(48, 48)
+        renderer = SoftwareRasterizer(cached_fb, backend="tiles-plan", num_threads=2,
+                                      plan_policy=ADAPTIVE_PLAN_POLICY,
+                                      preparation_cache_bytes=8 << 20)
+        try:
+            for expected_cache_status in ("miss", "hit"):
+                cached_fb.clear(16, 25, 38, 255, depth=1.)
+                renderer.draw_mesh(mesh, faces, VertexColorShader())
+                self.assert_frames_equal(reference, cached_fb)
+                self.assertEqual(renderer.last_plan_receipt, expected)
+                self.assertEqual(renderer.last_preparation_receipt["status"],
+                                 expected_cache_status)
+        finally:
+            renderer.executor.shutdown(wait=True)
+
     def test_nonbatch_shader_preserves_scalar_side_effects(self):
         mesh, faces = make_fixture(8, .8)
         old, new = StatefulShader(), StatefulShader()

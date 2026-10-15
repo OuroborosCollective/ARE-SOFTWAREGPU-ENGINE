@@ -197,5 +197,12 @@ class PlanTrace:
             body["selector"] = "pre-draw-geometry-v1"
             body["selected_route"] = "tiles-reference" if self.reference_reason else "batch-first"
             body["adaptive_max_triangles"] = ADAPTIVE_MAX_TRIANGLES
+            body["adaptive_gate_metrics_available"] = self.bbox_samples is not None
+            if self.bbox_samples is None:
+                # Preserve the existing workbench audit contract: omitted
+                # partitions are not zero observations and cannot be checked
+                # against absent execution counters.
+                del body["binned_pairs"]
+                del body["small_pairs"]
         raw = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return dict(body, plan_sha256=hashlib.sha256(raw).hexdigest())
