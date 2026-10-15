@@ -1,0 +1,6 @@
+{
+  "title": "What CPU Rasterizer Benchmarks Really Prove",
+  "description": "A reproducible approach to deterministic software rasterization, byte parity, and carefully scoped CPU performance claims.",
+  "tags": ["python", "cpp", "graphics", "performance"],
+  "markdown_file": "docs/devto/cpu-rendering-evidence.md"
+}
