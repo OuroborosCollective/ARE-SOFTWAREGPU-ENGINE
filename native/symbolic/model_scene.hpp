@@ -149,7 +149,7 @@ struct Scene {
                 for(float x:f)need(std::isfinite(x)&&std::abs(x)<=1e4f,"MODEL_MATERIAL_NUMBER");
                 for(float x:m.base_color)need(x>=0&&x<=1,"MODEL_BASE_COLOR");
                 need(m.metallic>=0&&m.metallic<=1&&m.roughness>=0&&m.roughness<=1&&std::abs(m.normal_scale)<=100&&
-                     m.occlusion_strength>=0&&m.occlusion_strength<=1&&m.double_sided,"MODEL_MATERIAL_RANGE");
+                     m.occlusion_strength>=0&&m.occlusion_strength<=1,"MODEL_MATERIAL_RANGE");
                 for(auto id:ids)need(id>=-1&&(id<0||std::uint32_t(id)<texture_count),"MODEL_MATERIAL_TEXTURE_INDEX");
                 materials.push_back(m);}
             std::uint64_t built_bytes=0;
@@ -222,7 +222,12 @@ struct Scene {
                     return are::rooms::Vertex{float((double(a.clip.x)*inv+1)*.5*config.width),
                         float((1-double(a.clip.y)*inv)*.5*config.height),float(double(a.clip.z)*inv),1};};
                 const auto a=screen(vertices[0]),b=screen(vertices[1]),c=screen(vertices[2]);
-                if(are::rooms::edge(a,b,c.x,c.y)<0)std::swap(vertices[1],vertices[2]);
+                // glTF's front face is CCW in NDC (Y-up). edge() sees
+                // positive area for front faces after the Y-down viewport transform.
+                // Cull BEFORE normalizing winding, including post-clip fan triangles.
+                const float area=are::rooms::edge(a,b,c.x,c.y);
+                if(!materials[m.material_index].double_sided && !(area>0.0f))return;
+                if(area<0)std::swap(vertices[1],vertices[2]);
                 if(surface_triangles.size()>=1000000)throw std::runtime_error("MODEL_SURFACE_TRIANGLE_BUDGET");
                 are::rooms::SurfaceTriangle tri;tri.material=m.material_index;
                 for(int k=0;k<3;++k){tri.v[k]=vertices[k].clip;tri.world[k]=vertices[k].world;
@@ -244,8 +249,10 @@ struct Scene {
             bool input_clipped=false;
             if(pbr){for(const auto& vertex:surface_input)for(unsigned plane=0;plane<6;++plane)
                     input_clipped=input_clipped||projection::distance(vertex.clip,plane)<0.0;
-                const auto emitted=projection::clip_surface_triangle(surface_input,append_surface);
-                if(emitted==0)++culled_count;else if(input_clipped)++clipped_count;}
+                const auto before=surface_triangles.size();
+                projection::clip_surface_triangle(surface_input,append_surface);
+                const auto visible=surface_triangles.size()-before;
+                if(visible==0)++culled_count;else if(input_clipped)++clipped_count;}
             else if(perspective){for(const auto& vertex:input)for(unsigned plane=0;plane<6;++plane)
                     input_clipped=input_clipped||projection::distance(vertex,plane)<0.0;
                 const auto emitted=projection::clip_triangle(input,append);

@@ -1,7 +1,8 @@
 """Pinned GLB -> typed offline input. Animation, shading and rendering run in C++17.
 
 Admitted subset: one indexed triangle primitive/instance, opaque double-sided
-geometry, optional one skin with all 1..3 influence sets, TRS/matrix nodes and
+geometry for diagnostic rendering or glTF-sided opaque geometry for PBR,
+optional one skin with all 1..3 influence sets, TRS/matrix nodes and
 STEP/LINEAR TRS animation. Textures are not yet evaluated.
 """
 from __future__ import annotations
@@ -213,13 +214,17 @@ def load_asset(path, entry, profile='diagnostic'):
         clips.append(dict(name=animation.get('name', f'clip-{len(clips)}'), channels=channels,
                           duration=max(float(c['times'][-1]) for c in channels)))
     material = doc.get('materials', [])[ _uint(primitive.get('material'), len(doc.get('materials', []))-1)]
-    require(material.get('doubleSided', False) is True and material.get('alphaMode', 'OPAQUE') == 'OPAQUE', 'MODEL_MATERIAL_SUBSET')
+    double_sided = material.get('doubleSided', False)
+    require(type(double_sided) is bool and (profile == 'pbr' or double_sided)
+            and material.get('alphaMode', 'OPAQUE') == 'OPAQUE', 'MODEL_MATERIAL_SUBSET')
     surface = load_surface_subset(doc, binary, primitive, accessor) if profile == 'pbr' else None
     metadata = dict(file=Path(path).name, sha256=entry['sha256'], bytes=entry['bytes'], vertices=len(xyz), triangles=len(faces),
                     nodes=len(nodes), joints=len(joints), influences_per_vertex=weights.shape[1],
                     maximum_nonzero_influences=int((weights > 0).sum(axis=1).max()) if weights.size else 0,
                     weight_sum_max_error=float(np.abs(weights.astype('f8').sum(axis=1)-1).max()) if weights.size else 0,
-                    images=len(doc.get('images', [])), material='opaque-double-sided', render_profile=profile,
+                    images=len(doc.get('images', [])),
+                    material='opaque-double-sided' if double_sided else 'opaque-single-sided',
+                    render_profile=profile,
                     animations=[dict(name=c['name'], duration=c['duration'], channels=len(c['channels'])) for c in clips])
     result = dict(positions=xyz, faces=faces, nodes=typed_nodes, joints=joints, inverse_bind=ibm,
                  joint_data=joint_data, weights=weights, mesh_node=mesh_node, clips=clips, metadata=metadata)
