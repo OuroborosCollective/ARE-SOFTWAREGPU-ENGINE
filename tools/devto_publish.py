@@ -6,7 +6,7 @@ DEVTO_API_KEY and must never be committed to a repository or printed.
 """
 
 import argparse
-from datetime import datetime
+from datetime import date as calendar_date
 import json
 import os
 import re
@@ -21,13 +21,35 @@ DEFAULT_MANIFEST = "docs/devto/cpu-rendering-evidence.json"
 DEVTO_API_BASE = "https://dev.to/api"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RFC3339_TIMESTAMP = re.compile(
-    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
-    r"(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})"
+    r"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})[Tt]"
+    r"(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})"
+    r"(?:[.][0-9]+)?(?:[Zz]|[+-](?P<offset_hour>[0-9]{2}):"
+    r"(?P<offset_minute>[0-9]{2}))"
 )
 
 
 class DevtoError(Exception):
     """Safe-to-print publisher failure without request secrets."""
+
+
+def is_rfc3339_timestamp(value):
+    """Validate the RFC 3339 date-time grammar, including leap seconds."""
+    if not isinstance(value, str):
+        return False
+    match = RFC3339_TIMESTAMP.fullmatch(value)
+    if match is None:
+        return False
+    try:
+        calendar_date.fromisoformat(match["date"])
+    except ValueError:
+        return False
+    if (int(match["hour"]) > 23 or int(match["minute"]) > 59
+            or int(match["second"]) > 60):
+        return False
+    if match["offset_hour"] is not None:
+        if int(match["offset_hour"]) > 23 or int(match["offset_minute"]) > 59:
+            return False
+    return True
 
 
 def load_article(manifest_path, repo_root=REPO_ROOT):
@@ -114,13 +136,8 @@ def publication_state(item):
     date = item.get("published_at")
     if explicit is not None and type(explicit) is not bool:
         raise DevtoError("Invalid DEV.to publication state; refusing update")
-    if has_date and date is not None:
-        try:
-            if not isinstance(date, str) or RFC3339_TIMESTAMP.fullmatch(date) is None:
-                raise ValueError
-            datetime.fromisoformat(date.replace("Z", "+00:00"))
-        except ValueError:
-            raise DevtoError("Invalid DEV.to publication timestamp; refusing update") from None
+    if has_date and date is not None and not is_rfc3339_timestamp(date):
+        raise DevtoError("Invalid DEV.to publication timestamp; refusing update")
     dated = (date is not None) if has_date else None
     if explicit is None and dated is None:
         raise DevtoError("Missing DEV.to publication state; refusing update")
@@ -155,7 +172,8 @@ def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
         raise DevtoError("Multiple articles have the same canonical URL; refusing update")
 
     existing = matches[0] if matches else None
-    article["published"] = bool(publish or (existing and publication_state(existing)))
+    existing_is_public = publication_state(existing) if existing else False
+    article["published"] = bool(publish or existing_is_public)
     if existing:
         article_id = existing.get("id")
         if type(article_id) is not int or article_id < 1:
