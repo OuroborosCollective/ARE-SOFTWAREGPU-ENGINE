@@ -17,6 +17,7 @@ class DevtoServer(BaseHTTPRequestHandler):
     articles = []
     requests = []
     status_code = 200
+    mutation_status_code = 200
 
     def log_message(self, *args):
         return
@@ -39,12 +40,16 @@ class DevtoServer(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length))
         self.__class__.requests.append(("POST", self.path, body))
+        if self.mutation_status_code != 200:
+            return self._send({"error": "request rejected"}, self.mutation_status_code)
         self._send({"id": 42, "url": "https://dev.to/are/example"}, 201)
 
     def do_PUT(self):
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length))
         self.__class__.requests.append(("PUT", self.path, body))
+        if self.mutation_status_code != 200:
+            return self._send({"error": "request rejected"}, self.mutation_status_code)
         self._send({"id": 42, "url": "https://dev.to/are/example"})
 
 
@@ -66,6 +71,7 @@ class DevtoPublishTest(unittest.TestCase):
         DevtoServer.articles = []
         DevtoServer.requests = []
         DevtoServer.status_code = 200
+        DevtoServer.mutation_status_code = 200
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         (self.root / "docs/devto").mkdir(parents=True)
@@ -136,6 +142,24 @@ class DevtoPublishTest(unittest.TestCase):
             self.sync(token="sensitive-example")
         self.assertNotIn("sensitive-example", str(err.exception))
         self.assertIn("403", str(err.exception))
+
+    def test_create_http_error_is_not_silenced_for_draft(self):
+        DevtoServer.mutation_status_code = 503
+        with self.assertRaises(publisher.DevtoError) as err:
+            self.sync(token="sensitive-example")
+        self.assertIn("503", str(err.exception))
+        self.assertNotIn("sensitive-example", str(err.exception))
+        self.assertEqual("POST", DevtoServer.requests[-1][0])
+
+    def test_update_http_error_is_not_silenced_for_draft(self):
+        DevtoServer.articles = [{"id": 42, "published": False,
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        DevtoServer.mutation_status_code = 429
+        with self.assertRaises(publisher.DevtoError) as err:
+            self.sync(token="sensitive-example")
+        self.assertIn("429", str(err.exception))
+        self.assertNotIn("sensitive-example", str(err.exception))
+        self.assertEqual("PUT", DevtoServer.requests[-1][0])
 
     def test_frontmatter_rejected(self):
         self.markdown.write_text("---\npublished: true\n---\n" + "hello " * 250)
