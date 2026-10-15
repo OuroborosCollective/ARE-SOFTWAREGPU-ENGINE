@@ -176,6 +176,16 @@ class TestModelProbe(unittest.TestCase):
         self.assertGreater(retained['receipt']['candidate_frame_timings'][0]['projected_triangles'], 0)
         self.assertFalse(np.array_equal(visible['frames'][0], culled['frames'][0]))
 
+    def test_diagnostic_profile_still_requires_double_sided_material(self):
+        for value in (False, None):
+            def single_sided(doc, binary, value=value):
+                if value is None:
+                    del doc['materials'][0]['doubleSided']
+                else:
+                    doc['materials'][0]['doubleSided'] = value
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'MODEL_MATERIAL_SUBSET'):
+                self.asset(profile='diagnostic', mutate=single_sided)
+
     def test_gltf_single_sided_boolean_only_and_opaque_only(self):
         for value in ('true', 1, None):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError,'MODEL_MATERIAL_SUBSET'):
