@@ -68,6 +68,7 @@ def load_article(manifest_path, repo_root=REPO_ROOT):
     return {
         "title": title.strip(), "description": description.strip(),
         "tags": tags, "body_markdown": body,
+        "ai_disclosure_level": "some_ai",
         "canonical_url": f"{REPOSITORY_URL}/blob/main/{relative}",
     }
 
