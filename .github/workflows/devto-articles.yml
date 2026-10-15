@@ -8,6 +8,11 @@ on:
       - 'tools/devto_publish.py'
   workflow_dispatch:
     inputs:
+      auth_only:
+        description: 'Read-only API-key check; no draft or public article written'
+        type: boolean
+        required: true
+        default: true
       publish:
         description: 'Publish publicly after human review (default creates/updates a draft)'
         type: boolean
@@ -40,9 +45,16 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && 'true' || 'false' }}
+          PUBLISH_REQUESTED: ${{ inputs.publish && 'true' || 'false' }}
+          AUTH_ONLY: ${{ inputs.auth_only && 'true' || 'false' }}
         run: |
-          if [ "$PUBLISH_REQUESTED" = "true" ]; then
+          if [ "$AUTH_ONLY" = "true" ]; then
+            if [ "$PUBLISH_REQUESTED" = "true" ]; then
+              echo "Cannot publish while auth_only is enabled" >&2
+              exit 1
+            fi
+            python tools/devto_publish.py --auth-check
+          elif [ "$PUBLISH_REQUESTED" = "true" ]; then
             python tools/devto_publish.py --publish
           else
             python tools/devto_publish.py
