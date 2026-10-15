@@ -3,6 +3,7 @@ Programmable Vertex and Fragment Shaders and 3D Matrix Math for SoftwareGPU.
 Implements standard GPU pipeline shading stages.
 """
 
+import math
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
@@ -234,5 +235,13 @@ class BlinnPhongShader(Shader):
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        final_rgb = ambient + diffuse + specular
+        # Performance optimization: Replace np.clip with pure scalar math
+        # Impact: Reduces fragment_shader execution time overhead.
+        r, g, b = float(final_rgb[0]), float(final_rgb[1]), float(final_rgb[2])
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+            raise ValueError("NaN encountered in color calculation")
+        r_out = int(r * 255.0) if 0.0 <= r <= 1.0 else (255 if r > 1.0 else 0)
+        g_out = int(g * 255.0) if 0.0 <= g <= 1.0 else (255 if g > 1.0 else 0)
+        b_out = int(b * 255.0) if 0.0 <= b <= 1.0 else (255 if b > 1.0 else 0)
+        return r_out, g_out, b_out, 255
