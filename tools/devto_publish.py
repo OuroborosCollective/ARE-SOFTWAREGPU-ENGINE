@@ -95,13 +95,10 @@ def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
     article = load_article(manifest_path, repo_root=repo_root)
     token = token.strip() if isinstance(token, str) else ""
     if not token:
-        # A missing token is never a successful draft sync. The offline
-        # validation path is --check, not a silent omission of API work.
         raise DevtoError("DEVTO_API_KEY is missing; configure a GitHub Actions secret")
 
     matches = []
-    # Read failures must not masquerade as a successful draft operation:
-    # otherwise we cannot establish idempotency or report a real HTTP error.
+    # Scan all relevant pages before creating; duplicates are not safe to guess.
     for page in range(1, 11):
         found = request_json("GET", f"/articles/me/all?per_page=100&page={page}",
                              token, api_base=api_base)
