@@ -95,13 +95,23 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
     requested_plan = planned
     scan_min_samples = None
+    dense_fallback = False
+    dense_fallback_without_features = False
     if planned:
         from .surface_plan import (PlanTrace, classify_tile, equivalent_batch,
-                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY)
+                                   checked_batch_rgba, SurfacePlanPolicy, DEFAULT_PLAN_POLICY,
+                                   ADAPTIVE_MAX_TRIANGLES)
         policy = plan_policy if plan_policy is not None else DEFAULT_PLAN_POLICY
         if not isinstance(policy, SurfacePlanPolicy):
             raise ValueError("SURFACE_PLAN_POLICY_INVALID")
-        scan_min_samples = policy.scan_min_samples
+        # For a guaranteed dense reference fallback, collecting scan/gate
+        # statistics adds work but cannot change the decision. Keep cache
+        # contracts unchanged: cached bins retain their configured key.
+        dense_fallback = (policy.selection == "adaptive"
+                          and len(triangles) > ADAPTIVE_MAX_TRIANGLES)
+        dense_fallback_without_features = dense_fallback and prepared_bins is None
+        scan_min_samples = (None if dense_fallback_without_features
+                            else policy.scan_min_samples)
     prepared = (bin_triangles(triangles, fb.width, fb.height, tile_size, scan_min_samples)
                 if prepared_bins is None else prepared_bins)
     if (not isinstance(prepared, TileBins) or prepared.triangles is not triangles
@@ -112,14 +122,29 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
     frame_w, frame_h = fb.width, fb.height
     bbox_samples, binned_pairs, small_pairs = (prepared.bbox_samples,
                                               prepared.binned_pairs, prepared.small_pairs)
+    if dense_fallback:
+        # Null means "not part of the selection receipt", never zero coverage.
+        # Cached bins may already carry the unused gate metrics; do not expose
+        # different plan digests for cached and uncached identical geometry.
+        bbox_samples = binned_pairs = small_pairs = None
 
     trace = None
     batch = None
     if planned:
         reason = None
-        if tasks and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
+        if policy.selection == "adaptive":
+            # Only static pre-draw facts are admissible: never time current draws.
+            if not tasks:
+                reason = "adaptive-no-binned-work"
+            elif equivalent_batch(shader) is None:
+                reason = "adaptive-no-batch-equivalence"
+            elif len(triangles) > ADAPTIVE_MAX_TRIANGLES:
+                reason = "adaptive-dense-triangle-count"
+            elif bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
+                reason = "adaptive-insufficient-bbox"
+        elif tasks and bbox_samples < policy.draw_min_bbox_samples_per_triangle * len(triangles):
             reason = "small-primitive-cost-threshold"
-            planned = False
+        planned = reason is None
         trace = PlanTrace(tuple(coordinate for coordinate, _ in tasks), reason, bbox_samples, len(triangles),
                           binned_pairs, small_pairs, policy=policy)
         if planned:
@@ -202,7 +227,10 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             for key in v0:
                 va, vb, vc = v0[key], v1[key], v2[key]
                 if isinstance(va, np.ndarray):
-                    if requested_plan:
+                    # A reference fallback with ordinary 1-D varyings must
+                    # retain the original tile path without extra reshapes.
+                    # Scalar ndarrays and tensors still need their sample axis.
+                    if requested_plan and (planned or policy.selection != "adaptive" or va.ndim != 1):
                         # A sample axis plus the original varying shape,
                         # including scalar ndarrays and matrix/tensor varyings.
                         shape = (-1,) + (1,) * va.ndim

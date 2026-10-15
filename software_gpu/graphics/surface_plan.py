@@ -21,6 +21,8 @@ PROTOCOL = "are.surface-plan.v1"
 MIN_SCAN_SAMPLES = 64
 MIN_BATCH_SAMPLES = 8
 MIN_DRAW_SAMPLES_PER_TRIANGLE = 64
+# Conservative research-only cutoff: large triangle counts use reference tiles.
+ADAPTIVE_MAX_TRIANGLES = 256
 MAX_TRACE_TILES = 128
 # Counter units (integers, summed over the whole draw):
 #   inside / outside / boundary / scan_bypassed: tile-triangle PAIRS.
@@ -49,6 +51,7 @@ class SurfacePlanPolicy:
     batch_min_samples: int = MIN_BATCH_SAMPLES
     draw_min_bbox_samples_per_triangle: int = MIN_DRAW_SAMPLES_PER_TRIANGLE
     name: str = "corner-scan-v1"
+    selection: str = "fixed"
 
     def __post_init__(self):
         for value, minimum in ((self.scan_min_samples, 1), (self.batch_min_samples, 1),
@@ -57,11 +60,19 @@ class SurfacePlanPolicy:
                 raise ValueError("SURFACE_PLAN_POLICY_INVALID")
         if not isinstance(self.name, str) or not self.name or len(self.name) > 64:
             raise ValueError("SURFACE_PLAN_POLICY_INVALID")
+        if self.selection not in ("fixed", "adaptive"):
+            raise ValueError("SURFACE_PLAN_POLICY_INVALID")
 
 
 DEFAULT_PLAN_POLICY = SurfacePlanPolicy()
 BATCH_FIRST_POLICY = SurfacePlanPolicy(scan_min_samples=sys.maxsize,
                                       name="batch-first-v1")
+# Explicit opt-in: select between reference tiles and batch-first using only
+# pre-execution clipped bounding boxes, triangle count and shader contract.
+# No timing probes, mutable global switches or LLM decisions in draw_mesh.
+ADAPTIVE_PLAN_POLICY = SurfacePlanPolicy(scan_min_samples=sys.maxsize,
+                                         draw_min_bbox_samples_per_triangle=256,
+                                         name="adaptive-geometry-v1", selection="adaptive")
 
 
 def classify_tile(s0, s1, s2, left, right, top, bottom):
@@ -182,5 +193,16 @@ class PlanTrace:
                 "trace_truncated": not self.reference_reason and self.tile_count > MAX_TRACE_TILES,
                 "counts": None if self.reference_reason else dict(sorted(self.counts.items())),
                 "nodes": nodes, "edges": edges}
+        if self.policy.selection == "adaptive":
+            body["selector"] = "pre-draw-geometry-v1"
+            body["selected_route"] = "tiles-reference" if self.reference_reason else "batch-first"
+            body["adaptive_max_triangles"] = ADAPTIVE_MAX_TRIANGLES
+            body["adaptive_gate_metrics_available"] = self.bbox_samples is not None
+            if self.bbox_samples is None:
+                # Preserve the existing workbench audit contract: omitted
+                # partitions are not zero observations and cannot be checked
+                # against absent execution counters.
+                del body["binned_pairs"]
+                del body["small_pairs"]
         raw = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return dict(body, plan_sha256=hashlib.sha256(raw).hexdigest())

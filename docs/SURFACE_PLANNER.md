@@ -234,3 +234,34 @@ Final lokal: 191 ausführbare Tests PASS; Oberfläche 100 %, Tile 98,88 %,
 Benchmark 91,96 %, Gesamt 65,56 %. Alle Floors PASS. Die beiden oben
 genannten AF_UNIX-/Coverage-Ausnahmen bleiben explizit; vollständige
 kanonische Head-CI ist vor dem Merge erforderlich.
+
+## Adaptive Geometrie-Policy (isolierte Forschung, 15. Oktober 2026)
+
+Draft-PR #88 ergänzt ausschließlich für den explizit gewählten
+`ADAPTIVE_PLAN_POLICY` eine vorab deterministische Entscheidung: nur Shader
+mit deklarierter Batch-Äquivalenz, höchstens 256 vorbereitete Dreiecke
+und mindestens 256 Bounding-Box-Samples je Dreieck kommen für den
+`batch-first`-Pfad infrage. Ansonsten bleibt die vorhandene CPU-Tile-Referenz.
+Die allgemeine `tiles-plan`-Vorgabe und Aurion bleiben unverändert.
+
+Bei bereits durch die Dreiecksanzahl abgewiesenen Draws kann die
+Scan-/Gate-Metrikerhebung ohne Verlust von Rasterinformation entfallen.
+Im Receipt stehen dann `estimated_bbox_samples: null`,
+`adaptive_gate_metrics_available: false` und **keine** Felder
+`binned_pairs` bzw. `small_pairs`. Das heißt *nicht erhoben*, nicht
+*Null Arbeit*. Die normalen Planzähler bleiben nur für geplante Draws
+verpflichtend. Receipt-Digest, Quell-Hashes und tatsächliche RGBA-/Float32-
+Depth-Parität werden unabhängig geprüft. Vorbereitungscache und direkter
+Draw müssen dieselbe Planentscheidung mit identischem Digest melden.
+
+Erster Head `e8be073` (Actions 38671192612, PASS, Artefakt 11943708285)
+zeigte bei 64 px/2 Workern/15 Repeats 4,29x für große Flächen,
+aber 0,79x für `procedural400`. Nachfolge-Head `a090c9d2` (Actions
+38674311990, PASS, Artefakt 11945461227) zeigte 3,68x bzw. 0,94x;
+die CI-Runner hatten **unterschiedliche CPU-Modelle** (EPYC 7763 gegen
+EPYC 9V74) und sind deshalb **kein** direkter Head-zu-Head-Speeduptest.
+Eine lokale AB/BA-Messung mit jeweils 15 Wiederholungen pro Block auf
+demselben CPU-Host war für den Rückfallgewinn nicht eindeutig. Keine
+allgemeine Performance-Garantie und keine Aktivierung im Standard-Renderer.
+Vor Integration sind finaler Head-CI-Readback sowie Workbench-Receipt-Audit
+auf dem unveränderlichen Quellbaum erforderlich.
