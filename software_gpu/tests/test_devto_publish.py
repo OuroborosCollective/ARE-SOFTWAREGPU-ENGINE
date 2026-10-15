@@ -144,11 +144,38 @@ class DevtoPublishTest(unittest.TestCase):
         self.sync()
         self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
 
+    def test_rfc3339_variants_keep_public_article_published(self):
+        for value in ("2026-10-15t17:00:00z", "1990-12-31T23:59:60Z",
+                      "1991-01-01T00:59:60+01:00",
+                      "2026-10-15T19:00:00.123+02:00"):
+            with self.subTest(value=value):
+                DevtoServer.articles = [{"id": 42, "published_at": value,
+                    "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+                DevtoServer.requests = []
+                self.sync()
+                self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
+
     def test_documented_null_published_at_keeps_unpublished_draft(self):
         DevtoServer.articles = [{"id": 42, "published_at": None,
             "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
         self.sync()
         self.assertFalse(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_malformed_published_at_does_not_modify_article(self):
+        for value in ("not-a-timestamp", "2026-10-15", "2026-10-15T17:00:00",
+                      "2026-10-15T17:00:00+00:60",
+                      "2026-10-15T17:00:60Z",
+                      "1990-12-31T12:00:60Z",
+                      "0001-01-01T00:00:60+23:59",
+                      "9999-12-31T23:59:60-23:59"):
+            for publish in (False, True):
+                with self.subTest(value=value, publish=publish):
+                    DevtoServer.articles = [{"id": 42, "published_at": value,
+                        "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+                    DevtoServer.requests = []
+                    with self.assertRaises(publisher.DevtoError):
+                        self.sync(publish=publish)
+                    self.assertTrue(all(method == "GET" for method, _, _ in DevtoServer.requests))
 
     def test_unknown_publication_state_does_not_modify_article(self):
         DevtoServer.articles = [{"id": 42,
