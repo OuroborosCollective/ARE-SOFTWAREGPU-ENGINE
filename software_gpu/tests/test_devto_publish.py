@@ -87,7 +87,7 @@ class DevtoPublishTest(unittest.TestCase):
         self.manifest.write_text(json.dumps(self.data), encoding="utf-8")
 
     def sync(self, publish=False, token="not-a-real-token"):
-        return publisher.sync_article(self.manifest, token=token,
+        return publisher.sync_article(self.manifest, token=token, publish=publish,
                                       repo_root=self.root, api_base=self.api)
 
     def test_creates_unpublished_draft_with_canonical_source(self):
