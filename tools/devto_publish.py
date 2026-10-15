@@ -65,12 +65,15 @@ def is_rfc3339_timestamp(value):
                               + int(match["offset_minute"]))
             if match["offset_sign"] == "-":
                 offset_minutes = -offset_minutes
-        local = datetime(
-            parsed_date.year, parsed_date.month, parsed_date.day,
-            int(match["hour"]), int(match["minute"]), 59,
-            tzinfo=timezone(timedelta(minutes=offset_minutes)),
-        )
-        utc = local.astimezone(timezone.utc)
+        try:
+            local = datetime(
+                parsed_date.year, parsed_date.month, parsed_date.day,
+                int(match["hour"]), int(match["minute"]), 59,
+                tzinfo=timezone(timedelta(minutes=offset_minutes)),
+            )
+            utc = local.astimezone(timezone.utc)
+        except (OverflowError, ValueError):
+            return False
         if (utc.date().isoformat() not in LEAP_SECOND_DATES
                 or (utc.hour, utc.minute, utc.second) != (23, 59, 59)):
             return False
