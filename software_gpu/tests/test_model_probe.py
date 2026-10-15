@@ -148,6 +148,43 @@ class TestModelProbe(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'MODEL_TEXTURE_TRANSFORM'):
             load_asset(path,entry,profile='pbr')
 
+    def test_pbr_single_sided_default_culls_reverse_faces_without_mutating_mesh(self):
+        # glTF 2.0 defaults doubleSided to false. This property must affect
+        # rasterization, not merely the Python material metadata.
+        def unset_double_sided(doc, binary):
+            del doc['materials'][0]['doubleSided']
+        one = self.asset(profile='pbr', surface=True, static=True,
+                         mutate=unset_double_sided)
+        self.assertIs(one['material']['double_sided'], False)
+        self.assertEqual(one['metadata']['material'], 'gltf-metallic-roughness-pbr-v1')
+        front = copy.deepcopy(one)
+        back = copy.deepcopy(one)
+        back['faces'] = back['faces'][:, [0, 2, 1]].copy()
+        double_back = copy.deepcopy(back)
+        double_back['material']['double_sided'] = True
+        camera = dict(eye=[0, 0, 4], target=[0, 0, 0], up=[0, 1, 0],
+                      fov_y_degrees=50, near=.1, far=20)
+        params = dict(render_profile='pbr', projection='perspective', camera=camera,
+                      repeats=1, workers=2)
+        visible = self.run_asset(front, [0], **params)
+        culled = self.run_asset(back, [0], **params)
+        retained = self.run_asset(double_back, [0], **params)
+        for output in (visible, culled, retained):
+            self.assertTrue(output['receipt']['full_buffer_parity'])
+        self.assertGreater(visible['receipt']['candidate_frame_timings'][0]['projected_triangles'], 0)
+        self.assertEqual(culled['receipt']['candidate_frame_timings'][0]['projected_triangles'], 0)
+        self.assertGreater(retained['receipt']['candidate_frame_timings'][0]['projected_triangles'], 0)
+        self.assertFalse(np.array_equal(visible['frames'][0], culled['frames'][0]))
+
+    def test_gltf_single_sided_boolean_only_and_opaque_only(self):
+        for value in ('true', 1, None):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError,'MODEL_MATERIAL_SUBSET'):
+                self.asset(profile='pbr', surface=True,
+                           mutate=lambda d,b: d['materials'][0].update(doubleSided=value))
+        with self.assertRaisesRegex(ValueError,'MODEL_MATERIAL_SUBSET'):
+            self.asset(profile='pbr', surface=True,
+                       mutate=lambda d,b: d['materials'][0].update(alphaMode='BLEND', doubleSided=False))
+
     def test_inverse_transpose_normal_for_nonuniform_weighted_skin_matrix(self):
         source=self.root/'normal_matrix_probe.cpp';exe=self.root/'normal_matrix_probe'
         source.write_text(r'''#include "model_scene.hpp"
@@ -188,7 +225,6 @@ auto n=normal_vector(blended,V3{.3,.8,.4});std::cout<<std::setprecision(17)<<n[0
             lambda d,b: d['animations'][0]['samplers'][0].update(interpolation='CUBICSPLINE'),
             lambda d,b: d['animations'][0]['channels'][0]['target'].update(path='weights'),
             lambda d,b: d['materials'][0].update(alphaMode='BLEND'),
-            lambda d,b: d['materials'][0].update(doubleSided=False),
             lambda d,b: d['nodes'][0].update(rotation=[0,0,0,0]),
             lambda d,b: d['meshes'][0]['primitives'][0].update(mode=1),
             lambda d,b: d.update(animations=d['animations']*65),
