@@ -67,7 +67,7 @@ def load_article(manifest_path, repo_root=REPO_ROOT):
         raise DevtoError("Markdown frontmatter could override publication safety settings")
     return {
         "title": title.strip(), "description": description.strip(),
-        "tags": tags, "body_markdown": body,
+        "tags": ",".join(tags), "body_markdown": body,
         "canonical_url": f"{REPOSITORY_URL}/blob/main/{relative}",
     }
 
@@ -88,6 +88,35 @@ def request_json(method, endpoint, token, payload=None, api_base=DEVTO_API_BASE)
     except (URLError, TimeoutError, OSError, UnicodeError, ValueError):
         raise DevtoError("DEV.to API request or response failed") from None
     return result
+
+
+def check_auth(token, api_base=DEVTO_API_BASE):
+    """Read-only authenticated probe. Never logs secret, article bodies, or user data."""
+    token = token.strip() if isinstance(token, str) else ""
+    if not token:
+        raise DevtoError("DEVTO_API_KEY is missing; configure a GitHub Actions secret")
+    found = request_json("GET", "/articles/me/all?per_page=1&page=1", token,
+                         api_base=api_base)
+    if not isinstance(found, list):
+        raise DevtoError("Unexpected DEV.to article list response")
+    return True
+
+
+def publication_state(item):
+    """Resolve state from Forem's list representation, or block unsafe PUT."""
+    explicit = item.get("published")
+    has_date = "published_at" in item
+    date = item.get("published_at")
+    if explicit is not None and type(explicit) is not bool:
+        raise DevtoError("Invalid DEV.to publication state; refusing update")
+    if has_date and date is not None and (not isinstance(date, str) or not date.strip()):
+        raise DevtoError("Invalid DEV.to publication timestamp; refusing update")
+    dated = (date is not None) if has_date else None
+    if explicit is None and dated is None:
+        raise DevtoError("Missing DEV.to publication state; refusing update")
+    if explicit is not None and dated is not None and explicit != dated:
+        raise DevtoError("Inconsistent DEV.to publication state; refusing update")
+    return explicit if explicit is not None else dated
 
 
 def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
@@ -116,7 +145,7 @@ def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
         raise DevtoError("Multiple articles have the same canonical URL; refusing update")
 
     existing = matches[0] if matches else None
-    article["published"] = bool(publish or (existing and existing.get("published") is True))
+    article["published"] = bool(publish or (existing and publication_state(existing)))
     if existing:
         article_id = existing.get("id")
         if type(article_id) is not int or article_id < 1:
@@ -141,12 +170,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", default=DEFAULT_MANIFEST)
     parser.add_argument("--check", action="store_true", help="Validate offline, without credentials")
+    parser.add_argument("--auth-check", action="store_true",
+                        help="Verify API credentials via read-only GET without publication")
     parser.add_argument("--publish", action="store_true", help="Explicitly publish publicly")
     args = parser.parse_args(argv)
     try:
+        if sum((args.check, args.auth_check, args.publish)) > 1:
+            raise DevtoError("--check, --auth-check and --publish are mutually exclusive")
         if args.check:
             load_article(args.manifest)
             print("DEVTO_VALIDATION_OK")
+            return 0
+        if args.auth_check:
+            check_auth(os.environ.get("DEVTO_API_KEY", ""))
+            print("DEVTO_AUTH_OK")
             return 0
         result = sync_article(args.manifest, token=os.environ.get("DEVTO_API_KEY", ""),
                               publish=args.publish)
