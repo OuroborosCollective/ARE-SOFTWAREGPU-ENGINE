@@ -128,7 +128,7 @@ def load_surface_subset(doc, binary, primitive, accessor):
     material = materials[material_index]
     _need(isinstance(material, dict) and not material.get('extensions')
           and material.get('alphaMode', 'OPAQUE') == 'OPAQUE'
-          and material.get('doubleSided', False) is True, 'MODEL_MATERIAL_SUBSET')
+          and type(material.get('doubleSided', False)) is bool, 'MODEL_MATERIAL_SUBSET')
     pbr = material.get('pbrMetallicRoughness', {})
     _need(isinstance(pbr, dict) and not pbr.get('extensions'), 'MODEL_PBR_SUBSET')
     base = _array(pbr.get('baseColorFactor', [1, 1, 1, 1]), 4, 'MODEL_BASE_COLOR', 0, 1)
@@ -170,7 +170,8 @@ def load_surface_subset(doc, binary, primitive, accessor):
                         mr_texture=bind(pbr.get('metallicRoughnessTexture'), False),
                         normal_texture=bind(normal, False),
                         emissive_texture=bind(material.get('emissiveTexture'), True),
-                        occlusion_texture=bind(occlusion, False), double_sided=True)
+                        occlusion_texture=bind(occlusion, False),
+                        double_sided=material.get('doubleSided', False))
     if any(i >= 0 for i in (material_out['base_texture'], material_out['mr_texture'],
                              material_out['normal_texture'], material_out['emissive_texture'],
                              material_out['occlusion_texture'])):

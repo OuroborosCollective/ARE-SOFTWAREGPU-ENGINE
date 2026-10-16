@@ -31,7 +31,7 @@ from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.graphics.shader import Vertex
-from software_gpu.graphics.surface_plan import SurfacePlanPolicy, BATCH_FIRST_POLICY
+from software_gpu.graphics.surface_plan import SurfacePlanPolicy, BATCH_FIRST_POLICY, ADAPTIVE_PLAN_POLICY
 from software_gpu.integrations.aurion.offline_render_worker import (
     _camera_transform, _orient_double_sided, build_procedural_mesh,
 )
@@ -87,7 +87,7 @@ def check_overrides(label, plan, override):
             raise AssertionError("SURFACE_PLAN_ABLATION_NOT_APPLIED:" + label)
 
 
-def mode_table(ablation):
+def mode_table(ablation, adaptive=False):
     modes = [("tiles", "tiles", FlatShader, None),
              ("plan-scalar", "tiles-plan", ScalarColorShader, None),
              ("plan-batch", "tiles-plan", VertexColorShader, None)]
@@ -98,6 +98,8 @@ def mode_table(ablation):
                 modes.append((label, "tiles-plan", VertexColorShader if batch else ScalarColorShader,
                               {"scan": scan, "force": True}))
         modes.append(("batch-first", "tiles-plan", VertexColorShader, BATCH_FIRST_POLICY))
+    if adaptive:
+        modes.append(("adaptive", "tiles-plan", VertexColorShader, ADAPTIVE_PLAN_POLICY))
     return modes
 
 
@@ -137,8 +139,8 @@ def environment():
 
 
 def measure_scene(name, mesh, faces, size, workers, repeats, ablation=False,
-                  deadline=None, spec=None):
-    modes = mode_table(ablation)
+                  deadline=None, spec=None, adaptive=False):
+    modes = mode_table(ablation, adaptive=adaptive)
     engines = {}
     times = {label: [] for label, _, _, _ in modes}
     overrides = {label: override for label, _, _, override in modes if isinstance(override, dict)}
@@ -266,6 +268,8 @@ def main(argv=None):
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--ablation", action="store_true",
                         help="add forced-plan scan x batch factorial modes")
+    parser.add_argument("--adaptive", action="store_true",
+                        help="include opt-in deterministic geometry selector")
     parser.add_argument("--max-seconds", type=float, default=1800.,
                         help="subprocess wall-clock budget; 0 disables")
     parser.add_argument("--budget-child", action="store_true", help=argparse.SUPPRESS)
@@ -284,7 +288,8 @@ def main(argv=None):
     for name, spec in SCENES:
         mesh, faces = build_scene(spec)
         results.append(measure_scene(name, mesh, faces, args.pixels, args.workers, args.repeats,
-                                     ablation=args.ablation, deadline=deadline, spec=spec))
+                                     ablation=args.ablation, deadline=deadline, spec=spec,
+                                     adaptive=args.adaptive))
         print("SURFACE_PLAN_SCENE_OK:" + name, file=sys.stderr, flush=True)
     receipt = {"protocol": "are.surface-plan-benchmark.v1", "python": platform.python_version(),
                "os": platform.platform(), "numpy": np.__version__,
@@ -324,6 +329,8 @@ def _run_budgeted(args):
                    "--workers", str(args.workers), "--max-seconds", str(args.max_seconds), "--budget-child"]
         if args.ablation:
             command.append("--ablation")
+        if args.adaptive:
+            command.append("--adaptive")
         try:
             process = subprocess.run(command, cwd=root, timeout=args.max_seconds,
                                      capture_output=True, text=True)

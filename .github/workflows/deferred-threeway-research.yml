@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - 'software_gpu/benchmarks/compare_deferred_threeway.py'
+      - 'software_gpu/benchmarks/compare_deferred_visibility.py'
+      - 'software_gpu/graphics/**'
+      - 'README.md'
       - 'software_gpu/tests/test_deferred_threeway.py'
       - '.github/workflows/deferred-threeway-research.yml'
   workflow_dispatch:
