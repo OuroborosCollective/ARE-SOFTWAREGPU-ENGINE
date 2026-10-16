@@ -9,3 +9,9 @@
 ## 2026-10-16 - Replaced np.dot and np.linalg.norm with scalar math
 **Learning:** In highly iterated hot paths (like fragment shaders), replacing NumPy vector operations like `np.dot` and `np.linalg.norm` on small, fixed-size arrays (e.g., length 3 vectors) with explicit scalar multiplication and addition eliminates dynamic dispatch overhead and yields significant performance speedups while maintaining exact mathematical correctness and byte parity.
 **Action:** Use scalar math instead of NumPy vector operations for small, fixed-size arrays in hot paths to avoid dispatch overhead.
+## 2026-10-16 - json.loads parameters
+**Learning:** In Python 3.11, the  function does not accept the  parameter, but it does accept the  parameter to handle , , and .
+**Action:** Use  instead of  to reject  values in .
+## 2026-10-16 - json.loads parameters
+**Learning:** In Python 3.11, the json.loads function does not accept the allow_nan=False parameter, but it does accept the parse_constant parameter to handle NaN, Infinity, and -Infinity.
+**Action:** Use parse_constant=lambda _: (_ for _ in ()).throw(ValueError()) instead of allow_nan=False to reject NaN values in json.loads.
