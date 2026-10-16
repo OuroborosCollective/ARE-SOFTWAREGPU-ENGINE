@@ -5,6 +5,7 @@ Implements standard GPU pipeline shading stages.
 
 from dataclasses import dataclass
 from typing import Tuple, Optional
+import math
 import numpy as np
 
 
@@ -234,5 +235,18 @@ class BlinnPhongShader(Shader):
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
 
-        final_rgb = np.clip(ambient + diffuse + specular, 0.0, 1.0) * 255.0
-        return int(final_rgb[0]), int(final_rgb[1]), int(final_rgb[2]), 255
+        final_rgb = ambient + diffuse + specular
+        r = float(final_rgb[0])
+        g = float(final_rgb[1])
+        b = float(final_rgb[2])
+
+        # Explicitly handle NaN for reference exception contract
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+            raise ValueError("NaN")
+
+        return (
+            0 if r < 0.0 else 255 if r >= 1.0 else int(r * 255.0),
+            0 if g < 0.0 else 255 if g >= 1.0 else int(g * 255.0),
+            0 if b < 0.0 else 255 if b >= 1.0 else int(b * 255.0),
+            255
+        )
