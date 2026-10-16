@@ -1,0 +1,63 @@
+{
+  "models": [
+    {
+      "name": "forest-lord",
+      "variants": [
+        {
+          "file": "Forest Lord_Meshy_AI_2026-03-07_8bac74.glb",
+          "label": "original",
+          "sha256": "b63f07c52fa4961b870fcde218b4cde67b77af525e087a5728b7fac9bc2f2fca",
+          "triangles": 2292680
+        },
+        {
+          "file": "forest-lord_lod0_30k.glb",
+          "label": "lod0",
+          "sha256": "c710ab5d1c5b425809d6715019a75764a5512325155aaced13a943843add435a",
+          "triangles": 30000
+        },
+        {
+          "file": "forest-lord_lod1_12k.glb",
+          "label": "lod1",
+          "sha256": "f6d88d9710cb0e74a30c521c8361b81ecc646ca9b4210ec5acc0e16ce49b6b4f",
+          "triangles": 12000
+        },
+        {
+          "file": "forest-lord_lod2_4k.glb",
+          "label": "lod2",
+          "sha256": "78e9f222aee2c24168ae1c380a43366cb04dcb2f29fc43adea54d9a7682cde81",
+          "triangles": 4000
+        }
+      ]
+    },
+    {
+      "name": "emerald-grass",
+      "variants": [
+        {
+          "file": "grass-original-native-pbr.glb",
+          "label": "original",
+          "sha256": "f3641ab363186abf4c8d829c3fa49bc62492f9247958d1237ffd8ae2d03de7bd",
+          "triangles": 1414062
+        },
+        {
+          "file": "grass_lod0_30k.glb",
+          "label": "lod0",
+          "sha256": "ecb05867fc3848c693543b8da64e64a7aa9ae5b67542ce72ff2845bb111e0a92",
+          "triangles": 30000
+        },
+        {
+          "file": "grass_lod1_12k.glb",
+          "label": "lod1",
+          "sha256": "51274f739262b0d29fdae52a17488e1c00d9a92c83313816dcaf498b709ecd19",
+          "triangles": 12000
+        },
+        {
+          "file": "grass_lod2_4k.glb",
+          "label": "lod2",
+          "sha256": "33346cf743204ecc1c47597f534cc9e4054d2b524de548c580170571f09cf1ab",
+          "triangles": 4000
+        }
+      ]
+    }
+  ],
+  "protocol": "are.owner-lod-native-benchmark.v1"
+}
