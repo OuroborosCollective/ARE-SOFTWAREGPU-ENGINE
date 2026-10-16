@@ -209,7 +209,8 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        diff = max(0.0, float(np.dot(normal, self.light_dir)))
+        # Replaced np.dot with explicit scalar multiplication/addition for better per-pixel performance.
+        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -230,7 +231,9 @@ class BlinnPhongShader(Shader):
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
-            spec = max(0.0, float(np.dot(normal, cache[1]))) ** self.shininess
+            hd = cache[1]
+            # Replaced np.dot with explicit scalar multiplication/addition for better per-pixel performance.
+            spec = max(0.0, float(normal[0]*hd[0] + normal[1]*hd[1] + normal[2]*hd[2])) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
