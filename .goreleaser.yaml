@@ -1,0 +1,41 @@
+# Stable, tagged GitHub releases only; SHA-tagged Android/Node previews stay separate.
+version: 2
+project_name: ARE-SoftwareGPU-Engine
+
+# SoftwareGPU is a Python/C++ project, not a Go executable.
+# The release workflow builds a verified Python wheel separately.
+builds:
+  - skip: true
+
+# Source archive includes the noncommercial licence and mandatory NOTICE.
+source:
+  enabled: true
+  format: tar.gz
+
+checksum:
+  name_template: checksums.txt
+  extra_files:
+    - glob: ./release-assets/software_gpu-*.whl
+
+release:
+  github:
+    owner: OuroborosCollective
+    name: ARE-SOFTWAREGPU-ENGINE
+  prerelease: auto
+  extra_files:
+    - glob: ./release-assets/software_gpu-*.whl
+  header: |
+    CPU-only software rasterization research, with reproducible tests and
+    source-bound evidence. No hardware-GPU parity or FPS guarantee.
+  footer: |
+    PolyForm Noncommercial 1.0.0; retain the Required Notice.
+    This Python wheel is not an Android application or a native GPU driver.
+    Separate Gradio Android/Linux/Windows preview clients remain under
+    `gradio-android-<commit>` tags.
+
+# Optional cross-posting: enabled only if both Discord webhook secrets exist.
+announce:
+  discord:
+    enabled: '{{ eq .Env.RELEASE_DISCORD_ANNOUNCE "true" }}'
+    author: OuroborosCollective
+    message_template: 'ARE SoftwareGPU {{ .Tag }} released (CPU-only research, verified artifacts): {{ .ReleaseURL }}'
