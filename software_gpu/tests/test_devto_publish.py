@@ -17,6 +17,7 @@ class DevtoServer(BaseHTTPRequestHandler):
     articles = []
     requests = []
     status_code = 200
+    mutation_status_code = 200
 
     def log_message(self, *args):
         return
@@ -42,12 +43,16 @@ class DevtoServer(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length))
         self.__class__.requests.append(("POST", self.path, body))
+        if self.mutation_status_code != 200:
+            return self._send({"error": "request rejected"}, self.mutation_status_code)
         self._send({"id": 42, "url": "https://dev.to/are/example"}, 201)
 
     def do_PUT(self):
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length))
         self.__class__.requests.append(("PUT", self.path, body))
+        if self.mutation_status_code != 200:
+            return self._send({"error": "request rejected"}, self.mutation_status_code)
         self._send({"id": 42, "url": "https://dev.to/are/example"})
 
 
@@ -69,6 +74,7 @@ class DevtoPublishTest(unittest.TestCase):
         DevtoServer.articles = []
         DevtoServer.requests = []
         DevtoServer.status_code = 200
+        DevtoServer.mutation_status_code = 200
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         (self.root / "docs/devto").mkdir(parents=True)
@@ -100,8 +106,28 @@ class DevtoPublishTest(unittest.TestCase):
         self.assertEqual(("POST", "/articles"), action[:2])
         payload = action[2]["article"]
         self.assertFalse(payload["published"])
+        self.assertEqual("python,graphics", payload["tags"])
         self.assertEqual(publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md",
                          payload["canonical_url"])
+
+    def test_read_only_auth_probe_makes_no_mutation(self):
+        self.assertTrue(publisher.check_auth("valid-test-token", api_base=self.api))
+        self.assertEqual("GET", DevtoServer.requests[0][0])
+        self.assertEqual("/articles/me/all?per_page=1&page=1", DevtoServer.requests[0][1])
+        self.assertEqual(1, len(DevtoServer.requests))
+
+    def test_auth_probe_rejects_missing_token_without_requests(self):
+        with self.assertRaises(publisher.DevtoError):
+            publisher.check_auth("", api_base=self.api)
+        self.assertEqual([], DevtoServer.requests)
+
+    def test_auth_probe_reports_401_without_leaking_token(self):
+        DevtoServer.status_code = 401
+        with self.assertRaises(publisher.DevtoError) as err:
+            publisher.check_auth("sensitive-example", api_base=self.api)
+        self.assertIn("401", str(err.exception))
+        self.assertNotIn("sensitive-example", str(err.exception))
+        self.assertFalse(any(m in ("POST", "PUT") for m, _, _ in DevtoServer.requests))
 
     def test_existing_draft_is_updated_without_creating_another(self):
         DevtoServer.articles = [{"id": 42, "published": False,
@@ -114,6 +140,61 @@ class DevtoPublishTest(unittest.TestCase):
             "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
         self.sync()
         self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_documented_published_at_keeps_public_article_published(self):
+        DevtoServer.articles = [{"id": 42,
+            "published_at": "2026-10-15T17:00:00Z",
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        self.sync()
+        self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_rfc3339_variants_keep_public_article_published(self):
+        for value in ("2026-10-15t17:00:00z", "1990-12-31T23:59:60Z",
+                      "1991-01-01T00:59:60+01:00",
+                      "2026-10-15T19:00:00.123+02:00"):
+            with self.subTest(value=value):
+                DevtoServer.articles = [{"id": 42, "published_at": value,
+                    "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+                DevtoServer.requests = []
+                self.sync()
+                self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_documented_null_published_at_keeps_unpublished_draft(self):
+        DevtoServer.articles = [{"id": 42, "published_at": None,
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        self.sync()
+        self.assertFalse(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_malformed_published_at_does_not_modify_article(self):
+        for value in ("not-a-timestamp", "2026-10-15", "2026-10-15T17:00:00",
+                      "2026-10-15T17:00:00+00:60",
+                      "2026-10-15T17:00:60Z",
+                      "1990-12-31T12:00:60Z",
+                      "0001-01-01T00:00:60+23:59",
+                      "9999-12-31T23:59:60-23:59"):
+            for publish in (False, True):
+                with self.subTest(value=value, publish=publish):
+                    DevtoServer.articles = [{"id": 42, "published_at": value,
+                        "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+                    DevtoServer.requests = []
+                    with self.assertRaises(publisher.DevtoError):
+                        self.sync(publish=publish)
+                    self.assertTrue(all(method == "GET" for method, _, _ in DevtoServer.requests))
+
+    def test_unknown_publication_state_does_not_modify_article(self):
+        DevtoServer.articles = [{"id": 42,
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        with self.assertRaises(publisher.DevtoError):
+            self.sync()
+        self.assertTrue(all(m == "GET" for m, _, _ in DevtoServer.requests))
+
+    def test_conflicting_publication_state_does_not_modify_article(self):
+        DevtoServer.articles = [{"id": 42, "published": False,
+            "published_at": "2026-10-15T17:00:00Z",
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        with self.assertRaises(publisher.DevtoError):
+            self.sync()
+        self.assertTrue(all(m == "GET" for m, _, _ in DevtoServer.requests))
 
     def test_manual_publish_flag_sets_public_state(self):
         self.assertTrue(self.sync(publish=True)["published"])
@@ -146,6 +227,24 @@ class DevtoPublishTest(unittest.TestCase):
             self.sync(token="sensitive-example")
         self.assertNotIn("sensitive-example", str(err.exception))
         self.assertIn("403", str(err.exception))
+
+    def test_create_http_error_is_not_silenced_for_draft(self):
+        DevtoServer.mutation_status_code = 503
+        with self.assertRaises(publisher.DevtoError) as err:
+            self.sync(token="sensitive-example")
+        self.assertIn("503", str(err.exception))
+        self.assertNotIn("sensitive-example", str(err.exception))
+        self.assertEqual("POST", DevtoServer.requests[-1][0])
+
+    def test_update_http_error_is_not_silenced_for_draft(self):
+        DevtoServer.articles = [{"id": 42, "published": False,
+            "canonical_url": publisher.REPOSITORY_URL + "/blob/main/docs/devto/test-article.md"}]
+        DevtoServer.mutation_status_code = 429
+        with self.assertRaises(publisher.DevtoError) as err:
+            self.sync(token="sensitive-example")
+        self.assertIn("429", str(err.exception))
+        self.assertNotIn("sensitive-example", str(err.exception))
+        self.assertEqual("PUT", DevtoServer.requests[-1][0])
 
     def test_frontmatter_rejected(self):
         self.markdown.write_text("---\npublished: true\n---\n" + "hello " * 250)
