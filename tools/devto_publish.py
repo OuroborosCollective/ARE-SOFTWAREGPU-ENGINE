@@ -73,7 +73,8 @@ def load_article(manifest_path, repo_root=REPO_ROOT):
 
 
 def request_json(method, endpoint, token, payload=None, api_base=DEVTO_API_BASE):
-    headers = {"api-key": token, "Accept": "application/vnd.forem.api-v1+json"}
+    headers = {"api-key": token, "Accept": "application/vnd.forem.api-v1+json",
+               "User-Agent": "ARE-SoftwareGPU-DEVto-Publisher/1.0"}
     data = None
     if payload is not None:
         headers["Content-Type"] = "application/json"
