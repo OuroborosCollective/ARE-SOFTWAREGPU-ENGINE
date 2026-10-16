@@ -6,7 +6,6 @@ DEVTO_API_KEY and must never be committed to a repository or printed.
 """
 
 import argparse
-from datetime import date as calendar_date, datetime, timedelta, timezone
 import json
 import os
 import re
@@ -20,64 +19,10 @@ REPOSITORY_URL = "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
 DEFAULT_MANIFEST = "docs/devto/cpu-rendering-evidence.json"
 DEVTO_API_BASE = "https://dev.to/api"
 REPO_ROOT = Path(__file__).resolve().parents[1]
-RFC3339_TIMESTAMP = re.compile(
-    r"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})[Tt]"
-    r"(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})"
-    r"(?:[.][0-9]+)?(?:[Zz]|(?P<offset_sign>[+-])(?P<offset_hour>[0-9]{2}):"
-    r"(?P<offset_minute>[0-9]{2}))"
-)
-LEAP_SECOND_DATES = frozenset({
-    "1972-06-30", "1972-12-31", "1973-12-31", "1974-12-31",
-    "1975-12-31", "1976-12-31", "1977-12-31", "1978-12-31",
-    "1979-12-31", "1981-06-30", "1982-06-30", "1983-06-30",
-    "1985-06-30", "1987-12-31", "1989-12-31", "1990-12-31",
-    "1992-06-30", "1993-06-30", "1994-06-30", "1995-12-31",
-    "1997-06-30", "1998-12-31", "2005-12-31", "2008-12-31",
-    "2012-06-30", "2015-06-30", "2016-12-31",
-})
 
 
 class DevtoError(Exception):
     """Safe-to-print publisher failure without request secrets."""
-
-
-def is_rfc3339_timestamp(value):
-    """Validate the RFC 3339 date-time grammar, including leap seconds."""
-    if not isinstance(value, str):
-        return False
-    match = RFC3339_TIMESTAMP.fullmatch(value)
-    if match is None:
-        return False
-    try:
-        parsed_date = calendar_date.fromisoformat(match["date"])
-    except ValueError:
-        return False
-    if (int(match["hour"]) > 23 or int(match["minute"]) > 59
-            or int(match["second"]) > 60):
-        return False
-    if match["offset_hour"] is not None:
-        if int(match["offset_hour"]) > 23 or int(match["offset_minute"]) > 59:
-            return False
-    if int(match["second"]) == 60:
-        offset_minutes = 0
-        if match["offset_hour"] is not None:
-            offset_minutes = (int(match["offset_hour"]) * 60
-                              + int(match["offset_minute"]))
-            if match["offset_sign"] == "-":
-                offset_minutes = -offset_minutes
-        try:
-            local = datetime(
-                parsed_date.year, parsed_date.month, parsed_date.day,
-                int(match["hour"]), int(match["minute"]), 59,
-                tzinfo=timezone(timedelta(minutes=offset_minutes)),
-            )
-            utc = local.astimezone(timezone.utc)
-        except (OverflowError, ValueError):
-            return False
-        if (utc.date().isoformat() not in LEAP_SECOND_DATES
-                or (utc.hour, utc.minute, utc.second) != (23, 59, 59)):
-            return False
-    return True
 
 
 def load_article(manifest_path, repo_root=REPO_ROOT):
@@ -122,13 +67,14 @@ def load_article(manifest_path, repo_root=REPO_ROOT):
         raise DevtoError("Markdown frontmatter could override publication safety settings")
     return {
         "title": title.strip(), "description": description.strip(),
-        "tags": ",".join(tags), "body_markdown": body,
+        "tags": tags, "body_markdown": body,
         "canonical_url": f"{REPOSITORY_URL}/blob/main/{relative}",
     }
 
 
 def request_json(method, endpoint, token, payload=None, api_base=DEVTO_API_BASE):
-    headers = {"api-key": token, "Accept": "application/vnd.forem.api-v1+json"}
+    headers = {"api-key": token, "Accept": "application/vnd.forem.api-v1+json",
+               "User-Agent": "ARE-SoftwareGPU-DEVto-Publisher/1.0"}
     data = None
     if payload is not None:
         headers["Content-Type"] = "application/json"
@@ -145,42 +91,11 @@ def request_json(method, endpoint, token, payload=None, api_base=DEVTO_API_BASE)
     return result
 
 
-def check_auth(token, api_base=DEVTO_API_BASE):
-    """Read-only authenticated probe. Never logs secret, article bodies, or user data."""
-    token = token.strip() if isinstance(token, str) else ""
-    if not token:
-        raise DevtoError("DEVTO_API_KEY is missing; configure a GitHub Actions secret")
-    found = request_json("GET", "/articles/me/all?per_page=1&page=1", token,
-                         api_base=api_base)
-    if not isinstance(found, list):
-        raise DevtoError("Unexpected DEV.to article list response")
-    return True
-
-
-def publication_state(item):
-    """Resolve state from Forem's list representation, or block unsafe PUT."""
-    explicit = item.get("published")
-    has_date = "published_at" in item
-    date = item.get("published_at")
-    if explicit is not None and type(explicit) is not bool:
-        raise DevtoError("Invalid DEV.to publication state; refusing update")
-    if has_date and date is not None and not is_rfc3339_timestamp(date):
-        raise DevtoError("Invalid DEV.to publication timestamp; refusing update")
-    dated = (date is not None) if has_date else None
-    if explicit is None and dated is None:
-        raise DevtoError("Missing DEV.to publication state; refusing update")
-    if explicit is not None and dated is not None and explicit != dated:
-        raise DevtoError("Inconsistent DEV.to publication state; refusing update")
-    return explicit if explicit is not None else dated
-
-
 def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
                  api_base=DEVTO_API_BASE):
     article = load_article(manifest_path, repo_root=repo_root)
-    token = token.strip() if isinstance(token, str) else ""
-    if not token:
+    if not isinstance(token, str) or not token.strip():
         raise DevtoError("DEVTO_API_KEY is missing; configure a GitHub Actions secret")
-
     matches = []
     # Scan all relevant pages before creating; duplicates are not safe to guess.
     for page in range(1, 11):
@@ -195,13 +110,12 @@ def sync_article(manifest_path, token, publish=False, repo_root=REPO_ROOT,
             break
     else:
         raise DevtoError("Article search exceeded safe pagination limit")
-
     if len(matches) > 1:
         raise DevtoError("Multiple articles have the same canonical URL; refusing update")
 
     existing = matches[0] if matches else None
-    existing_is_public = publication_state(existing) if existing else False
-    article["published"] = bool(publish or existing_is_public)
+    # Content edits must not accidentally unpublish an existing public article.
+    article["published"] = bool(publish or (existing and existing.get("published") is True))
     if existing:
         article_id = existing.get("id")
         if type(article_id) is not int or article_id < 1:
@@ -226,26 +140,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", default=DEFAULT_MANIFEST)
     parser.add_argument("--check", action="store_true", help="Validate offline, without credentials")
-    parser.add_argument("--auth-check", action="store_true",
-                        help="Verify API credentials via read-only GET without publication")
     parser.add_argument("--publish", action="store_true", help="Explicitly publish publicly")
     args = parser.parse_args(argv)
     try:
-        if sum((args.check, args.auth_check, args.publish)) > 1:
-            raise DevtoError("--check, --auth-check and --publish are mutually exclusive")
         if args.check:
             load_article(args.manifest)
             print("DEVTO_VALIDATION_OK")
             return 0
-        if args.auth_check:
-            check_auth(os.environ.get("DEVTO_API_KEY", ""))
-            print("DEVTO_AUTH_OK")
-            return 0
         result = sync_article(args.manifest, token=os.environ.get("DEVTO_API_KEY", ""),
                               publish=args.publish)
-        if result["operation"] == "skipped":
-            print("DEVTO_SKIPPED: DEV.to sync skipped (not publishing)")
-            return 0
         print(f"DEVTO_{result['operation'].upper()} id={result['id']} published={result['published']}")
         if result["url"]:
             print(f"Article: {result['url']}")
