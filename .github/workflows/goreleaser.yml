@@ -1,0 +1,138 @@
+name: Verified GoReleaser release
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.goreleaser.yaml'
+      - '.github/workflows/goreleaser.yml'
+      - 'tools/release_gate.py'
+      - 'software_gpu/tests/test_release_gate.py'
+      - 'setup.py'
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verified-goreleaser-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Validate configuration, wheel and snapshot without publishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_DISCORD_ANNOUNCE: 'false'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Exercise release gate negative and positive cases
+        run: python -m unittest software_gpu.tests.test_release_gate -v
+      - name: Build real redistributable Python wheel
+        run: |
+          set -euo pipefail
+          python -m pip wheel --no-deps --wheel-dir release-assets .
+          test "$(find release-assets -maxdepth 1 -name 'software_gpu-*.whl' | wc -l)" -eq 1
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          path, = list(Path('release-assets').glob('software_gpu-*.whl'))
+          with ZipFile(path) as archive:
+              assert any(p.endswith('/LICENSE.md') for p in archive.namelist())
+              assert any(p.endswith('/NOTICE') for p in archive.namelist())
+          print('WHEEL_LICENSE_NOTICE_OK')
+          PY
+      - name: Install and validate GoReleaser OSS
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          install-only: true
+      - name: GoReleaser check and local snapshot (never publishes)
+        run: |
+          set -euo pipefail
+          goreleaser check
+          goreleaser release --snapshot --clean
+          test -s dist/checksums.txt
+          grep -F 'software_gpu-' dist/checksums.txt
+          test "$(find dist -maxdepth 1 -type f -name '*.tar.gz' | wc -l)" -ge 1
+
+  publish:
+    name: Publish only exact-main fully green CPU CI tag
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_DISCORD_ANNOUNCE: ${{ secrets.DISCORD_WEBHOOK_ID != '' && secrets.DISCORD_WEBHOOK_TOKEN != '' && 'true' || 'false' }}
+      DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
+      DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Build tagged wheel from exactly the source being published
+        run: python -m pip wheel --no-deps --wheel-dir release-assets .
+      - name: Require exact SHA and all eight main CPU regressions jobs green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+          gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/cpu-regressions.yml/runs" \
+            -f head_sha="$GITHUB_SHA" -f event=push -f per_page=100 > "$RUNNER_TEMP/cpu-runs.json"
+          run_id="$(python tools/release_gate.py --tag "$GITHUB_REF_NAME" \
+            --sha "$GITHUB_SHA" --repo "$GITHUB_REPOSITORY" \
+            --runs "$RUNNER_TEMP/cpu-runs.json")"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" > "$RUNNER_TEMP/cpu-jobs.json"
+          python tools/release_gate.py --tag "$GITHUB_REF_NAME" \
+            --sha "$GITHUB_SHA" --repo "$GITHUB_REPOSITORY" \
+            --runs "$RUNNER_TEMP/cpu-runs.json" --jobs "$RUNNER_TEMP/cpu-jobs.json" \
+            --wheel release-assets/software_gpu-*.whl
+      - name: Install GoReleaser OSS
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          install-only: true
+      - name: Publish semver release and optional Discord announcement
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: goreleaser release --clean
+      - name: Read back exact tag, SHA and released assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft --jq '.isDraft' | grep -qx false
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --json tagName --jq '.tagName' | grep -Fxq "$GITHUB_REF_NAME"
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            --json assets --jq '.assets[].name' > "$RUNNER_TEMP/released-assets.txt"
+          grep -E '^software_gpu-.*[.]whl$' "$RUNNER_TEMP/released-assets.txt"
+          grep -Fx 'checksums.txt' "$RUNNER_TEMP/released-assets.txt"
+          grep -E '[.]tar[.]gz$' "$RUNNER_TEMP/released-assets.txt"
+          release_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq '.object.sha')"
+          if [ "$release_sha" != "$GITHUB_SHA" ]; then
+            # Annotated tags dereference to the commit in Git, not the tag object.
+            test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          fi
+          echo "RELEASE_READBACK_OK sha=$GITHUB_SHA tag=$GITHUB_REF_NAME"
