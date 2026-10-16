@@ -131,6 +131,48 @@ def select_training_snapshot(settings, inspected_release, *, approved_atomic_sha
     return selected
 
 
+
+def approve_training_snapshot(settings, inspected_release, *, atomic_sha,
+                              live_evidence_sha):
+    """Only the configured approved Atomic SHA can become a training input.
+
+    Current public Evidence HEAD is observational metadata, not a requirement
+    that invalidates a previously approved immutable dataset. Every selection
+    is still AUDIT_REQUIRED: the caller must rebuild the pinned canonical
+    source and check identical published Atomic bytes before any training.
+    """
+    if (type(settings) is not dict or type(atomic_sha) is not str
+            or not H40.fullmatch(atomic_sha)
+            or atomic_sha != settings.get("atomic_revision")):
+        raise ValueError("AUTO_DYNAMIC_APPROVAL_MISSING: Atomic is not the configured approved release")
+    if type(live_evidence_sha) is not str or not H40.fullmatch(live_evidence_sha):
+        raise ValueError("AUTO_DYNAMIC: live Evidence SHA must be pinned")
+    manifest = inspected_release.get("manifest", {})
+    source_sha = manifest.get("dataset_revision")
+    selected = select_training_snapshot(
+        settings, inspected_release,
+        approved_atomic_sha=atomic_sha,
+        current_evidence_sha=source_sha,
+    )
+    return {
+        "protocol": "are.miha.approved-snapshot-selection.v1",
+        "status": "AUDIT_REQUIRED",
+        "freshness": ("APPROVED_PINNED_CURRENT"
+                      if source_sha == live_evidence_sha
+                      else "APPROVED_PINNED_BEHIND_LIVE"),
+        "training_config": selected,
+        "approved_atomic_sha": atomic_sha,
+        "training_evidence_sha": source_sha,
+        "live_evidence_sha": live_evidence_sha,
+        "dataset_sha256": inspected_release["sha256"],
+        "examples": len(inspected_release["example_ids"]),
+        "training_started": False,
+        "release_accepted": False,
+        "next_required_gate": "canonical-to-Atomic builder audit and byte readback",
+    }
+
+
+
 def make_replay_shards(release,max_rows=2048,seed=42):
     if type(max_rows) is not int or max_rows<1 or type(seed) is not int:
         raise ValueError("AUTO_REPLAY_SHARD")
