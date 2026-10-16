@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Exercise release gate negative and positive cases
-        run: python -m unittest software_gpu.tests.test_release_gate -v
+        run: python -m unittest discover -s software_gpu/tests -p test_release_gate.py -v
       - name: Build real redistributable Python wheel
         run: |
           set -euo pipefail
