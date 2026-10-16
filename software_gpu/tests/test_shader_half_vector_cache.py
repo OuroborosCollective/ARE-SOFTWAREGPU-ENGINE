@@ -239,6 +239,40 @@ class TestBlinnPhongHalfVectorCache(unittest.TestCase):
                         shader.fragment_shader({"normal": np.zeros(3, dtype=np.float32),
                                                 "uv": np.zeros(2, dtype=np.float32)})
 
+    def test_scalar_clip_performance_and_semantics(self):
+        rng = np.random.default_rng(20261016)
+        normals = [rng.normal(size=3).astype(np.float32) for _ in range(800)]
+        uv = np.array([0.45, 0.58], dtype=np.float32)
+        ref, opt = self._pair()
+        before, after = [], []
+
+        # Test performance gating
+        for round_no in range(15):
+            order = ((ref, before), (opt, after))
+            if round_no % 2:
+                order = tuple(reversed(order))
+            for shader, samples in order:
+                start = time.perf_counter_ns()
+                for normal in normals:
+                    shader.fragment_shader({"normal": normal, "uv": uv})
+                samples.append((time.perf_counter_ns() - start) / 1e6)
+        median_before = statistics.median(before)
+        median_after = statistics.median(after)
+        speedup = median_before / median_after
+
+        print("SCALAR_CLIP_PAIRED_CPU_EVIDENCE " + json.dumps({
+            "python": sys.version.split()[0], "numpy": np.__version__,
+            "rounds": 15, "normals_per_round": len(normals),
+            "before_median_ms": round(median_before, 5),
+            "after_median_ms": round(median_after, 5),
+            "paired_speedup": round(statistics.median([x / y for x, y in zip(before, after)]), 4),
+            "median_ratio": round(speedup, 4),
+            "scope": "scalar fragment min max clip only",
+        }, sort_keys=True))
+
+        if sys.platform.startswith("linux") and sys.version_info >= (3, 12):
+            self.assertGreaterEqual(speedup, 1.05, "scalar clip optimization regressed or is insufficient")
+
 
 if __name__ == "__main__":
     unittest.main()
