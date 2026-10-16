@@ -19,6 +19,9 @@ from urllib.request import Request, urlopen
 REPOSITORY_URL = "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
 DEFAULT_MANIFEST = "docs/devto/cpu-rendering-evidence.json"
 DEVTO_API_BASE = "https://dev.to/api"
+# dev.to's bot filter 403s a missing/urllib-default User-Agent before auth is even
+# checked; a real one is required, not optional, for urllib-based requests.
+USER_AGENT = f"are-softwaregpu-devto-publisher/1.0 (+{REPOSITORY_URL})"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RFC3339_TIMESTAMP = re.compile(
     r"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})[Tt]"
@@ -128,7 +131,11 @@ def load_article(manifest_path, repo_root=REPO_ROOT):
 
 
 def request_json(method, endpoint, token, payload=None, api_base=DEVTO_API_BASE):
-    headers = {"api-key": token, "Accept": "application/vnd.forem.api-v1+json"}
+    headers = {
+        "api-key": token,
+        "Accept": "application/vnd.forem.api-v1+json",
+        "User-Agent": USER_AGENT,
+    }
     data = None
     if payload is not None:
         headers["Content-Type"] = "application/json"
@@ -257,3 +264,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
+        
