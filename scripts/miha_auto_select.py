@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from software_gpu.training.auto_incremental import (
-    canonical, inspect_release, select_training_snapshot
+    canonical, inspect_release, approve_training_snapshot
 )
 from software_gpu.training.auto_readiness import pinned_sha
 
@@ -21,7 +21,7 @@ def resolve(config, output, atomic_sha=None):
     api=HfApi()
     actual_evidence_sha=pinned_sha(api.dataset_info("Thorsu/miha-evidence").sha)
     if atomic_sha is None:
-        atomic_sha=api.dataset_info("Thorsu/miha-train-atomic").sha
+        atomic_sha=existing["atomic_revision"]
     atomic_sha=pinned_sha(atomic_sha)
     approved=snapshot_download("Thorsu/miha-train-atomic",repo_type="dataset",
                                revision=atomic_sha,
@@ -37,10 +37,11 @@ def resolve(config, output, atomic_sha=None):
         (Path(model_code)/"dataset_pipeline.py").read_bytes()).hexdigest()
     if release["manifest"].get("builder_code_sha256")!=pinned_builder_hash:
         raise ValueError("AUTO_DYNAMIC: published Atomic was built using different builder")
-    selected=select_training_snapshot(
-        existing,release,approved_atomic_sha=atomic_sha,
-        current_evidence_sha=actual_evidence_sha
+    approved=approve_training_snapshot(
+        existing,release,atomic_sha=atomic_sha,
+        live_evidence_sha=actual_evidence_sha
     )
+    selected=approved["training_config"]
     target=Path(output)
     target.mkdir(parents=True,exist_ok=False)
     config_path=target/"training.json"
@@ -49,9 +50,11 @@ def resolve(config, output, atomic_sha=None):
         handle.write("\n")
     receipt={
         "protocol":"are.miha.dynamic-training-config.v1",
+        "freshness":approved["freshness"],
         "status":"AUDIT_REQUIRED",
         "atomic_revision":atomic_sha,
-        "evidence_revision":actual_evidence_sha,
+        "evidence_revision":selected["evidence_revision"],
+        "observed_live_evidence_revision":actual_evidence_sha,
         "benchmark_revision":selected["bench_revision"],
         "code_revision":selected["code_revision"],
         "builder_sha256":pinned_builder_hash,
