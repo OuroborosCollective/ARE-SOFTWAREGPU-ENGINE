@@ -30,7 +30,10 @@ class DevtoServer(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
     def do_GET(self):
-        self.__class__.requests.append(("GET", self.path, None))
+        self.__class__.requests.append(("GET", self.path, {
+            "user_agent": self.headers.get("User-Agent"),
+            "api_key": self.headers.get("api-key"),
+        }))
         if self.status_code != 200:
             return self._send({"error": "request rejected"}, self.status_code)
         self._send(self.articles if "page=1" in self.path else [])
@@ -115,6 +118,13 @@ class DevtoPublishTest(unittest.TestCase):
     def test_manual_publish_flag_sets_public_state(self):
         self.assertTrue(self.sync(publish=True)["published"])
         self.assertTrue(DevtoServer.requests[-1][2]["article"]["published"])
+
+    def test_named_user_agent_and_api_key_sent_to_devto(self):
+        self.sync()
+        first = DevtoServer.requests[0]
+        self.assertEqual("GET", first[0])
+        self.assertEqual("ARE-SoftwareGPU-DEVto-Publisher/1.0", first[2]["user_agent"])
+        self.assertEqual("not-a-real-token", first[2]["api_key"])
 
     def test_no_api_requests_without_token(self):
         with self.assertRaises(publisher.DevtoError):
