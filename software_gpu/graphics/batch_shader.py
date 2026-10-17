@@ -34,8 +34,19 @@ class VertexColorShader(Shader):
                     0 if b <= 0 else 255 if b >= 255 else int(b),
                     255
                 )
-        rgb = np.clip(np.asarray(color) * 255, 0, 255).astype(np.uint8)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        # Fallback: pure scalar clip preserving exact numpy astype/clip semantics.
+        # Numpy np.clip(...).astype(np.uint8) drops fractional parts (truncates)
+        # and converts NaNs to 0 without raising exceptions in this path.
+        c = np.asarray(color)
+        r = c[0] * 255
+        g = c[1] * 255
+        b = c[2] * 255
+        return (
+            0 if r != r or r <= 0 else 255 if r >= 255 else int(r),
+            0 if g != g or g <= 0 else 255 if g >= 255 else int(g),
+            0 if b != b or b <= 0 else 255 if b >= 255 else int(b),
+            255
+        )
 
     batch_fragment_equivalent_to = fragment_shader
 
