@@ -4,6 +4,7 @@ Pure RGBA conversion only: no mutable per-fragment state, textures or lighting.
 For finite RGB triples both entry points use identical elementwise arithmetic
 and uint8 conversion. Invalid batch inputs are outside that equivalence domain.
 """
+import math
 import numpy as np
 
 from .shader import Shader
@@ -17,8 +18,20 @@ class VertexColorShader(Shader):
     vertex_preparation_equivalent_to = vertex_shader
 
     def fragment_shader(self, varyings):
-        rgb = np.clip(np.asarray(varyings["color"]) * 255, 0, 255).astype(np.uint8)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        color = varyings["color"]
+        r = float(color[0]) * 255.0
+        g = float(color[1]) * 255.0
+        b = float(color[2]) * 255.0
+
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+            raise ValueError("cannot convert float NaN to integer")
+
+        return (
+            int(min(255.0, max(0.0, r))),
+            int(min(255.0, max(0.0, g))),
+            int(min(255.0, max(0.0, b))),
+            255
+        )
 
     batch_fragment_equivalent_to = fragment_shader
 
