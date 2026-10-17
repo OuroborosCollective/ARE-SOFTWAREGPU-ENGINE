@@ -32,7 +32,7 @@ SOURCES=("software_gpu/benchmarks/compare_shader_frames.py",
          "software_gpu/graphics/geometry.py",
          "software_gpu/tests/test_shader_frames.py")
 POLICY=SurfacePlanPolicy(scan_min_samples=sys.maxsize,
-                          batch_min_samples=32,
+                          batch_min_samples=1,
                           draw_min_bbox_samples_per_triangle=0,
                           name="frame-batch-noscan-ablation")
 
