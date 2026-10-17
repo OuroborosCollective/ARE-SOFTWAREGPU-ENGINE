@@ -147,5 +147,59 @@ class VertexColorScalarParity(unittest.TestCase):
         np.testing.assert_array_equal(frames[0][1],frames[1][1])
 
 
+class VertexColorBatchAllocationParity(unittest.TestCase):
+    @staticmethod
+    def reference(colors):
+        # Original batch implementation, from the exact original renderer
+        color=np.asarray(colors)
+        if color.ndim!=2 or color.shape[1]!=3 or not np.isfinite(color).all():
+            raise ValueError("BATCH_COLOR_INPUT_INVALID")
+        rgb=np.clip(color*255,0,255).astype(np.uint8)
+        rgba=np.empty((len(rgb),4),dtype=np.uint8)
+        rgba[:,:3]=rgb
+        rgba[:,3]=255
+        return rgba
+
+    def test_randomized_finite_batches_exact_and_do_not_mutate_inputs(self):
+        from software_gpu.graphics.batch_shader import VertexColorShader
+        rng=np.random.default_rng(20261017)
+        shader=VertexColorShader()
+        for count in (0,1,3,128,2048):
+            for dtype in (np.float16,np.float32,np.float64,np.int16):
+                color=(rng.uniform(-2.,3.,size=(count,3)).astype(dtype)
+                       if np.issubdtype(dtype,np.floating)
+                       else rng.integers(-3,4,size=(count,3),dtype=dtype))
+                before=color.copy()
+                with self.subTest(count=count,dtype=str(dtype)):
+                    actual=shader.fragment_shader_batch({"color":color})
+                    np.testing.assert_array_equal(actual,self.reference(color))
+                    np.testing.assert_array_equal(color,before)
+                    self.assertEqual(actual.shape,(count,4))
+                    self.assertEqual(actual.dtype,np.uint8)
+                    self.assertTrue(actual.flags.c_contiguous)
+
+    def test_nonfinite_and_malformed_inputs_fail_closed(self):
+        from software_gpu.graphics.batch_shader import VertexColorShader
+        shader=VertexColorShader()
+        invalid=(np.array([[np.nan,0.,1.]],dtype=np.float32),
+                 np.array([[.1,np.inf,1.]],dtype=np.float64),
+                 np.array([.1,.4,.8],dtype=np.float32),
+                 np.zeros((2,4),dtype=np.float32))
+        for sample in invalid:
+            with self.subTest(shape=sample.shape):
+                with self.assertRaisesRegex(ValueError,"BATCH_COLOR_INPUT_INVALID"):
+                    shader.fragment_shader_batch({"color":sample})
+
+    def test_float32_boundary_results_including_overbright(self):
+        from software_gpu.graphics.batch_shader import VertexColorShader
+        shader=VertexColorShader()
+        pivot=np.linspace(-.1,1.1,4096,dtype=np.float32)
+        color=np.stack((pivot,pivot[::-1],
+                        np.nextafter(pivot,np.float32(np.inf))),axis=1)
+        np.testing.assert_array_equal(shader.fragment_shader_batch({"color":color}),
+                                      self.reference(color))
+
+
+
 if __name__ == "__main__":
     unittest.main()
