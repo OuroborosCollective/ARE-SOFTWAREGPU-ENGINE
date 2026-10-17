@@ -209,12 +209,8 @@ class BlinnPhongShader(Shader):
             base_color = tex_sample
 
         # Diffuse component (Lambertian)
-        # Inline dot product eliminates NumPy dispatch overhead in fragment loop
+        # Inline dot product eliminates NumPy dispatch overhead in fragment loop.
         diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
-        diffuse = base_color * self.light_color * diff
-
-        # Ambient component
-        ambient = base_color * self.ambient_color
 
         # Cache only loop-invariant halfway direction, preserving the same
         # NumPy float32 operations and dot/power/color evaluation as baseline.
@@ -231,15 +227,21 @@ class BlinnPhongShader(Shader):
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
-            # Inline dot product eliminates NumPy dispatch overhead in fragment loop
+            # Inline dot product eliminates NumPy dispatch overhead in fragment loop.
             spec = max(0.0, float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])) ** self.shininess
         else:
             spec = 0.0
-        specular = self.specular_color * self.light_color * spec
 
-        r = float(ambient[0] + diffuse[0] + specular[0])
-        g = float(ambient[1] + diffuse[1] + specular[1])
-        b = float(ambient[2] + diffuse[2] + specular[2])
+        # Extracting variables and doing scalar math directly eliminates the need
+        # to construct NumPy arrays (ambient, diffuse, specular) per fragment.
+        bc0, bc1, bc2 = float(base_color[0]), float(base_color[1]), float(base_color[2])
+        ac0, ac1, ac2 = float(self.ambient_color[0]), float(self.ambient_color[1]), float(self.ambient_color[2])
+        lc0, lc1, lc2 = float(self.light_color[0]), float(self.light_color[1]), float(self.light_color[2])
+        sc0, sc1, sc2 = float(self.specular_color[0]), float(self.specular_color[1]), float(self.specular_color[2])
+
+        r = bc0 * (ac0 + lc0 * diff) + sc0 * lc0 * spec
+        g = bc1 * (ac1 + lc1 * diff) + sc1 * lc1 * spec
+        b = bc2 * (ac2 + lc2 * diff) + sc2 * lc2 * spec
 
         # Inline comparisons preserve the existing scalar NaN, infinity and
         # truncation semantics without per-channel min/max function calls.
