@@ -43,9 +43,13 @@ class VertexColorShader(Shader):
         color = np.asarray(varyings["color"])
         if color.ndim != 2 or color.shape[1] != 3 or not np.isfinite(color).all():
             raise ValueError("BATCH_COLOR_INPUT_INVALID")
-        rgb = np.clip(color * 255, 0, 255).astype(np.uint8)
-        rgba = np.empty((len(rgb), 4), dtype=np.uint8)
-        rgba[:, :3] = rgb
+        # Own only one typed RGB working buffer. In-place clip plus the
+        # final uint8 assignment avoid separate clip and astype arrays while
+        # keeping exactly the original NumPy multiply/clip/cast semantics.
+        rgb_work = color * 255
+        np.clip(rgb_work, 0, 255, out=rgb_work)
+        rgba = np.empty((len(rgb_work), 4), dtype=np.uint8)
+        rgba[:, :3] = rgb_work
         rgba[:, 3] = 255
         return rgba
 
