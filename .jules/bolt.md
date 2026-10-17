@@ -6,3 +6,7 @@
 ## 2026-10-16 - Replace np.clip with scalar min/max in fragment_shader
 **Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders), replacing NumPy functions like `np.clip` with pure scalar equivalents (e.g., `min`/`max` on floats) improves performance by reducing overhead, but can cause exact byte-parity tests to fail due to silent NaN swallowing.
 **Action:** When implementing scalar fallbacks for functions like `np.clip`, always pair them with manual exception handling (like `math.isnan(val)` checks on all color channels) to preserve NumPy's original ValueError semantics for exact-bound exact parity tests.
+
+## 2026-10-18 - Replacing min/max math operations with inline fast-paths
+**Learning:** For pure Python hot paths (like fragment shaders), inline `NaN` checks utilizing boolean comparisons (e.g., `x == x` being false for NaN) and pure Python ternary bounding (e.g., `val if 0 <= val < 1 else 1`) execute significantly faster than `math.isnan()` and built-in `min()`/`max()` functions while preserving the same logic and exception handling.
+**Action:** Use inline pure python ternary checks and boolean checks for NaNs rather than `min`/`max` and `math.isnan()` builtins in critical inner loop paths where exact behaviour constraints apply and milliseconds matter.
