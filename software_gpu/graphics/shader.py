@@ -241,12 +241,14 @@ class BlinnPhongShader(Shader):
         g = float(ambient[1] + diffuse[1] + specular[1])
         b = float(ambient[2] + diffuse[2] + specular[2])
 
-        if math.isnan(r) or math.isnan(g) or math.isnan(b):
+        # Inline comparisons preserve the existing scalar NaN, infinity and
+        # truncation semantics without per-channel min/max function calls.
+        if r != r or g != g or b != b:
             raise ValueError("cannot convert float NaN to integer")
 
         return (
-            int(min(1.0, max(0.0, r)) * 255.0),
-            int(min(1.0, max(0.0, g)) * 255.0),
-            int(min(1.0, max(0.0, b)) * 255.0),
+            int((r if r < 1.0 else 1.0) * 255.0) if r > 0.0 else 0,
+            int((g if g < 1.0 else 1.0) * 255.0) if g > 0.0 else 0,
+            int((b if b < 1.0 else 1.0) * 255.0) if b > 0.0 else 0,
             255
         )
