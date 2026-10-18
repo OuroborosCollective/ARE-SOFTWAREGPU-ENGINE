@@ -140,16 +140,30 @@ class SoftwareRasterizer:
 
             inv_area = 1.0 / area
 
+            # Precompute vertex coordinates and deltas to avoid NumPy array allocations
+            # and function dispatch inside the highly-iterated per-pixel loop.
+            # This inline explicit evaluation yields significant performance speedups
+            # while maintaining exact float32 byte parity.
+            s0_x, s0_y = s0[0], s0[1]
+            s1_x, s1_y = s1[0], s1[1]
+            s2_x, s2_y = s2[0], s2[1]
+
+            dy0 = s2_y - s1_y
+            dx0 = s2_x - s1_x
+            dy1 = s0_y - s2_y
+            dx1 = s0_x - s2_x
+            dy2 = s1_y - s0_y
+            dx2 = s1_x - s0_x
+
             for py in range(min_y, max_y + 1):
                 p_y = py + 0.5
                 for px in range(min_x, max_x + 1):
                     p_x = px + 0.5
-                    p = np.array([p_x, p_y], dtype=np.float32)
 
-                    # Barycentric coordinates via edge functions
-                    w0 = edge_function(s1, s2, p)
-                    w1 = edge_function(s2, s0, p)
-                    w2 = edge_function(s0, s1, p)
+                    # Barycentric coordinates via explicit inline equations
+                    w0 = (p_x - s1_x) * dy0 - (p_y - s1_y) * dx0
+                    w1 = (p_x - s2_x) * dy1 - (p_y - s2_y) * dx1
+                    w2 = (p_x - s0_x) * dy2 - (p_y - s0_y) * dx2
 
                     # Inside triangle test
                     if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and

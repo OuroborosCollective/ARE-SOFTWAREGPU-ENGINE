@@ -6,3 +6,7 @@
 ## 2026-10-16 - Replace np.clip with scalar min/max in fragment_shader
 **Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders), replacing NumPy functions like `np.clip` with pure scalar equivalents (e.g., `min`/`max` on floats) improves performance by reducing overhead, but can cause exact byte-parity tests to fail due to silent NaN swallowing.
 **Action:** When implementing scalar fallbacks for functions like `np.clip`, always pair them with manual exception handling (like `math.isnan(val)` checks on all color channels) to preserve NumPy's original ValueError semantics for exact-bound exact parity tests.
+
+## 2026-10-18 - Inline Barycentric Edge Equation Evaluation
+**Learning:** In the highly-iterated per-pixel loops of the software rasterizer, allocating `np.array` per pixel and dispatching to a generic `edge_function` function incurs massive overhead. Precomputing edge deltas outside the loop and replacing the function calls with explicit inline math drastically increases graphics throughput while maintaining strict `float32` byte parity.
+**Action:** When working in tight inner loops, especially in `rasterizer.py` or similar computational paths, extract invariant values (like edge deltas) outside the loop and inline equations directly to avoid object allocation and function call overhead.
