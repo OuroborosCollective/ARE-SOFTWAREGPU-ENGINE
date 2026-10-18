@@ -140,53 +140,81 @@ class SoftwareRasterizer:
 
             inv_area = 1.0 / area
 
+            # PERFORMANCE: Precomputing edge deltas and explicitly evaluating w0/w1/w2
+            # eliminates inner-loop np.array() allocations and edge_function() calls.
+            # Avoid incremental additions which lose float32 byte-parity over width.
+            # Expected impact: >10x speedup in bounding box rasterization.
+            s1_x, s1_y = s1[0], s1[1]
+            s2_x, s2_y = s2[0], s2[1]
+            s0_x, s0_y = s0[0], s0[1]
+
+            e0_x = s2_x - s1_x
+            e0_y = s2_y - s1_y
+            e1_x = s0_x - s2_x
+            e1_y = s0_y - s2_y
+            e2_x = s1_x - s0_x
+            e2_y = s1_y - s0_y
+
+            c0 = (float(e0_y) > 0.0) or (float(e0_y) == 0.0 and float(e0_x) < 0.0)
+            c1 = (float(e1_y) > 0.0) or (float(e1_y) == 0.0 and float(e1_x) < 0.0)
+            c2 = (float(e2_y) > 0.0) or (float(e2_y) == 0.0 and float(e2_x) < 0.0)
+
             for py in range(min_y, max_y + 1):
                 p_y = py + 0.5
+
+                w0_y_part = (p_y - s1_y) * e0_x
+                w1_y_part = (p_y - s2_y) * e1_x
+                w2_y_part = (p_y - s0_y) * e2_x
+
                 for px in range(min_x, max_x + 1):
                     p_x = px + 0.5
-                    p = np.array([p_x, p_y], dtype=np.float32)
 
-                    # Barycentric coordinates via edge functions
-                    w0 = edge_function(s1, s2, p)
-                    w1 = edge_function(s2, s0, p)
-                    w2 = edge_function(s0, s1, p)
+                    w0 = (p_x - s1_x) * e0_y - w0_y_part
+                    w1 = (p_x - s2_x) * e1_y - w1_y_part
+                    w2 = (p_x - s0_x) * e2_y - w2_y_part
 
-                    # Inside triangle test
-                    if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
-                            edge_covered(w2, s0, s1)):
-                        alpha = w0 * inv_area
-                        beta = w1 * inv_area
-                        gamma = w2 * inv_area
+                    if not ((w0 >= 0) if c0 else (w0 > 0)):
+                        continue
 
-                        # Interpolate depth Z (screen space)
-                        z_val = alpha * s0[2] + beta * s1[2] + gamma * s2[2]
+                    if not ((w1 >= 0) if c1 else (w1 > 0)):
+                        continue
 
-                        # Early-Z depth test
-                        if z_val < self.fb.depth_buffer[py, px]:
-                            # Perspective-correct interpolation factor
-                            interp_inv_w = alpha * inv_w0 + beta * inv_w1 + gamma * inv_w2
-                            interp_factor = 1.0 / interp_inv_w if interp_inv_w > 1e-9 else 1.0
+                    if not ((w2 >= 0) if c2 else (w2 > 0)):
+                        continue
 
-                            # Interpolate varying attributes
-                            interpolated_varyings = {}
-                            for k in v0_var:
-                                val0, val1, val2 = v0_var[k], v1_var[k], v2_var[k]
-                                if isinstance(val0, np.ndarray):
-                                    weighted = (
-                                        alpha * (val0 * inv_w0) +
-                                        beta * (val1 * inv_w1) +
-                                        gamma * (val2 * inv_w2)
-                                    ) * interp_factor
-                                    interpolated_varyings[k] = weighted
-                                else:
-                                    interpolated_varyings[k] = val0
+                    alpha = w0 * inv_area
+                    beta = w1 * inv_area
+                    gamma = w2 * inv_area
 
-                            # Fragment Shader Invocation
-                            r, g, b, a = shader.fragment_shader(interpolated_varyings)
+                    # Interpolate depth Z (screen space)
+                    z_val = alpha * s0[2] + beta * s1[2] + gamma * s2[2]
 
-                            # Update Framebuffer and Depth buffer
-                            self.fb.depth_buffer[py, px] = z_val
-                            self.fb.color_buffer[py, px, 0] = r
-                            self.fb.color_buffer[py, px, 1] = g
-                            self.fb.color_buffer[py, px, 2] = b
-                            self.fb.color_buffer[py, px, 3] = a
+                    # Early-Z depth test
+                    if z_val < self.fb.depth_buffer[py, px]:
+                        # Perspective-correct interpolation factor
+                        interp_inv_w = alpha * inv_w0 + beta * inv_w1 + gamma * inv_w2
+                        interp_factor = 1.0 / interp_inv_w if interp_inv_w > 1e-9 else 1.0
+
+                        # Interpolate varying attributes
+                        interpolated_varyings = {}
+                        for k in v0_var:
+                            val0, val1, val2 = v0_var[k], v1_var[k], v2_var[k]
+                            if isinstance(val0, np.ndarray):
+                                weighted = (
+                                    alpha * (val0 * inv_w0) +
+                                    beta * (val1 * inv_w1) +
+                                    gamma * (val2 * inv_w2)
+                                ) * interp_factor
+                                interpolated_varyings[k] = weighted
+                            else:
+                                interpolated_varyings[k] = val0
+
+                        # Fragment Shader Invocation
+                        r, g, b, a = shader.fragment_shader(interpolated_varyings)
+
+                        # Update Framebuffer and Depth buffer
+                        self.fb.depth_buffer[py, px] = z_val
+                        self.fb.color_buffer[py, px, 0] = r
+                        self.fb.color_buffer[py, px, 1] = g
+                        self.fb.color_buffer[py, px, 2] = b
+                        self.fb.color_buffer[py, px, 3] = a
