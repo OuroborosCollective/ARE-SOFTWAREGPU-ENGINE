@@ -14,6 +14,20 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "fixtures/aurion/phase4_offline/job.example.json"
 BACKENDS = ("tiles", "tiles-plan", "bands")
+# Bounded, reproducible user-facing presets; never arbitrary worker commands.
+TEST_PRESETS = {
+    "Schnelltest · 64 Pixel": (686, 64, "tiles"),
+    "Standard · 128 Pixel": (686, 128, "tiles-plan"),
+    "Detailtest · 256 Pixel": (1234, 256, "tiles-plan"),
+    "Vergleich · Referenzrenderer": (686, 128, "bands"),
+}
+
+
+def preset_values(name: str):
+    if name not in TEST_PRESETS:
+        raise ValueError("TEST_PRESET_INVALID")
+    return TEST_PRESETS[name]
+
 
 
 def make_job(seed: int, pixels: int, backend: str) -> dict:
@@ -62,20 +76,60 @@ def execute(seed: int, pixels: int, backend: str):
 
 def create_demo():
     import gradio as gr
-    with gr.Blocks(title="ARE SoftwareGPU | Private CPU Arena") as demo:
-        gr.Markdown("# ARE SoftwareGPU | private offline CPU arena\n"
-                    "Seeded geometry only; CPU-vs-CPU is not GPU parity. "
-                    "No Aurion gameplay authority or original GLB publication.")
+    theme = gr.themes.Soft(primary_hue="cyan", secondary_hue="slate", neutral_hue="slate")
+    with gr.Blocks(title="ARE SoftwareGPU | CPU-Testlabor", theme=theme) as demo:
+        gr.Markdown(
+            "# ARE SoftwareGPU · CPU-Testlabor\n"
+            "### Echte Grafiktests, ohne Kommandozeile\n"
+            "Wähle eine Testvorlage und tippe auf **Test starten**. "
+            "Der Server rendert ein Bild, wiederholt den Lauf dreimal und "
+            "prüft dessen digitale Prüfsumme. Die App selbst enthält keinen Renderer."
+        )
         with gr.Row():
-            seed = gr.Number(value=686, precision=0, label="Deterministic mesh seed")
-            pixels = gr.Dropdown([64, 128, 256], value=128, label="Resolution")
-            backend = gr.Dropdown(list(BACKENDS), value="tiles-plan", label="CPU renderer")
-        run = gr.Button("Render and verify", variant="primary")
-        with gr.Row():
-            image = gr.Image(label="Actual CPU framebuffer", interactive=False)
-            receipt = gr.JSON(label="Worker receipt / hashes / CPU timings")
-        run.click(execute, [seed, pixels, backend], [image, receipt],
+            with gr.Column(scale=2):
+                preset = gr.Dropdown(
+                    choices=list(TEST_PRESETS), value="Schnelltest · 64 Pixel",
+                    label="1 · Testvorlage",
+                    info="Schnelltest für den ersten Versuch; Detailtest für mehr Bildpunkte."
+                )
+                gr.Markdown("**2 · Optional anpassen** · Die voreingestellten Werte funktionieren ohne Änderung.")
+                seed = gr.Number(value=686, precision=0, label="Testmuster-Nummer",
+                                 info="Dieselbe Nummer erzeugt dasselbe Ausgangsmuster.")
+                pixels = gr.Dropdown([64, 128, 256], value=64,
+                                     label="Bildgröße in Pixeln")
+                backend = gr.Dropdown(
+                    list(BACKENDS), value="tiles", label="CPU-Berechnungsweg",
+                    info="Tiles = Standard, Tiles-plan = Forschung, Bands = Referenz."
+                )
+                run = gr.Button("3 · Test starten", variant="primary", size="lg")
+                state = gr.Markdown("**Bereit.** Wähle eine Vorlage oder starte den Schnelltest.")
+            with gr.Column(scale=3):
+                image = gr.Image(label="Tatsächlich auf CPU gerendertes Bild",
+                                 interactive=False)
+                with gr.Accordion("Technische Prüfdaten und SHA-256", open=False):
+                    receipt = gr.JSON(label="Original-Worker-Receipt")
+        preset.change(preset_values, inputs=[preset],
+                      outputs=[seed, pixels, backend])
+        def run_with_message(s, p, b):
+            picture, evidence = execute(s, p, b)
+            result = evidence["outcome"]
+            if not result["repeat_byte_identical"]:
+                raise RuntimeError("REPLAY_MISMATCH")
+            return (picture, evidence,
+                    "**Bestanden:** Der echte CPU-Renderer hat das Bild erzeugt. "
+                    "Drei Wiederholungen waren byteidentisch; "
+                    f"{result['covered_pixels']} Pixel wurden belegt. "
+                    "Details findest du unter »Technische Prüfdaten«.")
+        run.click(run_with_message, [seed, pixels, backend], [image, receipt, state],
                   concurrency_limit=1, concurrency_id="are-softwaregpu-cpu")
+        gr.Markdown(
+            "#### Brauche ich einen Server?\n"
+            "Ja. Die Android-APK zeigt diese geschützte Testoberfläche an. "
+            "Die CPU-Arbeit findet auf dem Rechner mit dem ARE-Dienst statt. "
+            "Ohne erreichbaren HTTPS-Dienst kann die APK keinen Renderjob starten.\n\n"
+            "**Grenzen:** Nur prozedurale Testbilder, keine veröffentlichten Original-GLBs, "
+            "kein Spielserver und kein Nachweis für eine physische GPU."
+        )
     return demo
 
 
