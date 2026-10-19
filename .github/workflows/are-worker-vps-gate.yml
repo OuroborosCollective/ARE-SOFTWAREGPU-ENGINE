@@ -19,7 +19,7 @@ jobs:
     env:
       ARE_GRADIO_USER: ci
       ARE_EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      ARE_GRADIO_PASSWORD_PATH: ${{ runner.temp }}/are-worker-smoke-password
+      ARE_GRADIO_PASSWORD_PATH: /tmp/are-worker-smoke-password
       COMPOSE_PROJECT_NAME: are-softwaregpu
     steps:
       - name: Checkout exact source revision
