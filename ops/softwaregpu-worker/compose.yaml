@@ -1,0 +1,42 @@
+name: are-softwaregpu
+services:
+  worker:
+    container_name: are-softwaregpu-worker
+    image: are-softwaregpu-worker:current
+    build:
+      context: ../..
+      dockerfile: ops/softwaregpu-worker/Dockerfile
+    restart: unless-stopped
+    init: true
+    cpus: "3.0"
+    mem_limit: 3g
+    pids_limit: 96
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    environment:
+      ARE_GRADIO_USER: ${ARE_GRADIO_USER:?ARE_GRADIO_USER required}
+      ARE_GRADIO_PASSWORD_FILE: /run/secrets/are_gradio_password
+      ARE_GRADIO_CONTAINER_BIND: "1"
+      ARE_GRADIO_SERVER_BIND: "0.0.0.0"
+      HOME: /tmp
+    secrets:
+      - are_gradio_password
+    tmpfs:
+      - /tmp:size=768m,mode=1777
+    ports:
+      - "127.0.0.1:17860:7860"
+    labels:
+      org.ouroboros.service: are-softwaregpu-worker
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/', timeout=4).close()"]
+      interval: 20s
+      timeout: 7s
+      start_period: 45s
+      retries: 4
+secrets:
+  are_gradio_password:
+    file: ${ARE_GRADIO_PASSWORD_PATH:?ARE_GRADIO_PASSWORD_PATH required}
