@@ -55,6 +55,28 @@ class TestWorkerDeploymentContract(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "BIND_INVALID"):
                 gradio_server_bind()
 
+    def test_no_untagged_or_foreign_project_cleanup_paths(self):
+        script = (WORKER / "deploy.sh").read_text("utf-8")
+        # A project-specific ephemeral volume or an unused dangling
+        # worker-labelled image is the only eligible garbage.
+        self.assertIn('label=org.ouroboros.lifecycle=disposable', script)
+        self.assertIn('label=org.ouroboros.service=are-softwaregpu-worker', script)
+        self.assertIn('label=com.docker.compose.project=are-softwaregpu', script)
+        self.assertIn('dangling=true', script)
+        self.assertIn('docker ps -aq --filter "ancestor=', script)
+        self.assertIn('docker ps -aq --filter "volume=', script)
+        self.assertNotIn('docker volume rm -f', script)
+        self.assertNotIn('docker compose down -v', script)
+
+    def test_image_source_identity_is_required(self):
+        dockerfile = (WORKER / "Dockerfile").read_text("utf-8")
+        config = (WORKER / "compose.yaml").read_text("utf-8")
+        script = (WORKER / "deploy.sh").read_text("utf-8")
+        self.assertIn("org.opencontainers.image.revision", dockerfile)
+        self.assertIn("ARE_EXPECTED_SOURCE_SHA", config)
+        self.assertIn("ARE_WORKER_SHA_MISMATCH", script)
+        self.assertIn("ARE_WORKER_DIRTY_CHECKOUT", script)
+
     def test_image_contains_no_host_credentials_or_persistent_storage(self):
         dockerfile = (WORKER / "Dockerfile").read_text("utf-8")
         self.assertIn("USER 10001:10001", dockerfile)
