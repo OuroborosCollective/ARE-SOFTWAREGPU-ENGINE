@@ -151,3 +151,13 @@ python -m software_gpu.benchmarks.compare_surface_plans --output-dir surface-pla
 Die [SoftwareGPU Workbench](plugins/softwaregpu-workbench/README.md) enthält
 das wiederverwendbare Plugin für echte Regressionen, begrenzte Benchmarks,
 Quellhash-Audit, Ablationsanalyse, Renderer-Kalibrierung und CPU-Finetuning-Preflight.
+
+## Neue CPU-Testlabor-Oberfläche (Forschung)
+
+Die Android-Begleitapp erhält einen klaren Einstieg statt einer unbeschrifteten Gradio-Adresse. Einmal eine **eigene HTTPS-Testserver-Adresse** konfigurieren, dann im geschützten Testlabor **Schnelltest**, **Standard**, **Detailtest** oder **Referenzvergleich** auswählen und **Test starten** drücken. Seed, Pixelgröße und CPU-Pfad werden für jede Vorlage automatisch gesetzt; das gerenderte Bild und die geprüften SHA-256-Receipts erscheinen auf demselben Bildschirm. [Android-Anleitung](android/README.md) · [Server-Anleitung](plugins/gradio_arena/README.md).
+
+**Wichtig:** Die APK enthält weiterhin **keinen lokalen Renderer**. Ohne einen betriebenen HTTPS-Server und Anmeldung funktioniert kein Renderjob; es gibt keine behauptete öffentliche Demo. Der neue UI-Branch ist erst nach bestandenem Android-/Python-CI und einem tatsächlichen Release als installierte APK verfügbar.
+
+### Shader: Vollbild-CPU-Nachweise vom 19. Oktober 2026
+
+[PR #115](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/115) misst den realen `draw_mesh`-Aufruf mit 15 gepaarten Zeiten und byteidentischen RGBA8-/float32-Tiefenpuffern bei 96×96 Pixeln. Der letzte geprüfte Head `94da7fe4401c4c220d15303666456699d5fef1a4` erzielte **1,6878×** (große Flächen, Scalar) und **1,2366×** (kleine Dreiecke, Scalar), bei Batch aber **0,7680×** bzw. **1,1617×**. Die Batch-Ergebnisse schwankten zwischen den CI-Läufen; **keine pauschale Beschleunigung oder Produktions-Policy-Änderung**. [Methode](docs/SHADER_WHOLE_FRAME_EVIDENCE_2026-10-17.md) · [Final-Head-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39206724215). Keine Aussage über Aurion-FPS oder Hardware-GPU-Parität.
