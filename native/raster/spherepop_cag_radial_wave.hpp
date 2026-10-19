@@ -54,6 +54,11 @@ inline WaveReceipt render_radial_cag_spherepop(
     if ((_mm_getcsr() & ((1u<<15)|(1u<<6)))!=0)
         throw std::invalid_argument("SPHEREPOP_WAVE_INPUT_INVALID");
 #endif
+    // Fail closed on arithmetic overflow in edge travel or path accumulation.
+    const double diagonal_time=1.4142135623730950488/wave_speed;
+    if(!std::isfinite(diagonal_time) ||
+       !std::isfinite(diagonal_time*double(width+height)))
+        throw std::invalid_argument("SPHEREPOP_WAVE_INPUT_INVALID");
     for(std::size_t i=0;i<depth_cells;++i)
         if (!std::isfinite(depth[i]) || depth[i]<0 || depth[i]>1 ||
             (owners[i]!=0 && !(depth[i]<1.0f)))
