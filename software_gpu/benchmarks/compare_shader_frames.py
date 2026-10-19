@@ -6,6 +6,7 @@ No GPU claim or assertion of a performance gain.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -61,35 +62,96 @@ def make_digest(report):
                                       allow_nan=False).encode()).hexdigest()
 
 
+def _spread(values):
+    """Median, linearly interpolated IQR and unscaled median absolute deviation."""
+    ordered = sorted(values)
+    def q(fraction):
+        index = (len(ordered) - 1) * fraction
+        low = int(index)
+        return ordered[low] + (ordered[min(low + 1, len(ordered) - 1)]
+                               - ordered[low]) * (index - low)
+    median = statistics.median(ordered)
+    return median, q(.75) - q(.25), statistics.median(abs(v - median) for v in ordered)
+
+
 def validate(report):
-    if report.get("sha256")!=make_digest(report):
+    if not isinstance(report, dict) or report.get("sha256") != make_digest(report):
         raise ValueError("SHADER_FRAME_RECEIPT_DIGEST")
-    if report.get("protocol")!="are.shader.full-frame-abba.v1" or report.get("repeats")!=15:
+    if report.get("protocol") != "are.shader.full-frame-abba.v1" or report.get("repeats") != 15:
         raise ValueError("SHADER_FRAME_RECEIPT_PROTOCOL")
-    if len(report.get("cases",[]))!=4:
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                   text=True).strip()
+    if report.get("head_sha") != head:
+        raise ValueError("SHADER_FRAME_RECEIPT_HEAD")
+    sources = report.get("source_sha256")
+    if not isinstance(sources, dict) or set(sources) != set(SOURCES):
+        raise ValueError("SHADER_FRAME_RECEIPT_SOURCE")
+    if any(sources[path] != hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+           for path in SOURCES):
+        raise ValueError("SHADER_FRAME_RECEIPT_SOURCE")
+    pixels, workers = report.get("pixels"), report.get("workers")
+    if (type(pixels) is not int or not 32 <= pixels <= 256
+            or type(workers) is not int or not 1 <= workers <= 8):
         raise ValueError("SHADER_FRAME_RECEIPT_CASES")
-    seen=set()
-    for c in report["cases"]:
-        k=(c.get("scene"),c.get("mode"))
-        if k not in {(s,m) for s,_,_ in SCENES for m in MODES} or k in seen:
+    expected = {(name, mode): count for name, count, _ in SCENES for mode in MODES}
+    cases = report.get("cases")
+    if not isinstance(cases, list) or len(cases) != len(expected):
+        raise ValueError("SHADER_FRAME_RECEIPT_CASES")
+    seen = set()
+    scene_hashes = {}
+    for c in cases:
+        if not isinstance(c, dict):
             raise ValueError("SHADER_FRAME_RECEIPT_CASES")
-        seen.add(k)
-        pairs=c.get("pairs",[])
-        if len(pairs)!=15:
-            raise ValueError("SHADER_FRAME_RECEIPT_PAIRS")
-        h={"rgba_sha256":c.get("rgba_sha256"),"depth_sha256":c.get("depth_sha256")}
-        if any(not isinstance(x,str) or len(x)!=64 for x in h.values()):
+        key = (c.get("scene"), c.get("mode"))
+        if (key not in expected or key in seen
+                or c.get("triangles") != expected[key]
+                or c.get("pixels") != pixels or c.get("workers") != workers
+                or type(c.get("covered_pixels")) is not int
+                or not 10 < c["covered_pixels"] <= pixels * pixels
+                or type(c.get("min_batch_fragment_samples")) is not int
+                or (c["min_batch_fragment_samples"] <= 0 if key[1] == "plan-batch"
+                    else c["min_batch_fragment_samples"] != 0)):
+            raise ValueError("SHADER_FRAME_RECEIPT_CASES")
+        seen.add(key)
+        hashes = {name: c.get(name) for name in ("rgba_sha256", "depth_sha256")}
+        if any(not isinstance(v, str) or len(v) != 64
+               or any(ch not in "0123456789abcdef" for ch in v)
+               for v in hashes.values()):
             raise ValueError("SHADER_FRAME_RECEIPT_HASHES")
-        for i,p in enumerate(pairs):
-            order=["previous","current"] if i%2==0 else ["current","previous"]
-            if (p.get("order")!=order or p.get("hashes")!=h or
-                any(type(p.get(x+"_ms")) not in (int,float) or p[x+"_ms"]<=0
-                    for x in ("previous","current"))):
+        prev_hash = scene_hashes.setdefault(key[0], hashes)
+        if hashes != prev_hash:
+            raise ValueError("SHADER_FRAME_RECEIPT_HASHES")
+        pairs = c.get("pairs")
+        if not isinstance(pairs, list) or len(pairs) != 15:
+            raise ValueError("SHADER_FRAME_RECEIPT_PAIRS")
+        for i, pair in enumerate(pairs):
+            order = ["previous", "current"] if i % 2 == 0 else ["current", "previous"]
+            if (not isinstance(pair, dict) or pair.get("order") != order
+                    or pair.get("hashes") != hashes
+                    or any(type(pair.get(label + "_ms")) not in (int, float)
+                           or not math.isfinite(pair[label + "_ms"])
+                           or pair[label + "_ms"] <= 0 for label in ("previous", "current"))):
                 raise ValueError("SHADER_FRAME_RECEIPT_PAIRS")
-        speed=statistics.median(p["previous_ms"]/p["current_ms"] for p in pairs)
-        faster=sum(p["current_ms"]<p["previous_ms"] for p in pairs)
-        if (abs(speed-c["paired_median_speedup"])>1e-12
-                or faster!=c["faster_pairs"]):
+        previous = [p["previous_ms"] for p in pairs]
+        current = [p["current_ms"] for p in pairs]
+        ratios = [a / b for a, b in zip(previous, current)]
+        if not all(math.isfinite(r) and r > 0 for r in ratios):
+            raise ValueError("SHADER_FRAME_RECEIPT_TIMINGS")
+        prev_med, prev_iqr, prev_mad = _spread(previous)
+        curr_med, curr_iqr, curr_mad = _spread(current)
+        metrics = {
+            "median_previous_ms": prev_med, "median_current_ms": curr_med,
+            "iqr_previous_ms": prev_iqr, "iqr_current_ms": curr_iqr,
+            "mad_previous_ms": prev_mad, "mad_current_ms": curr_mad,
+            "paired_median_speedup": statistics.median(ratios),
+        }
+        if any(type(c.get(field)) not in (float, int)
+               or not math.isfinite(c[field])
+               or not math.isclose(c[field], value, rel_tol=1e-12, abs_tol=1e-12)
+               for field, value in metrics.items()):
+            raise ValueError("SHADER_FRAME_RECEIPT_TIMINGS")
+        faster = sum(b < a for a, b in zip(previous, current))
+        if type(c.get("faster_pairs")) is not int or c["faster_pairs"] != faster:
             raise ValueError("SHADER_FRAME_RECEIPT_TIMINGS")
     return True
 
@@ -142,7 +204,7 @@ def measure_case(name,count,radius,mode,pixels=96,workers=2,repeats=15):
                               "previous_ms":timings["previous"],
                               "current_ms":timings["current"],
                               "hashes":hashes["current"]})
-        if mode=="plan-batch" and max(batch_samples,default=0)==0:
+        if mode=="plan-batch" and min(batch_samples,default=0)<=0:
             raise ValueError("SHADER_FRAME_BATCH_NOT_EXERCISED")
         return {"scene":name,"mode":mode,"triangles":count,"pixels":pixels,
                 "workers":workers,"covered_pixels":covered_pixels,
@@ -152,6 +214,10 @@ def measure_case(name,count,radius,mode,pixels=96,workers=2,repeats=15):
                 "pairs":pairs,
                 "median_previous_ms":statistics.median(x["previous_ms"] for x in pairs),
                 "median_current_ms":statistics.median(x["current_ms"] for x in pairs),
+                "iqr_previous_ms":_spread([x["previous_ms"] for x in pairs])[1],
+                "iqr_current_ms":_spread([x["current_ms"] for x in pairs])[1],
+                "mad_previous_ms":_spread([x["previous_ms"] for x in pairs])[2],
+                "mad_current_ms":_spread([x["current_ms"] for x in pairs])[2],
                 "paired_median_speedup":statistics.median(
                     x["previous_ms"]/x["current_ms"] for x in pairs),
                 "faster_pairs":sum(x["current_ms"]<x["previous_ms"] for x in pairs)}
