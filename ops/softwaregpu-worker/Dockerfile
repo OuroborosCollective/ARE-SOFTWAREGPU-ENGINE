@@ -1,6 +1,8 @@
 # Optional, private CPU renderer. This image is never published by the PR.
 FROM python:3.12-slim-bookworm
-LABEL org.ouroboros.service="are-softwaregpu-worker"
+ARG ARE_SOURCE_SHA
+LABEL org.ouroboros.service="are-softwaregpu-worker" \
+      org.opencontainers.image.revision="${ARE_SOURCE_SHA}"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
