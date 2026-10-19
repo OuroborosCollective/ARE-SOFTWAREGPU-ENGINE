@@ -6,6 +6,8 @@ services:
     build:
       context: ../..
       dockerfile: ops/softwaregpu-worker/Dockerfile
+      args:
+        ARE_SOURCE_SHA: ${ARE_EXPECTED_SOURCE_SHA:?exact checked out source SHA required}
     restart: unless-stopped
     init: true
     cpus: "3.0"
