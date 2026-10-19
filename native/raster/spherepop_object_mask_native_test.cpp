@@ -75,7 +75,8 @@ int main() {
             assert(rgba[4*i+1]==original[4*i+1]);
         } else for(int k=0;k<4;++k) assert(rgba[4*i+k]==original[4*i+k]);
     }
-    const auto colored=rgba, stamp=history.fingerprint();
+    const auto colored=rgba;
+    const auto stamp=history.fingerprint();
     auto repeat=original;History replay;
     const auto again=apply_object_masked(repeat.data(),repeat.size(),depth.data(),depth.size(),
                                           owners.data(),owners.size(),width,height,src,eye,
