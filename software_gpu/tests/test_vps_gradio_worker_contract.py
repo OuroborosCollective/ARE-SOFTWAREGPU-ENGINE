@@ -39,6 +39,10 @@ class TestWorkerDeploymentContract(unittest.TestCase):
         self.assertNotIn("docker image prune", script)
         self.assertNotIn("docker rm -f", script)
         self.assertNotIn("docker image rm -f", script)
+        self.assertIn("ARE_WORKER_FIRST_INSTALL_ROLLBACK", script)
+        self.assertIn("PREEXISTING_CONTAINER", script)
+        self.assertIn("BOOT_HEALTHY", script)
+        self.assertIn('docker compose -p "${PROJECT}" -f "${CONFIG}" down --remove-orphans', script)
 
     def test_bind_default_loopback_and_unsafe_external_bind_denied(self):
         from plugins.gradio_arena.app import gradio_server_bind
