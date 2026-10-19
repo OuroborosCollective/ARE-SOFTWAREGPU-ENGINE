@@ -1,25 +1,35 @@
-# Whole-frame CPU-Shader-Impact: reale draw_mesh-Messung (2026-10-17)
+# Whole-frame CPU-Shader-Impact: geprüfte A/B-Messung (2026-10-19)
 
-**Scope:** CPU-only, echte Geometry/Framebuffer-Schreibvorgänge mit exakt gleichen Shader-Varyings, identischen RGBA8-Farben und byte-identischen Float32-Depth-Daten. Die beiden Shader-Versionen werden auf **demselben Repository-Head** verglichen; die Referenz ist der explizit rekonstruierte vorherige VertexColor-Fragment- und Batch-Shader. Dies ist keine Hardware-GPU-Messung, keine automatische Policy-Aktivierung und keine allgemeine Aurion-FPS-Prognose.
+**Vergleich:** #113 wurde auf `main` als Commit `711daab6e6930374a2a8be1d0864f4bb87c63d59` integriert. Dieser Forschungs-PR vergleicht den explizit rekonstruierten vorherigen `VertexColorShader` mit dessen aktueller Implementierung innerhalb eines realen `draw_mesh`-Aufrufs. Er misst **nicht** die anderen Shader aus #113 (etwa Blinn-Phong), keine komplette Spiel-Frame-Pipeline mit Clear/Present/Animation und keine Hardware-GPU. Keine Änderung der Produktions-Backend-Policy.
 
-Source-bound [GitHub Actions 39052922640](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39052922640) auf **c60ee6155b9ab68ffd6483e580dce2c0a0637555**: Unit-Tests 3/3 PASS; 15 abwechselnde A/B-Paare in jeder der vier Szenen, im Runner verifizierter SHA-256-Receipt **6c9ad14f264157cf5e48568aaed3131390a22b9c1ec5cae7174400627c57dd9d**.
+## Unveränderlicher historischer CI-Beleg für die ursprüngliche Forschungsrevision
 
-| Szene | Shader-Route | Gepaarten Median: vorherige Zeit / aktuelle Zeit | Kandidat schneller |
-| --- | --- | ---: | ---: |
-| 8 große überlappende Dreiecke | vollständiger `tiles`-Scalar-Draw | **1,8343×** | 15/15 |
-| 160 kleine Dreiecke | vollständiger `tiles`-Scalar-Draw | **1,2132×** | 14/15 |
-| 8 große Dreiecke | geplanter `tiles-plan`-Batch-Draw | **0,9975×** | 6/15 |
-| 160 kleine Dreiecke | geplanter `tiles-plan`-Batch-Draw | **1,0754×** | 10/15 |
+- [GitHub Actions 39053027612](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39053027612), PR-Head `9c3026d1fd6d3503bb08b464feda849fd9e1ceb1`.
+- Artifact ID **12108431228**, Name `shader-whole-frame-67bac970cd88a78bf701726258922b389d8eb0cf`, ZIP-SHA-256 `530044190e077e9acdb7ff671fe4e7a800af4e866c3c2a22d1bcf606e8b1eb4a`, CRC PASS.
+- `report.json` SHA-256 gemäß kanonischem JSON-Body `98bc71dafbdb42b822039a5ea97661c165ae3ae41c624ee060f5504540b5083f`; die sechs in der Datei deklarierten Source-SHA-256 wurden im ursprünglichen CI gegen den Checkout geprüft.
+- 96 x 96 Pixel; 2 Worker; 15 alternierende, gemessene AB/BA-Paare je Fall; ein Aufwärmpaar; Zeitmessung umfasst `draw_mesh`, nicht `clear`, Hashing oder Renderer-Initialisierung. Original-Runner Linux 6.17.0-1022-azure / Python 3.12.15 / NumPy 2.5.4 (4 logische CPUs).
+- Jeder gemessene Draw zeigt vorher/nachher denselben RGBA8- und float32-Tiefenbuffer-Hash; Scalar- und Batch-Ausführung liefern je Szene ebenfalls dieselben Puffer. Byteidentität gilt nur für die geprüften Szenen, Auflösungen und Rasterpfade.
 
-**Interpretation:** Die gemessene Scalar-Optimierung beeinflusst die vollständige Framezeit deutlich. Batch-Shading hat bereits vektorisierte Arbeit und profitiert deutlich weniger vom optimierten Konvertierungsschritt. 0,9975× ist praktisch neutral innerhalb normaler Host-Varianz – keinesfalls als positive Beschleunigung ausgeben. Die Werte sind szenen- und runnergebunden; andere Geometrie, Threadzahl, Auflösung und Shader können abweichen.
+| Geometrie / Ausführung | Vorher Median ms | Vorher IQR / MAD ms | Nachher Median ms | Nachher IQR / MAD ms | Median der 15 Paar-Ratios | Nachher schneller |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 8 große Dreiecke / tiles-scalar | 110.716 | 8.780 / 2.029 | 64.227 | 9.059 / 4.814 | **1.7169x** | 15/15 |
+| 8 große Dreiecke / plan-batch | 31.477 | 6.801 / 1.909 | 29.347 | 0.199 / 0.098 | **1.0639x** | 14/15 |
+| 160 kleine Dreiecke / tiles-scalar | 41.844 | 2.332 / 1.442 | 34.409 | 5.617 / 1.834 | **1.2069x** | 13/15 |
+| 160 kleine Dreiecke / plan-batch | 36.838 | 1.537 / 0.764 | 36.604 | 6.352 / 1.887 | **0.9738x** | 6/15 |
 
-**Sicherheitsvertrag:** Baseline/Kandidat desselben Szenen-Durchlaufs müssen identische RGBA8- und Depth-Puffer-Hashes erzeugen. Das Benchmark-Gate prüft alle Wiederholungen, reale Batch-Aufrufe, bytegleiche Frames, Quellcode-Hashes, tatsächlichen Git-Head, Alternierung, rohe Zeiten und selbst signierten JSON-Receipt. Der Test verwendet für die Messung bewusst ein Batch-Minimum von **einem** Fragment, damit Batch-Ausführung bei kleinen Dreiecken belegbar ist; dies **ändert nicht die Produktions-Policy**. Die vorherige 32er-Batchschwelle hätte in dieser Szene den Batch-Pfad gar nicht ausgelöst. Die Clear-Kosten sind nicht in den separat gemessenen `draw_mesh`-Zeiten enthalten.
+IQR = linear interpoliertes 75%- minus 25%-Quantil der 15 Einzelzeiten; MAD = nicht skalierter Median der absoluten Abweichungen vom Einzelzeit-Median. **Die Ratio ist der Median der 15 einzeln gepaarten Quotienten**, nicht der Quotient der beiden angezeigten Mediane. Alle diese Streuungswerte wurden aus dem Original-Artifact unabhängig berechnet. Die signifikant schwankenden Host-Laufzeiten und vier getesteten Konfigurationen erlauben weder universelle FPS-Garantien noch automatische Backend-Umschaltung. In `small-triangles/plan-batch` ist ein Vorteil **nicht nachgewiesen**; die gemessene Ratio ist sogar kleiner als 1.
 
-**Reproduktion:**
+## Receipt-Gate und Grenzen
+
+Die ursprüngliche Implementierung von `validate()` prüfte keine Commit-Identität, Quellhashes, Szenenmetadaten, Einzelmediane oder Streuung. Die ursprüngliche Evidence-Datei referenzierte außerdem den noch älteren Run 39052922640 mit widersprechenden Batch-Ratios. Beide Befunde wurden im Review als **P1** eingeordnet. Der bestehende Draft #115 enthält daher verschärfte Validierung und negative Regressionen, unter anderem für selbst neu signierte, verfälschte Reports. Das historische Artifact wird **nicht** rückwirkend verändert; ein neuer Report muss auf dem **exakten neuen PR-Head** durch CI frisch erstellt, heruntergeladen und mit der aktuellen Implementierung geprüft werden.
+
+Die Quellhashes müssen genau die sechs im Benchmark deklarierten Dateien abdecken und zu deren Checkout-Bytes passen; außerdem müssen `head_sha`, 15 positive endliche CPU-Messpaare, Alternierung, Szene/Modus, Polygonanzahl, Pixel/Worker, Puffer-Hashes, Batch-Proben und Median/IQR/MAD zusammenpassen. Ein selbstsignierter Digest ersetzt keine externe Commit-/Quellprüfung. Die vier Fälle wurden absichtlich mit `batch_min_samples=1` gemessen: Das ist eine **Benchmark-Ablation** und keine Änderung der produktiven Policy. Peak-RSS, Energie, VRAM und tatsächliche Spiel-FPS wurden **nicht** gemessen.
+
+**Final-Head-Abnahme:** [PR #115](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/115) bleibt Draft, bis der neue Head durch alle benötigten Jobs bestätigt wurde, der neue SHA-gebundene Artifact-Readback mit seinen tatsächlichen Messwerten separat dokumentiert ist und unabhängige Review/Approval vorliegt. Diese historische Tabelle ist kein Ersatz für die Final-Head-Messung und rechtfertigt keine Produktivstrategie-Änderung.
+
+Reproduktionsbefehle im vollständigen Checkout:
 
 ```bash
 python -m unittest software_gpu.tests.test_shader_frames -v
 python -m software_gpu.benchmarks.compare_shader_frames --output /tmp/frame-report.json --pixels 96 --workers 2
 ```
-
-**Deployment-Grenze:** Der Run belegt den Forschungs-PR-Head, nicht eine `main`-Integration. Deren vollständige CPU-CI muss gesondert nachgewiesen werden. Keine Hardware-GPU-Parität, keine Modelltrainingsläufe und kein automatisch geändertes Auswahlmodell.
