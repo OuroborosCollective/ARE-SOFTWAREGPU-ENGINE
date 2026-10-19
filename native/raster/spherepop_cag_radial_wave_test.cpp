@@ -37,7 +37,8 @@ int main() {
     assert(counts[2]>0);
     const auto visible=label_depth_winners(before.data(),depth.data(),depth.size(),7,owner.data(),owner.size());
     assert(visible>0);
-    const auto input=rgba, input_depth=depth;
+    const auto input=rgba;
+    const auto input_depth=depth;
     // CAG supplies (3,4) and every area emits 8-neighbour equal-speed radial waves.
     const auto wave=render_radial_cag_spherepop(rgba.data(),rgba.size(),
         depth.data(),depth.size(),owner.data(),owner.size(),width,height,
