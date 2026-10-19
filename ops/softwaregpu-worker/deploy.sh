@@ -30,7 +30,7 @@ if [[ "${actual}" != "${expected}" ]]; then
     echo "ARE_WORKER_SHA_MISMATCH: refusing unverified checkout" >&2
     exit 3
 fi
-if ! git -C "${ROOT}" diff --quiet || ! git -C "${ROOT}" diff --cached --quiet; then
+if [[ -n "$(git -C "${ROOT}" status --porcelain --untracked-files=all)" ]]; then
     echo "ARE_WORKER_DIRTY_CHECKOUT" >&2
     exit 3
 fi
@@ -99,5 +99,5 @@ while IFS= read -r volume_name; do
 done < <(docker volume ls -q --filter "label=com.docker.compose.project=are-softwaregpu" \
                        --filter "label=org.ouroboros.lifecycle=disposable")
 
-echo "ARE_WORKER_DEPLOYED: sha=${actual}; cpus<=3; host=127.0.0.1:17860; old disposable resources removed"
+echo "ARE_WORKER_LOCAL_READY: sha=${actual}; cpus<=3; host=127.0.0.1:17860; old disposable resources removed"
 echo "HTTPS and DNS must be verified separately for gpu.arelorian.de; no host-wide Docker cleanup performed"
