@@ -6,6 +6,8 @@ No public endpoint or real secrets are used.
 import importlib.util
 import os
 import socket
+import tempfile
+from pathlib import Path
 import unittest
 from unittest import mock
 from urllib.error import HTTPError
@@ -70,6 +72,32 @@ class TestPrivateGradioRuntime(unittest.TestCase):
         self.assertFalse(options["share"])
         self.assertEqual(options["auth"], ("owner", "local-ci-demo-password-123"))
         self.assertEqual(options["allowed_paths"], [])
+
+    def test_read_only_docker_secret_authentication_and_source_conflict(self):
+        with tempfile.TemporaryDirectory(prefix="are-gradio-secret-") as tmp:
+            path = Path(tmp) / "password"
+            path.write_text("ci-only-long-test-password-for-ARE-123456\n",
+                            encoding="utf-8")
+            with mock.patch.dict(os.environ, {
+                "ARE_GRADIO_USER": "owner", "ARE_GRADIO_PASSWORD_FILE": str(path)
+            }, clear=True), mock.patch("gradio.blocks.Blocks.launch") as launch:
+                main()
+                self.assertEqual(
+                    launch.call_args.kwargs["auth"],
+                    ("owner", "ci-only-long-test-password-for-ARE-123456")
+                )
+            with mock.patch.dict(os.environ, {
+                "ARE_GRADIO_USER": "owner", "ARE_GRADIO_PASSWORD_FILE": str(path),
+                "ARE_GRADIO_PASSWORD": "another-very-long-password-value"
+            }, clear=True):
+                with self.assertRaisesRegex(SystemExit, "PASSWORD_SOURCE_AMBIGUOUS"):
+                    main()
+            with mock.patch.dict(os.environ, {
+                "ARE_GRADIO_USER": "owner",
+                "ARE_GRADIO_PASSWORD_FILE": str(path) + ".missing"
+            }, clear=True):
+                with self.assertRaisesRegex(SystemExit, "PASSWORD_FILE_UNAVAILABLE"):
+                    main()
 
     def test_real_http_listener_rejects_unauthenticated_compute(self):
         demo = create_demo().queue(max_size=3, default_concurrency_limit=1)
