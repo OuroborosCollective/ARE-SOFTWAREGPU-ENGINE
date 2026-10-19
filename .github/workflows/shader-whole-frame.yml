@@ -48,5 +48,5 @@ jobs:
         with:
           name: shader-whole-frame-${{ github.sha }}
           path: ${{ runner.temp }}/full-frame/report.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30
