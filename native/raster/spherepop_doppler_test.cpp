@@ -52,7 +52,8 @@ int main() {
     const auto code=are::raster::draw(packed.data(),packed.size(),1,4,4,
                    rgba.data(),rgba.size(),depth.data(),depth.size(),counts.data(),counts.size());
     assert(code==are::raster::ok && counts[2]>0);
-    const auto initial=rgba, initial_depth=depth;
+    const auto initial=rgba;
+    const auto initial_depth=depth;
     const auto no_effect=apply_single_object(rgba.data(),rgba.size(),depth.data(),depth.size(),4,4,source,observer,{0,0,0},120,1.0,17);
     assert(no_effect.factor==1 && no_effect.tinted_pixels==0 && rgba==initial);
     History history;
@@ -64,7 +65,8 @@ int main() {
         if(depth[i]==1)for(int c=0;c<4;++c)assert(rgba[4*i+c]==initial[4*i+c]);
         if(depth[i]<1){assert(rgba[4*i]<=initial[4*i]); assert(rgba[4*i+2]>=initial[4*i+2]);}
     }
-    const auto modified=rgba, prior=history.fingerprint();
+    const auto modified=rgba;
+    const auto prior=history.fingerprint();
     reject([&]{apply_single_object(rgba.data(),rgba.size(),depth.data(),depth.size(),4,4,source,observer,{120,0,0},120,1,17,&history);},"DOPPLER_VELOCITY_BUDGET");
     assert(rgba==modified && history.fingerprint()==prior);
     auto invalid_depth=depth; invalid_depth[15]=std::numeric_limits<float>::quiet_NaN();
