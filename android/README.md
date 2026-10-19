@@ -33,3 +33,11 @@ Das erfordert gültige Organisationsrechte für `GITHUB_TOKEN` mit
 `packages: write`; falls das fehlschlägt, darf kein kompletter Release
 behauptet werden. Es erfolgt kein automatischer Publish zur öffentlichen
 `registry.npmjs.org` ohne gesonderte npm-Publisher-Autorisierung.
+
+## Geführter Teststart (neue UI im Forschungs-PR)
+
+Die App zeigt zuerst einen verständlichen Verbindungsassistenten statt einer leeren Gradio-Maske. Der Benutzer benötigt **einmal** eine bereits bereitgestellte, authentifizierte HTTPS-Adresse des ARE-Testservers; die APK ist weiterhin ein WebView-Client und kann ohne diesen Rechner keine Renderjobs ausführen. Kein öffentliches Demo-Ziel, kein eingebettetes Passwort und kein unsicherer HTTP-Fallback.
+
+Nach Anmeldung zeigt der überarbeitete serverseitige CPU-Testbereich vier sofort wählbare Vorlagen: **Schnelltest (64 Pixel)**, **Standard (128 Pixel)**, **Detailtest (256 Pixel)** und **Referenzvergleich (Bands)**. Die Auswahl setzt Seed, Auflösung und Renderer automatisch. Der Button **Test starten** verwendet weiter den echten isolierten Worker mit drei Replays, Bild-SHA-256-Readback und unverändertem Budget. Technische Receipts stehen einklappbar unter dem gerenderten Bild. Diese Oberfläche ist nur verfügbar, wenn sowohl App **als auch Server** den neuen Code verwenden.
+
+**Prüfung:** `python -m unittest software_gpu.tests.test_gradio_arena -v`; Android-Build `gradle -p android :app:assembleDebug` benötigt JDK 17/SDK 35. Keine Aussage über erfolgreiche Geräteinstallation oder neuen APK-Release ohne passenden Workflow- und Geräte-Readback.
