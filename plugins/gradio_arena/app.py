@@ -133,12 +133,43 @@ def create_demo():
     return demo
 
 
+def gradio_server_bind() -> str:
+    """Public container binding is allowed only behind the loopback-host gateway."""
+    address = os.environ.get("ARE_GRADIO_SERVER_BIND", "127.0.0.1")
+    if address == "127.0.0.1":
+        return address
+    if address == "0.0.0.0":
+        if os.environ.get("ARE_GRADIO_CONTAINER_BIND") != "1":
+            raise SystemExit("CONTAINER_BIND_REQUIRED")
+        return address
+    raise SystemExit("BIND_INVALID")
+
+
+def _gradio_password() -> str | None:
+    direct = os.environ.get("ARE_GRADIO_PASSWORD")
+    file_path = os.environ.get("ARE_GRADIO_PASSWORD_FILE")
+    if direct is not None and file_path is not None:
+        raise SystemExit("PASSWORD_SOURCE_AMBIGUOUS")
+    if file_path is None:
+        return direct
+    path = Path(file_path)
+    if not path.is_absolute() or path.is_symlink():
+        raise SystemExit("PASSWORD_FILE_INVALID")
+    try:
+        secret = path.read_text(encoding="utf-8").rstrip("\r\n")
+    except (OSError, UnicodeError):
+        raise SystemExit("PASSWORD_FILE_UNAVAILABLE")
+    if "\n" in secret or "\r" in secret:
+        raise SystemExit("PASSWORD_FILE_INVALID")
+    return secret
+
+
 def main():
-    user, password = os.environ.get("ARE_GRADIO_USER"), os.environ.get("ARE_GRADIO_PASSWORD")
+    user, password = os.environ.get("ARE_GRADIO_USER"), _gradio_password()
     if not user or not password or len(password) < 20:
         raise SystemExit("SET_ARE_GRADIO_USER_AND_STRONG_PASSWORD")
     create_demo().queue(max_size=3, default_concurrency_limit=1).launch(
-        server_name="127.0.0.1", server_port=7860, share=False,
+        server_name=gradio_server_bind(), server_port=7860, share=False,
         auth=(user, password), show_error=False, allowed_paths=[])
 
 
