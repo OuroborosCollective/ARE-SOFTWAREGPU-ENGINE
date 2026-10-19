@@ -23,6 +23,7 @@ public final class MainActivity extends Activity {
     private WebView browser;
     private TextView status;
     private LinearLayout welcome;
+    private ScrollView welcomeScroll;
     private String permittedHost = "";
     private static final String PREFS = "are_gradio_endpoint";
     private static final int BG = Color.rgb(12, 19, 33);
@@ -82,6 +83,7 @@ public final class MainActivity extends Activity {
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        welcomeScroll = scroll;
         welcome = new LinearLayout(this);
         welcome.setOrientation(LinearLayout.VERTICAL);
         welcome.setPadding(dp(16), dp(20), dp(16), dp(20));
@@ -169,8 +171,7 @@ public final class MainActivity extends Activity {
         if (browser.getVisibility() == View.VISIBLE && browser.canGoBack()) browser.goBack();
         else if (browser.getVisibility() == View.VISIBLE) {
             browser.setVisibility(View.GONE);
-            welcome.getParent().requestLayout();
-            ((View) welcome.getParent().getParent()).setVisibility(View.VISIBLE);
+            welcomeScroll.setVisibility(View.VISIBLE);
         } else super.onBackPressed();
     }
     @Override protected void onDestroy() { browser.destroy(); super.onDestroy(); }
