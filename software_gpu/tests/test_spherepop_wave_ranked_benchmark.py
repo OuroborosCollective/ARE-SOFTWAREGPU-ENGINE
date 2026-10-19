@@ -46,6 +46,12 @@ class TestSpherePopWaveRankedBenchmark(unittest.TestCase):
                 "baseline_ranking_x":{m:r["ranking_without_wave"][m]["median"]
                                       for m in ("tiles","batch-first","native-cpp")}} for r in report["rows"]]},
                 sort_keys=True))
+            # Retain raw positive timing samples, source binding, compiler
+            # digests and image hashes in the immutable GitHub job log.
+            # The temporary JSON file is otherwise deleted after this test.
+            print("SPHEREPOP_WAVE_RAW_EVIDENCE_START")
+            print(json.dumps(report,sort_keys=True,separators=(",",":"),allow_nan=False))
+            print("SPHEREPOP_WAVE_RAW_EVIDENCE_END")
             print("SPHEREPOP_WAVE_BENCHMARK_RECEIPT_END")
 
 
