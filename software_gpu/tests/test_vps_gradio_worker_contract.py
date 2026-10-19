@@ -72,6 +72,17 @@ class TestWorkerDeploymentContract(unittest.TestCase):
         self.assertNotIn('docker volume rm -f', script)
         self.assertNotIn('docker compose down -v', script)
 
+    def test_bounded_container_logs_and_user_domain_default(self):
+        # Enforce storage control on a shared VPS, not only safe image GC.
+        compose = (WORKER / "compose.yaml").read_text("utf-8")
+        self.assertIn("logging:", compose)
+        self.assertIn('driver: "local"', compose)
+        self.assertIn('max-size: "10m"', compose)
+        self.assertIn('max-file: "3"', compose)
+        android = (ROOT / "android/app/src/main/java/de/arelorian/softwaregpu/MainActivity.java").read_text("utf-8")
+        self.assertIn('prefs.getString("endpoint", "https://gpu.arelorian.de")', android)
+        self.assertIn('"https".equalsIgnoreCase(uri.getScheme())', android)
+
     def test_image_source_identity_is_required(self):
         dockerfile = (WORKER / "Dockerfile").read_text("utf-8")
         config = (WORKER / "compose.yaml").read_text("utf-8")
