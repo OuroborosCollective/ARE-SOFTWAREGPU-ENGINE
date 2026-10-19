@@ -9,6 +9,11 @@ services:
       args:
         ARE_SOURCE_SHA: ${ARE_EXPECTED_SOURCE_SHA:?exact checked out source SHA required}
     restart: unless-stopped
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
     init: true
     cpus: "3.0"
     mem_limit: 3g
