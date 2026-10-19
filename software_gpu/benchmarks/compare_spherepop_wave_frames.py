@@ -146,11 +146,13 @@ def measure_scene(name,spec,pixels,repeats,kernel,wave_fn,deadline):
                     else:
                         if effect_hash is None:effect_hash=hashes
                         elif effect_hash!=hashes:raise AssertionError("SPHEREPOP_EFFECT_PARITY")
-                        if hashes["depth_sha256"]!=baseline_hash["depth_sha256"]:
-                            raise AssertionError("SPHEREPOP_DEPTH_CHANGED")
+                        # An AB/BA pair may execute the effect before the
+                        # baseline. Compare final references after both ran.
                     if repeat>=0:samples[mode][state].append(elapsed)
-        if baseline_hash==effect_hash or len(fingerprints)!=1:
+        if baseline_hash is None or effect_hash is None or baseline_hash==effect_hash or len(fingerprints)!=1:
             raise AssertionError("SPHEREPOP_EFFECT_NOT_EXERCISED_OR_NONDETERMINISTIC")
+        if baseline_hash["depth_sha256"]!=effect_hash["depth_sha256"]:
+            raise AssertionError("SPHEREPOP_DEPTH_CHANGED")
         pairs={}
         for mode in MODES:
             off=samples[mode]["off"]
