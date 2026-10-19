@@ -83,6 +83,9 @@ int main() {
         owner.data(),owner.size(),width,height,7,4,{30,0,0},120,1);},"SPHEREPOP_WAVE_INPUT_INVALID");
     reject([&]{render_radial_cag_spherepop(rgba.data(),rgba.size(),depth.data(),depth.size(),
         owner.data(),owner.size(),width,height,3,4,{120,0,0},120,1);},"DOPPLER_VELOCITY_BUDGET");
+    reject([&]{render_radial_cag_spherepop(rgba.data(),rgba.size(),depth.data(),depth.size(),
+        owner.data(),owner.size(),width,height,3,4,{0,0,0},
+        std::numeric_limits<double>::min(),1);},"SPHEREPOP_WAVE_INPUT_INVALID");
     assert(rgba==result);
     std::cout<<"PASS real native CAG->SpherePop radial Doppler wavefront: complete="
              <<wave.finalized.size()<<" refusals="<<wave.refusals
