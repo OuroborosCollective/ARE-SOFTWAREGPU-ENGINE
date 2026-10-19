@@ -120,10 +120,19 @@ def measure_scene(name,spec,pixels,repeats,kernel,wave_fn,deadline):
                         # Owners are derived from final nearest depth; one owner
                         # explicitly labels this independently rendered object.
                         owners=np.zeros((pixels,pixels),dtype=np.uint32)
-                        owners[fb.depth_buffer<np.float32(1.0)]=7
+                        visible=fb.depth_buffer<np.float32(1.0)
+                        owners[visible]=7
+                        # Existing raster stores signed clip/NDC depth [-1,1].
+                        # SpherePop accepts normalized [0,1]. Keep the actual
+                        # framebuffer untouched; project a distinct float32
+                        # depth input, and INCLUDE its cost in wave-on timing.
+                        if not np.isfinite(fb.depth_buffer).all() or np.any(fb.depth_buffer[visible]<-1.0):
+                            raise AssertionError("SPHEREPOP_NATIVE_DEPTH_DOMAIN")
+                        wave_depth=fb.depth_buffer.copy()
+                        wave_depth[visible]=(wave_depth[visible]+np.float32(1.0))*np.float32(0.5)
                         metrics=Metrics()
                         code=wave_fn(fb.color_buffer.ctypes.data,fb.color_buffer.nbytes,
-                            fb.depth_buffer.ctypes.data,fb.depth_buffer.size,
+                            wave_depth.ctypes.data,wave_depth.size,
                             owners.ctypes.data,owners.size,pixels,pixels,
                             pixels//2,pixels//2,30.0,0.0,0.0,120.0,1.0,
                             ctypes.byref(metrics))
