@@ -16,7 +16,7 @@ template<typename F> void reject(F f,const char* message) {
     assert(caught);
 }
 int main() {
-    constexpr int width=5,height=5;
+    constexpr int width=7,height=9;
     std::array<std::uint8_t,width*height*4> rgba{};
     std::array<float,width*height> depth{};
     depth.fill(1.f);
@@ -25,10 +25,10 @@ int main() {
     // One visible real native triangle; there is no stubbed renderer.
     std::array<double,23> triangle{};
     triangle[0]=0; triangle[1]=0; triangle[2]=.5;
-    triangle[3]=0; triangle[4]=5; triangle[5]=.5;
-    triangle[6]=5; triangle[7]=0; triangle[8]=.5;
+    triangle[3]=0; triangle[4]=9; triangle[5]=.5;
+    triangle[6]=7; triangle[7]=0; triangle[8]=.5;
     triangle[9]=triangle[10]=triangle[11]=1.;
-    triangle[12]=1./25.;
+    triangle[12]=1./63.;
     for(int i=13;i<22;++i) triangle[i]=.5;
     const auto before=depth;
     assert(are::raster::draw(triangle.data(),triangle.size(),1,width,height,
@@ -38,10 +38,10 @@ int main() {
     const auto visible=label_depth_winners(before.data(),depth.data(),depth.size(),7,owner.data(),owner.size());
     assert(visible>0);
     const auto input=rgba, input_depth=depth;
-    // CAG supplies (2,2) and every area emits 8-neighbour equal-speed radial waves.
+    // CAG supplies (3,4) and every area emits 8-neighbour equal-speed radial waves.
     const auto wave=render_radial_cag_spherepop(rgba.data(),rgba.size(),
         depth.data(),depth.size(),owner.data(),owner.size(),width,height,
-        2,2,{30.,0.,0.},120.,1.);
+        3,4,{30.,0.,0.},120.,1.);
     assert(wave.finalized.size()==width*height);
     assert(wave.refusals>0);
     std::array<unsigned,width*height> seen{};
@@ -50,11 +50,11 @@ int main() {
         assert(a.area<seen.size());
         assert(++seen[a.area]==1);
         assert(a.owner==owner[a.area]);
-        if(a.area==12) { assert(a.arrival_seconds==0 && a.doppler==1 && a.tinted==0); }
-        if(a.area==13) {east=a.doppler;assert(std::abs(a.arrival_seconds-1./120.)<1e-14);}
-        if(a.area==11) west=a.doppler;
-        if(a.area==7) north=a.doppler;
-        if(a.area==8) {diag=a.arrival_seconds;assert(a.emitter==12);}
+        if(a.area==31) { assert(a.arrival_seconds==0 && a.doppler==1 && a.tinted==0); }
+        if(a.area==32) {east=a.doppler;assert(std::abs(a.arrival_seconds-1./120.)<1e-14);}
+        if(a.area==30) west=a.doppler;
+        if(a.area==24) north=a.doppler;
+        if(a.area==25) {diag=a.arrival_seconds;assert(a.emitter==31);}
         if(owner[a.area]==0) assert(a.tinted==0);
     }
     for(unsigned n:seen) assert(n==1);
@@ -65,23 +65,23 @@ int main() {
     assert(depth==input_depth);
     for(std::size_t k=0;k<owner.size();++k) {
         assert(rgba[4*k+3]==input[4*k+3]);
-        if(owner[k]==0 || k==12)for(int c=0;c<4;++c)assert(rgba[4*k+c]==input[4*k+c]);
+        if(owner[k]==0 || k==31)for(int c=0;c<4;++c)assert(rgba[4*k+c]==input[4*k+c]);
     }
     const auto result=rgba;
     auto replay=input;
     const auto wave2=render_radial_cag_spherepop(replay.data(),replay.size(),
         depth.data(),depth.size(),owner.data(),owner.size(),width,height,
-        2,2,{30.,0.,0.},120.,1.);
+        3,4,{30.,0.,0.},120.,1.);
     assert(replay==result && wave.event_fingerprint==wave2.event_fingerprint);
     assert(wave.refusals==wave2.refusals && wave.tinted_pixels==wave2.tinted_pixels);
     // Reject before buffer mutation.
-    auto invalid=depth;invalid[24]=std::numeric_limits<float>::quiet_NaN();
+    auto invalid=depth;invalid[62]=std::numeric_limits<float>::quiet_NaN();
     reject([&]{render_radial_cag_spherepop(rgba.data(),rgba.size(),invalid.data(),invalid.size(),
-        owner.data(),owner.size(),width,height,2,2,{30,0,0},120,1);},"SPHEREPOP_WAVE_SCENE_INVALID");
+        owner.data(),owner.size(),width,height,3,4,{30,0,0},120,1);},"SPHEREPOP_WAVE_SCENE_INVALID");
     reject([&]{render_radial_cag_spherepop(rgba.data(),rgba.size(),depth.data(),depth.size(),
-        owner.data(),owner.size(),width,height,5,2,{30,0,0},120,1);},"SPHEREPOP_WAVE_INPUT_INVALID");
+        owner.data(),owner.size(),width,height,7,4,{30,0,0},120,1);},"SPHEREPOP_WAVE_INPUT_INVALID");
     reject([&]{render_radial_cag_spherepop(rgba.data(),rgba.size(),depth.data(),depth.size(),
-        owner.data(),owner.size(),width,height,2,2,{120,0,0},120,1);},"DOPPLER_VELOCITY_BUDGET");
+        owner.data(),owner.size(),width,height,3,4,{120,0,0},120,1);},"DOPPLER_VELOCITY_BUDGET");
     assert(rgba==result);
     std::cout<<"PASS real native CAG->SpherePop radial Doppler wavefront: complete="
              <<wave.finalized.size()<<" refusals="<<wave.refusals
