@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
         endpoint.setPadding(dp(12), dp(14), dp(12), dp(14));
         endpoint.setBackground(surface(BG, 10));
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        endpoint.setText(prefs.getString("endpoint", ""));
+        endpoint.setText(prefs.getString("endpoint", "https://gpu.arelorian.de"));
         welcome.addView(endpoint, new LinearLayout.LayoutParams(-1, dp(55)));
         welcome.addView(text("2  Vorlage auswählen · 3  Test starten", 17, FG, true));
         welcome.addView(text("Auf dem nächsten Bildschirm findest du Schnelltest, Standard, Detailtest und Referenzvergleich. Einstellungen werden automatisch ausgefüllt.", 14, MUTED, false));
