@@ -95,16 +95,15 @@ inline WaveReceipt render_radial_cag_spherepop(
         }
         // Reuse native single-object effect including alpha/depth semantics.
         std::uint32_t tinted=0;
-        if(owners[step.cell]!=0) {
+        if(owners[step.cell]!=0 && step.cell!=step.emitter) {
             const auto offset=std::size_t(step.cell)*4;
             const auto result=apply_single_object(staged.data()+offset,4,
                 depth+step.cell,1,1,1,{double(px),double(py),0.},
-                {double(x),double(y),0.},step.cell==step.emitter ? Vec3{0,0,0} : velocity,
+                {double(x),double(y),0.},velocity,
                 wave_speed,artistic_gain,owners[step.cell]);
-            // For the center, source==observer: synthesize neutral no-op,
-            // rather than calling Doppler with an invalid zero line of sight.
             tinted=static_cast<std::uint32_t>(result.tinted_pixels);
         }
+        // CAG seed has no radial direction: neutral, finalized exactly once.
         completed[step.cell]=1;     // Bind -> Pop -> Collapse, at most once.
         receipt.finalized.push_back({step.cell,step.emitter,step.time,factor,
                                      owners[step.cell],tinted});
