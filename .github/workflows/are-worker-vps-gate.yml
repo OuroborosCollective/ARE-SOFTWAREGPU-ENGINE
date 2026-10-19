@@ -48,7 +48,10 @@ jobs:
       - name: Build and boot isolated real CPU worker
         run: |
           set -euo pipefail
-          docker compose -p are-softwaregpu -f ops/softwaregpu-worker/compose.yaml up --build -d --wait --wait-timeout 120
+          # Exercise the actual SHA-bound deploy/cleanup script on an ephemeral
+          # GitHub runner; never connect this CI job to the owner's VPS.
+          sudo git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          sudo --preserve-env=ARE_EXPECTED_SOURCE_SHA,ARE_GRADIO_USER bash ops/softwaregpu-worker/deploy.sh
           test "$(docker inspect --format '{{.HostConfig.NanoCpus}}' are-softwaregpu-worker)" = '3000000000'
           test "$(docker inspect --format '{{.HostConfig.Memory}}' are-softwaregpu-worker)" = '3221225472'
           docker port are-softwaregpu-worker 7860/tcp | grep -qx '127.0.0.1:17860'
@@ -73,3 +76,5 @@ jobs:
         run: |
           docker compose -p are-softwaregpu -f ops/softwaregpu-worker/compose.yaml down --remove-orphans || true
           docker image rm are-softwaregpu-worker:current || true
+          sudo rm -f /opt/are-softwaregpu/private/gradio-password || true
+          sudo rmdir /opt/are-softwaregpu/private /opt/are-softwaregpu 2>/dev/null || true
