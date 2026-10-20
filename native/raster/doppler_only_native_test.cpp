@@ -169,7 +169,8 @@ static void measure(int pixels) {
     auto broken=bare.rgba;
     auto broken_depth=bare.depth;
     broken_depth[cells-1]=std::numeric_limits<float>::quiet_NaN();
-    std::vector<std::uint32_t> owners(cells,7);
+    std::vector<std::uint32_t> owners(cells,0);
+    for(std::size_t i=0;i<cells;++i)if(bare.depth[i]<1.0f)owners[i]=7;
     const auto stable=broken;
     expect_reject([&]{direct::apply_direct(broken.data(),broken.size(),
         broken_depth.data(),broken_depth.size(),owners.data(),owners.size(),
