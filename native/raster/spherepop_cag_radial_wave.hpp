@@ -32,6 +32,7 @@ struct WaveReceipt {
     std::size_t tinted_pixels=0;
     std::size_t doppler_factor_evaluations=0; // Instrumentation, not event digest.
     std::size_t reused_visible_cells=0; // Trace which branch executed.
+    bool reuse_requested=false;
 };
 
 inline WaveReceipt render_radial_cag_spherepop(
@@ -82,6 +83,7 @@ inline WaveReceipt render_radial_cag_spherepop(
     // Transactional: a bad propagation never leaves half a rendered frame.
     std::vector<std::uint8_t> staged(rgba,rgba+rgba_bytes);
     WaveReceipt receipt;
+    receipt.reuse_requested=reuse_factor;
     receipt.finalized.reserve(depth_cells);
     std::uint64_t fnv=14695981039346656037ull;
     const auto feed=[&](std::uint32_t v){
