@@ -1,5 +1,22 @@
 # ARE SoftwareGPU Engine
 
+## Zeitfenster-Wellenring – Single-Origin Animation (20.10.2026)
+
+**Neue experimentelle C++17-Variante:** Ein fester CAG-Impact-Ursprung, **0 Reemissionen**, **0 Priority-Queue-Einträge**. Der Wellenring verarbeitet nur Pixel mit einer Ankunftszeit im halboffenen Intervall `(elapsed - window, elapsed]`; der Quellpunkt ist bei `t=0` die einzige Ankunft. Aufeinanderfolgende Ticks bearbeiten keine Grenzpunkte doppelt. Kein zustandsbehafteter Lauf über mehrere Frames, kein Produktionsmodus.
+
+**Rangliste der CPU-Aufwände** für denselben realen Zwei-Dreiecks-Rasterizer, je **15 alternierende Laufzeiten pro Modus und Größe**. Niedriger = günstiger, jedoch liefert ein schmaler Ring bewusst weniger Effektpixel und **ist keine identische Bildausgabe**:
+
+| C++17 native, vollständiger Draw | 32 × 32 | 64 × 64 | 128 × 128 | 256 × 256 |
+| --- | ---: | ---: | ---: | ---: |
+| **Schmaler zeitabhängiger Ring** | **0,033493 ms** | **0,134993 ms** | **0,595413 ms** | **2,467414 ms** |
+| Sofortiger voller Impact | 0,041838 ms | 0,166041 ms | 0,725036 ms | 3,010150 ms |
+| Volles Zeitfenster – **bytegleich** zum sofortigen Impact | 0,043351 ms | 0,170339 ms | 0,744091 ms | 3,081933 ms |
+
+**Regression:** Volles Zeitfenster liefert an allen vier Auflösungen exakt dieselben RGBA8-Bytes wie der bisherige Single-Origin-Impact. Nullzeit-Quelle, Radius, halb offene Tickgrenzen, deterministisches Wiederholen, Fremdobjekt-/Alpha-/Depth-Schutz und ungültige Daten sind geprüft. [180 Rohzeiten, Pixelzähler und FNV-Bildprüfsummen](evidence/single-origin-time-window-20261020.json) · [CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39469980703) · [Versuchsvertrag](docs/SINGLE_ORIGIN_TIME_WINDOW.md) · [PR #137](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/137).
+
+**Messgrenzen:** Zeitfenster-Overhead ist sichtbar, keine pauschale Performance-Beschleunigung gegenüber dem sofortigen Impact. Keine vollständige GLB-Welt, Android-FPS, GPU-Vergleich, persistente Impact-ID oder produktive Animation nachgewiesen.
+
+
 ## Single-Origin Impact Wave – direkte Wellenfront (20.10.2026)
 
 **Neuer CPU-Forschungsmodus:** Ein CAG-Impact startet **genau eine** kreisförmige Ausbreitung. Der C++17-Renderer berechnet alle betroffenen Renderbereiche direkt aus der ursprünglichen Position, ohne weitere SpherePop-Auslöser und ohne Ereigniswarteschlange. Jeder Bereich wird je Aufruf genau einmal abgeschlossen; Doppler-Farbe wird nur für passende sichtbare Besitzerpixel berechnet.
