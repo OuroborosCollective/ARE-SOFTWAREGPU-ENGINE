@@ -27,3 +27,17 @@ This is a bounded research experiment, not production activation. CPU-only same-
 Der native Test misst nach identischem `are::raster::draw` vier Varianten: (0) Raster-only, (1) direktes Wolfram-orakelgestütztes Doppler ohne SpherePop, (2) SpherePop plus Doppler, (3) SpherePop ohne Doppler. Je Auflösung (32² und 64²) werden **15 rotierende Zeitreihen** erfasst. Jede Wiederholung prüft RGBA-/Depth-Determinismus und Alpha; die reine SpherePop-Variante darf keine Pixel färben und muss dieselbe Zahl einmal abgeschlossener Bereiche und Ablehnungen wie Variante 2 besitzen. Die JSON-Zeile enthält alle vier Zeitreihen.
 
 Der Median von `interaction_ms = (T_combined - T_spherepop_only) - (T_doppler_only - T_raster_only)` ist ein **indikatives** Wechselwirkungssignal auf dieser CPU und Szene: negativ bedeutet weniger Zusatzkosten der Kombination als additiv erwartet, positiv bedeutet mehr. Dies ist **kein Beweis** für eine physikalische oder allgemeine Render-Synergie; zusätzlich werden die RGB-Ergebnisse der direkten und reemittierten Doppler-Variante unterschieden. Keine GitHub-Mergefreigabe bei roten CI-Gates.
+
+
+## Gemessener Vier-Wege-Befund (Ubuntu/Python 3.11, Actions 39455136257)
+
+Gleicher echter C++17-Native-Rasterizer, je 2 Dreiecke, 15 CPU-Wiederholungen; Zeitmediane in Millisekunden:
+
+| Pixel | Raster | Doppler direkt | SpherePop ohne Doppler | SpherePop + Doppler | Gepaarter Median Kombiniert / Doppler-direkt | Median Interaktion |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 32x32 | 0,016771 | 0,039845 | 0,345044 | 0,398223 | 9,9821x | +0,028524 ms |
+| 64x64 | 0,063598 | 0,155219 | 1,661679 | 1,872102 | 12,0663x | +0,125274 ms |
+
+Interaktion = (T_Kombination - T_SpherePop) - (T_Doppler - T_Raster). Ein positiver Wert ist mehr Overhead als additiv erwartet. Keine positive Performance-Synergie auf diesem Fixture; keine optimierte Faktorwiederverwendung gemessen. Direkter Doppler und lokale SpherePop-Reemission erzeugen absichtlich verschiedene RGB-Fragmente (4031 vs. 3063 gefaerbte Pixel bei 64x64), deshalb keine Byte-aequivalenten Alternativen. Float32-Depth und Alpha bleiben invariant.
+
+Die rohen Zeitreihen und Bild-FNV-Pruefsummen sind im [CI-Job](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455136257) protokolliert. Die aelteren 5,06x-Ranglistenwerte vergleichen native C++ mit Python-Tiles, nicht die Synergie.
