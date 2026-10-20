@@ -1,5 +1,21 @@
 # ARE SoftwareGPU Engine
 
+## Neue Optimierung: SpherePop-Faktorwiederverwendung (20.10.2026)
+
+Die bestehende CAG/SpherePop/Doppler-Wellenfront berechnete den **identischen Doppler-Faktor zweimal** bei sichtbaren, abgeschlossenen Renderpunkten. Der neue **opt-in C++17-Pfad** verwendet ihn erneut, ohne Framebuffer oder Ereignishistorie zu verändern. Standard bleibt die vorherige Referenz (`reuse_factor=false`).
+
+**Rangliste für exakt dieselbe Bildausgabe (native CPU):** Je 15 abwechselnde, vollständige echte Zwei-Dreiecks-Rasterläufe auf einem Linux-CI-Runner. Niedrigere Millisekunden bedeuten schneller. Speedup ist der **gepaarte Median** alter Laufzeit / neuer Laufzeit.
+
+| Auflösung | Referenz: Faktor doppelt | Optimiert: Faktor einmal | Gemessener Speedup | Faktoraufrufe vorher → nachher |
+| --- | ---: | ---: | ---: | ---: |
+| **32 × 32** | 0,407666 ms | **0,392777 ms** | **1,034×** | 1.985 → 1.023 |
+| **64 × 64** | 1,901770 ms | **1,850384 ms** | **1,029×** | 7.949 → 4.095 |
+
+**Byte- und Ereignis-Parität bestätigt:** RGBA8, Float32-Depth, Alpha, Eigentümer, Wellen-Reihenfolge, Ankunftszeiten, Doppler-Faktoren und Ereignis-Fingerprint; verschiedene Startpunkte, Geschwindigkeiten, deaktivierter Doppler und ungültiger Depth-Eingang getestet. [Alle 60 Rohzeiten und Zähler](evidence/spherepop-factor-reuse-cpu-20261020.json) · [PR #135](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/135) · [gemessene CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39462395261).
+
+**Truth Boundary:** Nur dieselbe native CPU-Szene und derselbe Effekt werden verglichen. Die Messung behauptet **keine 128/256-px-, GLB-, Android-, GPU- oder Produktions-FPS-Beschleunigung**. Die separate Vier-Wege-Rangliste darunter vergleicht dagegen funktional unterschiedliche Effekte und ist nicht mit diesen Faktoren zu multiplizieren.
+
+
 ## Vier-Wege-Doppler-Rangliste (20.10.2026)
 
 **Gemessener C++17-CPU-Vergleich** – identischer echter ARE-Native-Rasterpfad, jeweils zwei Dreiecke, 15 alternierende Durchläufe pro Modus und Auflösung. **Kleinere Zeit = besser**. Die Sortierung bezieht sich ausschließlich auf diesen Test und ersetzt keine älteren, anders konfigurierten Renderer-Bestenlisten.
