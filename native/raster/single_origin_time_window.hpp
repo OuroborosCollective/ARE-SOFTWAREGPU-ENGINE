@@ -3,7 +3,7 @@
 // One CAG impact -> one direct distance calculation per affected area.
 // Deliberately no SpherePop queue, no recurrent re-emissions, no persistent history.
 #pragma once
-#include "spherepop_doppler_profile.hpp"
+#include "single_origin_impact_wave.hpp"
 #include <algorithm>
 #include <cfenv>
 #include <cmath>
@@ -16,14 +16,6 @@
 
 namespace are::raster::single_origin {
 using experimental::Vec3;
-inline double euclidean_distance(int x0,int y0,int x,int y) {
-    return std::hypot(double(x-x0),double(y-y0));
-}
-inline double octile_distance(int x0,int y0,int x,int y) {
-    const int dx=std::abs(x-x0),dy=std::abs(y-y0);
-    const int low=std::min(dx,dy),high=std::max(dx,dy);
-    return double(high-low)+double(low)*std::sqrt(2.);
-}
 struct PulseReceipt {
     std::size_t area_completions=0;   // exactly once per active window
     std::size_t spatial_candidates=0; // inside clipped impact bound
