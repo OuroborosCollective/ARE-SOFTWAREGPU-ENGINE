@@ -27,7 +27,8 @@ constexpr int ticks = 8;
 
 struct Rendered {
     std::vector<std::uint8_t> rgba;
-    std::vector<float> depth;
+    std::vector<float> depth; // immutable raw native NDC depth, may be negative
+    std::vector<float> effect_depth; // separate [0,1] read-only pulse input
     std::vector<std::uint32_t> owners;
     std::uint64_t sample_writes = 0;
 };
@@ -59,7 +60,7 @@ void emit_samples(const std::vector<double>& values){
 }
 pulse::PulseReceipt apply(Rendered& rendered,int n,double t){
     return pulse::apply_at_time(rendered.rgba.data(),rendered.rgba.size(),
-       rendered.depth.data(),rendered.depth.size(),
+       rendered.effect_depth.data(),rendered.effect_depth.size(),
        rendered.owners.data(),rendered.owners.size(),n,n,n/2,n/2,
        {3.,0.,0.},8.,1.,48.,t,1.,target_owner,true);
 }
@@ -90,13 +91,23 @@ int main(int argc,char** argv) {try{
         Rendered out;
         out.rgba=renderer.rgba();
         out.depth=renderer.depth();
+        out.effect_depth.resize(out.depth.size());
         out.owners.assign(out.depth.size(),0);
         out.sample_writes=renderer.waves()[1].samples;
         need(out.sample_writes>0,"GLB_PULSE_RASTER_EMPTY");
         for(std::size_t i=0;i<out.depth.size();++i){
-            need(std::isfinite(out.depth[i])&&out.depth[i]>=0.0f&&
-                 out.depth[i]<=1.0f,"GLB_PULSE_DEPTH_INVALID");
-            if(out.depth[i]<1.0f)out.owners[i]=target_owner;
+            // Native diagnostic MSAA depth is NDC [-1,1], while the
+            // pulse preflight intentionally requires [0,1]. Keep both.
+            // Depth=1 is untouched background; strict-less native winners
+            // remain strict-less after this monotone viewport mapping.
+            const float z=out.depth[i];
+            need(std::isfinite(z)&&z>=-1.0f&&z<=1.0f,
+                 "GLB_PULSE_NATIVE_DEPTH_INVALID");
+            if(z<1.0f){
+                out.owners[i]=target_owner;
+                out.effect_depth[i]=std::min((z+1.0f)*0.5f,
+                                              std::nextafter(1.0f,0.0f));
+            }else out.effect_depth[i]=1.0f;
         }
         return out;
     };
@@ -114,8 +125,11 @@ int main(int argc,char** argv) {try{
         need(receipt.area_completions==expected[std::size_t(t)]&&
              receipt.spherepop_starts==1&&receipt.queue_pushes==0&&
              receipt.reemissions==0&&receipt.refusals==0,"GLB_PULSE_ARRIVAL_CONTRACT");
-        const bool depth_equal=std::memcmp(pristine.depth.data(),colored.depth.data(),
-                                          pristine.depth.size()*sizeof(float))==0;
+        const bool depth_equal=
+            std::memcmp(pristine.depth.data(),colored.depth.data(),
+                        pristine.depth.size()*sizeof(float))==0 &&
+            std::memcmp(pristine.effect_depth.data(),colored.effect_depth.data(),
+                        pristine.effect_depth.size()*sizeof(float))==0;
         bool alpha_equal=true,background_preserved=true;
         for(std::size_t i=0;i<pristine.depth.size();++i){
             const int x=int(i%std::size_t(n)),y=int(i/std::size_t(n));
