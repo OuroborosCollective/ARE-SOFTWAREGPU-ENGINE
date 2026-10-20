@@ -98,6 +98,8 @@ static void verify_equal(const Frame& reference,const Frame& candidate,int pixel
                 <<wave_edges<<" extra="<<eligible
                 <<" legacy="<<a.doppler_factor_evaluations
                 <<" reused="<<b.doppler_factor_evaluations
+                <<" reused_branch="<<b.reused_visible_cells
+                <<" legacy_branch="<<a.reused_visible_cells
                 <<" pixels="<<pixels<<"\n";
         }
         assert(wave_edges==cells-1);
