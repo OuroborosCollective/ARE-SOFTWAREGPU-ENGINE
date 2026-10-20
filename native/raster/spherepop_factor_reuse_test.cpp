@@ -59,10 +59,12 @@ static Frame draw_and_wave(int pixels,const std::array<double,46>& mesh,
     for(std::size_t i=0;i<cells;++i) {
         if(result.depth[i]<1.0f && i%17!=0)owners[i]=7;
     }
+    if(reuse_factor) std::cerr<<"FACTOR_REUSE_REQUEST_AT_CALL "<<reuse_factor<<"\n";
     result.receipt=wave::render_radial_cag_spherepop(
         result.rgba.data(),result.rgba.size(),result.depth.data(),result.depth.size(),
         owners.data(),owners.size(),pixels,pixels,cx,cy,velocity,120.,1.,
         with_doppler,reuse_factor);
+    if(reuse_factor) std::cerr<<"FACTOR_REUSE_RETURN_RECORDED "<<result.receipt.reuse_requested<<" CELLS "<<result.receipt.reused_visible_cells<<"\n";
     return result;
 }
 static void verify_equal(const Frame& reference,const Frame& candidate,int pixels,
