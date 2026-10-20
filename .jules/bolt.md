@@ -6,3 +6,7 @@
 ## 2026-10-16 - Replace np.clip with scalar min/max in fragment_shader
 **Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders), replacing NumPy functions like `np.clip` with pure scalar equivalents (e.g., `min`/`max` on floats) improves performance by reducing overhead, but can cause exact byte-parity tests to fail due to silent NaN swallowing.
 **Action:** When implementing scalar fallbacks for functions like `np.clip`, always pair them with manual exception handling (like `math.isnan(val)` checks on all color channels) to preserve NumPy's original ValueError semantics for exact-bound exact parity tests.
+
+## 2026-10-21 - Framebuffer clear optimization
+**Learning:** When clearing or filling homogeneous RGBA structures (like framebuffers) where all channels are simultaneously reset to a constant color, casting the NumPy array view to `np.uint32` and using a single `fill()` operation significantly improves performance over per-channel assignment.
+**Action:** When implementing pixel buffer clearing, use `color_buffer.view(np.uint32).fill(color_val)`. Ensure `sys.byteorder` is checked to maintain correctness on big-endian architectures, and always clean up temporary files before requesting review. Use generous elapsed time thresholds for CI performance gates to avoid flakiness.

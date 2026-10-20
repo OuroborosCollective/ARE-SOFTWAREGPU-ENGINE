@@ -74,6 +74,18 @@ class TestFramebufferContract(unittest.TestCase):
         self.assertTrue((fb.color_buffer == np.array([1, 2, 3, 4], dtype=np.uint8)).all())
         self.assertTrue((fb.depth_buffer == np.float32(0.75)).all())
 
+    def test_clear_performance_gate(self):
+        import time
+        fb = Framebuffer(1920, 1080)
+        start = time.perf_counter()
+        for _ in range(100):
+            fb.clear()
+        end = time.perf_counter()
+        elapsed = end - start
+        # The optimized version takes ~0.15s, while the original took ~0.5s.
+        # Set a safe threshold of 0.5s for CI environments which may be slower.
+        self.assertLess(elapsed, 0.5, "Framebuffer clear performance regression detected")
+
     def test_save_ppm_binary_layout_and_alpha_dropped(self):
         fb = Framebuffer(3, 2)
         fb.set_pixel(0, 0, 255, 0, 0, 7, z=0.0)
