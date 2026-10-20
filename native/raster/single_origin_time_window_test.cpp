@@ -10,6 +10,8 @@
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
+#include <fstream>
+#include <set>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -228,11 +230,84 @@ static void measure(int n,const std::array<double,46>& geom){
     std::cout<<",\"full\":";print(samples[1]);
     std::cout<<",\"ring\":";print(samples[2]);std::cout<<"}}\n";
 }
-int main(){
+
+// Eight independent native raster frames, from a pristine framebuffer on every
+// tick. Exported P6 frames are visual evidence, not a performance comparison.
+static void visual_sequence(int n,const std::array<double,46>& geom,
+                            const char* export_directory) {
+    assert(n==128);
+    const auto base=draw(n,geom);
+    const int sx=n/2, sy=n/2;
+    const double speed=8., radius=48., window=1.;
+    const std::array<std::size_t,8> oracle{{1,196,600,996,1416,1816,2188,0}};
+    std::vector<unsigned> arrivals(std::size_t(n)*n,0);
+    std::array<std::uint64_t,8> frame_hashes{};
+    std::size_t total=0;
+    for(int tick=0;tick<8;++tick){
+        auto frame=base, replay=base;
+        const double elapsed=double(tick);
+        const auto receipt=timed(frame,n,sx,sy,3.,speed,radius,elapsed,window);
+        const auto twice=timed(replay,n,sx,sy,3.,speed,radius,elapsed,window);
+        assert(frame.rgba==replay.rgba && frame.depth==base.depth &&
+               replay.depth==base.depth && frame.owners==base.owners);
+        assert(receipt.area_completions==twice.area_completions &&
+               receipt.event_fingerprint==twice.event_fingerprint &&
+               receipt.area_completions==oracle[std::size_t(tick)]);
+        assert(receipt.spherepop_starts==1 && receipt.reemissions==0 &&
+               receipt.queue_pushes==0 && receipt.refusals==0);
+        std::size_t independently_active=0;
+        for(int y=0;y<n;++y)for(int x=0;x<n;++x){
+            const auto cell=std::size_t(y)*n+x;
+            const double distance=std::hypot(double(x-sx),double(y-sy));
+            const double arrival=distance/speed;
+            const bool active=distance<=radius && arrival<=elapsed &&
+                (tick==0 || arrival>elapsed-window);
+            if(active){++arrivals[cell];++independently_active;}
+            if(!active || base.owners[cell]!=7)
+                for(int c=0;c<4;++c)
+                    assert(frame.rgba[4*cell+c]==base.rgba[4*cell+c]);
+            assert(frame.rgba[4*cell+3]==base.rgba[4*cell+3]);
+        }
+        assert(independently_active==receipt.area_completions);
+        frame_hashes[std::size_t(tick)]=checksum(frame.rgba);
+        if(export_directory){
+            const std::string path=std::string(export_directory)+
+                "/wave-"+std::to_string(tick)+".ppm";
+            std::ofstream ppm(path,std::ios::binary);
+            if(!ppm) throw std::runtime_error("SINGLE_ORIGIN_SEQUENCE_EXPORT_OPEN");
+            ppm<<"P6\n"<<n<<" "<<n<<"\n255\n";
+            for(std::size_t i=0;i<frame.rgba.size();i+=4)
+                ppm.write(reinterpret_cast<const char*>(frame.rgba.data()+i),3);
+            if(!ppm) throw std::runtime_error("SINGLE_ORIGIN_SEQUENCE_EXPORT_WRITE");
+        }
+        total+=receipt.area_completions;
+        std::cout<<"SINGLE_ORIGIN_SEQUENCE_FRAME {\"tick\":"<<tick
+                 <<",\"areas\":"<<receipt.area_completions
+                 <<",\"tinted\":"<<receipt.tinted_pixels
+                 <<",\"rgba_fnv64\":"<<frame_hashes[std::size_t(tick)]<<"}\n";
+    }
+    std::size_t circle=0;
+    for(int y=0;y<n;++y)for(int x=0;x<n;++x){
+        const auto cell=std::size_t(y)*n+x;
+        const bool in_circle=std::hypot(double(x-sx),double(y-sy))<=radius;
+        circle+=in_circle;
+        assert(arrivals[cell]==unsigned(in_circle));
+    }
+    assert(total==7213 && total==circle);
+    assert(frame_hashes[0]==frame_hashes[7] &&
+           std::set<std::uint64_t>(frame_hashes.begin(),frame_hashes.end()).size()>=6);
+    std::cout<<"SINGLE_ORIGIN_SEQUENCE_PASS frames=8 unique_areas="
+             <<total<<" repeated_areas=0\n";
+}
+
+int main(int argc,char** argv){
+    if(argc!=1 && !(argc==3 && std::string(argv[1])=="--frames-dir"))
+        return 2;
     assert(wave::arrival_seconds(0,0,3,4,5.)==1.);
     for(int n:{32,64,128,256}){
         const auto geom=geometry(n);
         check(n,geom);
+        if(n==128) visual_sequence(n,geom,argc==3?argv[2]:nullptr);
         measure(n,geom);
     }
     std::cout<<"SINGLE_ORIGIN_TIME_NATIVE_PASS\n";
