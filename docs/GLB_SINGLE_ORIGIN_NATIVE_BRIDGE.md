@@ -16,6 +16,8 @@ At timestamps `t=0..7`, a new pristine raster is rendered, then the unchanged `s
 - Independent replay of the same timestamp, and byte-exact output equality between native **one-worker** and **four-worker** modes for each base and wave P6 image.
 - 15 alternating warmup-excluded native full-draw baseline/wave timing pairs **per worker configuration**, including native geometry recomputation, rasterization and post-effect. The raw samples and medians are emitted on the native stdout and checked by the Python regression. Different outputs are not speedup-equivalent.
 
+The validated Python test emits `GLB_PULSE_EVIDENCE` into the exact-head GitHub Actions log, including SHA-256 identities for the generated GLB, typed model request and native bridge translation unit, 8 full wave PPM frames, and **all 15 raw full-draw baseline/wave times with medians** for 1 and 4 workers. This is one-host descriptive CPU evidence, not a variance-adjusted cross-run performance claim.
+
 This is a full `generated GLB -> native diagnostic renderer -> post-raster RGBA8 pulse` slice, **not** textured-PBR material parity, a per-object ownership buffer, a Godot comparison, the ten original owner GLBs, scene submission in live gameplay, or hardware-GPU performance. Native `sample_writes` are MSAA sample writes, not unique output pixels. The native model exporter produces 128x128 P6 frames for inspection; no external hosting is involved.
 
 ## Verification and publication gate
