@@ -1,5 +1,22 @@
 # ARE SoftwareGPU Engine
 
+## Single-Origin Impact Wave – direkte Wellenfront (20.10.2026)
+
+**Neuer CPU-Forschungsmodus:** Ein CAG-Impact startet **genau eine** kreisförmige Ausbreitung. Der C++17-Renderer berechnet alle betroffenen Renderbereiche direkt aus der ursprünglichen Position, ohne weitere SpherePop-Auslöser und ohne Ereigniswarteschlange. Jeder Bereich wird je Aufruf genau einmal abgeschlossen; Doppler-Farbe wird nur für passende sichtbare Besitzerpixel berechnet.
+
+| Rang | Native C++17 mit realer Zwei-Dreiecks-Szene | 32×32 | 64×64 |
+| ---: | --- | ---: | ---: |
+| **1** | **Single-Origin Impact Wave** | **0,044253 ms** | **0,172162 ms** |
+| 2 | Bereits optimierte kaskadierende SpherePop+Doppler-Welle | 0,407181 ms | 1,900019 ms |
+| **Speedup** | **Gepaarter Median: alt / neu** | **9,15×** | **11,07×** |
+
+Die Zahlen beruhen auf je **15 gepaarten CPU-Durchläufen einschließlich echter nativer Rasterisierung und Effekt**. Im 64×64-Test entfallen **27.909 verworfene Mehrfachankünfte** der alten Methode; im neuen Modus wurden **4.096/4.096 Bereiche abgeschlossen, 0 Reemissionen und 0 Queue-Einträge** protokolliert.
+
+**Evidenz:** [60 rohe Messwerte und Zähler](evidence/single-origin-impact-wave-20261020.json) · [native Ubuntu-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39466509033) · [technischer Vertrag](docs/SINGLE_ORIGIN_IMPACT_WAVE.md) · [PR #136](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/136).
+
+**Abgrenzung:** Die schnellere Methode verändert die Effektsemantik: Doppler bezieht sich auf **eine feste Impact-Quelle** und nicht auf lokale Ketten-Emitter. Identische RGBA8-Ausgabe zwischen beiden Methoden wird deshalb **nicht** behauptet. Unveränderte Tiefen-/Alpha-Werte, Besitzergrenzen, deterministischer Replay und Eingabefehler sind getestet. Die Wirkung wird in diesem Prototyp sofort auf den Impactbereich projiziert, nicht als zeitlich animierte Welle. Keine GPU-, GLB-, Android- oder produktive FPS-Aussage; der neue Modus ist nicht standardmäßig aktiviert. Die alte Kettenwelle bleibt für echte Kettenreaktionen erhalten.
+
+
 ## Neue Optimierung: SpherePop-Faktorwiederverwendung (20.10.2026)
 
 Die bestehende CAG/SpherePop/Doppler-Wellenfront berechnete den **identischen Doppler-Faktor zweimal** bei sichtbaren, abgeschlossenen Renderpunkten. Der neue **opt-in C++17-Pfad** verwendet ihn erneut, ohne Framebuffer oder Ereignishistorie zu verändern. Standard bleibt die vorherige Referenz (`reuse_factor=false`).
