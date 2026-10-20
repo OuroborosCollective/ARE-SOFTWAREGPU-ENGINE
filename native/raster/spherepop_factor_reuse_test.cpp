@@ -90,8 +90,19 @@ static void verify_equal(const Frame& reference,const Frame& candidate,int pixel
     }
     for(auto v:visited)assert(v==1);
     if(with_doppler) {
-        assert(b.doppler_factor_evaluations==cells-1);
-        assert(a.doppler_factor_evaluations==cells-1+eligible);
+        std::size_t wave_edges=0;
+        for(const auto& event:a.finalized) wave_edges+=(event.area!=event.emitter);
+        if(b.doppler_factor_evaluations!=wave_edges ||
+           a.doppler_factor_evaluations!=wave_edges+eligible) {
+            std::cerr<<"SPHEREPOP_FACTOR_COUNT_DIAGNOSTIC expected="
+                <<wave_edges<<" extra="<<eligible
+                <<" legacy="<<a.doppler_factor_evaluations
+                <<" reused="<<b.doppler_factor_evaluations
+                <<" pixels="<<pixels<<"\n";
+        }
+        assert(wave_edges==cells-1);
+        assert(b.doppler_factor_evaluations==wave_edges);
+        assert(a.doppler_factor_evaluations==wave_edges+eligible);
     } else {
         assert(a.doppler_factor_evaluations==0);
         assert(b.doppler_factor_evaluations==0);
