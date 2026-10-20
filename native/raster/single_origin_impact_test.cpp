@@ -142,8 +142,8 @@ static void check(int n) {
   using clock=std::chrono::steady_clock;
   for(int rep=-2;rep<15;++rep)for(int k=0;k<2;++k) {
     bool fast=(k==(rep%2==0?0:1));
-    auto f=raster(n,geom);
     const auto start=clock::now();
+    auto f=raster(n,geom);
     if(fast) {
       auto rr=single::apply(f.pixels.data(),f.pixels.size(),f.depth.data(),
         f.depth.size(),f.owners.data(),f.owners.size(),
@@ -168,7 +168,7 @@ static void check(int n) {
   std::cout<<std::fixed<<std::setprecision(9)
     <<"SINGLE_ORIGIN_IMPACT_RECEIPT {\"pixels\":"<<n
     <<",\"repeats\":15,\"radius\":"<<n
-    <<",\"source_count\":1,\"mode\":\"native_cpp_effect_only\""
+    <<",\"source_count\":1,\"mode\":\"native_cpp_full_draw\""
     <<",\"spherepop_refusals\":"<<old.refusals
     <<",\"single_area_completions\":"<<result.area_completions
     <<",\"single_reemissions\":"<<result.reemissions
