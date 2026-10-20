@@ -30,6 +30,7 @@ struct WaveReceipt {
     std::uint64_t refusals=0;          // Discarded attempts to repeat finalized areas.
     std::uint64_t event_fingerprint=0; // Non-cryptographic deterministic debug digest.
     std::size_t tinted_pixels=0;
+    std::size_t doppler_factor_evaluations=0; // Instrumentation, not event digest.
 };
 
 inline WaveReceipt render_radial_cag_spherepop(
@@ -37,7 +38,8 @@ inline WaveReceipt render_radial_cag_spherepop(
     const float* depth,std::size_t depth_cells,
     const std::uint32_t* owners,std::size_t owner_cells,
     int width,int height, int cag_x,int cag_y,
-    Vec3 velocity, double wave_speed,double artistic_gain, bool enable_doppler=true) {
+    Vec3 velocity, double wave_speed,double artistic_gain, bool enable_doppler=true,
+    bool reuse_factor=false) {
 
     // A bounded finite grid: single-threaded priority queue, no shader-side
     // recursion, state persisted only in this invocation's local receipt.
@@ -97,16 +99,37 @@ inline WaveReceipt render_radial_cag_spherepop(
             // Doppler controls spectral post tint, not isotropic wave velocity.
             factor=doppler_factor({double(px),double(py),0.},
                                   {double(x),double(y),0.},velocity,wave_speed);
+            ++receipt.doppler_factor_evaluations;
         }
         // Reuse native single-object effect including alpha/depth semantics.
         std::uint32_t tinted=0;
         if(enable_doppler && owners[step.cell]!=0 && step.cell!=step.emitter) {
             const auto offset=std::size_t(step.cell)*4;
-            const auto result=apply_single_object(staged.data()+offset,4,
-                depth+step.cell,1,1,1,{double(px),double(py),0.},
-                {double(x),double(y),0.},velocity,
-                wave_speed,artistic_gain,owners[step.cell]);
-            tinted=static_cast<std::uint32_t>(result.tinted_pixels);
+            if(reuse_factor) {
+                // Same scalar tint math, but reuse the validated factor.
+                // The original function still owns the unoptimized reference.
+                const double tint=std::clamp((factor-1.0)*artistic_gain,-1.0,1.0);
+                const auto amount=static_cast<int>(std::floor(std::abs(tint)*64.0+0.5));
+                if(amount && depth[step.cell]<1.0f) {
+                    auto* color=staged.data()+offset;
+                    const auto old_r=color[0],old_b=color[2];
+                    if(tint>0) {
+                        color[0]=static_cast<std::uint8_t>(std::max(0,int(old_r)-amount));
+                        color[2]=static_cast<std::uint8_t>(std::min(255,int(old_b)+amount));
+                    } else {
+                        color[0]=static_cast<std::uint8_t>(std::min(255,int(old_r)+amount));
+                        color[2]=static_cast<std::uint8_t>(std::max(0,int(old_b)-amount));
+                    }
+                    tinted=(color[0]!=old_r || color[2]!=old_b) ? 1u : 0u;
+                }
+            } else {
+                const auto result=apply_single_object(staged.data()+offset,4,
+                    depth+step.cell,1,1,1,{double(px),double(py),0.},
+                    {double(x),double(y),0.},velocity,
+                    wave_speed,artistic_gain,owners[step.cell]);
+                ++receipt.doppler_factor_evaluations;
+                tinted=static_cast<std::uint32_t>(result.tinted_pixels);
+            }
         }
         // CAG seed has no radial direction: neutral, finalized exactly once.
         completed[step.cell]=1;     // Bind -> Pop -> Collapse, at most once.
