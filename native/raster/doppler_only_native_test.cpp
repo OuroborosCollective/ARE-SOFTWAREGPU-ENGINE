@@ -126,7 +126,7 @@ static Observed render_once(int pixels,const std::array<double,46>& packed,int m
             result.rgba.data(),result.rgba.size(),
             result.depth.data(),result.depth.size(),
             owners.data(),owners.size(),pixels,pixels,pixels/2,pixels/2,
-            {30,0,0},120,1,true);
+            {30,0,0},120,1,mode==2);
         assert(r.finalized.size()==cells && r.refusals>0);
         result.finished=r.finalized.size();
         result.wave_refusals=std::size_t(r.refusals);
@@ -153,10 +153,12 @@ static void measure(int pixels) {
     const auto bare=render_once(pixels,packed,0);
     const auto single=render_once(pixels,packed,1);
     const auto pop=render_once(pixels,packed,2);
+    const auto pop_plain=render_once(pixels,packed,3);
     const auto cells=std::size_t(pixels)*pixels;
-    assert(single.depth==bare.depth && pop.depth==bare.depth);
+    assert(single.depth==bare.depth && pop.depth==bare.depth && pop_plain.depth==bare.depth);
     assert(single.rgba!=bare.rgba && pop.rgba!=bare.rgba);
-    assert(single.finished==cells && pop.finished==cells && pop.wave_refusals>0);
+    assert(single.finished==cells && pop.finished==cells && pop_plain.finished==cells && pop.wave_refusals>0);
+    assert(pop_plain.tinted==0 && pop_plain.rgba==bare.rgba && pop_plain.wave_refusals==pop.wave_refusals);
     for(std::size_t i=0;i<cells;++i) {
         // The real native framebuffer alpha and every depth bit are preserved.
         assert(single.rgba[4*i+3]==bare.rgba[4*i+3]);
@@ -192,21 +194,21 @@ static void measure(int pixels) {
     auto re=direct::apply_direct(owned.data(),owned.size(),bare.depth.data(),bare.depth.size(),
         owners_other.data(),owners_other.size(),pixels,pixels,pixels/2,pixels/2,
         {30,0,0},120,1,7);
-    assert(re.tinted>0);
+    assert(re.tinted_pixels>0);
     for(int c=0;c<4;++c)assert(owned[c]==bare.rgba[c]);
 
     constexpr int repeats=15;
     using clock=std::chrono::steady_clock;
-    std::array<std::vector<double>,3> samples{};
-    // Same renderer work for all three modes; order rotates and reverses.
+    std::array<std::vector<double>,4> samples{};
+    // Four-way complete same-native-raster comparison; rotated and reversed order.
     for(int rep=-2;rep<repeats;++rep) {
-        for(int slot=0;slot<3;++slot) {
-            const int mode=(rep%2==0) ? (slot+rep+300)%3 : (2-slot+rep+300)%3;
+        for(int slot=0;slot<4;++slot) {
+            const int mode=(rep%2==0) ? (slot+rep+400)%4 : (3-slot+rep+400)%4;
             const auto start=clock::now();
             auto frame=render_once(pixels,packed,mode);
             const auto milliseconds=std::chrono::duration<double,std::milli>(clock::now()-start).count();
             assert(std::isfinite(milliseconds)&&milliseconds>0);
-            const auto& expected=(mode==0?bare:mode==1?single:pop);
+            const auto& expected=(mode==0?bare:mode==1?single:mode==2?pop:pop_plain);
             assert(frame.depth==expected.depth && frame.rgba==expected.rgba &&
                    frame.finished==expected.finished && frame.tinted==expected.tinted &&
                    frame.wave_refusals==expected.wave_refusals);
@@ -214,11 +216,13 @@ static void measure(int pixels) {
         }
     }
     for(const auto& one:samples)assert(one.size()==repeats);
-    std::vector<double> speedup,bare_to_direct,bare_to_pop;
+    std::vector<double> speedup,bare_to_direct,bare_to_pop,sp_plain_to_sp,interaction_ms;
     for(int i=0;i<repeats;++i) {
         speedup.push_back(samples[2][i]/samples[1][i]);
         bare_to_direct.push_back(samples[0][i]/samples[1][i]);
         bare_to_pop.push_back(samples[0][i]/samples[2][i]);
+        sp_plain_to_sp.push_back(samples[3][i]/samples[2][i]);
+        interaction_ms.push_back((samples[2][i]-samples[3][i])-(samples[1][i]-samples[0][i]));
     }
     std::cout<<std::fixed<<std::setprecision(9);
     std::cout<<"DOPPLER_ONLY_FRAME_RECEIPT {\"pixels\":"<<pixels
@@ -226,6 +230,9 @@ static void measure(int pixels) {
              <<",\"median_bare_ms\":"<<median(samples[0])
              <<",\"median_doppler_only_ms\":"<<median(samples[1])
              <<",\"median_spherepop_doppler_ms\":"<<median(samples[2])
+             <<",\"median_spherepop_only_ms\":"<<median(samples[3])
+             <<",\"paired_spherepop_only_over_combined\":"<<median(sp_plain_to_sp)
+             <<",\"median_interaction_ms\":"<<median(interaction_ms)
              <<",\"paired_sp_over_direct\":"<<median(speedup)
              <<",\"paired_bare_over_direct\":"<<median(bare_to_direct)
              <<",\"paired_bare_over_sp\":"<<median(bare_to_pop)
@@ -241,6 +248,8 @@ static void measure(int pixels) {
     print_samples(samples[1]);
     std::cout<<",\"spherepop\":";
     print_samples(samples[2]);
+    std::cout<<",\"spherepop_only\":";
+    print_samples(samples[3]);
     std::cout<<"}}\n";
 }
 int main() {
