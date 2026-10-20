@@ -98,6 +98,29 @@ class TestSingleOriginGlbBridge(unittest.TestCase):
                     self.assertTrue(all(v > 0 for v in samples))
                     self.assertGreater(bench["median_" + mode + "_ms"], 0)
             self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), identity["sha256"])
+            # Persist measured native receipt and replayable image identities in
+            # the *exact-head* GitHub Actions log. Running hidden benchmarks
+            # without publishing their timings is not performance evidence.
+            receipt = {
+                "protocol": "are.native-glb-single-origin-benchmark.v1",
+                "glb_sha256": identity["sha256"],
+                "aremdl_sha256": hashlib.sha256(request.read_bytes()).hexdigest(),
+                "bridge_cpp_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
+                "python_version": sys.version.split()[0],
+                "source_triangles": 28800,
+                "resolution": [128, 128],
+                "ticks": 8,
+                "frame_wave_ppm_sha256": [
+                    hashlib.sha256((root / "one" / f"wave-{i}.ppm").read_bytes()).hexdigest()
+                    for i in range(8)
+                ],
+                "workers_1": b1[0],
+                "workers_4": b4[0],
+                "same_frames_1_and_4_workers": True,
+                "same_native_depth_and_alpha_after_pulse": True,
+            }
+            print("GLB_PULSE_EVIDENCE " +
+                  json.dumps(receipt, sort_keys=True, separators=(",", ":")), flush=True)
 
     def test_multiple_models_are_rejected_without_projected_ownership(self):
         with tempfile.TemporaryDirectory(prefix="are-glb-wave-owner-") as directory:
