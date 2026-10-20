@@ -37,7 +37,7 @@ inline WaveReceipt render_radial_cag_spherepop(
     const float* depth,std::size_t depth_cells,
     const std::uint32_t* owners,std::size_t owner_cells,
     int width,int height, int cag_x,int cag_y,
-    Vec3 velocity, double wave_speed,double artistic_gain) {
+    Vec3 velocity, double wave_speed,double artistic_gain, bool enable_doppler=true) {
 
     // A bounded finite grid: single-threaded priority queue, no shader-side
     // recursion, state persisted only in this invocation's local receipt.
@@ -93,14 +93,14 @@ inline WaveReceipt render_radial_cag_spherepop(
         const int px=int(step.emitter%std::uint32_t(width));
         const int py=int(step.emitter/std::uint32_t(width));
         double factor=1.;
-        if(step.cell!=step.emitter) {
+        if(enable_doppler && step.cell!=step.emitter) {
             // Doppler controls spectral post tint, not isotropic wave velocity.
             factor=doppler_factor({double(px),double(py),0.},
                                   {double(x),double(y),0.},velocity,wave_speed);
         }
         // Reuse native single-object effect including alpha/depth semantics.
         std::uint32_t tinted=0;
-        if(owners[step.cell]!=0 && step.cell!=step.emitter) {
+        if(enable_doppler && owners[step.cell]!=0 && step.cell!=step.emitter) {
             const auto offset=std::size_t(step.cell)*4;
             const auto result=apply_single_object(staged.data()+offset,4,
                 depth+step.cell,1,1,1,{double(px),double(py),0.},
