@@ -21,3 +21,9 @@ python -m unittest discover -s software_gpu/tests -v
 ```
 
 This is a bounded research experiment, not production activation. CPU-only same-runner A/B ratios are not hardware-GPU FPS and cannot be compared directly to prior distinct scenes/hosts.
+
+## Vier-Wege-Synergieprüfung (C++17, gleicher Rasterkern)
+
+Der native Test misst nach identischem `are::raster::draw` vier Varianten: (0) Raster-only, (1) direktes Wolfram-orakelgestütztes Doppler ohne SpherePop, (2) SpherePop plus Doppler, (3) SpherePop ohne Doppler. Je Auflösung (32² und 64²) werden **15 rotierende Zeitreihen** erfasst. Jede Wiederholung prüft RGBA-/Depth-Determinismus und Alpha; die reine SpherePop-Variante darf keine Pixel färben und muss dieselbe Zahl einmal abgeschlossener Bereiche und Ablehnungen wie Variante 2 besitzen. Die JSON-Zeile enthält alle vier Zeitreihen.
+
+Der Median von `interaction_ms = (T_combined - T_spherepop_only) - (T_doppler_only - T_raster_only)` ist ein **indikatives** Wechselwirkungssignal auf dieser CPU und Szene: negativ bedeutet weniger Zusatzkosten der Kombination als additiv erwartet, positiv bedeutet mehr. Dies ist **kein Beweis** für eine physikalische oder allgemeine Render-Synergie; zusätzlich werden die RGB-Ergebnisse der direkten und reemittierten Doppler-Variante unterschieden. Keine GitHub-Mergefreigabe bei roten CI-Gates.
