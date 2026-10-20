@@ -1,0 +1,43 @@
+# Wolfram + C++17 Doppler-only CPU research ablation
+
+**Separated implementations.** `native/raster/doppler_only.hpp` contains no SpherePop includes, history, priority queue, area-propagation or event callbacks. A source position and classical source velocity directly determine an independent pixel's Doppler factor. A distinct object-owner mask prevents changes to unrelated objects, and the result preserves the canonical RGBA alpha and all float32 depth bits. Failed admission leaves all RGBA unchanged. Source pixels have the neutral factor 1 (no line-of-sight direction).
+
+**Independent Wolfram reference:**
+```wolfram
+FullSimplify[{120/(120-30),120/(120+30),120/(120-0),
+              120/(120-30/Sqrt[2]),120/(120+30/Sqrt[2]),
+              Sqrt[(1+3/5)/(1-3/5)]}]
+(* {4/3, 4/5, 1, 4(8+Sqrt[2])/31, 4(8-Sqrt[2])/31, 2} *)
+```
+The last `2` is a relativistic control, not used by this classical profile. RGB red/blue tint remains an artistic mapping, **not physical spectral radiance**. There is no on-render Wolfram HTTP call and no GPU implementation.
+
+The native test renders **real C++17 triangles** with `are::raster::draw`, then measures 32×32 and 64×64 raster frames in **three conditions**: baseline native render, direct Doppler-only, and CAG-seeded SpherePop+Doppler. It alternates conditions for 15 CPU samples after warmups, compares deterministic full-buffer replays and unchanged depth/alpha, and emits the measured native raw milliseconds, per-scene medians and paired ratios to the CI logs. `Doppler-only` and `SpherePop+Doppler` intentionally produce *different* RGB data: the former references the original source, the latter propagates through previous local emitters. Matching them pixel-by-pixel is neither expected nor a valid test.
+
+**Numerical contract:** classical stationary-observer/moving-source Doppler, speed and positions in internally consistent units. Rejects nonfinite input, velocity budget violations, non-nearest rounding, SSE FTZ/DAZ, inconsistent buffers or invalid depth. Source/observer coincidence is neutral. Float64 geometric factor does not claim byte-equivalent physical accuracy of arbitrary float32 pipelines.
+
+```bash
+python -m unittest software_gpu.tests.test_doppler_only -v
+python -m unittest discover -s software_gpu/tests -v
+```
+
+This is a bounded research experiment, not production activation. CPU-only same-runner A/B ratios are not hardware-GPU FPS and cannot be compared directly to prior distinct scenes/hosts.
+
+## Vier-Wege-Synergieprüfung (C++17, gleicher Rasterkern)
+
+Der native Test misst nach identischem `are::raster::draw` vier Varianten: (0) Raster-only, (1) direktes Wolfram-orakelgestütztes Doppler ohne SpherePop, (2) SpherePop plus Doppler, (3) SpherePop ohne Doppler. Je Auflösung (32² und 64²) werden **15 rotierende Zeitreihen** erfasst. Jede Wiederholung prüft RGBA-/Depth-Determinismus und Alpha; die reine SpherePop-Variante darf keine Pixel färben und muss dieselbe Zahl einmal abgeschlossener Bereiche und Ablehnungen wie Variante 2 besitzen. Die JSON-Zeile enthält alle vier Zeitreihen.
+
+Der Median von `interaction_ms = (T_combined - T_spherepop_only) - (T_doppler_only - T_raster_only)` ist ein **indikatives** Wechselwirkungssignal auf dieser CPU und Szene: negativ bedeutet weniger Zusatzkosten der Kombination als additiv erwartet, positiv bedeutet mehr. Dies ist **kein Beweis** für eine physikalische oder allgemeine Render-Synergie; zusätzlich werden die RGB-Ergebnisse der direkten und reemittierten Doppler-Variante unterschieden. Keine GitHub-Mergefreigabe bei roten CI-Gates.
+
+
+## Gemessener Vier-Wege-Befund (Ubuntu/Python 3.11, Actions 39455136257)
+
+Gleicher echter C++17-Native-Rasterizer, je 2 Dreiecke, 15 CPU-Wiederholungen; Zeitmediane in Millisekunden:
+
+| Pixel | Raster | Doppler direkt | SpherePop ohne Doppler | SpherePop + Doppler | Gepaarter Median Kombiniert / Doppler-direkt | Median Interaktion |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 32x32 | 0,016771 | 0,039845 | 0,345044 | 0,398223 | 9,9821x | +0,028524 ms |
+| 64x64 | 0,063598 | 0,155219 | 1,661679 | 1,872102 | 12,0663x | +0,125274 ms |
+
+Interaktion = (T_Kombination - T_SpherePop) - (T_Doppler - T_Raster). Ein positiver Wert ist mehr Overhead als additiv erwartet. Keine positive Performance-Synergie auf diesem Fixture; keine optimierte Faktorwiederverwendung gemessen. Direkter Doppler und lokale SpherePop-Reemission erzeugen absichtlich verschiedene RGB-Fragmente (4031 vs. 3063 gefaerbte Pixel bei 64x64), deshalb keine Byte-aequivalenten Alternativen. Float32-Depth und Alpha bleiben invariant.
+
+Die rohen Zeitreihen und Bild-FNV-Pruefsummen sind im [CI-Job](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455136257) protokolliert. Die aelteren 5,06x-Ranglistenwerte vergleichen native C++ mit Python-Tiles, nicht die Synergie.

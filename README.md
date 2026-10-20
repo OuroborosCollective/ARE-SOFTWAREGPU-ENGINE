@@ -1,5 +1,22 @@
 # ARE SoftwareGPU Engine
 
+## Vier-Wege-Doppler-Rangliste (20.10.2026)
+
+**Gemessener C++17-CPU-Vergleich** – identischer echter ARE-Native-Rasterpfad, jeweils zwei Dreiecke, 15 alternierende Durchläufe pro Modus und Auflösung. **Kleinere Zeit = besser**. Die Sortierung bezieht sich ausschließlich auf diesen Test und ersetzt keine älteren, anders konfigurierten Renderer-Bestenlisten.
+
+| Rang | Effekt-Modus auf demselben Native-C++-Raster | 32 × 32 | 64 × 64 | 64² gegenüber SpherePop + Doppler¹ |
+| ---: | --- | ---: | ---: | ---: |
+| **1** | **Raster ohne Effekt** | **0,016771 ms** | **0,063469 ms** | **29,58×** |
+| **2** | **Direkter Wolfram-orakelgeprüfter Doppler, ohne SpherePop** | 0,039905 ms | 0,156163 ms | **12,02×** |
+| **3** | **SpherePop ohne Doppler** | 0,346249 ms | 1,653992 ms | 1,14× |
+| **4** | **SpherePop + Doppler** | 0,399439 ms | 1,877461 ms | 1,00× |
+
+¹ Quotient aus **Zeitmedianen**, nicht der gepaarte Median. Der **gepaarte** Speedup von direktem Doppler gegenüber SpherePop+Doppler beträgt **10,08× bei 32²** bzw. **12,04× bei 64²**. Die gemessenen zusätzlichen Interaktionskosten der Kombination sind **+0,030558 ms** bzw. **+0,129973 ms** (gepaarte Mediane): **kein positiver Synergieeffekt in diesem Fixture**.
+
+**Evidenz:** [Alle 120 Einzelzeiten, Zähler und Frame-Digests](evidence/doppler-spherepop-fourway-20261020.json) · [CI #39455646518, 8/8 CPU-Gates](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455646518) · [Mesa #39455646536, 4/4](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455646536) · [Versuchsanordnung](docs/WOLFRAM_CPP_DOPPLER_ONLY_ABLATION.md). Derselbe Renderer wird verglichen; die **RGB-Bilder sind nicht notwendigerweise gleichwertig**, weil direkter Doppler eine feste Quelle und SpherePop wechselnde Auslösepositionen verwendet. Depth- und Alpha-Invarianten bleiben getestet. Kein GPU-Vergleich, kein vollständiger GLB-Benchmark und **keine** Behauptung, SpherePop beschleunige durch die Kombination die Rasterisierung.
+
+---
+
 ## Neu: SpherePop/CAG-Wellenfront und echte CPU-Benchmarks (20.10.2026)
 
 **Experimentell und CPU-only:** CAG liefert den Ausbreitungsursprung, die SpherePop-inspirierte Wellenfront besucht jede Renderfläche innerhalb eines Aufrufs **genau einmal** und weist weitere Ankünfte auf bereits abgeschlossene Flächen ab. Der Doppler-Farbeffekt ist getrennt optional; eine Variante **ohne Doppler** wird in der nativen Regression verglichen. Keine vollständige originale SpherePop-Semantik, kein Audio-Doppler, kein produktiver Standard und keine GPU-Parität.
