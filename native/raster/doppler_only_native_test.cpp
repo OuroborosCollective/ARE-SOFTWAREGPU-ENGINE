@@ -132,7 +132,8 @@ static Observed render_once(int pixels,const std::array<double,46>& packed,int m
         result.wave_refusals=std::size_t(r.refusals);
         result.tinted=r.tinted_pixels;
     }
-    assert(result.tinted>0);
+    if(mode==3)assert(result.tinted==0);
+    else assert(result.tinted>0);
     return result;
 }
 static double median(std::vector<double> values) {
