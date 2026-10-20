@@ -59,12 +59,10 @@ static Frame draw_and_wave(int pixels,const std::array<double,46>& mesh,
     for(std::size_t i=0;i<cells;++i) {
         if(result.depth[i]<1.0f && i%17!=0)owners[i]=7;
     }
-    if(reuse_factor) std::cerr<<"FACTOR_REUSE_REQUEST_AT_CALL "<<reuse_factor<<"\n";
     result.receipt=wave::render_radial_cag_spherepop(
         result.rgba.data(),result.rgba.size(),result.depth.data(),result.depth.size(),
         owners.data(),owners.size(),pixels,pixels,cx,cy,velocity,120.,1.,
         with_doppler,reuse_factor);
-    if(reuse_factor) std::cerr<<"FACTOR_REUSE_RETURN_RECORDED "<<result.receipt.reuse_requested<<" CELLS "<<result.receipt.reused_visible_cells<<"\n";
     return result;
 }
 static void verify_equal(const Frame& reference,const Frame& candidate,int pixels,
@@ -94,17 +92,6 @@ static void verify_equal(const Frame& reference,const Frame& candidate,int pixel
     if(with_doppler) {
         std::size_t wave_edges=0;
         for(const auto& event:a.finalized) wave_edges+=(event.area!=event.emitter);
-        if(b.doppler_factor_evaluations!=wave_edges ||
-           a.doppler_factor_evaluations!=wave_edges+eligible) {
-            std::cerr<<"SPHEREPOP_FACTOR_COUNT_DIAGNOSTIC expected="
-                <<wave_edges<<" extra="<<eligible
-                <<" legacy="<<a.doppler_factor_evaluations
-                <<" reused="<<b.doppler_factor_evaluations
-                <<" request="<<b.reuse_requested
-                <<" reused_branch="<<b.reused_visible_cells
-                <<" legacy_branch="<<a.reused_visible_cells
-                <<" pixels="<<pixels<<"\n";
-        }
         assert(wave_edges==cells-1);
         assert(b.doppler_factor_evaluations==wave_edges);
         assert(a.doppler_factor_evaluations==wave_edges+eligible);
@@ -190,7 +177,10 @@ static void measure(int pixels) {
             const auto elapsed=std::chrono::duration<double,std::milli>(
                 clock::now()-begin).count();
             assert(std::isfinite(elapsed) && elapsed>0);
-            verify_equal(legacy,frame,pixels,true,cx,cy);
+            // The candidate argument must really be the optimized variant:
+            // compare old->new in both arms, never old->old under a new counter contract.
+            if(reuse) verify_equal(legacy,frame,pixels,true,cx,cy);
+            else verify_equal(frame,optimized,pixels,true,cx,cy);
             if(repeat>=0)samples[reuse?1:0].push_back(elapsed);
         }
     }
