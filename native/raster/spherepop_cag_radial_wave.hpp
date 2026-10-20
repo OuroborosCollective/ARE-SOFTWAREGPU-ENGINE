@@ -31,6 +31,7 @@ struct WaveReceipt {
     std::uint64_t event_fingerprint=0; // Non-cryptographic deterministic debug digest.
     std::size_t tinted_pixels=0;
     std::size_t doppler_factor_evaluations=0; // Instrumentation, not event digest.
+    std::size_t reused_visible_cells=0; // Trace which branch executed.
 };
 
 inline WaveReceipt render_radial_cag_spherepop(
@@ -106,6 +107,7 @@ inline WaveReceipt render_radial_cag_spherepop(
         if(enable_doppler && owners[step.cell]!=0 && step.cell!=step.emitter) {
             const auto offset=std::size_t(step.cell)*4;
             if(reuse_factor) {
+                ++receipt.reused_visible_cells;
                 // Same scalar tint math, but reuse the validated factor.
                 // The original function still owns the unoptimized reference.
                 const double tint=std::clamp((factor-1.0)*artistic_gain,-1.0,1.0);
