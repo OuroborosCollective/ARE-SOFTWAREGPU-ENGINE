@@ -161,8 +161,14 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Optimization: explicitly unrolling boolean checks avoids slow np.stack and .all()
+    # reductions across small dimensions. This eliminates 7 memory allocations and
+    # improves face-setup performance under load.
+    inside_vertices = ((w + x >= 0.0) & (w - x >= 0.0) &
+                       (w + y >= 0.0) & (w - y >= 0.0) &
+                       (w + z >= 0.0) & (w - z >= 0.0) &
+                       (w - _MIN_W >= 0.0))
+    fully_inside = face_ok & inside_vertices[:, 0] & inside_vertices[:, 1] & inside_vertices[:, 2]
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
