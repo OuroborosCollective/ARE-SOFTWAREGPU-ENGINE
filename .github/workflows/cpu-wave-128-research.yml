@@ -25,6 +25,10 @@ jobs:
           python-version: '3.12'
       - name: Install CPU prerequisites
         run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
+      - name: Compile and run native 64/128 grid bounds, replay and negative contracts
+        run: |
+          g++ -std=c++17 -O2 -fno-fast-math -ffp-contract=off -Wall -Wextra -Werror native/raster/spherepop_grid128_contract_test.cpp -o "${RUNNER_TEMP}/grid128-test"
+          "${RUNNER_TEMP}/grid128-test"
       - name: Verify reference ranking regressions
         run: python -m unittest software_gpu.tests.test_spherepop_rankings -v
       - name: Execute real 128px 15-pair benchmark with strict SHA gates
