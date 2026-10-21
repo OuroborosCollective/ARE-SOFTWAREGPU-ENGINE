@@ -10,12 +10,17 @@ import math
 from pathlib import Path
 import re
 import statistics
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 WAVE = ROOT / "evidence/spherepop-wave-ranked-cpu-20261020.json"
 WINDOW = ROOT / "evidence/single-origin-time-window-20261020.json"
 BACKENDS = ("native-cpp", "batch-first", "tiles")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
+# Original unchanged archive identity. Its claimed self-digest is noncanonical.
+ARCHIVED_GIT_BLOB = "6db5b618934cc0108a93a797c2dbbf4437d8608e"
+ARCHIVED_CLAIMED_SHA256 = "3850a06e6f1996ac28dd77af6b927f9b9e78a6cbacc9d937ce244cfa3391ebee"
+ARCHIVED_HEAD = "381f3a8d7053293d0b978128a6ad05f551a5ea9e"
 
 
 def require(condition, code):
@@ -48,19 +53,57 @@ def checked_median(values, claimed):
     return median
 
 
-def validate_wave(receipt):
+def verify_wave_integrity(receipt):
+    """New receipts need canonical SHA-256. One historical Git blob is pinned.
+
+    The archived receipt's declared self-digest is inconsistent with canonical
+    JSON. This exception is permitted only for the exact unchanged repository
+    blob and must be reported. No new receipt may use this exception.
+    """
+    claimed = receipt.get("sha256")
+    require(bool(HEX64.fullmatch(str(claimed))), "RANKING_RECEIPT_SHA")
+    if claimed == digest(receipt):
+        return "canonical-sha256"
+    raw = WAVE.read_bytes()
+    header = b"blob " + str(len(raw)).encode("ascii") + b"\0"
+    git_blob = hashlib.sha1(header + raw).hexdigest()
+    require(git_blob == ARCHIVED_GIT_BLOB, "RANKING_ARCHIVE_GIT_BLOB_DRIFT")
+    require(receipt == json.loads(raw) and
+            claimed == ARCHIVED_CLAIMED_SHA256 and
+            receipt.get("head_sha") == ARCHIVED_HEAD,
+            "RANKING_RECEIPT_SHA")
+    return "legacy-git-blob-pinned-self-digest-mismatch"
+
+
+def check_current_checkout(receipt, integrity):
+    """Current-run receipts must bind to exactly this checkout and source tree."""
+    require(integrity == "canonical-sha256", "RANKING_CURRENT_NONCANONICAL")
+    sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                  text=True, timeout=10).strip()
+    require(receipt["head_sha"] == sha, "RANKING_CURRENT_HEAD_DRIFT")
+    actual = {}
+    for path in receipt["source_sha256"]:
+        source = ROOT / path
+        require(source.is_file() and source.resolve().is_relative_to(ROOT),
+                "RANKING_CURRENT_SOURCE_UNAVAILABLE")
+        actual[path] = hashlib.sha256(source.read_bytes()).hexdigest()
+    require(actual == receipt["source_sha256"], "RANKING_CURRENT_SOURCE_DRIFT")
+
+
+def validate_wave(receipt, *, strict_current=False):
     require(receipt.get("protocol") == "are.spherepop-wave-ranked-benchmark.v1"
             and receipt.get("no_physical_gpu_comparison") is True
             and receipt.get("no_production_speedup_claim") is True,
             "RANKING_WAVE_PROTOCOL")
-    require(bool(HEX64.fullmatch(str(receipt.get("sha256", "")))) and
-            receipt["sha256"] == digest(receipt), "RANKING_RECEIPT_SHA")
+    integrity = verify_wave_integrity(receipt)
     require(bool(re.fullmatch(r"[0-9a-f]{40}", str(receipt.get("head_sha", ""))))
             and receipt.get("authority") == "measured-single-host-CPU-only"
             and receipt.get("source_sha256"),
             "RANKING_SOURCE_UNBOUND")
     for h in receipt["source_sha256"].values():
         require(bool(HEX64.fullmatch(str(h))), "RANKING_SOURCE_HASH")
+    if strict_current:
+        check_current_checkout(receipt, integrity)
     rows = receipt.get("rows")
     require(isinstance(rows, list) and rows, "RANKING_WAVE_EMPTY")
     seen = set()
@@ -146,15 +189,16 @@ def validate_window(receipt):
     return sorted(board, key=lambda row: row["pixels"])
 
 
-def assemble(wave, window):
+def assemble(wave, window, *, strict_current=False):
     return {"protocol": "are.cpu-wave-leaderboard.v1",
             "scope": "single-CPU receipt, within-scene rankings, no GPU parity",
             "wave_source": {"head_sha": wave["head_sha"],
-                            "receipt_sha256": wave["sha256"]},
+                            "receipt_sha256": wave["sha256"],
+                            "integrity": verify_wave_integrity(wave)},
             "window_source": {"source_commit": window["source_commit"],
                               "date": window.get("date"),
                               "ci_run": window.get("ci_run")},
-            "wave": validate_wave(wave),
+            "wave": validate_wave(wave, strict_current=strict_current),
             "impact": validate_window(window)}
 
 
@@ -164,6 +208,13 @@ def render(board):
         "",
         "**Datenstand:** SpherePop-Receipt " + board["wave_source"]["head_sha"][:12] +
         "; Single-Origin " + board["window_source"]["source_commit"][:12] + ".",
+        "",
+        "**Historischer Integrity-Status:** "
+        + board["wave_source"]["integrity"]
+        + ". Unveränderter Git-Blob statt stillschweigend umgeschriebener"
+        " historischer SHA-256. Neue Messungen verlangen einen"
+        " kanonischen SHA-256 sowie einen Abgleich aller Quellhashes"
+        " mit dem exakten Checkout.",
         "",
         "Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter"
         " Bild-/Depth-Parität. Die Rangfolge gilt **nur innerhalb der jeweiligen"
@@ -220,9 +271,12 @@ def main(argv=None):
     p.add_argument("--markdown", type=Path)
     p.add_argument("--json", type=Path)
     p.add_argument("--check", type=Path, help="fail unless rendered text matches checked-in snapshot")
+    p.add_argument("--strict-current", action="store_true",
+                   help="require canonical receipt, current git HEAD and every source SHA-256")
     args = p.parse_args(argv)
     board = assemble(json.loads(args.wave.read_text(encoding="utf-8")),
-                     json.loads(args.window.read_text(encoding="utf-8")))
+                     json.loads(args.window.read_text(encoding="utf-8")),
+                     strict_current=args.strict_current)
     md = render(board)
     if args.check:
         require(args.check.read_text(encoding="utf-8") == md,
