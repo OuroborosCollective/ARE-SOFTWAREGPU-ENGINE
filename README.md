@@ -1,5 +1,90 @@
 # ARE SoftwareGPU Engine
 
+## Zeitfenster-Wellenring – Single-Origin Animation (20.10.2026)
+
+**Neue experimentelle C++17-Variante:** Ein fester CAG-Impact-Ursprung, **0 Reemissionen**, **0 Priority-Queue-Einträge**. Der Wellenring verarbeitet nur Pixel mit einer Ankunftszeit im halboffenen Intervall `(elapsed - window, elapsed]`; der Quellpunkt ist bei `t=0` die einzige Ankunft. Aufeinanderfolgende Ticks bearbeiten keine Grenzpunkte doppelt. Kein zustandsbehafteter Lauf über mehrere Frames, kein Produktionsmodus.
+
+**Rangliste der CPU-Aufwände** für denselben realen Zwei-Dreiecks-Rasterizer, je **15 alternierende Laufzeiten pro Modus und Größe**. Niedriger = günstiger, jedoch liefert ein schmaler Ring bewusst weniger Effektpixel und **ist keine identische Bildausgabe**:
+
+| C++17 native, vollständiger Draw | 32 × 32 | 64 × 64 | 128 × 128 | 256 × 256 |
+| --- | ---: | ---: | ---: | ---: |
+| **Schmaler zeitabhängiger Ring** | **0,033493 ms** | **0,134993 ms** | **0,595413 ms** | **2,467414 ms** |
+| Sofortiger voller Impact | 0,041838 ms | 0,166041 ms | 0,725036 ms | 3,010150 ms |
+| Volles Zeitfenster – **bytegleich** zum sofortigen Impact | 0,043351 ms | 0,170339 ms | 0,744091 ms | 3,081933 ms |
+
+**Regression:** Volles Zeitfenster liefert an allen vier Auflösungen exakt dieselben RGBA8-Bytes wie der bisherige Single-Origin-Impact. Nullzeit-Quelle, Radius, halb offene Tickgrenzen, deterministisches Wiederholen, Fremdobjekt-/Alpha-/Depth-Schutz und ungültige Daten sind geprüft. [180 Rohzeiten, Pixelzähler und FNV-Bildprüfsummen](evidence/single-origin-time-window-20261020.json) · [CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39469980703) · [Versuchsvertrag](docs/SINGLE_ORIGIN_TIME_WINDOW.md) · [PR #137](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/137).
+
+**Messgrenzen:** Zeitfenster-Overhead ist sichtbar, keine pauschale Performance-Beschleunigung gegenüber dem sofortigen Impact. Keine vollständige GLB-Welt, Android-FPS, GPU-Vergleich, persistente Impact-ID oder produktive Animation nachgewiesen.
+
+
+## Single-Origin Impact Wave – direkte Wellenfront (20.10.2026)
+
+**Neuer CPU-Forschungsmodus:** Ein CAG-Impact startet **genau eine** kreisförmige Ausbreitung. Der C++17-Renderer berechnet alle betroffenen Renderbereiche direkt aus der ursprünglichen Position, ohne weitere SpherePop-Auslöser und ohne Ereigniswarteschlange. Jeder Bereich wird je Aufruf genau einmal abgeschlossen; Doppler-Farbe wird nur für passende sichtbare Besitzerpixel berechnet.
+
+| Rang | Native C++17 mit realer Zwei-Dreiecks-Szene | 32×32 | 64×64 |
+| ---: | --- | ---: | ---: |
+| **1** | **Single-Origin Impact Wave** | **0,044253 ms** | **0,172162 ms** |
+| 2 | Bereits optimierte kaskadierende SpherePop+Doppler-Welle | 0,407181 ms | 1,900019 ms |
+| **Speedup** | **Gepaarter Median: alt / neu** | **9,15×** | **11,07×** |
+
+Die Zahlen beruhen auf je **15 gepaarten CPU-Durchläufen einschließlich echter nativer Rasterisierung und Effekt**. Im 64×64-Test entfallen **27.909 verworfene Mehrfachankünfte** der alten Methode; im neuen Modus wurden **4.096/4.096 Bereiche abgeschlossen, 0 Reemissionen und 0 Queue-Einträge** protokolliert.
+
+**Evidenz:** [60 rohe Messwerte und Zähler](evidence/single-origin-impact-wave-20261020.json) · [native Ubuntu-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39466509033) · [technischer Vertrag](docs/SINGLE_ORIGIN_IMPACT_WAVE.md) · [PR #136](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/136).
+
+**Abgrenzung:** Die schnellere Methode verändert die Effektsemantik: Doppler bezieht sich auf **eine feste Impact-Quelle** und nicht auf lokale Ketten-Emitter. Identische RGBA8-Ausgabe zwischen beiden Methoden wird deshalb **nicht** behauptet. Unveränderte Tiefen-/Alpha-Werte, Besitzergrenzen, deterministischer Replay und Eingabefehler sind getestet. Die Wirkung wird in diesem Prototyp sofort auf den Impactbereich projiziert, nicht als zeitlich animierte Welle. Keine GPU-, GLB-, Android- oder produktive FPS-Aussage; der neue Modus ist nicht standardmäßig aktiviert. Die alte Kettenwelle bleibt für echte Kettenreaktionen erhalten.
+
+
+## Neue Optimierung: SpherePop-Faktorwiederverwendung (20.10.2026)
+
+Die bestehende CAG/SpherePop/Doppler-Wellenfront berechnete den **identischen Doppler-Faktor zweimal** bei sichtbaren, abgeschlossenen Renderpunkten. Der neue **opt-in C++17-Pfad** verwendet ihn erneut, ohne Framebuffer oder Ereignishistorie zu verändern. Standard bleibt die vorherige Referenz (`reuse_factor=false`).
+
+**Rangliste für exakt dieselbe Bildausgabe (native CPU):** Je 15 abwechselnde, vollständige echte Zwei-Dreiecks-Rasterläufe auf einem Linux-CI-Runner. Niedrigere Millisekunden bedeuten schneller. Speedup ist der **gepaarte Median** alter Laufzeit / neuer Laufzeit.
+
+| Auflösung | Referenz: Faktor doppelt | Optimiert: Faktor einmal | Gemessener Speedup | Faktoraufrufe vorher → nachher |
+| --- | ---: | ---: | ---: | ---: |
+| **32 × 32** | 0,407666 ms | **0,392777 ms** | **1,034×** | 1.985 → 1.023 |
+| **64 × 64** | 1,901770 ms | **1,850384 ms** | **1,029×** | 7.949 → 4.095 |
+
+**Byte- und Ereignis-Parität bestätigt:** RGBA8, Float32-Depth, Alpha, Eigentümer, Wellen-Reihenfolge, Ankunftszeiten, Doppler-Faktoren und Ereignis-Fingerprint; verschiedene Startpunkte, Geschwindigkeiten, deaktivierter Doppler und ungültiger Depth-Eingang getestet. [Alle 60 Rohzeiten und Zähler](evidence/spherepop-factor-reuse-cpu-20261020.json) · [PR #135](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/135) · [gemessene CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39462395261).
+
+**Truth Boundary:** Nur dieselbe native CPU-Szene und derselbe Effekt werden verglichen. Die Messung behauptet **keine 128/256-px-, GLB-, Android-, GPU- oder Produktions-FPS-Beschleunigung**. Die separate Vier-Wege-Rangliste darunter vergleicht dagegen funktional unterschiedliche Effekte und ist nicht mit diesen Faktoren zu multiplizieren.
+
+
+## Vier-Wege-Doppler-Rangliste (20.10.2026)
+
+**Gemessener C++17-CPU-Vergleich** – identischer echter ARE-Native-Rasterpfad, jeweils zwei Dreiecke, 15 alternierende Durchläufe pro Modus und Auflösung. **Kleinere Zeit = besser**. Die Sortierung bezieht sich ausschließlich auf diesen Test und ersetzt keine älteren, anders konfigurierten Renderer-Bestenlisten.
+
+| Rang | Effekt-Modus auf demselben Native-C++-Raster | 32 × 32 | 64 × 64 | 64² gegenüber SpherePop + Doppler¹ |
+| ---: | --- | ---: | ---: | ---: |
+| **1** | **Raster ohne Effekt** | **0,016771 ms** | **0,063469 ms** | **29,58×** |
+| **2** | **Direkter Wolfram-orakelgeprüfter Doppler, ohne SpherePop** | 0,039905 ms | 0,156163 ms | **12,02×** |
+| **3** | **SpherePop ohne Doppler** | 0,346249 ms | 1,653992 ms | 1,14× |
+| **4** | **SpherePop + Doppler** | 0,399439 ms | 1,877461 ms | 1,00× |
+
+¹ Quotient aus **Zeitmedianen**, nicht der gepaarte Median. Der **gepaarte** Speedup von direktem Doppler gegenüber SpherePop+Doppler beträgt **10,08× bei 32²** bzw. **12,04× bei 64²**. Die gemessenen zusätzlichen Interaktionskosten der Kombination sind **+0,030558 ms** bzw. **+0,129973 ms** (gepaarte Mediane): **kein positiver Synergieeffekt in diesem Fixture**.
+
+**Evidenz:** [Alle 120 Einzelzeiten, Zähler und Frame-Digests](evidence/doppler-spherepop-fourway-20261020.json) · [CI #39455646518, 8/8 CPU-Gates](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455646518) · [Mesa #39455646536, 4/4](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39455646536) · [Versuchsanordnung](docs/WOLFRAM_CPP_DOPPLER_ONLY_ABLATION.md). Derselbe Renderer wird verglichen; die **RGB-Bilder sind nicht notwendigerweise gleichwertig**, weil direkter Doppler eine feste Quelle und SpherePop wechselnde Auslösepositionen verwendet. Depth- und Alpha-Invarianten bleiben getestet. Kein GPU-Vergleich, kein vollständiger GLB-Benchmark und **keine** Behauptung, SpherePop beschleunige durch die Kombination die Rasterisierung.
+
+---
+
+## Neu: SpherePop/CAG-Wellenfront und echte CPU-Benchmarks (20.10.2026)
+
+**Experimentell und CPU-only:** CAG liefert den Ausbreitungsursprung, die SpherePop-inspirierte Wellenfront besucht jede Renderfläche innerhalb eines Aufrufs **genau einmal** und weist weitere Ankünfte auf bereits abgeschlossene Flächen ab. Der Doppler-Farbeffekt ist getrennt optional; eine Variante **ohne Doppler** wird in der nativen Regression verglichen. Keine vollständige originale SpherePop-Semantik, kein Audio-Doppler, kein produktiver Standard und keine GPU-Parität.
+
+**Neue, 15-fach gepaarte Messungen** aus dem SHA-/Compiler-/Framebuffer-gebundenen [PR #128](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/128): Baseline ist Python-`tiles` **mit identisch aktivierter Wellenfront**, Kandidat `native-cpp` **mit derselben Wellenfront**. Der native Renderer war in allen vier Fällen schneller.
+
+| Getestete Szene | Native C++ / Tiles, beide mit SpherePop+Doppler | Status |
+| --- | ---: | --- |
+| 8 große Dreiecke, **64 × 64 px** | **5,06×** | 15 gepaarte CPU-Draws, RGB-/Depth-Parität zwischen Backends |
+| Prozedural 400 Dreiecke, **64 × 64 px** | **4,05×** | 15 gepaarte CPU-Draws |
+| Prozedural 400 Dreiecke, **32 × 32 px** | **3,25×** | 15 gepaarte CPU-Draws |
+| 8 große Dreiecke, **32 × 32 px** | **3,18×** | 15 gepaarte CPU-Draws |
+
+**Wichtig:** Die Wellenfront inklusive Doppler kostet selbst zusätzliche CPU-Zeit. Die Faktoren vergleichen die **drei Renderer bei jeweils aktivem Effekt**, nicht SpherePop gegen kein SpherePop und nicht die älteren 128/256-px-Rekorde. Wiederholung und Runner-Streuung ändern Zahlen; keine universelle FPS-Zusage. [Rohzeiten + Quellhashes](evidence/spherepop-wave-ranked-cpu-20261020.json) · [A/B-Methodik](docs/SPHEREPOP_CAG_WAVE_RANKED_BENCHMARK.md) · [PR #127 Wellenkern](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/127).
+
+**Neue Ablation ohne Doppler (Forschung):** Der eigenständige `native/raster/spherepop_no_doppler_test.cpp` prüft, dass Fläche, Ereignisfolge, Ankunftszeit und Einmal-Abschluss erhalten bleiben, während die unveränderten RGBA8-Pixel ohne Farbfilter gerendert werden. 15 echte native CPU-Zeitpaare vergleichen ausschließlich die Wellenverarbeitung mit/ohne Doppler; die so gemessenen Werte sind **kein voller Frame-Speedup**. **Erster Linux-3.11-Test:** ohne Doppler **0,292344 ms**, mit Doppler **0,311770 ms** (jeweils Zeit-Median), gepaarter Median `Doppler / ohne Doppler` **1,07385×**. 1.024 von 1.024 Flächen wurden einmalig abgeschlossen; 6.789 Wiederankünfte wurden verworfen; unveränderte Farben/Depth ohne Doppler und deterministischer Replay nachgewiesen. [CPU-CI Run 39345625588](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/39345625588). Ein einzelner Host/15 Paare begründet keine allgemeine FPS-Aussage.
+
+
 ## Beste belegte CPU-Ergebnisse — Spitzenwerte zuerst
 
 **Rekordtafel (15.10.2026):** Absteigend nach dokumentiertem Faktor sortiert. **Jede Zeile hat eine andere Referenz und teilweise eine andere Pipeline**; die Faktoren sind nicht direkt vergleichbar oder multiplizierbar. **Keine Hardware-GPU-Parität und keine allgemeine FPS-Zusage.** Forschungsvarianten sind nicht automatisch Produktionsstandard.

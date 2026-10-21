@@ -1,0 +1,52 @@
+name: Shader whole-frame CPU A/B
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'software_gpu/benchmarks/compare_shader_frames.py'
+      - 'software_gpu/tests/test_shader_frames.py'
+      - '.github/workflows/shader-whole-frame.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frame:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check 'numpy>=1.20,<3' 'Pillow>=9'
+      - name: Real RGBA8 and float32 depth parity
+        run: python -m unittest software_gpu.tests.test_shader_frames -v
+      - name: Fifteen alternating full-frame CPU pairs
+        run: python -m software_gpu.benchmarks.compare_shader_frames --output "${{ runner.temp }}/full-frame/report.json" --pixels 96 --workers 2
+      - name: Strict source/readback/timing receipt
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python - "${{ runner.temp }}/full-frame/report.json" <<'PY'
+          import hashlib,json,os,pathlib,sys
+          from software_gpu.benchmarks.compare_shader_frames import validate
+          receipt=json.loads(pathlib.Path(sys.argv[1]).read_text())
+          assert validate(receipt)
+          assert receipt['head_sha']==os.environ['EXPECTED_SHA']
+          for path,digest in receipt['source_sha256'].items():
+              assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==digest
+          assert len(receipt['cases'])==4
+          assert all(c['covered_pixels']>10 for c in receipt['cases'])
+          assert all(c['min_batch_fragment_samples']>0 for c in receipt['cases'] if c['mode']=='plan-batch')
+          print('SHADER_FULL_FRAME_READBACK_OK',receipt['sha256'])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: shader-whole-frame-${{ github.sha }}
+          path: ${{ runner.temp }}/full-frame/report.json
+          if-no-files-found: error
+          retention-days: 30

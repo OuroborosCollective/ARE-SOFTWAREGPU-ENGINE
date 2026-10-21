@@ -1,0 +1,17 @@
+{
+  "protocol": "are.wolfram-direct-doppler-oracle.v1",
+  "recorded_utc": "2026-10-20",
+  "math_model": "classical moving source stationary observer",
+  "input": "FullSimplify[{120/(120-30),120/(120+30),120/(120-0),120/(120-30/Sqrt[2]),120/(120+30/Sqrt[2]),Sqrt[(1+3/5)/(1-3/5)]}]",
+  "exact": [
+    "4/3",
+    "4/5",
+    "1",
+    "4(8+Sqrt[2])/31",
+    "4(8-Sqrt[2])/31",
+    "2"
+  ],
+  "last_is_relativistic_control_only": true,
+  "rendering_consequences": "Doppler values are frequency factors, not frame speedups. Standalone C++ mode has no SpherePop machinery.",
+  "evidence_limit": "Independent Wolfram algebra; byte-level pixel and timing facts require real native C++ CI readback."
+}
