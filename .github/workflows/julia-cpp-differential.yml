@@ -10,6 +10,9 @@ on:
       - 'native/raster/spherepop_doppler_profile.hpp'
       - 'software_gpu/research/julia_cpp_differential.jl'
       - '.github/workflows/julia-cpp-differential.yml'
+      - 'software_gpu/benchmarks/spherepop_rankings.py'
+      - 'software_gpu/tests/test_spherepop_rankings.py'
+      - 'docs/CPU_WAVE_RANGLISTEN.md'
   workflow_dispatch:
 
 permissions:
@@ -34,3 +37,7 @@ jobs:
       - name: Run independent Julia differential and exact-oracle assertions
         run: |
           julia --startup-file=no --history-file=no --compiled-modules=no software_gpu/research/julia_cpp_differential.jl "${RUNNER_TEMP}/native-wave"
+      - name: Validate historical CPU wave rankings and negative gates
+        run: |
+          python -m unittest software_gpu.tests.test_spherepop_rankings -v
+          python -m software_gpu.benchmarks.spherepop_rankings --check docs/CPU_WAVE_RANGLISTEN.md
