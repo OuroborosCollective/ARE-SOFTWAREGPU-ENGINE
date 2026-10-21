@@ -1,0 +1,36 @@
+name: Julia C++ SpherePop differential research
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/raster/julia_cpp_differential_driver.cpp'
+      - 'native/raster/doppler_only.hpp'
+      - 'native/raster/spherepop_cag_radial_wave.hpp'
+      - 'native/raster/spherepop_object_mask.hpp'
+      - 'native/raster/spherepop_doppler_profile.hpp'
+      - 'software_gpu/research/julia_cpp_differential.jl'
+      - '.github/workflows/julia-cpp-differential.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-oracles:
+    name: C++17 / Julia / Wolfram fixed reference
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2 pinned
+        with:
+          version: '1.10'
+          arch: x64
+      - name: Compile existing native C++17 effect fixture
+        run: |
+          g++ -std=c++17 -O3 -fno-fast-math -ffp-contract=off -Wall -Wextra -Werror native/raster/julia_cpp_differential_driver.cpp -o "${RUNNER_TEMP}/native-wave"
+      - name: Run independent Julia differential and exact-oracle assertions
+        run: |
+          julia --startup-file=no --history-file=no --compiled-modules=no software_gpu/research/julia_cpp_differential.jl "${RUNNER_TEMP}/native-wave"
