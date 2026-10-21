@@ -22,7 +22,13 @@ class TestCpuWaveLeaderboard(unittest.TestCase):
         for case in board["impact"]:
             self.assertEqual(case["pairs"],15)
             self.assertEqual(case["ranks"][0]["mode"],"ring")
-        self.assertIn("kein",rank.render(board).lower())
+        self.assertIn("keinerlei",rank.render(board).lower())
+
+    def test_legacy_archive_integrity_is_explicit(self):
+        self.assertEqual(rank.verify_wave_integrity(self.wave),
+                         "legacy-git-blob-pinned-self-digest-mismatch")
+        with self.assertRaisesRegex(ValueError,"RANKING_CURRENT_NONCANONICAL"):
+            rank.check_current_checkout(self.wave, rank.verify_wave_integrity(self.wave))
 
     def test_source_checksum_tamper_rejected(self):
         corrupt=copy.deepcopy(self.wave)
