@@ -190,8 +190,8 @@ def main(argv=None):
     p.add_argument("--repeats",type=int,default=15)
     p.add_argument("--max-seconds",type=float,default=600.)
     args=p.parse_args(argv)
-    if not 15<=args.repeats<=30 or len(args.pixels)>2 or not args.pixels or any(x not in (32,64) for x in args.pixels) or not math.isfinite(args.max_seconds) or args.max_seconds<=0:
-        p.error("Require 15..30 repeats, sizes 32 or 64, positive deadline")
+    if not 15<=args.repeats<=30 or len(args.pixels)>2 or not args.pixels or any(x not in (32,64,128) for x in args.pixels) or not math.isfinite(args.max_seconds) or args.max_seconds<=0:
+        p.error("Require 15..30 repeats, sizes 32, 64 or 128, positive deadline")
     start=time.monotonic()
     head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
     sources={s:hashlib.sha256((ROOT/s).read_bytes()).hexdigest() for s in SOURCES}
