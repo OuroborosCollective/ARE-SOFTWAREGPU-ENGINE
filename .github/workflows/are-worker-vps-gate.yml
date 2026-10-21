@@ -1,0 +1,80 @@
+name: ARE worker VPS contract (no VPS access)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ops/softwaregpu-worker/**'
+      - 'software_gpu/tests/test_vps_gradio_worker_contract.py'
+      - 'software_gpu/tests/test_gradio_arena_ui.py'
+      - 'plugins/gradio_arena/app.py'
+      - '.github/workflows/are-worker-vps-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  worker-container:
+    name: Real 3-vCPU CPU worker / Standard 128px / no persistent volumes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ARE_GRADIO_USER: ci
+      ARE_EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      ARE_GRADIO_PASSWORD_PATH: /tmp/are-worker-smoke-password
+      COMPOSE_PROJECT_NAME: are-softwaregpu
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install minimal real CPU package dependencies
+        run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
+      - name: Verify exact-source identity and negative cleanup contracts
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$ARE_EXPECTED_SOURCE_SHA"
+          bash -n ops/softwaregpu-worker/deploy.sh
+          python -m unittest software_gpu.tests.test_vps_gradio_worker_contract -v
+      - name: Configure disposable CI-only authentication file
+        run: |
+          set -euo pipefail
+          printf '%s\n' 'ci-only-long-password-not-for-production-20261019' > "$ARE_GRADIO_PASSWORD_PATH"
+          chmod 0444 "$ARE_GRADIO_PASSWORD_PATH"
+          docker compose -p are-softwaregpu -f ops/softwaregpu-worker/compose.yaml config --quiet
+      - name: Build and boot isolated real CPU worker
+        run: |
+          set -euo pipefail
+          # Exercise the actual SHA-bound deploy/cleanup script on an ephemeral
+          # GitHub runner; never connect this CI job to the owner's VPS.
+          sudo git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          sudo --preserve-env=ARE_EXPECTED_SOURCE_SHA,ARE_GRADIO_USER bash ops/softwaregpu-worker/deploy.sh
+          test "$(docker inspect --format '{{.HostConfig.NanoCpus}}' are-softwaregpu-worker)" = '3000000000'
+          test "$(docker inspect --format '{{.HostConfig.Memory}}' are-softwaregpu-worker)" = '3221225472'
+          docker port are-softwaregpu-worker 7860/tcp | grep -qx '127.0.0.1:17860'
+          docker inspect are-softwaregpu-worker | python -c 'import json,sys; obj=json.load(sys.stdin)[0]; assert not any(m["Type"]=="volume" for m in obj["Mounts"]); assert obj["Config"]["User"]=="10001:10001"'
+      - name: Verify real Standard 128px callback and public auth barrier
+        run: |
+          set -euo pipefail
+          docker exec are-softwaregpu-worker python -m unittest software_gpu.tests.test_gradio_arena_ui.TestPrivateGradioRuntime.test_standard_preset_reaches_real_cpu_worker_and_success_message -v
+          python - <<'PY'
+          from urllib.error import HTTPError
+          from urllib.request import urlopen
+          try:
+              urlopen("http://127.0.0.1:17860/config", timeout=10)
+          except HTTPError as error:
+              assert error.code == 401, f"expected login barrier, got {error.code}"
+              print("ARE_GRADIO_UNAUTHENTICATED_API_DENIED_401")
+          else:
+              raise AssertionError("unauthenticated config access accepted")
+          PY
+      - name: Tear down only CI-owned worker, never prune shared resources
+        if: always()
+        run: |
+          docker compose -p are-softwaregpu -f ops/softwaregpu-worker/compose.yaml down --remove-orphans || true
+          docker image rm are-softwaregpu-worker:current || true
+          sudo rm -f /opt/are-softwaregpu/private/gradio-password || true
+          sudo rmdir /opt/are-softwaregpu/private /opt/are-softwaregpu 2>/dev/null || true

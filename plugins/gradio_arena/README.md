@@ -66,3 +66,9 @@ opening a remote command/render endpoint: the computational Gradio process retai
 its password-protected loopback listener, fixed resource limits and finite queue.
 A later externally hosted demo must first provide an authenticated, rate-limited
 execution boundary and verify it with live readback before claiming it is online.
+
+## Geführtes CPU-Testlabor
+
+Nach der Authentifizierung **eine Vorlage auswählen und Test starten**. Verfügbare reale Worker-Jobs: Schnelltest (Seed 686 / 64 px / `tiles`), Standard (686 / 128 px / `tiles-plan`), Detailtest (1234 / 256 px / `tiles-plan`), Referenzvergleich (686 / 128 px / `bands`). Einstellungen können anschließend manuell verändert werden, der begrenzte Job-Vertrag bleibt unverändert. Das echte Bild wird mit dem Worker-Receipt und BMP-SHA-256 verifiziert; die technischen Details sind einklappbar. Kein Test wird nur in der UI simuliert.
+
+Android zeigt die Seite über eine **eigene, erreichbare, authentifizierte HTTPS-Verbindung**. Ein reiner Loopback-Server `127.0.0.1:7860` auf einem anderen Rechner ist vom Tablet nicht erreichbar. Eine öffentliche HTTPS-Instanz ist derzeit nicht verifiziert. Keine voreingestellten Fremdserver oder Credentials.
