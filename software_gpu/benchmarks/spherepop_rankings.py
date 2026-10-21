@@ -64,9 +64,13 @@ def verify_wave_integrity(receipt):
     require(bool(HEX64.fullmatch(str(claimed))), "RANKING_RECEIPT_SHA")
     if claimed == digest(receipt):
         return "canonical-sha256"
-    raw = WAVE.read_bytes()
-    header = b"blob " + str(len(raw)).encode("ascii") + b"\0"
-    git_blob = hashlib.sha1(header + raw).hexdigest()
+    # Git's immutable object, not checkout bytes (Windows CRLF conversion).
+    rel = WAVE.relative_to(ROOT).as_posix()
+    git_blob = subprocess.check_output(
+        ["git", "rev-parse", "HEAD:" + rel], cwd=ROOT,
+        text=True, timeout=10).strip()
+    raw = subprocess.check_output(
+        ["git", "show", "HEAD:" + rel], cwd=ROOT, timeout=10)
     require(git_blob == ARCHIVED_GIT_BLOB, "RANKING_ARCHIVE_GIT_BLOB_DRIFT")
     require(receipt == json.loads(raw) and
             claimed == ARCHIVED_CLAIMED_SHA256 and
