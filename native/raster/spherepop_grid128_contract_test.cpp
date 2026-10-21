@@ -34,7 +34,7 @@ static WaveReceipt run(std::vector<std::uint8_t>& rgba,
     return render_radial_cag_spherepop(
         rgba.data(),rgba.size(),depth.data(),depth.size(),
         owners.data(),owners.size(),width,height,width/2,height/2,
-        {30.,0.,0.},120.,1.,true,reuse);
+        {30.,0.,0.},120.,1.,true,reuse,true);
 }
 
 static void test_grid(int width,int height) {
@@ -91,7 +91,7 @@ static void test_grid(int width,int height) {
     auto untouched=original;
     rejects([&]{render_radial_cag_spherepop(untouched.data(),untouched.size(),
         invalid.data(),invalid.size(),owners.data(),owners.size(),
-        width,height,width/2,height/2,{30,0,0},120,1);},
+        width,height,width/2,height/2,{30,0,0},120,1,true,false,true);},
         "SPHEREPOP_WAVE_SCENE_INVALID");
     demand(untouched==original,"GRID_BAD_DEPTH_MUTATED_FRAME");
     std::cout<<"GRID_CONTRACT_PASS width="<<width<<" height="<<height
@@ -104,6 +104,17 @@ int main() {
     try {
         // An existing 64-grid remains deterministic; new 128-grid is opt-in.
         test_grid(64,64);
+        // Default production bound remains 64, even if buffers are valid.
+        {
+            std::vector<std::uint8_t> data(128*128*4,7);
+            std::vector<float> d(128*128,.5f);
+            std::vector<std::uint32_t> o(128*128,7);
+            const auto initial=data;
+            rejects([&]{render_radial_cag_spherepop(data.data(),data.size(),
+                d.data(),d.size(),o.data(),o.size(),128,128,64,64,
+                {30,0,0},120,1);},"SPHEREPOP_WAVE_INPUT_INVALID");
+            demand(data==initial,"DEFAULT_BOUND_MUTATED_FRAME");
+        }
         test_grid(128,128);
         // Anything outside the new finite resource budget must reject
         // transactionally, including empty or overflow-sized dimensions.
