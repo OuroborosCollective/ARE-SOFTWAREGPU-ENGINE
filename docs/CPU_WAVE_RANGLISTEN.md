@@ -2,6 +2,8 @@
 
 **Datenstand:** SpherePop-Receipt 381f3a8d7053; Single-Origin 2cfd8be80d3b.
 
+**Historischer Integrity-Status:** legacy-git-blob-pinned-self-digest-mismatch. Unveränderter Git-Blob statt stillschweigend umgeschriebener historischer SHA-256. Neue Messungen verlangen einen kanonischen SHA-256 sowie einen Abgleich aller Quellhashes mit dem exakten Checkout.
+
 Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-/Depth-Parität. Die Rangfolge gilt **nur innerhalb der jeweiligen Szene und Auflösung**. Keinerlei GPU-, Gameplay-FPS- oder Julia-Renderer-Parität ist daraus ableitbar.
 
 ## CAG/SpherePop/Doppler: ganzer Draw mit Welle
