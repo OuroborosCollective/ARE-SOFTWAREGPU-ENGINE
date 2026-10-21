@@ -144,7 +144,8 @@ def validate_wave(receipt, *, strict_current=False):
             checked_median([a/b for a, b in zip(off, on)],
                            data["effect_cost_ratio_paired"]["median"])
             entry["ranks"].append({"backend": backend, "median_ms": median,
-                                   "iqr_ms": data["raster_plus_wave"]["iqr"]})
+                                   "iqr_ms": data["raster_plus_wave"]["iqr"],
+                                   "tiles_relative_x": row["ranking_with_wave"][backend]["median"]})
         for backend in BACKENDS:
             on = row["modes"][backend]["raw_ms"]["on"]
             baseline = row["modes"]["tiles"]["raw_ms"]["on"]
@@ -227,14 +228,20 @@ def render(board):
         "",
         "## CAG/SpherePop/Doppler: ganzer Draw mit Welle",
         "",
-        "| Szene | Native C++ ms | Batch-first ms | Tiles ms | Rang 1 |",
-        "|:--|--:|--:|--:|:--|",
+        "**x-Faktor:** Median der 15 gepaarten Tiles-/Backend-Zeiten. "
+        "1,00× = Gleichstand, unter 1,00× = Backend langsamer.",
+        "",
+        "| Szene | Native C++ ms | Batch-first ms | Tiles ms | C++ ggü. Tiles | Batch ggü. Tiles | Rang 1 |",
+        "|:--|--:|--:|--:|--:|--:|:--|",
     ]
     for case in board["wave"]:
         m = {r["backend"]: r["median_ms"] for r in case["ranks"]}
+        ratios = {r["backend"]: r["tiles_relative_x"] for r in case["ranks"]}
         name = f'{case["scene"]}, {case["pixels"]} px ({case["triangles"]} Dreiecke)'
         lines.append(f'| {name} | {m["native-cpp"]:.6f} |'
                      f' {m["batch-first"]:.6f} | {m["tiles"]:.6f} |'
+                     f' {ratios["native-cpp"]:.3f}× |'
+                     f' {ratios["batch-first"]:.3f}× |'
                      f' {case["ranks"][0]["backend"]} |')
     lines += ["", "## Single-Origin Impact Waves: drei unterschiedliche Wirkungen",
               "", "| Auflösung | Ring ms | Sofort ms | Vollfenster ms | Rang 1 |",

@@ -8,12 +8,14 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 
 ## CAG/SpherePop/Doppler: ganzer Draw mit Welle
 
-| Szene | Native C++ ms | Batch-first ms | Tiles ms | Rang 1 |
-|:--|--:|--:|--:|:--|
-| large-surfaces, 32 px (8 Dreiecke) | 1.178829 | 2.181734 | 3.739977 | native-cpp |
-| procedural400, 32 px (400 Dreiecke) | 3.931035 | 13.204037 | 12.861730 | native-cpp |
-| large-surfaces, 64 px (8 Dreiecke) | 2.276167 | 4.678524 | 11.527986 | native-cpp |
-| procedural400, 64 px (400 Dreiecke) | 4.972207 | 20.397879 | 20.119249 | native-cpp |
+**x-Faktor:** Median der 15 gepaarten Tiles-/Backend-Zeiten. 1,00× = Gleichstand, unter 1,00× = Backend langsamer.
+
+| Szene | Native C++ ms | Batch-first ms | Tiles ms | C++ ggü. Tiles | Batch ggü. Tiles | Rang 1 |
+|:--|--:|--:|--:|--:|--:|:--|
+| large-surfaces, 32 px (8 Dreiecke) | 1.178829 | 2.181734 | 3.739977 | 3.180× | 1.714× | native-cpp |
+| procedural400, 32 px (400 Dreiecke) | 3.931035 | 13.204037 | 12.861730 | 3.253× | 0.976× | native-cpp |
+| large-surfaces, 64 px (8 Dreiecke) | 2.276167 | 4.678524 | 11.527986 | 5.058× | 2.462× | native-cpp |
+| procedural400, 64 px (400 Dreiecke) | 4.972207 | 20.397879 | 20.119249 | 4.047× | 0.987× | native-cpp |
 
 ## Single-Origin Impact Waves: drei unterschiedliche Wirkungen
 

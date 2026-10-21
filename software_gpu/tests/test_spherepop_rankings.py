@@ -19,10 +19,16 @@ class TestCpuWaveLeaderboard(unittest.TestCase):
             self.assertEqual(case["pairs"],15)
             self.assertEqual(case["ranks"][0]["backend"],"native-cpp")
             self.assertEqual(len(case["ranks"]),3)
+            for item in case["ranks"]:
+                self.assertGreater(item["tiles_relative_x"],0)
+            self.assertAlmostEqual(next(x["tiles_relative_x"] for x in case["ranks"]
+                                        if x["backend"]=="tiles"),1.0)
         for case in board["impact"]:
             self.assertEqual(case["pairs"],15)
             self.assertEqual(case["ranks"][0]["mode"],"ring")
         self.assertIn("keinerlei",rank.render(board).lower())
+        self.assertIn("C++ ggü. Tiles",rank.render(board))
+        self.assertIn("5.058×",rank.render(board))
 
     def test_legacy_archive_integrity_is_explicit(self):
         self.assertEqual(rank.verify_wave_integrity(self.wave),
