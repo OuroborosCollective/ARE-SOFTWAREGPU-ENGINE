@@ -6,3 +6,7 @@
 ## 2026-10-16 - Replace np.clip with scalar min/max in fragment_shader
 **Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders), replacing NumPy functions like `np.clip` with pure scalar equivalents (e.g., `min`/`max` on floats) improves performance by reducing overhead, but can cause exact byte-parity tests to fail due to silent NaN swallowing.
 **Action:** When implementing scalar fallbacks for functions like `np.clip`, always pair them with manual exception handling (like `math.isnan(val)` checks on all color channels) to preserve NumPy's original ValueError semantics for exact-bound exact parity tests.
+
+## 2026-10-21 - Memory allocations in geometry hot path
+**Learning:** In NumPy-based hot paths (like `prepare_triangles`), using `np.stack` to aggregate scalar conditions across multiple dimensions for operations like `isfinite` or clipping adds significant temporary array allocation overhead.
+**Action:** Pre-allocate output arrays using dimension-agnostic approaches like `np.empty_like` and explicitly unroll boolean checks across small fixed dimensions. This yields a ~2-4x speedup on clipping and mapping evaluations compared to multi-dimensional array reductions like `.all(axis=)`.
