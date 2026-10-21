@@ -1,5 +1,13 @@
 name: CPU wave leaderboard
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'software_gpu/benchmarks/spherepop_rankings.py'
+      - 'software_gpu/tests/test_spherepop_rankings.py'
+      - 'software_gpu/benchmarks/compare_spherepop_wave_frames.py'
+      - 'docs/CPU_WAVE_RANGLISTEN.md'
+      - '.github/workflows/cpu-wave-leaderboard.yml'
   workflow_dispatch:
   schedule:
     - cron: '15 5 * * 1'
