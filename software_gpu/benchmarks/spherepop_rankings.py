@@ -115,7 +115,7 @@ def validate_wave(receipt, *, strict_current=False):
     for row in rows:
         key = (row["scene"], row["pixels"])
         require(key not in seen and isinstance(row["pixels"], int) and
-                row["pixels"] in (32, 64), "RANKING_SCENE_DUPLICATE")
+                row["pixels"] in (32, 64, 128), "RANKING_SCENE_DUPLICATE")
         seen.add(key)
         n = row["repeats"]
         require(type(n) is int and n >= 15, "RANKING_REPETITIONS")
