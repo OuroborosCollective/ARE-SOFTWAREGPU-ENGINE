@@ -40,7 +40,7 @@ jobs:
       - name: Run a fresh single-budget 15-pair CPU frame ranking
         run: |
           python -m software_gpu.benchmarks.compare_spherepop_wave_frames --output "${RUNNER_TEMP}/current-wave-raw.json" --pixels 32 64 --repeats 15 --max-seconds 600
-          python -m software_gpu.benchmarks.spherepop_rankings --wave "${RUNNER_TEMP}/current-wave-raw.json" --markdown "${RUNNER_TEMP}/current-leaderboard.md" --json "${RUNNER_TEMP}/current-leaderboard.json"
+          python -m software_gpu.benchmarks.spherepop_rankings --strict-current --wave "${RUNNER_TEMP}/current-wave-raw.json" --markdown "${RUNNER_TEMP}/current-leaderboard.md" --json "${RUNNER_TEMP}/current-leaderboard.json"
       - name: Publish current ranks and historical comparison in job summary
         shell: bash
         run: |
