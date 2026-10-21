@@ -2,7 +2,7 @@
 import os
 from unittest import TestCase, mock
 
-from plugins.gradio_arena.app import BACKENDS, execute, main, make_job
+from plugins.gradio_arena.app import BACKENDS, TEST_PRESETS, preset_values, execute, main, make_job
 
 
 class TestGradioArena(TestCase):
@@ -21,6 +21,19 @@ class TestGradioArena(TestCase):
         for args in invalid:
             with self.subTest(args=args), self.assertRaises(ValueError):
                 make_job(*args)
+
+    def test_template_choices_are_bounded_and_deterministic(self):
+        self.assertGreaterEqual(len(TEST_PRESETS), 4)
+        for name, expected in TEST_PRESETS.items():
+            with self.subTest(name=name):
+                self.assertEqual(preset_values(name), expected)
+                job = make_job(*preset_values(name))
+                self.assertEqual(job["authority"], "offline-read-only")
+                self.assertEqual(job["render"]["repeats"], 3)
+        with self.assertRaisesRegex(ValueError, "TEST_PRESET_INVALID"):
+            preset_values("execute arbitrary command")
+        with self.assertRaisesRegex(ValueError, "TEST_PRESET_INVALID"):
+            preset_values(None)
 
     def test_authentication_is_mandatory(self):
         with mock.patch.dict(os.environ, {}, clear=True):

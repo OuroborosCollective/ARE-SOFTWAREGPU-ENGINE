@@ -93,6 +93,16 @@ jobs:
           sha256sum "$apk" | tee android-apk.sha256
           cp "$apk" ARE-SoftwareGPU-Gradio-Android-preview.apk
           sha256sum ARE-SoftwareGPU-Gradio-Android-preview.apk > ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
+      - name: Upload SHA-bound Android debug APK for PR device testing
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-guided-test-${{ github.event.pull_request.head.sha }}
+          path: |
+            ARE-SoftwareGPU-Gradio-Android-preview.apk
+            ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
       - name: Verify Node packages and platform archives
         run: |
           set -euo pipefail
