@@ -161,16 +161,27 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Performance optimization: Replace np.stack and all() over multiple axes with explicit logical_and operations.
+    # This avoids large intermediate array allocations and overhead, yielding faster execution.
+    fully_inside = (face_ok
+                    & (w + x >= 0.0).all(axis=1)
+                    & (w - x >= 0.0).all(axis=1)
+                    & (w + y >= 0.0).all(axis=1)
+                    & (w - y >= 0.0).all(axis=1)
+                    & (w + z >= 0.0).all(axis=1)
+                    & (w - z >= 0.0).all(axis=1)
+                    & (w - _MIN_W >= 0.0).all(axis=1))
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
     inv_w = 1.0 / w
     ndc = fpos[..., :3] * inv_w[..., None]
-    sx = (ndc[..., 0] + 1.0) * 0.5 * width
-    sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
+
+    # Performance optimization: pre-allocate empty array instead of np.stack to avoid allocation and copy overhead.
+    screen = np.empty_like(ndc, dtype=np.float32)
+    screen[..., 0] = (ndc[..., 0] + 1.0) * (0.5 * width)
+    screen[..., 1] = (1.0 - ndc[..., 1]) * (0.5 * height)
+    screen[..., 2] = ndc[..., 2]
     finite = np.isfinite(screen).all(axis=(1, 2))
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
