@@ -149,7 +149,9 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
         raise IndexError("triangle index outside vertex array")
 
     valid = np.array([t is not None for t in transformed])
-    face_ok = valid[idx].all(axis=1)
+    # Unroll boolean reduction across 3 vertices to avoid slow numpy .all() overhead
+    v = valid[idx]
+    face_ok = v[:, 0] & v[:, 1] & v[:, 2]
 
     # Stacked clip positions (NaN rows for discarded vertices; those faces are
     # excluded by face_ok and never take the fast path).
@@ -171,7 +173,9 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
     screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+    # Unroll boolean reduction across 3 vertices and 3 axes to avoid slow numpy .all() overhead
+    f = np.isfinite(screen)
+    finite = f[:, 0, 0] & f[:, 0, 1] & f[:, 0, 2] & f[:, 1, 0] & f[:, 1, 1] & f[:, 1, 2] & f[:, 2, 0] & f[:, 2, 1] & f[:, 2, 2]
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
