@@ -1,0 +1,7 @@
+test_complete_rgba8_and_float32_depth_bytes (software_gpu.tests.test_band_inline_parity.TestBandInlineParity.test_complete_rgba8_and_float32_depth_bytes) ... ok
+test_shared_diagonal_shades_each_sample_once (software_gpu.tests.test_band_inline_parity.TestBandInlineParity.test_shared_diagonal_shades_each_sample_once) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.861s
+
+OK

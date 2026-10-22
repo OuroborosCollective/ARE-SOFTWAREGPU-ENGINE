@@ -12,7 +12,7 @@ from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
 from ..core.device import VirtualGPU
 from .tile_backend import rasterize_tiles
-from .geometry import prepare_triangles, edge_function, edge_covered
+from .geometry import prepare_triangles, is_top_left
 
 
 
@@ -128,8 +128,6 @@ class SoftwareRasterizer:
     def _rasterize_band(self, triangles: list, shader: Shader, y_start: int, y_end: int) -> None:
         """Rasterizes triangles that overlap the vertical band [y_start, y_end)."""
         fb_w = self.fb.width
-        # Import is_top_left here for inline edge coverage calculation without function calls inside loop
-        from .geometry import is_top_left
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
             min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))

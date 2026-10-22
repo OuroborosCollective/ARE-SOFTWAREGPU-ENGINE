@@ -1,0 +1,17 @@
+{
+  "numpy": "1.26.4",
+  "results": {
+    "main": {
+      "depth_mismatched_values": 2169,
+      "rgba8_equal": true
+    },
+    "pr155": {
+      "depth_mismatched_values": 2169,
+      "rgba8_equal": true
+    },
+    "candidate": {
+      "depth_mismatched_values": 2169,
+      "rgba8_equal": true
+    }
+  }
+}
