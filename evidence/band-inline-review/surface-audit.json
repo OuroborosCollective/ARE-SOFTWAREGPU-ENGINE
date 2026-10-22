@@ -1,0 +1,89 @@
+{
+  "artifact_sha256": "4429f0ca60220d90f9cc33715934b66458cce89551d2a569e12a922a0da917bb",
+  "authority": "artifact-consistency-only",
+  "independent_rerender_performed": false,
+  "rows": [
+    {
+      "modes": [
+        "abl-noscan-batch",
+        "abl-noscan-scalar",
+        "abl-scan-batch",
+        "abl-scan-scalar",
+        "batch-first",
+        "plan-batch",
+        "plan-scalar",
+        "tiles"
+      ],
+      "pixels": 256,
+      "repeats": 15,
+      "reported_byte_identical": true,
+      "scene": "tiny"
+    },
+    {
+      "modes": [
+        "abl-noscan-batch",
+        "abl-noscan-scalar",
+        "abl-scan-batch",
+        "abl-scan-scalar",
+        "batch-first",
+        "plan-batch",
+        "plan-scalar",
+        "tiles"
+      ],
+      "pixels": 256,
+      "repeats": 15,
+      "reported_byte_identical": true,
+      "scene": "small-triangles"
+    },
+    {
+      "modes": [
+        "abl-noscan-batch",
+        "abl-noscan-scalar",
+        "abl-scan-batch",
+        "abl-scan-scalar",
+        "batch-first",
+        "plan-batch",
+        "plan-scalar",
+        "tiles"
+      ],
+      "pixels": 256,
+      "repeats": 15,
+      "reported_byte_identical": true,
+      "scene": "large-surfaces"
+    },
+    {
+      "modes": [
+        "abl-noscan-batch",
+        "abl-noscan-scalar",
+        "abl-scan-batch",
+        "abl-scan-scalar",
+        "batch-first",
+        "plan-batch",
+        "plan-scalar",
+        "tiles"
+      ],
+      "pixels": 256,
+      "repeats": 15,
+      "reported_byte_identical": true,
+      "scene": "procedural400"
+    },
+    {
+      "modes": [
+        "abl-noscan-batch",
+        "abl-noscan-scalar",
+        "abl-scan-batch",
+        "abl-scan-scalar",
+        "batch-first",
+        "plan-batch",
+        "plan-scalar",
+        "tiles"
+      ],
+      "pixels": 256,
+      "repeats": 15,
+      "reported_byte_identical": true,
+      "scene": "procedural5k"
+    }
+  ],
+  "source_verification": "all-declared-sources-match-checkout",
+  "status": "PASS"
+}

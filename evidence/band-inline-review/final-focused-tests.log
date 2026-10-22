@@ -1,0 +1,19 @@
+test_complete_rgba8_and_float32_depth_bytes (software_gpu.tests.test_band_inline_parity.TestBandInlineParity.test_complete_rgba8_and_float32_depth_bytes) ... ok
+test_shared_diagonal_shades_each_sample_once (software_gpu.tests.test_band_inline_parity.TestBandInlineParity.test_shared_diagonal_shades_each_sample_once) ... ok
+test_alpha_is_stored_verbatim_and_ignored_for_composition (software_gpu.tests.test_raster_correctness_contract.TestAlphaNonGoal.test_alpha_is_stored_verbatim_and_ignored_for_composition)
+Pins the documented non-goal: no alpha blending exists. A 'fully ... ok
+test_equal_depth_keeps_first_submission (software_gpu.tests.test_raster_correctness_contract.TestDepthContract.test_equal_depth_keeps_first_submission)
+Strict '<' depth compare: later equal-depth fragments never replace. ... ok
+test_nearer_triangle_wins_regardless_of_submission_order (software_gpu.tests.test_raster_correctness_contract.TestDepthContract.test_nearer_triangle_wins_regardless_of_submission_order) ... ok
+test_extreme_coordinates_clip_without_crash (software_gpu.tests.test_raster_correctness_contract.TestNumericFailClosed.test_extreme_coordinates_clip_without_crash) ... ok
+test_inf_varying_discards_primitive (software_gpu.tests.test_raster_correctness_contract.TestNumericFailClosed.test_inf_varying_discards_primitive) ... ok
+test_invalid_indices_raise_programming_error (software_gpu.tests.test_raster_correctness_contract.TestNumericFailClosed.test_invalid_indices_raise_programming_error) ... ok
+test_nan_vertex_discards_only_that_primitive (software_gpu.tests.test_raster_correctness_contract.TestNumericFailClosed.test_nan_vertex_discards_only_that_primitive) ... ok
+test_both_backends_byte_identical_on_receding_quad (software_gpu.tests.test_raster_correctness_contract.TestPerspectiveInterpolation.test_both_backends_byte_identical_on_receding_quad) ... ok
+test_receding_quad_matches_perspective_not_affine (software_gpu.tests.test_raster_correctness_contract.TestPerspectiveInterpolation.test_receding_quad_matches_perspective_not_affine)
+Slanted-surface ramp: at screen center the perspective-correct value ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.600s
+
+OK
