@@ -140,20 +140,36 @@ class SoftwareRasterizer:
 
             inv_area = 1.0 / area
 
+            # Bolt Optimization: Precompute edge evaluation deltas and top-left rules
+            # outside the inner pixel loop to avoid repeated calculation.
+            dy12, dx12 = s2[1] - s1[1], s2[0] - s1[0]
+            dy20, dx20 = s0[1] - s2[1], s0[0] - s2[0]
+            dy01, dx01 = s1[1] - s0[1], s1[0] - s0[0]
+
+            tl0 = float(dy12) > 0.0 or (float(dy12) == 0.0 and float(dx12) < 0.0)
+            tl1 = float(dy20) > 0.0 or (float(dy20) == 0.0 and float(dx20) < 0.0)
+            tl2 = float(dy01) > 0.0 or (float(dy01) == 0.0 and float(dx01) < 0.0)
+
             for py in range(min_y, max_y + 1):
-                p_y = py + 0.5
+                p_y_f32 = np.float32(py + 0.5)
                 for px in range(min_x, max_x + 1):
-                    p_x = px + 0.5
-                    p = np.array([p_x, p_y], dtype=np.float32)
+                    p_x_f32 = np.float32(px + 0.5)
 
-                    # Barycentric coordinates via edge functions
-                    w0 = edge_function(s1, s2, p)
-                    w1 = edge_function(s2, s0, p)
-                    w2 = edge_function(s0, s1, p)
+                    # Bolt Optimization: Replace `np.array` allocation and `edge_function` calls
+                    # with explicitly evaluated inline math to eliminate overhead while retaining
+                    # numpy's exact float32 propagation logic for exact byte parity.
+                    w0 = (p_x_f32 - s1[0]) * dy12 - (p_y_f32 - s1[1]) * dx12
+                    w1 = (p_x_f32 - s2[0]) * dy20 - (p_y_f32 - s2[1]) * dx20
+                    w2 = (p_x_f32 - s0[0]) * dy01 - (p_y_f32 - s0[1]) * dx01
 
-                    # Inside triangle test
-                    if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
-                            edge_covered(w2, s0, s1)):
+                    # Inside triangle test inline
+                    c0 = (w0 >= 0) if tl0 else (w0 > 0)
+                    if not c0: continue
+                    c1 = (w1 >= 0) if tl1 else (w1 > 0)
+                    if not c1: continue
+                    c2 = (w2 >= 0) if tl2 else (w2 > 0)
+
+                    if c2:
                         alpha = w0 * inv_area
                         beta = w1 * inv_area
                         gamma = w2 * inv_area
