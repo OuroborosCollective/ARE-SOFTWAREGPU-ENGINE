@@ -128,6 +128,8 @@ class SoftwareRasterizer:
     def _rasterize_band(self, triangles: list, shader: Shader, y_start: int, y_end: int) -> None:
         """Rasterizes triangles that overlap the vertical band [y_start, y_end)."""
         fb_w = self.fb.width
+        # Import is_top_left here for inline edge coverage calculation without function calls inside loop
+        from .geometry import is_top_left
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
             min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
@@ -140,20 +142,42 @@ class SoftwareRasterizer:
 
             inv_area = 1.0 / area
 
+            # Optimization: Precomputing explicit edge deltas and coverage rules outside
+            # the per-pixel loop eliminates np.array allocations and edge_function/edge_covered calls.
+            # This yields significant performance speedups. We preserve exact byte parity by explicitly
+            # performing the math with np.float32 to avoid precision differences from Python's 64-bit float.
+            dy12 = np.float32(s2[1] - s1[1])
+            dx12 = np.float32(s2[0] - s1[0])
+            dy20 = np.float32(s0[1] - s2[1])
+            dx20 = np.float32(s0[0] - s2[0])
+            dy01 = np.float32(s1[1] - s0[1])
+            dx01 = np.float32(s1[0] - s0[0])
+
+            s1x = np.float32(s1[0])
+            s1y = np.float32(s1[1])
+            s2x = np.float32(s2[0])
+            s2y = np.float32(s2[1])
+            s0x = np.float32(s0[0])
+            s0y = np.float32(s0[1])
+
+            c0 = is_top_left(s1, s2)
+            c1 = is_top_left(s2, s0)
+            c2 = is_top_left(s0, s1)
+
             for py in range(min_y, max_y + 1):
-                p_y = py + 0.5
+                p_y = np.float32(py + 0.5)
                 for px in range(min_x, max_x + 1):
-                    p_x = px + 0.5
-                    p = np.array([p_x, p_y], dtype=np.float32)
+                    p_x = np.float32(px + 0.5)
 
-                    # Barycentric coordinates via edge functions
-                    w0 = edge_function(s1, s2, p)
-                    w1 = edge_function(s2, s0, p)
-                    w2 = edge_function(s0, s1, p)
+                    # Inline barycentric coordinates (exact evaluation without np.array)
+                    w0 = (p_x - s1x) * dy12 - (p_y - s1y) * dx12
+                    w1 = (p_x - s2x) * dy20 - (p_y - s2y) * dx20
+                    w2 = (p_x - s0x) * dy01 - (p_y - s0y) * dx01
 
-                    # Inside triangle test
-                    if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
-                            edge_covered(w2, s0, s1)):
+                    # Inside triangle test using precalculated top-left flags
+                    if ((w0 >= 0 if c0 else w0 > 0) and
+                        (w1 >= 0 if c1 else w1 > 0) and
+                        (w2 >= 0 if c2 else w2 > 0)):
                         alpha = w0 * inv_area
                         beta = w1 * inv_area
                         gamma = w2 * inv_area
