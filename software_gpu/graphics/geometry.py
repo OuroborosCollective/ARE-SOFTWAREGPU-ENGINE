@@ -149,7 +149,10 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
         raise IndexError("triangle index outside vertex array")
 
     valid = np.array([t is not None for t in transformed])
-    face_ok = valid[idx].all(axis=1)
+    # Optimization: Replace .all(axis=1) reduction across small fixed dimensions (3 vertices)
+    # with explicitly unrolled bitwise operations to avoid slow array reduction overhead.
+    v = valid[idx]
+    face_ok = v[:, 0] & v[:, 1] & v[:, 2]
 
     # Stacked clip positions (NaN rows for discarded vertices; those faces are
     # excluded by face_ok and never take the fast path).
@@ -159,10 +162,48 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     )
     fpos = pos_arr[idx]  # (F, 3, 4) clip positions per face corner
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
-    # Distances to the six homogeneous planes plus the positive-w safety plane,
-    # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+
+    # Optimization: Avoid using np.stack to aggregate large arrays. Pre-allocate an output
+    # boolean array (fully_inside) and explicitly unroll boolean checks in-place using np.logical_and
+    # and out=. This reduces memory allocation overhead and significantly improves performance.
+    fully_inside = np.empty_like(face_ok)
+    np.copyto(fully_inside, face_ok)
+    buf = np.empty_like(w, dtype=bool)
+
+    np.greater_equal(w + x, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w - x, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w + y, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w - y, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w + z, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w - z, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
+
+    np.greater_equal(w - _MIN_W, 0.0, out=buf)
+    np.logical_and(fully_inside, buf[:, 0], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 1], out=fully_inside)
+    np.logical_and(fully_inside, buf[:, 2], out=fully_inside)
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
@@ -171,7 +212,15 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
     screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # Optimization: Replace .all(axis=...) reductions across small fixed dimensions
+    # with explicitly unrolled bitwise operations to avoid slow array reduction overhead.
+    s_ok = np.isfinite(screen)
+    finite = (
+        s_ok[:, 0, 0] & s_ok[:, 0, 1] & s_ok[:, 0, 2] &
+        s_ok[:, 1, 0] & s_ok[:, 1, 1] & s_ok[:, 1, 2] &
+        s_ok[:, 2, 0] & s_ok[:, 2, 1] & s_ok[:, 2, 2]
+    )
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
