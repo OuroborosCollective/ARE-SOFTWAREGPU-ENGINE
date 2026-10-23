@@ -5,6 +5,11 @@ on:
     paths:
       - 'software_gpu/benchmarks/compare_spherepop_wave_frames.py'
       - 'software_gpu/benchmarks/spherepop_rankings.py'
+      - 'software_gpu/research/spherepop_grid128_julia_oracle.jl'
+      - 'native/raster/spherepop_cag_radial_wave.hpp'
+      - 'native/raster/spherepop_grid128_contract_test.cpp'
+      - 'native/raster/spherepop_grid128_julia_driver.cpp'
+      - 'native/raster/spherepop_wave_benchmark_bridge.cpp'
       - '.github/workflows/cpu-wave-128-research.yml'
   workflow_dispatch:
 permissions:
