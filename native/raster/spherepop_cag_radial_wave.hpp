@@ -39,11 +39,12 @@ inline WaveReceipt render_radial_cag_spherepop(
     const std::uint32_t* owners,std::size_t owner_cells,
     int width,int height, int cag_x,int cag_y,
     Vec3 velocity, double wave_speed,double artistic_gain, bool enable_doppler=true,
-    bool reuse_factor=false) {
+    bool reuse_factor=false, bool allow_research_128=false) {
 
     // A bounded finite grid: single-threaded priority queue, no shader-side
     // recursion, state persisted only in this invocation's local receipt.
-    if (width<=0 || height<=0 || width>64 || height>64 ||
+    if (width<=0 || height<=0 || width>(allow_research_128 ? 128 : 64) ||
+        height>(allow_research_128 ? 128 : 64) ||
         cag_x<0 || cag_y<0 || cag_x>=width || cag_y>=height ||
         !rgba || !depth || !owners ||
         depth_cells!=static_cast<std::size_t>(width)*height ||

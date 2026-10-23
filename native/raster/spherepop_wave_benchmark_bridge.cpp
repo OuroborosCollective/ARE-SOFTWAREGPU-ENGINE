@@ -27,7 +27,8 @@ extern "C" int are_wave_benchmark_apply(
     try {
         auto receipt=are::raster::experimental::render_radial_cag_spherepop(
             rgba, bytes, depth, depth_cells, owners, owner_cells, width, height,
-            cag_x, cag_y, {vx,vy,vz}, wave_speed, artistic_gain);
+            cag_x, cag_y, {vx,vy,vz}, wave_speed, artistic_gain,
+            true, false, width>64 || height>64);
         output->finalized=static_cast<std::uint64_t>(receipt.finalized.size());
         output->refused=receipt.refusals;
         output->tinted=static_cast<std::uint64_t>(receipt.tinted_pixels);
