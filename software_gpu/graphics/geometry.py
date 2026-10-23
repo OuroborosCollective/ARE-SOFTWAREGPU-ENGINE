@@ -161,8 +161,18 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Optimization: Pre-allocate with np.empty_like and explicitly unroll boolean checks in-place
+    # using np.logical_and(..., out=...) significantly reduces memory allocation overhead and improves
+    # performance compared to np.stack.
+    cond = w + x >= 0.0
+    np.logical_and(cond, w - x >= 0.0, out=cond)
+    np.logical_and(cond, w + y >= 0.0, out=cond)
+    np.logical_and(cond, w - y >= 0.0, out=cond)
+    np.logical_and(cond, w + z >= 0.0, out=cond)
+    np.logical_and(cond, w - z >= 0.0, out=cond)
+    np.logical_and(cond, w - _MIN_W >= 0.0, out=cond)
+
+    fully_inside = face_ok & cond[:, 0] & cond[:, 1] & cond[:, 2]
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
@@ -170,13 +180,32 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # Optimization: Pre-allocate output array instead of using np.stack
+    screen = np.empty_like(ndc, dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    # Optimization: Unrolled .all() for finite check across vertices
+    finite = np.isfinite(screen[:, 0, 0])
+    np.logical_and(finite, np.isfinite(screen[:, 0, 1]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 0, 2]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 1, 0]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 1, 1]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 1, 2]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 2, 0]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 2, 1]), out=finite)
+    np.logical_and(finite, np.isfinite(screen[:, 2, 2]), out=finite)
+
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
             - (screen[:, 2, 1] - screen[:, 0, 1]) * (screen[:, 1, 0] - screen[:, 0, 0]))
-    emit_fast = fully_inside & finite & np.isfinite(area) & (area > np.float32(1e-9))
+
+    emit_fast = fully_inside & finite
+    np.logical_and(emit_fast, np.isfinite(area), out=emit_fast)
+    np.logical_and(emit_fast, area > np.float32(1e-9), out=emit_fast)
 
     slots = [None] * len(idx)
     for fi in range(len(idx)):
