@@ -1,0 +1,135 @@
+{
+  "protocol": "are.owner-public-glb-batch.v1",
+  "date": "2026-10-20",
+  "source": "owner-supplied GLB originals",
+  "permissions": {
+    "creator_confirmed": "self-created",
+    "public_distribution": "authorized for this upload batch",
+    "asset_spdx_license": "not specified; no license asserted"
+  },
+  "scope": "Source-byte identity + local offline GLB admission evidence, not native ARE render parity, GPU/game FPS or public binary upload",
+  "total_bytes": 498874792,
+  "total_triangles": 10140549,
+  "models": [
+    {
+      "alias": "armor",
+      "file": "deep dark polished darksteel plate armor, rough texturized engraved metal surface, glowing red flickering hellfire cracks, burning red eyes, flaming sword, lava-glow boo_Meshy_AI_2026-10-11_d98f9c.glb",
+      "bytes": 99935220,
+      "sha256": "0f868ab4876418eb5e3d66fba0831be93a08b00d970c469942fcda57cfd02105",
+      "vertices": 1285353,
+      "triangles": 2431898,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "assassin",
+      "file": "Meshy_AI_Female_Assassin_Chibi_All_Animations.glb",
+      "bytes": 22079580,
+      "sha256": "daec8f2e72d3d6795794cb79fc0c33f9752b0eadad36fd35850f9bbd419bb810",
+      "vertices": 7720,
+      "triangles": 5000,
+      "skin_joints": 68,
+      "animation_clips": 9,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "aurion-rigged",
+      "file": "Meshy_AI_Aurion_Rigged_Charact_All_Animations.glb",
+      "bytes": 1281960,
+      "sha256": "b225ab949f0ca01f352d678717be16e2d2dc1678a788a60fedf3008eee9ad79b",
+      "vertices": 594,
+      "triangles": 643,
+      "skin_joints": 3,
+      "animation_clips": 15,
+      "embedded_images": 1,
+      "previous_manifest_sha_match": false
+    },
+    {
+      "alias": "axe",
+      "file": "Meshy_AI_Mini_Chibi_Fighter_Ca_All_Animations.glb",
+      "bytes": 30050296,
+      "sha256": "e5f0e95716c337d7212a65cba685258d9feb336fac3d874e3bd99ec03849cb4e",
+      "vertices": 41479,
+      "triangles": 38477,
+      "skin_joints": 35,
+      "animation_clips": 9,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "boulder",
+      "file": "Meshy_AI_Cracked_Granite_Bould_1010215236_texture.glb",
+      "bytes": 5187548,
+      "sha256": "aeab1a6ae1a66208f09eaa546318a66261c74cc8ba13056d47b923f502a56958",
+      "vertices": 7992,
+      "triangles": 10478,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 1,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "crystal",
+      "file": "Meshy_AI_Crystal_Starburst_1011194057_texture.glb",
+      "bytes": 42470820,
+      "sha256": "7dfb6b3ccdd66025b1a94b58305aa29536630b04636ebf7ddd79f0590b3714bb",
+      "vertices": 628353,
+      "triangles": 1104486,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "forest-lord",
+      "file": "Forest Lord_Meshy_AI_2026-03-07_8bac74.glb",
+      "bytes": 76521836,
+      "sha256": "b63f07c52fa4961b870fcde218b4cde67b77af525e087a5728b7fac9bc2f2fca",
+      "vertices": 1379002,
+      "triangles": 2292680,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 1,
+      "previous_manifest_sha_match": false
+    },
+    {
+      "alias": "log",
+      "file": "Meshy_AI_tree_log_for_sitting__1011194141_texture.glb",
+      "bytes": 1760808,
+      "sha256": "7f308ab672ed20e10323233e16083a0342d9e767b0ece3c82ce993b0e8d99f3f",
+      "vertices": 7798,
+      "triangles": 9999,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 1,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "sword",
+      "file": "Meshy_AI_Mini_Chibi_Fighter_re_All_Animations.glb",
+      "bytes": 25923140,
+      "sha256": "febd50da5f541e844ac89fb03b8c0498ec699362f7ffabd6319e24fb8c93befd",
+      "vertices": 18782,
+      "triangles": 13811,
+      "skin_joints": 84,
+      "animation_clips": 6,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    },
+    {
+      "alias": "wisteria",
+      "file": "Meshy_AI_Enchanted_Wisteria_Tr_1011190640_texture.glb",
+      "bytes": 193663584,
+      "sha256": "2928bd82b1215d511d343dd1df6871b5a9fe3b7877b1b7b67dd8b45f5b8ced7e",
+      "vertices": 4001328,
+      "triangles": 4233077,
+      "skin_joints": 0,
+      "animation_clips": 0,
+      "embedded_images": 3,
+      "previous_manifest_sha_match": true
+    }
+  ]
+}

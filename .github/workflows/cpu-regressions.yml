@@ -38,6 +38,20 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
         run: python -m software_gpu.benchmarks.compare_tile_backends --repeats 2 --workers 1
 
+  numpy-legacy-parity:
+    name: Band parity / NumPy 1.26
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install supported NumPy 1.x scalar-promotion runtime
+        run: python -m pip install "numpy==1.26.4" "Pillow>=9.0"
+      - name: Compare complete legacy and optimized band buffers
+        run: python -m unittest software_gpu.tests.test_band_inline_parity -v
+
   package:
     name: Wheel and CLI smoke test
     runs-on: ubuntu-latest

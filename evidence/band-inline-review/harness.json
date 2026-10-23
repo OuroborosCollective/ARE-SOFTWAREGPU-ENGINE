@@ -1,0 +1,29 @@
+{
+  "ci_executed": false,
+  "evidence_level": "TRACKED_SOURCE_ONLY",
+  "head_sha": "28f85a7bf2640c0d2e09b36ccb6c778d3bb462a8",
+  "investigation_candidates": [
+    "No tracked root AGENTS.md/CLAUDE.md: inspect existing agent policy before adding one"
+  ],
+  "markers": {
+    "agent_instructions": false,
+    "ci_workflows": true,
+    "manifest": true,
+    "memory": true,
+    "test_files": true
+  },
+  "note": "Static inventory; path classifications are not execution, CI, or runtime proof.",
+  "project_profile": "unknown",
+  "root": "/workspace/scratch/42048936e9d6/softwaregpu",
+  "runtime_verified": false,
+  "schema": "ouroboros.harness.static.v1",
+  "surface_counts": {
+    "core": 138,
+    "documentation_or_other": 107,
+    "production": 24,
+    "runtime_projection": 6,
+    "test_evidence": 220
+  },
+  "tracked_file_count": 495,
+  "tracked_inventory_resolved": true
+}

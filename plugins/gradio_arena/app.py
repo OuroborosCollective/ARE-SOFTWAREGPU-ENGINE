@@ -14,6 +14,20 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "fixtures/aurion/phase4_offline/job.example.json"
 BACKENDS = ("tiles", "tiles-plan", "bands")
+# Bounded, reproducible user-facing presets; never arbitrary worker commands.
+TEST_PRESETS = {
+    "Schnelltest · 64 Pixel": (686, 64, "tiles"),
+    "Standard · 128 Pixel": (686, 128, "tiles-plan"),
+    "Detailtest · 256 Pixel": (1234, 256, "tiles-plan"),
+    "Vergleich · Referenzrenderer": (686, 128, "bands"),
+}
+
+
+def preset_values(name: str):
+    if name not in TEST_PRESETS:
+        raise ValueError("TEST_PRESET_INVALID")
+    return TEST_PRESETS[name]
+
 
 
 def make_job(seed: int, pixels: int, backend: str) -> dict:
@@ -62,29 +76,100 @@ def execute(seed: int, pixels: int, backend: str):
 
 def create_demo():
     import gradio as gr
-    with gr.Blocks(title="ARE SoftwareGPU | Private CPU Arena") as demo:
-        gr.Markdown("# ARE SoftwareGPU | private offline CPU arena\n"
-                    "Seeded geometry only; CPU-vs-CPU is not GPU parity. "
-                    "No Aurion gameplay authority or original GLB publication.")
+    theme = gr.themes.Soft(primary_hue="cyan", secondary_hue="slate", neutral_hue="slate")
+    with gr.Blocks(title="ARE SoftwareGPU | CPU-Testlabor", theme=theme) as demo:
+        gr.Markdown(
+            "# ARE SoftwareGPU · CPU-Testlabor\n"
+            "### Echte Grafiktests, ohne Kommandozeile\n"
+            "Wähle eine Testvorlage und tippe auf **Test starten**. "
+            "Der Server rendert ein Bild, wiederholt den Lauf dreimal und "
+            "prüft dessen digitale Prüfsumme. Die App selbst enthält keinen Renderer."
+        )
         with gr.Row():
-            seed = gr.Number(value=686, precision=0, label="Deterministic mesh seed")
-            pixels = gr.Dropdown([64, 128, 256], value=128, label="Resolution")
-            backend = gr.Dropdown(list(BACKENDS), value="tiles-plan", label="CPU renderer")
-        run = gr.Button("Render and verify", variant="primary")
-        with gr.Row():
-            image = gr.Image(label="Actual CPU framebuffer", interactive=False)
-            receipt = gr.JSON(label="Worker receipt / hashes / CPU timings")
-        run.click(execute, [seed, pixels, backend], [image, receipt],
+            with gr.Column(scale=2):
+                preset = gr.Dropdown(
+                    choices=list(TEST_PRESETS), value="Schnelltest · 64 Pixel",
+                    label="1 · Testvorlage",
+                    info="Schnelltest für den ersten Versuch; Detailtest für mehr Bildpunkte."
+                )
+                gr.Markdown("**2 · Optional anpassen** · Die voreingestellten Werte funktionieren ohne Änderung.")
+                seed = gr.Number(value=686, precision=0, label="Testmuster-Nummer",
+                                 info="Dieselbe Nummer erzeugt dasselbe Ausgangsmuster.")
+                pixels = gr.Dropdown([64, 128, 256], value=64,
+                                     label="Bildgröße in Pixeln")
+                backend = gr.Dropdown(
+                    list(BACKENDS), value="tiles", label="CPU-Berechnungsweg",
+                    info="Tiles = Standard, Tiles-plan = Forschung, Bands = Referenz."
+                )
+                run = gr.Button("3 · Test starten", variant="primary", size="lg")
+                state = gr.Markdown("**Bereit.** Wähle eine Vorlage oder starte den Schnelltest.")
+            with gr.Column(scale=3):
+                image = gr.Image(label="Tatsächlich auf CPU gerendertes Bild",
+                                 interactive=False)
+                with gr.Accordion("Technische Prüfdaten und SHA-256", open=False):
+                    receipt = gr.JSON(label="Original-Worker-Receipt")
+        preset.change(preset_values, inputs=[preset],
+                      outputs=[seed, pixels, backend])
+        def run_with_message(s, p, b):
+            picture, evidence = execute(s, p, b)
+            result = evidence["outcome"]
+            if not result["repeat_byte_identical"]:
+                raise RuntimeError("REPLAY_MISMATCH")
+            return (picture, evidence,
+                    "**Bestanden:** Der echte CPU-Renderer hat das Bild erzeugt. "
+                    "Drei Wiederholungen waren byteidentisch; "
+                    f"{result['covered_pixels']} Pixel wurden belegt. "
+                    "Details findest du unter »Technische Prüfdaten«.")
+        run.click(run_with_message, [seed, pixels, backend], [image, receipt, state],
                   concurrency_limit=1, concurrency_id="are-softwaregpu-cpu")
+        gr.Markdown(
+            "#### Brauche ich einen Server?\n"
+            "Ja. Die Android-APK zeigt diese geschützte Testoberfläche an. "
+            "Die CPU-Arbeit findet auf dem Rechner mit dem ARE-Dienst statt. "
+            "Ohne erreichbaren HTTPS-Dienst kann die APK keinen Renderjob starten.\n\n"
+            "**Grenzen:** Nur prozedurale Testbilder, keine veröffentlichten Original-GLBs, "
+            "kein Spielserver und kein Nachweis für eine physische GPU."
+        )
     return demo
 
 
+def gradio_server_bind() -> str:
+    """Public container binding is allowed only behind the loopback-host gateway."""
+    address = os.environ.get("ARE_GRADIO_SERVER_BIND", "127.0.0.1")
+    if address == "127.0.0.1":
+        return address
+    if address == "0.0.0.0":
+        if os.environ.get("ARE_GRADIO_CONTAINER_BIND") != "1":
+            raise SystemExit("CONTAINER_BIND_REQUIRED")
+        return address
+    raise SystemExit("BIND_INVALID")
+
+
+def _gradio_password() -> str | None:
+    direct = os.environ.get("ARE_GRADIO_PASSWORD")
+    file_path = os.environ.get("ARE_GRADIO_PASSWORD_FILE")
+    if direct is not None and file_path is not None:
+        raise SystemExit("PASSWORD_SOURCE_AMBIGUOUS")
+    if file_path is None:
+        return direct
+    path = Path(file_path)
+    if not path.is_absolute() or path.is_symlink():
+        raise SystemExit("PASSWORD_FILE_INVALID")
+    try:
+        secret = path.read_text(encoding="utf-8").rstrip("\r\n")
+    except (OSError, UnicodeError):
+        raise SystemExit("PASSWORD_FILE_UNAVAILABLE")
+    if "\n" in secret or "\r" in secret:
+        raise SystemExit("PASSWORD_FILE_INVALID")
+    return secret
+
+
 def main():
-    user, password = os.environ.get("ARE_GRADIO_USER"), os.environ.get("ARE_GRADIO_PASSWORD")
+    user, password = os.environ.get("ARE_GRADIO_USER"), _gradio_password()
     if not user or not password or len(password) < 20:
         raise SystemExit("SET_ARE_GRADIO_USER_AND_STRONG_PASSWORD")
     create_demo().queue(max_size=3, default_concurrency_limit=1).launch(
-        server_name="127.0.0.1", server_port=7860, share=False,
+        server_name=gradio_server_bind(), server_port=7860, share=False,
         auth=(user, password), show_error=False, allowed_paths=[])
 
 
