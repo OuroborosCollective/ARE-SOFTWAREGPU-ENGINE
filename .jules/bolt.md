@@ -10,3 +10,7 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2023-10-25 - Optimitization for `prepare_triangles` distance calculation
+**Learning:** The distance calculation to the homogenous planes within `prepare_triangles` creates a `(F, 3, 7)` stack via `np.stack` and performs an expensive boolean reduction via `(dist >= 0).all(axis=(1, 2))`.
+**Action:** Unrolling the operations over the `7` planes explicitly, avoiding `np.stack`, and using explicitly unrolled boolean operations over the `3` corners per face `(cond[:, 0] & cond[:, 1] & cond[:, 2])` yields over a 5x improvement in performance (0.11s vs 0.76s).
