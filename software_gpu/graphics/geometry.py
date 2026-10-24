@@ -161,8 +161,22 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Optimization: Pre-allocating output arrays with np.empty_like (rather than np.stack)
+    # avoids slow allocation and array aggregation overhead, significantly improving setup performance.
+    dist = np.empty((fpos.shape[0], fpos.shape[1], 7), dtype=np.float64)
+    dist[..., 0] = w + x
+    dist[..., 1] = w - x
+    dist[..., 2] = w + y
+    dist[..., 3] = w - y
+    dist[..., 4] = w + z
+    dist[..., 5] = w - z
+    dist[..., 6] = w - _MIN_W
+
+    # Optimization: Unrolling boolean checks using explicit bitwise & across the 3 fixed vertices
+    # instead of .all(axis=1) and .all(axis=2) removes slow array reduction overhead for speedups.
+    d_ok = dist >= 0.0
+    vert_ok = d_ok[..., 0] & d_ok[..., 1] & d_ok[..., 2] & d_ok[..., 3] & d_ok[..., 4] & d_ok[..., 5] & d_ok[..., 6]
+    fully_inside = face_ok & vert_ok[:, 0] & vert_ok[:, 1] & vert_ok[:, 2]
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
@@ -170,8 +184,17 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+    # Optimization: Replace np.stack with pre-allocation via np.empty_like and direct assignment.
+    screen = np.empty_like(ndc, dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    # Optimization: Unrolling the .all(axis=(1, 2)) reduction check across vertices and coordinates.
+    s_fin = np.isfinite(screen)
+    v_fin = s_fin[..., 0] & s_fin[..., 1] & s_fin[..., 2]
+    finite = v_fin[:, 0] & v_fin[:, 1] & v_fin[:, 2]
+
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
