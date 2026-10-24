@@ -10,3 +10,11 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2026-10-24 - Geometry Culling `np.stack` Optimization
+**Learning:** In NumPy-based hot paths (like `prepare_triangles`), avoid using `np.stack` to aggregate large arrays or conditions. Pre-allocating output arrays with dimension-agnostic approaches like `np.empty_like` (rather than hardcoded shapes in `np.empty`) and explicitly unrolling boolean checks in-place (e.g., using `np.logical_and(..., out=...)`) significantly reduces memory allocation overhead and improves performance compared to `np.stack`.
+**Action:** When extracting components from vectors or building new vector arrays in performance-sensitive NumPy code, use `np.empty_like()` and assign components explicitly via slicing rather than concatenating or stacking them.
+
+## 2026-10-24 - Scratchpad Cleanliness
+**Learning:** Always thoroughly clean up all temporary benchmarking, scratchpad, and debug scripts from the repository workspace before concluding a task or requesting a code review to prevent repository pollution.
+**Action:** Ensure `rm scratch*.py test*.py` (or similar targeted cleanup commands) are run and verified before submitting a PR.
