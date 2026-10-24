@@ -149,7 +149,9 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
         raise IndexError("triangle index outside vertex array")
 
     valid = np.array([t is not None for t in transformed])
-    face_ok = valid[idx].all(axis=1)
+    # Explictly unrolled bitwise operations avoid slow array reduction overhead
+    # for small fixed dimensions (like the 3 vertices of a face), improving performance.
+    face_ok = valid[idx[:, 0]] & valid[idx[:, 1]] & valid[idx[:, 2]]
 
     # Stacked clip positions (NaN rows for discarded vertices; those faces are
     # excluded by face_ok and never take the fast path).
@@ -159,10 +161,19 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     )
     fpos = pos_arr[idx]  # (F, 3, 4) clip positions per face corner
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
+
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Pre-allocating the output array with np.empty_like and explicitly unrolling
+    # boolean checks in-place avoids np.stack overhead and reduces memory allocation.
+    fully_inside = face_ok.copy()
+    np.logical_and(fully_inside, (w + x >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w - x >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w + y >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w - y >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w + z >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w - z >= 0.0).all(axis=1), out=fully_inside)
+    np.logical_and(fully_inside, (w - _MIN_W >= 0.0).all(axis=1), out=fully_inside)
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
@@ -170,8 +181,14 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # Pre-allocating and assigning components explicitly avoids np.stack overhead.
+    screen = np.empty((fpos.shape[0], 3, 3), dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    finite = np.isfinite(screen).reshape(fpos.shape[0], -1).all(axis=1)
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
