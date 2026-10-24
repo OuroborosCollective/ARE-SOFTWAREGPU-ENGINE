@@ -10,3 +10,7 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2026-10-24 - Geometry Setup np.stack optimization
+**Learning:** In NumPy-based hot paths (like `prepare_triangles`), using `np.stack` to aggregate large multidimensional arrays for boolean condition checks across dimensions incurs significant allocation and reduction overhead, scaling poorly with face count.
+**Action:** Utilize explicitly unrolled boolean checks in-place (e.g., using `np.logical_and(..., out=...)`) combined with bitwise operations across fixed inner dimensions (like 3 vertices). When preparing a base state array for these in-place reductions, use `.copy()` (e.g., `face_ok.copy()`) rather than allocating with `np.empty_like` and manually assigning elements, to reduce memory allocation overhead and improve performance.
