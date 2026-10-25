@@ -88,3 +88,55 @@ def verify_authenticated_runs(catalog, document, fetch_proof):
         streak=0 if "accepted" in sweeps[n].values() else streak+1
     return {"completed":streak>=3,"complete_sweeps":complete,
             "consecutive_no_gain_sweeps":streak,"candidate_count":len(candidates)}
+
+def fetch_github_proof(run_id, token=None):
+    """Independent GitHub API lookup and exact-run artifact readback.
+
+    The uploaded artifact is NOT taken from agent-provided URLs or the
+    scoreboard. GitHub run ID and attempt determine the one permitted name.
+    """
+    import io
+    import os
+    import urllib.request
+    import zipfile
+
+    need(type(run_id) is int and run_id > 0, "CI_RUN_ID")
+    token = token if token is not None else os.environ.get("GITHUB_TOKEN", "")
+    need(isinstance(token, str) and token, "CI_TOKEN_REQUIRED")
+    prefix = "https://api.github.com/repos/" + REPO
+    headers = {"Authorization": "Bearer " + token,
+               "Accept": "application/vnd.github+json",
+               "User-Agent": "ARE-Autoloop-Evidence-Verifier"}
+
+    def request_json(url):
+        need(url.startswith(prefix + "/"), "CI_URL_SCOPE")
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as response:
+            need(response.status == 200, "CI_HTTP_STATUS")
+            body = response.read(1024 * 1024 + 1)
+        need(len(body) <= 1024 * 1024, "CI_METADATA_TOO_LARGE")
+        return json.loads(body)
+
+    run = request_json(prefix + "/actions/runs/" + str(run_id))
+    need(run.get("id") == run_id and run.get("run_attempt") == 1, "CI_RUN_ID")
+    need(run.get("name") == WORKFLOW and run.get("event") == "workflow_dispatch", "CI_WORKFLOW")
+    need(run.get("conclusion") == "success" and run.get("status") == "completed", "CI_NOT_GREEN")
+    artifacts = request_json(prefix + "/actions/runs/" + str(run_id) + "/artifacts?per_page=100")
+    need(artifacts.get("total_count") == 1 and len(artifacts.get("artifacts", [])) == 1, "CI_ARTIFACT_COUNT")
+    artifact = artifacts["artifacts"][0]
+    need(artifact.get("name") == f"are-autoloop-ab-{run_id}-1" and
+         artifact.get("expired") is False and
+         type(artifact.get("size_in_bytes")) is int and
+         0 < artifact["size_in_bytes"] <= 8 * 1024 * 1024, "CI_ARTIFACT_IDENTITY")
+    artifact_id = artifact.get("id")
+    need(type(artifact_id) is int and artifact_id > 0, "CI_ARTIFACT_ID")
+    url = prefix + "/actions/artifacts/" + str(artifact_id) + "/zip"
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+        body = response.read(8 * 1024 * 1024 + 1)
+    need(len(body) <= 8 * 1024 * 1024, "CI_ARTIFACT_ZIP_BUDGET")
+    with zipfile.ZipFile(io.BytesIO(body)) as archive:
+        names = archive.namelist()
+        need(names == ["raw-600-pairs.json"], "CI_ARTIFACT_CONTENTS")
+        info = archive.getinfo(names[0])
+        need(0 < info.file_size <= 3 * 1024 * 1024, "CI_RECEIPT_SIZE")
+        receipt = json.loads(archive.read(info))
+    return {"run": run, "receipt": receipt}
