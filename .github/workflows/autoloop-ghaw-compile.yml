@@ -1,0 +1,45 @@
+name: Autoloop gh-aw compile and scheduler safety
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/autoloop.md'
+      - '.github/workflows/autoloop.lock.yml'
+      - '.github/workflows/shared/**'
+      - '.github/workflows/scripts/autoloop_scheduler.py'
+      - '.github/workflows/autoloop-ghaw-compile.yml'
+      - 'software_gpu/tests/test_autoloop_scheduler_safety.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: are-autoloop-compile-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compile-and-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Scheduler contract regressions (no 5-rejection shortcut)
+        run: python -m unittest software_gpu.tests.test_autoloop_scheduler_safety -v
+      - name: Install pinned official gh-aw compiler
+        uses: github/gh-aw-actions/setup-cli@31130b20a8fd3ef263acbe2091267c0aace07e09 # v0.65.6
+        with:
+          version: v0.65.6
+      - name: Compile source and check committed lock for drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh aw version
+          gh aw compile autoloop
+          if ! git diff --exit-code -- .github/workflows/autoloop.lock.yml; then
+            echo 'AUTOLOOP_LOCK_NOT_MATCHING_SOURCE: run gh aw compile and commit the generated lock'
+            exit 1
+          fi
