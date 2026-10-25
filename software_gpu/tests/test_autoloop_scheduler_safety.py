@@ -28,6 +28,17 @@ class CpuAutoloopScheduleSafety(unittest.TestCase):
         self.assertTrue(skip)
         self.assertIn("evaluation failed", reason)
 
+    def test_no_cpu_ledger_cannot_start_autonomous_search(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "CPU_EVIDENCE_STATE_MISSING"):
+                scheduler.certified_cpu_plateau("softwaregpu-cpu", tmp)
+
+    def test_non_cpu_program_not_constrained_by_cpu_ledger(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertIsNone(scheduler.certified_cpu_plateau("different-program", tmp))
+
     def test_completed_ignores_queued_runs(self):
         skip, reason = scheduler.check_skip_conditions({"completed": True})
         self.assertTrue(skip)
