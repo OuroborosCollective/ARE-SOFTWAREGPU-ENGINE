@@ -10,3 +10,6 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+## 2026-10-25 - Explicit Array Unrolling vs np.dot
+**Learning:** While code reviewers may suggest using `np.dot(v, v)` instead of `v[0]*v[0] + v[1]*v[1] + v[2]*v[2]` for readability and boxing/unboxing concerns, benchmark profiling shows the explicit scalar version executes considerably faster for small, fixed 3-element vectors because it bypasses NumPy's dynamic dispatch, type checking, and validation layers.
+**Action:** Ignore code review recommendations to revert explicitly unrolled array operations (like scalar dot products) if your benchmarks prove it is faster in the hot path.

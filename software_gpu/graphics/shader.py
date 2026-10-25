@@ -174,7 +174,8 @@ class BlinnPhongShader(Shader):
 
         # World normal
         world_normal = self.normal_matrix @ vertex.normal
-        norm_len = np.linalg.norm(world_normal)
+        # Inline explicit length calculation eliminates NumPy function call overhead for length of normal
+        norm_len = math.sqrt(world_normal[0]*world_normal[0] + world_normal[1]*world_normal[1] + world_normal[2]*world_normal[2])
         if norm_len > 1e-6:
             world_normal /= norm_len
 
@@ -224,7 +225,8 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
+            # Inline explicit length calculation eliminates NumPy function call overhead for length of half vector
+            half_len = math.sqrt(half_dir[0]*half_dir[0] + half_dir[1]*half_dir[1] + half_dir[2]*half_dir[2])
             valid = bool(half_len > 1e-6)
             if valid:
                 half_dir /= half_len
