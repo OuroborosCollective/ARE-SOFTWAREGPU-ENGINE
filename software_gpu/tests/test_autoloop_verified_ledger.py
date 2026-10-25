@@ -6,16 +6,16 @@ import hashlib
 import json
 import unittest
 from software_gpu.benchmarks import autoloop_verified_ledger as ledger
-from software_gpu.benchmarks.autoloop_cpu_ab import SOURCE_PATHS, TARGET
+from software_gpu.benchmarks.autoloop_cpu_ab import SOURCE_PATHS, TARGET, SCENES, RESOLUTIONS, WORKERS
 from software_gpu.tests.test_autoloop_cpu_ab import make_profiles
 
 CAT = {
     "protocol": "are.autoloop-cpu-catalog.v1",
     "version": "2026-10-25-v1",
     "candidates": ["scalar-fastpath", "batch-fastpath"],
-    "scenes": ["tiny"],
-    "pixels": [64, 128],
-    "workers": [1],
+    "scenes": list(SCENES),
+    "pixels": list(RESOLUTIONS),
+    "workers": list(WORKERS),
     "rounds": 2,
     "pairs_per_round": 15,
 }
@@ -81,6 +81,25 @@ class TestAttestedPlateau(unittest.TestCase):
         def accept(p):
             p[201] = attested(201, "accepted")
         self.assertFalse(evaluate(entries(), accept)["completed"])
+
+    def test_catalog_must_cover_all_real_renderer_profiles(self):
+        for field in ("scenes", "pixels", "workers"):
+            narrowed = dict(CAT)
+            narrowed[field] = CAT[field][:-1]
+            with self.assertRaisesRegex(ValueError, "CATALOG_PROFILES"):
+                ledger.verify_authenticated_runs(narrowed, {
+                    "protocol": "are.autoloop-cpu-run-ledger.v1",
+                    "catalog_version": CAT["version"], "runs": []
+                }, lambda run_id: self.fail("unexpected API read"))
+
+    def test_run_evidence_must_match_full_catalog_identity(self):
+        altered = dict(CAT)
+        altered["rounds"] = 1
+        with self.assertRaisesRegex(ValueError, "CATALOG_SAMPLING"):
+            ledger.verify_authenticated_runs(altered, {
+                "protocol": "are.autoloop-cpu-run-ledger.v1",
+                "catalog_version": CAT["version"], "runs": []
+            }, lambda run_id: self.fail("unexpected API read"))
 
     def test_self_asserted_ci_boolean_not_used(self):
         rows = entries()
