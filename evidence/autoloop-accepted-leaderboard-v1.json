@@ -1,0 +1,6 @@
+{
+  "entries": [],
+  "protocol": "are.autoloop-public-leaderboard.v1",
+  "scope": "latest independently CI-verified same-host whole-draw CPU measurements per profile; no GPU or FPS comparison",
+  "sources": []
+}
