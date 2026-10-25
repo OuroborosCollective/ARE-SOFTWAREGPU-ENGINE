@@ -225,9 +225,9 @@ def check_skip_conditions(state):
         return True, "completed: target metric reached"
     if state.get("paused"):
         return True, "paused: {}".format(state.get("pause_reason", "unknown"))
-    recent = state.get("recent_statuses", [])[-5:]
-    if len(recent) >= 5 and all(s == "rejected" for s in recent):
-        return True, "plateau: 5 consecutive rejections"
+    # Rejections alone never prove a complete catalog sweep. This research
+    # installation has no authenticated sweep-completion state yet.
+    # Fail closed on explicit pause/completion only; never fabricate a plateau.
     return False, None
 
 
