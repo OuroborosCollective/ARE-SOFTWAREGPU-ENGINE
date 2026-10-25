@@ -10,3 +10,7 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2024-10-25 - [Test Gate Creation Pattern]
+**Learning:** Overwriting or deleting existing tests while creating new test gates breaks existing CI safeguards.
+**Action:** When adding new test gates, strictly append to existing files or create new, dedicated test files. Never delete unrelated test files like `test_performance_edge_covered.py`.
