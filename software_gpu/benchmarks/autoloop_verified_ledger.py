@@ -38,9 +38,12 @@ def _validated_outcome(item, proof):
     need(run.get("repository", {}).get("full_name")==REPO, "CI_REPOSITORY")
     need(run.get("name")==WORKFLOW, "CI_WORKFLOW")
     need(run.get("event")=="workflow_dispatch", "CI_EVENT")
+    need(run.get("display_title")==f"ARE CPU A/B s{item['sweep']} {item['candidate']}", "CANDIDATE_IDENTITY")
     need(run.get("status")=="completed" and run.get("conclusion")=="success", "CI_NOT_GREEN")
     need(run.get("run_attempt")==1, "CI_RETRY_REQUIRES_EXPLICIT_EVIDENCE")
     need(r.get("protocol")=="are.autoloop-cpu-ab-run.v1", "RECEIPT_PROTOCOL")
+    need(r.get("candidate")==item["candidate"], "CANDIDATE_IDENTITY")
+    need(r.get("sweep")==item["sweep"], "SWEEP_IDENTITY")
     need(r.get("smoke_only") is False and r.get("candidate_dirty_shader") is False, "FULL_RUN_REQUIRED")
     need(bool(SHA40.fullmatch(str(r.get("source_commit")))) and
          bool(SHA40.fullmatch(str(r.get("baseline_commit")))), "SOURCE_COMMIT")
