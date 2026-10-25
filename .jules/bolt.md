@@ -10,3 +10,7 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2026-10-25 - Rasterizer loop-invariant barycentric exact byte-parity
+**Learning:** When optimizing float32 calculations (like barycentric equations) via loop-invariant code motion, strictly extract intact sub-expressions rather than expanding or rearranging algebraic terms (e.g., do not expand `(p_x - s1x) * dy` to `p_x * dy - s1x * dy`). Changing the evaluation tree alters floating-point truncation and breaks exact byte-parity tests.
+**Action:** Always extract the exact y-dependent component (e.g. `w0_y_term = (p_y - s1y) * dx12`) and substitute it directly into the unexpanded original expression (e.g., `w0 = (p_x - s1x) * dy12 - w0_y_term`) to preserve precision.
