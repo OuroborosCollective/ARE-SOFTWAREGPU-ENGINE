@@ -1,0 +1,29 @@
+{
+  "protocol": "are.autoloop-cpu-catalog.v1",
+  "version": "2026-10-25-v1",
+  "candidates": [
+    "scalar-float32-rgb-conversion",
+    "batch-rgb-inplace-clamp",
+    "batch-rgba-allocation",
+    "batch-broadcast-and-stride",
+    "shader-call-overhead",
+    "batch-dtype-fastpath"
+  ],
+  "scenes": [
+    "tiny",
+    "small-triangles",
+    "large-surfaces",
+    "procedural400",
+    "procedural5k"
+  ],
+  "pixels": [
+    64,
+    128
+  ],
+  "workers": [
+    1,
+    2
+  ],
+  "rounds": 2,
+  "pairs_per_round": 15
+}
