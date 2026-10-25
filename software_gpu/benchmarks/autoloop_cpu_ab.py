@@ -153,10 +153,13 @@ def rpc(proc, message, deadline):
     require(all(bool(SHA64.fullmatch(str(value.get(k)))) for k in ("rgba_sha256","depth_sha256")), "WORKER_HASH")
     return value
 
-def measure(root,baseline,output,smoke,budget):
+def measure(root,baseline,output,smoke,budget,candidate=None,sweep=None):
     root = Path(root).resolve()
     require(root.is_dir() and Path(output).is_absolute(), "ABS_PATH_REQUIRED")
     require(bool(SHA40.fullmatch(baseline)) and 0 < budget <= 2700, "ARGUMENTS_INVALID")
+    if not smoke:
+        require(isinstance(candidate,str) and candidate in ("scalar-float32-rgb-conversion","batch-rgb-inplace-clamp","batch-rgba-allocation","batch-broadcast-and-stride","shader-call-overhead","batch-dtype-fastpath"), "CANDIDATE_INVALID")
+        require(type(sweep) is int and sweep > 0, "SWEEP_INVALID")
     head = git(root,"rev-parse","HEAD")
     require(bool(SHA40.fullmatch(head)), "HEAD_INVALID")
     dirty = [x[3:] for x in git(root,"status","--porcelain","--untracked-files=no").splitlines() if x.strip()]
@@ -224,6 +227,9 @@ def measure(root,baseline,output,smoke,budget):
             "environment":{"runner":os.getenv("RUNNER_ENVIRONMENT","unverified-local"),"cpu":platform.processor() or platform.machine(),
                            "python":platform.python_version(),"numpy":_numpy_version(),"workers":[1,2]},
             "profiles":profiles,"candidate_dirty_shader":bool(dirty),"smoke_only":bool(smoke)}
+    if not smoke:
+        result["candidate"] = candidate
+        result["sweep"] = sweep
     decision=({"outcome":"smoke-pass","score":1.0,"profile_count":len(profiles)} if smoke else adjudicate(profiles))
     result.update(decision)
     result["sha256"]=hashlib.sha256(json.dumps(result,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
@@ -242,11 +248,13 @@ def main():
     p.add_argument("--output",type=Path)
     p.add_argument("--max-seconds",type=int,default=2400)
     p.add_argument("--smoke",action="store_true")
+    p.add_argument("--candidate")
+    p.add_argument("--sweep",type=int)
     p.add_argument("--worker",type=Path,help=argparse.SUPPRESS)
     args=p.parse_args()
     if args.worker:return worker(args.worker)
     require(args.baseline and args.output,"ARGUMENTS_MISSING")
-    result=measure(Path.cwd(),args.baseline,args.output,args.smoke,args.max_seconds)
+    result=measure(Path.cwd(),args.baseline,args.output,args.smoke,args.max_seconds,args.candidate,args.sweep)
     print(json.dumps({"score":result["score"] if result["outcome"]=="accepted" else 1.0,
                       "outcome":result["outcome"],"profiles":result["profile_count"],
                       "receipt_sha256":result["sha256"]}))
