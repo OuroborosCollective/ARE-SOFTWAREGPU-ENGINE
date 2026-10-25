@@ -236,8 +236,10 @@ def certified_cpu_plateau(program_name, repo_memory_dir=REPO_MEMORY_DIR):
     """Read only independently attested full-run results for SoftwareGPU."""
     if program_name != "softwaregpu-cpu":
         return None
-    import importlib
     from pathlib import Path
+    # When invoked as a script, Python's import root is the script directory.
+    # Admit the checked-out repo explicitly, never a remote or installed copy.
+    sys.path.insert(0, os.getcwd())
     from software_gpu.benchmarks.autoloop_verified_ledger import (
         parse_markdown_ledger, verify_authenticated_runs, fetch_github_proof
     )
