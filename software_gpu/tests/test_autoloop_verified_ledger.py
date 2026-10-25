@@ -12,7 +12,7 @@ from software_gpu.tests.test_autoloop_cpu_ab import make_profiles
 CAT = {
     "protocol": "are.autoloop-cpu-catalog.v1",
     "version": "2026-10-25-v1",
-    "candidates": ["scalar-fastpath", "batch-fastpath"],
+    "candidates": ["scalar-float32-rgb-conversion","batch-rgb-inplace-clamp"],
     "scenes": list(SCENES),
     "pixels": list(RESOLUTIONS),
     "workers": list(WORKERS),
@@ -22,7 +22,7 @@ CAT = {
 RUN_URL = "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/"
 REPO = "OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
 
-def attested(run_id, outcome="no_gain", *, dirty=False, sweep=1, candidate="scalar-fastpath"):
+def attested(run_id, outcome="no_gain", *, dirty=False, sweep=1, candidate="scalar-float32-rgb-conversion"):
     source = f"{run_id:040x}"
     baseline = "b" * 40
     hashes = {name: "a" * 64 for name in SOURCE_PATHS}
@@ -81,7 +81,7 @@ class TestAttestedPlateau(unittest.TestCase):
 
     def test_acceptance_resets_streak(self):
         def accept(p):
-            p[201] = attested(201, "accepted", sweep=2, candidate="scalar-fastpath")
+            p[201] = attested(201, "accepted", sweep=2, candidate="scalar-float32-rgb-conversion")
         self.assertFalse(evaluate(entries(), accept)["completed"])
 
     def test_catalog_must_cover_all_real_renderer_profiles(self):
@@ -110,7 +110,7 @@ class TestAttestedPlateau(unittest.TestCase):
     def test_candidate_receipt_must_match_ledger(self):
         def change(p):
             r = p[101]["receipt"]
-            r["candidate"] = "batch-fastpath"
+            r["candidate"] = "batch-rgb-inplace-clamp"
             r["sha256"] = hashlib.sha256(json.dumps({
                 k:v for k,v in r.items() if k!="sha256"
             },sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
@@ -163,9 +163,9 @@ class TestAttestedPlateau(unittest.TestCase):
 
     def test_duplicate_reused_and_gapped_runs_fail_closed(self):
         with self.assertRaisesRegex(ValueError, "LEDGER_DUPLICATE_RUN"):
-            evaluate(entries() + [{"sweep": 4, "candidate": "scalar-fastpath", "run_id": 101}])
+            evaluate(entries() + [{"sweep": 4, "candidate": "scalar-float32-rgb-conversion", "run_id": 101}])
         with self.assertRaisesRegex(ValueError, "LEDGER_DUPLICATE_CANDIDATE"):
-            evaluate(entries() + [{"sweep": 1, "candidate": "scalar-fastpath", "run_id": 999}])
+            evaluate(entries() + [{"sweep": 1, "candidate": "scalar-float32-rgb-conversion", "run_id": 999}])
         data = entries()
         data[0]["sweep"] = 0
         with self.assertRaisesRegex(ValueError, "LEDGER_SWEEP"):
