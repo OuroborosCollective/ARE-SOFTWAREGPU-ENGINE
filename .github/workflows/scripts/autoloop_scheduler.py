@@ -231,6 +231,28 @@ def check_skip_conditions(state):
     return False, None
 
 
+
+def certified_cpu_plateau(program_name, repo_memory_dir=REPO_MEMORY_DIR):
+    """Read only independently attested full-run results for SoftwareGPU."""
+    if program_name != "softwaregpu-cpu":
+        return None
+    import importlib
+    from pathlib import Path
+    from software_gpu.benchmarks.autoloop_verified_ledger import (
+        parse_markdown_ledger, verify_authenticated_runs, fetch_github_proof
+    )
+    state_file = Path(repo_memory_dir) / (program_name + ".md")
+    if not state_file.is_file():
+        raise ValueError("CPU_EVIDENCE_STATE_MISSING")
+    document = parse_markdown_ledger(state_file.read_text(encoding="utf-8"))
+    if document is None:
+        raise ValueError("CPU_EVIDENCE_LEDGER_MISSING")
+    catalog_file = Path(PROGRAMS_DIR) / program_name / "catalog.json"
+    catalog = json.loads(catalog_file.read_text(encoding="utf-8"))
+    result = verify_authenticated_runs(catalog, document, fetch_github_proof)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # I/O helpers
 # ---------------------------------------------------------------------------
@@ -661,6 +683,18 @@ def main():
                 last_run = datetime.fromisoformat(lr.replace("Z", "+00:00"))
             except ValueError:
                 pass
+
+        # SoftwareGPU may not infer the 3-sweep plateau from agent-written state.
+        # No confirmed artifact-backed ledger => no autonomous GPU/CPU work.
+        if name == "softwaregpu-cpu":
+            try:
+                attested = certified_cpu_plateau(name)
+            except (ValueError, OSError, KeyError, TypeError) as err:
+                skipped.append({"name": name, "reason": "cpu evidence pending: " + str(err)})
+                continue
+            if attested["completed"]:
+                skipped.append({"name": name, "reason": "certified plateau: 3 complete gain-free catalog sweeps"})
+                continue
 
         should_skip, reason = check_skip_conditions(state)
         if should_skip:
