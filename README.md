@@ -1,5 +1,9 @@
 # ARE SoftwareGPU Engine
 
+> **ARE SoftwareGPU Research & Leaderboard:** [Forschungswebsite mit CPU-Ranglisten öffnen](https://project25966.websitepublisher.ai/index.html) · [Original-Receipts & technische Ranglisten](docs/CPU_WAVE_RANGLISTEN.md) · [GitHub Actions](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions)
+>
+> Die öffentliche Website liest bestehende, revisionsgebundene CPU-Evidence aus diesem Repository. Historische Werte sind keine Live-FPS; neue Rekorde erfordern reale, geprüfte Benchmark-Receipts. Kein VPS-Zugriff durch die Website.
+
 ## Zeitfenster-Wellenring – Single-Origin Animation (20.10.2026)
 
 **Neue experimentelle C++17-Variante:** Ein fester CAG-Impact-Ursprung, **0 Reemissionen**, **0 Priority-Queue-Einträge**. Der Wellenring verarbeitet nur Pixel mit einer Ankunftszeit im halboffenen Intervall `(elapsed - window, elapsed]`; der Quellpunkt ist bei `t=0` die einzige Ankunft. Aufeinanderfolgende Ticks bearbeiten keine Grenzpunkte doppelt. Kein zustandsbehafteter Lauf über mehrere Frames, kein Produktionsmodus.
