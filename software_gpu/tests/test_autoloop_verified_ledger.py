@@ -22,7 +22,7 @@ CAT = {
 RUN_URL = "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/"
 REPO = "OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
 
-def attested(run_id, outcome="no_gain", *, dirty=False):
+def attested(run_id, outcome="no_gain", *, dirty=False, sweep=1, candidate="scalar-fastpath"):
     source = f"{run_id:040x}"
     baseline = "b" * 40
     hashes = {name: "a" * 64 for name in SOURCE_PATHS}
@@ -42,6 +42,7 @@ def attested(run_id, outcome="no_gain", *, dirty=False):
         "profiles": profiles,
         "candidate_dirty_shader": dirty,
         "smoke_only": False,
+        "candidate": candidate, "sweep": sweep,
         "outcome": outcome,
         "score": score,
         "profile_count": 20,
@@ -54,6 +55,7 @@ def attested(run_id, outcome="no_gain", *, dirty=False):
         "event": "workflow_dispatch", "status": "completed",
         "conclusion": "success", "repository": {"full_name": REPO},
         "head_sha": source, "run_attempt": 1,
+        "display_title": f"ARE CPU A/B s{sweep} {candidate}",
     }
     return {"run": run, "receipt": receipt}
 
@@ -63,7 +65,7 @@ def entries(n=3):
             for idx, candidate in enumerate(CAT["candidates"], start=1)]
 
 def evaluate(rows, changed=None):
-    proofs = {item["run_id"]: attested(item["run_id"]) for item in rows}
+    proofs = {item["run_id"]: attested(item["run_id"], sweep=item["sweep"], candidate=item["candidate"]) for item in rows}
     if changed:
         changed(proofs)
     return ledger.verify_authenticated_runs(
@@ -79,7 +81,7 @@ class TestAttestedPlateau(unittest.TestCase):
 
     def test_acceptance_resets_streak(self):
         def accept(p):
-            p[201] = attested(201, "accepted")
+            p[201] = attested(201, "accepted", sweep=2, candidate="scalar-fastpath")
         self.assertFalse(evaluate(entries(), accept)["completed"])
 
     def test_catalog_must_cover_all_real_renderer_profiles(self):
@@ -100,6 +102,30 @@ class TestAttestedPlateau(unittest.TestCase):
                 "protocol": "are.autoloop-cpu-run-ledger.v1",
                 "catalog_version": CAT["version"], "runs": []
             }, lambda run_id: self.fail("unexpected API read"))
+
+    def test_candidate_label_must_match_signed_run(self):
+        with self.assertRaisesRegex(ValueError, "CANDIDATE_IDENTITY"):
+            evaluate(entries(), lambda p: p[101]["run"].update({"display_title": "ARE CPU A/B s1 batch-fastpath"}))
+
+    def test_candidate_receipt_must_match_ledger(self):
+        def change(p):
+            r = p[101]["receipt"]
+            r["candidate"] = "batch-fastpath"
+            r["sha256"] = hashlib.sha256(json.dumps({
+                k:v for k,v in r.items() if k!="sha256"
+            },sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+        with self.assertRaisesRegex(ValueError,"CANDIDATE_IDENTITY"):
+            evaluate(entries(),change)
+
+    def test_sweep_receipt_must_match_ledger(self):
+        def change(p):
+            r = p[101]["receipt"]
+            r["sweep"] = 2
+            r["sha256"] = hashlib.sha256(json.dumps({
+                k:v for k,v in r.items() if k!="sha256"
+            },sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+        with self.assertRaisesRegex(ValueError,"SWEEP_IDENTITY"):
+            evaluate(entries(),change)
 
     def test_self_asserted_ci_boolean_not_used(self):
         rows = entries()
