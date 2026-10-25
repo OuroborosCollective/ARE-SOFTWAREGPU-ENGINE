@@ -64,6 +64,9 @@ def verify_authenticated_runs(catalog, document, fetch_proof):
     need(catalog.get("protocol")=="are.autoloop-cpu-catalog.v1", "CATALOG_PROTOCOL")
     need(document.get("protocol")=="are.autoloop-cpu-run-ledger.v1" and
          document.get("catalog_version")==catalog.get("version"), "LEDGER_VERSION")
+    from .autoloop_cpu_ab import SCENES, RESOLUTIONS, WORKERS
+    need(catalog.get("scenes")==list(SCENES) and catalog.get("pixels")==list(RESOLUTIONS) and catalog.get("workers")==list(WORKERS), "CATALOG_PROFILES")
+    need(catalog.get("rounds")==2 and catalog.get("pairs_per_round")==15, "CATALOG_SAMPLING")
     candidates=catalog.get("candidates")
     need(isinstance(candidates,list) and candidates and len(set(candidates))==len(candidates), "CATALOG_CANDIDATES")
     entries=document.get("runs")
