@@ -179,8 +179,20 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # ⚡ Bolt Optimization: Replacing np.stack with pre-allocation eliminates
+    # intermediate temporary arrays and significantly speeds up setup.
+    screen = np.empty((sx.shape[0], 3, 3), dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    # ⚡ Bolt Optimization: Explicit unrolled bitwise operations avoid slow array reductions.
+    sf = np.isfinite(screen)
+    finite = sf[:, 0, 0] & sf[:, 0, 1] & sf[:, 0, 2] & \
+             sf[:, 1, 0] & sf[:, 1, 1] & sf[:, 1, 2] & \
+             sf[:, 2, 0] & sf[:, 2, 1] & sf[:, 2, 2]
+
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
