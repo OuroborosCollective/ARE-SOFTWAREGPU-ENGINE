@@ -177,10 +177,16 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     # identical elementwise float64 math to the per-vertex slow path.
     inv_w = 1.0 / w
     ndc = fpos[..., :3] * inv_w[..., None]
-    sx = (ndc[..., 0] + 1.0) * 0.5 * width
-    sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # ⚡ Bolt: Pre-allocate output array instead of using np.stack to reduce memory
+    # allocation overhead. Use ndc.shape to cleanly handle arbitrary leading dimensions.
+    # Impact: Modest speedup in geometry setup. Measurement: load_stress_benchmark.py geometry throughput.
+    screen = np.empty(ndc.shape, dtype=np.float32)
+    screen[..., 0] = (ndc[..., 0] + 1.0) * 0.5 * width
+    screen[..., 1] = (1.0 - ndc[..., 1]) * 0.5 * height
+    screen[..., 2] = ndc[..., 2]
+
+    finite = np.isfinite(screen).all(axis=(-2, -1))
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])

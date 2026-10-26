@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-26 - Unrolling array reductions vs ellipsis broadcasting
+**Learning:** In NumPy hot paths, replacing `.all(axis=...)` reductions across small, fixed dimensions (such as face vertices) with explicitly unrolled bitwise operations (e.g., `arr[:, 0] & arr[:, 1] & arr[:, 2]`) avoids slow array reduction overhead. However, if the original code uses ellipsis (`...`) for arbitrary batch dimensions (dimensional broadcasting), do not unroll with hardcoded flat indices (e.g., `f[:, 0, 0]`) as this causes functional regressions.
+**Action:** Retain `.all(axis=(-2, -1))` for robustness when supporting arbitrary batching in geometry paths.
