@@ -14,3 +14,7 @@
 ## 2026-10-25 - Rasterizer loop-invariant barycentric exact byte-parity
 **Learning:** When optimizing float32 calculations (like barycentric equations) via loop-invariant code motion, strictly extract intact sub-expressions rather than expanding or rearranging algebraic terms (e.g., do not expand `(p_x - s1x) * dy` to `p_x * dy - s1x * dy`). Changing the evaluation tree alters floating-point truncation and breaks exact byte-parity tests.
 **Action:** Always extract the exact y-dependent component (e.g. `w0_y_term = (p_y - s1y) * dx12`) and substitute it directly into the unexpanded original expression (e.g., `w0 = (p_x - s1x) * dy12 - w0_y_term`) to preserve precision.
+
+## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
+**Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
+**Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
