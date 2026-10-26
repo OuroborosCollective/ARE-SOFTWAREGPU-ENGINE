@@ -10,3 +10,7 @@
 ## 2026-10-18 - Rasterizer _rasterize_band Optimization
 **Learning:** Precomputing edge deltas (`dx`, `dy`) and moving them out of the innermost per-pixel loop, alongside inlining barycentric calculations (replacing per-pixel `np.array` allocation), yields substantial rasterizer speedups without breaking exact byte parity.
 **Action:** When manually inlining barycentric edge equation logic inside rasterizer innermost pixel loops, explicitly cast coordinates to `np.float32()` (e.g., `np.float32(px + 0.5)`) to avoid `float64` promotion, which otherwise breaks depth interpolation and exact depth buffer byte-parity contracts.
+
+## 2023-10-25 - Framebuffer Bitwise Filling and Geometry Array Unrolling
+**Learning:** In NumPy-based hot paths (like `prepare_triangles`), avoiding `np.stack` and using explicitly unrolled boolean checks in-place avoids slow array reduction overhead and yields significant performance speedups. When clearing homogeneous RGBA structures (like framebuffers), casting the NumPy array view to `np.uint32` and using a single `fill()` operation significantly improves performance, but explicitly casting Python scalars to `int()` is necessary to prevent silent integer overflow when applying bitwise shifts.
+**Action:** When performing `np.stack` and `.all(axis=...)` over fixed small sets (like 3 vertices), unroll the check using boolean combinations (`&`). For framebuffer filling optimizations using bitwise shifts, cast components using `int()` before packing.

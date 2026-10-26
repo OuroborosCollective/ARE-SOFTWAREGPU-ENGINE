@@ -161,8 +161,11 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
     # Distances to the six homogeneous planes plus the positive-w safety plane,
     # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Optimization: Unrolling the distance checks and avoiding np.stack allocations
+    fully_inside = face_ok.copy()
+    for plane_cond in [(w + x >= 0.0), (w - x >= 0.0), (w + y >= 0.0), (w - y >= 0.0), (w + z >= 0.0), (w - z >= 0.0), (w >= _MIN_W)]:
+        # Inline bitwise AND over the 3 vertices per face instead of .all(axis=1) to avoid slow array reduction overhead
+        np.logical_and(fully_inside, plane_cond[:, 0] & plane_cond[:, 1] & plane_cond[:, 2], out=fully_inside)
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
@@ -171,7 +174,11 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
     screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # Optimization: Unrolled isfinite check over the 3 vertices and 3 coordinates to avoid .all(axis=(1,2))
+    finite = np.isfinite(screen[:, 0, 0]) & np.isfinite(screen[:, 0, 1]) & np.isfinite(screen[:, 0, 2]) & \
+             np.isfinite(screen[:, 1, 0]) & np.isfinite(screen[:, 1, 1]) & np.isfinite(screen[:, 1, 2]) & \
+             np.isfinite(screen[:, 2, 0]) & np.isfinite(screen[:, 2, 1]) & np.isfinite(screen[:, 2, 2])
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])

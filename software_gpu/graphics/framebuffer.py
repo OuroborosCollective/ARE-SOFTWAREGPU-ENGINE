@@ -25,9 +25,9 @@ class Framebuffer:
         # Optimization: Casting the NumPy array view to np.uint32 and using a single fill()
         # operation improves framebuffer clear performance by ~4x-10x.
         if sys.byteorder == 'little':
-            color_val = r | (g << 8) | (b << 16) | (a << 24)
+            color_val = int(r) | (int(g) << 8) | (int(b) << 16) | (int(a) << 24)
         else:
-            color_val = (r << 24) | (g << 16) | (b << 8) | a
+            color_val = (int(r) << 24) | (int(g) << 16) | (int(b) << 8) | int(a)
         self.color_buffer.view(np.uint32).fill(color_val)
         self.depth_buffer.fill(depth)
 
