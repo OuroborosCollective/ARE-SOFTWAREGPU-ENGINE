@@ -149,7 +149,9 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
         raise IndexError("triangle index outside vertex array")
 
     valid = np.array([t is not None for t in transformed])
-    face_ok = valid[idx].all(axis=1)
+    # Unroll the fixed three-corner validity reduction without changing order.
+    valid_idx = valid[idx]
+    face_ok = valid_idx[:, 0] & valid_idx[:, 1] & valid_idx[:, 2]
 
     # Stacked clip positions (NaN rows for discarded vertices; those faces are
     # excluded by face_ok and never take the fast path).
@@ -159,10 +161,17 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     )
     fpos = pos_arr[idx]  # (F, 3, 4) clip positions per face corner
     x, y, z, w = fpos[..., 0], fpos[..., 1], fpos[..., 2], fpos[..., 3]
-    # Distances to the six homogeneous planes plus the positive-w safety plane,
-    # same formulas as _distance, evaluated for every face at once.
-    dist = np.stack([w + x, w - x, w + y, w - y, w + z, w - z, w - _MIN_W], axis=-1)
-    fully_inside = face_ok & (dist >= 0.0).all(axis=(1, 2))
+    # Distances to six homogeneous planes plus positive-w safety plane.
+    # Equivalent to np.stack(...).all(axis=(1,2)), without the 3x7 stack.
+    fully_inside = face_ok.copy()
+    for i in range(3):
+        np.logical_and(fully_inside, w[:, i] + x[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] - x[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] + y[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] - y[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] + z[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] - z[:, i] >= 0.0, out=fully_inside)
+        np.logical_and(fully_inside, w[:, i] - _MIN_W >= 0.0, out=fully_inside)
 
     # Perspective divide + screen mapping for the (common) unclipped faces;
     # identical elementwise float64 math to the per-vertex slow path.
