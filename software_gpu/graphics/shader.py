@@ -210,7 +210,9 @@ class BlinnPhongShader(Shader):
 
         # Diffuse component (Lambertian)
         # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
+        dp_diff = float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2])
+        # Inline ternary max check eliminates built-in function call overhead
+        diff = dp_diff if dp_diff > 0.0 else 0.0
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -232,7 +234,9 @@ class BlinnPhongShader(Shader):
             self._half_cache = cache
         if cache[2]:
             # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-            spec = max(0.0, float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])) ** self.shininess
+            dp_spec = float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])
+            # Inline ternary max check eliminates built-in function call overhead
+            spec = (dp_spec if dp_spec > 0.0 else 0.0) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
