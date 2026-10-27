@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2024-11-20 - Rasterizer prepare_triangles stack and all() reduction optimization
+**Learning:** In NumPy-based hot paths like `prepare_triangles`, `np.stack` and chained `.all()` array reductions over small fixed dimensions are unexpectedly slow due to allocation and reduction overhead.
+**Action:** Replace `np.stack` with pre-allocated `np.empty` (using dynamic shape attributes like `ndc.shape[:-1] + (3,)` to preserve batch dimensions), and unroll `.all()` using explicit `np.logical_and` into a `.copy()` of the base state array.
