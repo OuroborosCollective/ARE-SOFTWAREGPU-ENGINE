@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-27 - Inline max/min with ternary operator in shaders
+**Learning:** In pure-Python hot loops like fragment shaders, replacing built-in function calls such as `max(0.0, val)` with an inline Python ternary expression (`val if val > 0.0 else 0.0`) significantly eliminates call overhead and improves FPS while preserving exact NaN handling behavior. For nested `max(0.0, min(1.0, val))` preserving NaN requires careful chaining like `1.0 if val != val else (1.0 if val > 1.0 else (val if val > 0.0 else 0.0))`.
+**Action:** When working in inner Python loops where NumPy vectorization isn't available or causes dispatch overhead, replace simple math functions with explicit inline boolean operations. Ensure NaN propagation tests exist or are checked properly.
