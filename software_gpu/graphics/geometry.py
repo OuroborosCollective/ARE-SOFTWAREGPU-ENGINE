@@ -179,8 +179,20 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+    # Pre-allocate output array instead of np.stack for performance.
+    # Use dynamic shape attribute ndc.shape to preserve arbitrary batch dimensions.
+    screen = np.empty(ndc.shape, dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    # Avoid .all() chained array reductions, use explicitly unrolled boolean checks in-place.
+    finite = face_ok.copy()
+    finite_screen = np.isfinite(screen)
+    for i in range(3):
+        np.logical_and(finite, finite_screen[..., i, 0], out=finite)
+        np.logical_and(finite, finite_screen[..., i, 1], out=finite)
+        np.logical_and(finite, finite_screen[..., i, 2], out=finite)
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
