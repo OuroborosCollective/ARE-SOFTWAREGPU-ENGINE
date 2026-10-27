@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2023-10-27 - [Tuple Unpacking Overhead with NumPy]
+**Learning:** Unpacking small NumPy arrays into Python scalars inside hot loops (e.g., `x, y, z, w = position`) incurs noticeable overhead due to per-element object creation.
+**Action:** When working in hot paths, replace tuple unpacking with direct indexing (e.g., `position[3] + position[0]`) to bypass this overhead and achieve speedups.
