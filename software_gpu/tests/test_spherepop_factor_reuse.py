@@ -3,6 +3,7 @@
 CI emits the 15-pair timings and bit-identical frame/history evidence;
 new mode stays opt-in pending sufficient benchmark evidence.
 """
+import json
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,18 @@ class TestSpherePopFactorReuse(unittest.TestCase):
             self.assertEqual(run.returncode,0,run.stderr[-8000:]+run.stdout[-3500:])
             self.assertIn("SPHEREPOP_FACTOR_REUSE_NATIVE_PASS",run.stdout)
             self.assertEqual(run.stdout.count("SPHEREPOP_FACTOR_REUSE_RECEIPT"),2)
+            cache_lines=[line.split(" ",1)[1] for line in run.stdout.splitlines()
+                         if line.startswith("SPHEREPOP_DIRECTION_CACHE_RECEIPT ")]
+            self.assertEqual(len(cache_lines),2)
+            for raw in cache_lines:
+                item=json.loads(raw)
+                self.assertEqual(item["pairs"],15)
+                self.assertTrue(item["same_rgba_depth_history"])
+                self.assertEqual(len(item["raw_ms"]["baseline"]),15)
+                self.assertEqual(len(item["raw_ms"]["cache"]),15)
+                self.assertGreater(item["baseline_factor_evaluations"],
+                                   item["cached_factor_evaluations"])
+                self.assertGreater(item["median_paired_speedup"],0)
             print(run.stdout,flush=True)
 
 if __name__=="__main__":
