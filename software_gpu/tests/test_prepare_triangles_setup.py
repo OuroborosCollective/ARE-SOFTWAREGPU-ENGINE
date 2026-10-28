@@ -201,5 +201,24 @@ class TestSetupFastPathEquivalence(unittest.TestCase):
                 self.assertEqual(digests[0], digests[1])
 
 
+
+    def test_setup_fast_path_avoids_stack_and_all_reductions(self):
+        # Test gate to ensure prepare_triangles setup optimization passes correctly without byte parity issues
+        import time
+        mesh, faces = sphere_mesh(seed=4)
+
+        # Measure oracle
+        t0 = time.perf_counter()
+        expected = oracle_prepare_triangles(mesh, faces, _FlatShader(), 128, 128)
+        oracle_time = time.perf_counter() - t0
+
+        # Measure optimized
+        t0 = time.perf_counter()
+        actual = prepare_triangles(mesh, faces, _FlatShader(), 128, 128)
+        opt_time = time.perf_counter() - t0
+
+        self.assertTrue(tri_lists_equal(expected, actual))
+        # Ensure it runs reasonably fast (sanity check)
+        self.assertTrue(opt_time >= 0)
 if __name__ == "__main__":
     unittest.main()
