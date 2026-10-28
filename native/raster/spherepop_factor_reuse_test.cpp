@@ -45,7 +45,8 @@ static std::array<double,46> square(int pixels) {
 }
 static Frame draw_and_wave(int pixels,const std::array<double,46>& mesh,
                            wave::Vec3 velocity,int cx,int cy,
-                           bool with_doppler,bool reuse_factor) {
+                           bool with_doppler,bool reuse_factor,
+                           bool cache_directions=false) {
     const auto cells=std::size_t(pixels)*pixels;
     Frame result{};
     result.rgba.assign(cells*4,0);
@@ -62,7 +63,7 @@ static Frame draw_and_wave(int pixels,const std::array<double,46>& mesh,
     result.receipt=wave::render_radial_cag_spherepop(
         result.rgba.data(),result.rgba.size(),result.depth.data(),result.depth.size(),
         owners.data(),owners.size(),pixels,pixels,cx,cy,velocity,120.,1.,
-        with_doppler,reuse_factor);
+        with_doppler,reuse_factor,pixels>64,cache_directions);
     return result;
 }
 static void verify_equal(const Frame& reference,const Frame& candidate,int pixels,
@@ -205,7 +206,94 @@ static void measure(int pixels) {
     print_values(samples[1]);
     std::cout<<"}}\n";
 }
+
+static void verify_direction_cache(const Frame& reference,const Frame& cached,
+                                   int pixels,bool with_doppler) {
+    const auto cells=std::size_t(pixels)*pixels;
+    assert(reference.rgba==cached.rgba && reference.depth==cached.depth);
+    const auto& a=reference.receipt;
+    const auto& b=cached.receipt;
+    assert(a.finalized.size()==cells && b.finalized.size()==cells);
+    assert(a.refusals==b.refusals && a.refusals>0);
+    assert(a.tinted_pixels==b.tinted_pixels);
+    assert(a.event_fingerprint==b.event_fingerprint);
+    for(std::size_t k=0;k<cells;++k) {
+        const auto& x=a.finalized[k];
+        const auto& y=b.finalized[k];
+        assert(x.area==y.area && x.emitter==y.emitter);
+        assert(x.owner==y.owner && x.tinted==y.tinted);
+        assert(std::memcmp(&x.arrival_seconds,&y.arrival_seconds,sizeof(double))==0);
+        assert(std::memcmp(&x.doppler,&y.doppler,sizeof(double))==0);
+    }
+    if(with_doppler) {
+        // Both variants use the existing opt-in reuse_factor=true: the
+        // only difference is the number of real directional Doppler calls.
+        assert(a.doppler_factor_evaluations==cells-1);
+        assert(b.doppler_factor_evaluations>0);
+        assert(b.doppler_factor_evaluations<=8);
+    } else {
+        assert(a.doppler_factor_evaluations==0);
+        assert(b.doppler_factor_evaluations==0);
+    }
+}
+
+static void measure_direction_cache(int pixels) {
+    const auto mesh=square(pixels);
+    const int cx=pixels/2,cy=pixels/2;
+    for(const auto vel: {wave::Vec3{30.,0.,0.},wave::Vec3{0.,30.,0.},
+                        wave::Vec3{-20.,15.,0.},wave::Vec3{0.,0.,0.}}) {
+        for(const std::pair<int,int> seed:
+            {std::pair<int,int>{cx,cy},{3,4}}) {
+            for(bool doppler: {false,true}) {
+                const auto original=draw_and_wave(pixels,mesh,vel,seed.first,
+                                                   seed.second,doppler,true,false);
+                const auto cached=draw_and_wave(pixels,mesh,vel,seed.first,
+                                                 seed.second,doppler,true,true);
+                verify_direction_cache(original,cached,pixels,doppler);
+            }
+        }
+    }
+    const auto original=draw_and_wave(pixels,mesh,{30.,0.,0.},cx,cy,true,true,false);
+    const auto cached=draw_and_wave(pixels,mesh,{30.,0.,0.},cx,cy,true,true,true);
+    verify_direction_cache(original,cached,pixels,true);
+    std::array<std::vector<double>,2> samples{};
+    using clock=std::chrono::steady_clock;
+    for(int repeat=-2;repeat<15;++repeat) {
+        for(int pass=0;pass<2;++pass) {
+            const bool cache=(pass==(repeat%2==0?0:1));
+            const auto before=clock::now();
+            const auto frame=draw_and_wave(pixels,mesh,{30.,0.,0.},cx,cy,
+                                            true,true,cache);
+            const auto elapsed=std::chrono::duration<double,std::milli>(
+                clock::now()-before).count();
+            assert(std::isfinite(elapsed) && elapsed>0);
+            if(cache)verify_direction_cache(original,frame,pixels,true);
+            else verify_direction_cache(frame,cached,pixels,true);
+            if(repeat>=0)samples[cache?1:0].push_back(elapsed);
+        }
+    }
+    assert(samples[0].size()==15 && samples[1].size()==15);
+    std::vector<double> speedups;
+    for(std::size_t i=0;i<15;++i)
+        speedups.push_back(samples[0][i]/samples[1][i]);
+    std::cout<<std::fixed<<std::setprecision(9);
+    std::cout<<"SPHEREPOP_DIRECTION_CACHE_RECEIPT {\"pixels\":"<<pixels
+        <<",\"pairs\":15,\"same_rgba_depth_history\":true"
+        <<",\"baseline_factor_evaluations\":"<<original.receipt.doppler_factor_evaluations
+        <<",\"cached_factor_evaluations\":"<<cached.receipt.doppler_factor_evaluations
+        <<",\"median_baseline_ms\":"<<median(samples[0])
+        <<",\"median_cached_ms\":"<<median(samples[1])
+        <<",\"median_paired_speedup\":"<<median(speedups)
+        <<",\"raw_ms\":{\"baseline\":";
+    print_values(samples[0]);
+    std::cout<<",\"cache\":";
+    print_values(samples[1]);
+    std::cout<<"}}\n";
+}
+
 int main() {
+    measure_direction_cache(32);
+    measure_direction_cache(64);
     measure(32);
     measure(64);
     std::cout<<"SPHEREPOP_FACTOR_REUSE_NATIVE_PASS\n";
