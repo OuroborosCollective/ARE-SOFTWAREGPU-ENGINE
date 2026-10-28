@@ -39,7 +39,8 @@ inline WaveReceipt render_radial_cag_spherepop(
     const std::uint32_t* owners,std::size_t owner_cells,
     int width,int height, int cag_x,int cag_y,
     Vec3 velocity, double wave_speed,double artistic_gain, bool enable_doppler=true,
-    bool reuse_factor=false, bool allow_research_128=false) {
+    bool reuse_factor=false, bool allow_research_128=false,
+    bool cache_directions=false) {
 
     // A bounded finite grid: single-threaded priority queue, no shader-side
     // recursion, state persisted only in this invocation's local receipt.
@@ -83,6 +84,12 @@ inline WaveReceipt render_radial_cag_spherepop(
     std::vector<std::uint8_t> staged(rgba,rgba+rgba_bytes);
     WaveReceipt receipt;
     receipt.finalized.reserve(depth_cells);
+    // A wave emitter is always one of the eight adjacent integer cells.
+    // For a fixed velocity and wave speed, Doppler depends on that direction,
+    // not the absolute pixel location. Cache lazily so an unused direction
+    // cannot cause a new validation failure and the default stays identical.
+    std::array<double,9> direction_factors{};
+    std::array<std::uint8_t,9> direction_valid{};
     std::uint64_t fnv=14695981039346656037ull;
     const auto feed=[&](std::uint32_t v){
         for(unsigned k=0;k<4;++k) {fnv^=std::uint8_t(v>>(k*8));fnv*=1099511628211ull;}
@@ -98,9 +105,23 @@ inline WaveReceipt render_radial_cag_spherepop(
         double factor=1.;
         if(enable_doppler && step.cell!=step.emitter) {
             // Doppler controls spectral post tint, not isotropic wave velocity.
-            factor=doppler_factor({double(px),double(py),0.},
-                                  {double(x),double(y),0.},velocity,wave_speed);
-            ++receipt.doppler_factor_evaluations;
+            if(cache_directions) {
+                // Pending events are generated only by the eight-neighbor loop
+                // below. The emitter is the previous completed neighbor.
+                const auto direction=std::size_t((y-py+1)*3+(x-px+1));
+                if(!direction_valid[direction]) {
+                    direction_factors[direction]=doppler_factor(
+                        {double(px),double(py),0.},
+                        {double(x),double(y),0.},velocity,wave_speed);
+                    direction_valid[direction]=1;
+                    ++receipt.doppler_factor_evaluations;
+                }
+                factor=direction_factors[direction];
+            } else {
+                factor=doppler_factor({double(px),double(py),0.},
+                                      {double(x),double(y),0.},velocity,wave_speed);
+                ++receipt.doppler_factor_evaluations;
+            }
         }
         // Reuse native single-object effect including alpha/depth semantics.
         std::uint32_t tinted=0;
