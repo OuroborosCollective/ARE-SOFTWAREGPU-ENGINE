@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-28 - Geometry setup pipeline optimization
+**Learning:** In NumPy-based hot paths (like `prepare_triangles`), replacing `np.stack` with pre-allocated arrays and chaining logical operations in-place (`np.logical_and(..., out=...)`) instead of chained `&` operations reduces intermediate array allocations, significantly improving performance and setup frame times without affecting correctness or byte parity.
+**Action:** When preparing a base state array or constructing structured ndarrays in setup routines, avoid `np.stack` allocating new intermediate arrays and prefer explicitly unrolling `.all()` checks with boolean slicing and in-place reductions.

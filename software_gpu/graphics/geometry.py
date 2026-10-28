@@ -177,15 +177,25 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     # identical elementwise float64 math to the per-vertex slow path.
     inv_w = 1.0 / w
     ndc = fpos[..., :3] * inv_w[..., None]
-    sx = (ndc[..., 0] + 1.0) * 0.5 * width
-    sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+    sx = ((ndc[..., 0] + 1.0) * 0.5 * width).astype(np.float32)
+    sy = ((1.0 - ndc[..., 1]) * 0.5 * height).astype(np.float32)
+    # Pre-allocate output array instead of np.stack to reduce overhead and improve setup performance
+    screen = np.empty(sx.shape + (3,), dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+    # Explicitly unroll .all() reduction across the fixed 3 vertices using ellipsis to support arbitrary batch dimensions
+    isf = np.isfinite(screen)
+    v_finite = isf[..., 0] & isf[..., 1] & isf[..., 2]
+    finite = v_finite[..., 0] & v_finite[..., 1] & v_finite[..., 2]
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
             - (screen[:, 2, 1] - screen[:, 0, 1]) * (screen[:, 1, 0] - screen[:, 0, 0]))
-    emit_fast = fully_inside & finite & np.isfinite(area) & (area > np.float32(1e-9))
+    # In-place logical operations to avoid intermediate array allocations
+    emit_fast = np.logical_and(fully_inside, finite)
+    np.logical_and(emit_fast, np.isfinite(area), out=emit_fast)
+    np.logical_and(emit_fast, area > np.float32(1e-9), out=emit_fast)
 
     slots = [None] * len(idx)
     for fi in range(len(idx)):
