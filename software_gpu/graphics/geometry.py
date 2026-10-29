@@ -23,8 +23,11 @@ def edge_function(a: np.ndarray, b: np.ndarray, p: np.ndarray):
 
 def is_top_left(a: np.ndarray, b: np.ndarray) -> bool:
     """Inclusive edge for positive-area, clockwise screen-space triangles."""
-    dy, dx = float(b[1] - a[1]), float(b[0] - a[0])
-    return dy > 0.0 or (dy == 0.0 and dx < 0.0)
+    # ⚡ Bolt Optimization: Replace float conversion and explicit dx/dy unpacking with optimized checks
+    dy = b[1] - a[1]
+    if dy > 0: return True
+    if dy < 0: return False
+    return b[0] < a[0]
 
 
 def edge_covered(value, a: np.ndarray, b: np.ndarray):
