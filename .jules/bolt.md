@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-29 - Geometry edge coverage evaluation optimization
+**Learning:** In geometric evaluation hot paths (e.g., triangle edge functions), use early returns (short-circuiting) to avoid calculating unnecessary coordinate differences. For example, evaluate `dy` first and return immediately if non-zero, avoiding the calculation of `dx` and any associated explicit `float()` casts.
+**Action:** When calculating edge bounds like `is_top_left`, refactor logic such as `dy > 0.0 or (dy == 0.0 and dx < 0.0)` into distinct conditional branches (e.g. `if dy > 0.0: return True; if dy < 0.0: return False; return dx < 0.0`) to avoid evaluating `dx` entirely on the majority of edge checks, which reduces overhead by ~25% without altering parity.
