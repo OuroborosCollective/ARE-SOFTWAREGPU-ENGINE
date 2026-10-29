@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-28 - Replace built-in max/min with inline ternary for nested bounds
+**Learning:** For nested bounds like \`max(0.0, min(1.0, val))\`, built-in Python function calls introduce significant overhead in pure-Python hot paths. Replacing them with chained ternary evaluations like \`1.0 if val != val else (1.0 if val > 1.0 else (val if val > 0.0 else 0.0))\` eliminates call overhead and yields a significant speedup.
+**Action:** When optimizing tight pure-Python loops involving nested bounds, replace \`max\`/\`min\` calls with inline ternary logic. Ensure the ternary carefully chains comparisons to explicitly preserve exact NaN handling and fallthrough semantics expected by downstream tests.

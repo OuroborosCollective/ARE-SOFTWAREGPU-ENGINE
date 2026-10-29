@@ -200,8 +200,11 @@ class BlinnPhongShader(Shader):
         if texture is not None:
             # Preserve NumPy float32 promotion/rounding for exact texel selection.
             u, v = varyings['uv'][0], varyings['uv'][1]
-            u = max(0.0, min(1.0, u))
-            v = max(0.0, min(1.0, v))
+            # ⚡ Bolt Optimization: Inline ternary operators instead of max/min builtins
+            # to eliminate function call overhead in the fragment shader hot path.
+            # Preserves exactly the same NaN swallowing behavior as the original max(0.0, min(1.0, val)).
+            u = 1.0 if u != u else (1.0 if u > 1.0 else (u if u > 0.0 else 0.0))
+            v = 1.0 if v != v else (1.0 if v > 1.0 else (v if v > 0.0 else 0.0))
             th, tw = texture.shape[0], texture.shape[1]
             tx = int(u * (tw - 1))
             ty = int(v * (th - 1))
