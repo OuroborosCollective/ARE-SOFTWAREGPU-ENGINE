@@ -22,3 +22,7 @@
 ## 2026-10-30 - Optimize array allocation and reduction in geometry setup
 **Learning:** `np.stack` and `.all()` introduce measurable function dispatch, array allocation, and reduction loop overheads on small, fixed-size arrays during geometry processing.
 **Action:** Replace `np.stack` with a pre-allocated `np.empty` array mapped element-wise, and replace `.all()` on fixed axes with unrolled bitwise logical AND (`&`) operations on the constituent elements. Preserve ellipsis (`...`) indexing to support arbitrary broadcasting if present in the original design.
+
+## 2026-10-31 - HTTP Server Network Error Tolerance
+**Learning:** Calling `self.http()` in Python tests using standard `http.client` may occasionally encounter `ConnectionAbortedError` or `ConnectionResetError` (especially under Windows/heavy loads) on forced TCP termination limits, which shouldn't falsely fail exact bounds tests.
+**Action:** Surround expected rejection boundary HTTP request calls with try/except blocks to explicitly swallow `ConnectionAbortedError` and `ConnectionResetError` and verify the expected HTTP response code and error message.
