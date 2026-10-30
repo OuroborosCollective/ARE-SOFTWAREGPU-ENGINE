@@ -23,8 +23,10 @@ def edge_function(a: np.ndarray, b: np.ndarray, p: np.ndarray):
 
 def is_top_left(a: np.ndarray, b: np.ndarray) -> bool:
     """Inclusive edge for positive-area, clockwise screen-space triangles."""
-    dy, dx = float(b[1] - a[1]), float(b[0] - a[0])
-    return dy > 0.0 or (dy == 0.0 and dx < 0.0)
+    dy = float(b[1] - a[1])
+    if dy != 0.0:
+        return dy > 0.0
+    return float(b[0] - a[0]) < 0.0
 
 
 def edge_covered(value, a: np.ndarray, b: np.ndarray):
@@ -179,7 +181,12 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
+    # Avoid an intermediate float64 stack and subsequent float32 copy.
+    # Column assignment keeps the original float32 rounding of each value.
+    screen = np.empty(sx.shape + (3,), dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
     finite = np.isfinite(screen).all(axis=(1, 2))
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
