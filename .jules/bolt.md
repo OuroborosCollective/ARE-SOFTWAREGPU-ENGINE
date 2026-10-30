@@ -18,3 +18,11 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-30 - Geometry Early Return Optimization
+**Learning:** In geometric evaluation hot paths (e.g., triangle edge functions), computing unneeded coordinates (like `dx`) alongside explicit `float()` casts can introduce overhead.
+**Action:** Use early returns (short-circuiting) to avoid calculating unnecessary coordinate differences. Evaluate `dy` first and return immediately if non-zero, avoiding the calculation of `dx` and any associated explicit `float()` casts.
+
+## 2026-10-30 - Rasterizer Barycentric Early Return Optimization
+**Learning:** In pixel rasterization loops involving barycentric edge equations, computing all three barycentric coordinates unconditionally adds overhead.
+**Action:** Add early returns on barycentric coordinates to avoid computing the remaining coordinates if the first one fails the coverage test.
