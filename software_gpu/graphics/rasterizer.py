@@ -178,13 +178,15 @@ class SoftwareRasterizer:
 
                     # Inline barycentric coordinates (exact evaluation without np.array)
                     w0 = (p_x - s1x) * dy12 - w0_y_term
+                    if not (w0 >= 0 if c0 else w0 > 0):
+                        continue
                     w1 = (p_x - s2x) * dy20 - w1_y_term
+                    if not (w1 >= 0 if c1 else w1 > 0):
+                        continue
                     w2 = (p_x - s0x) * dy01 - w2_y_term
 
                     # Inside triangle test using precalculated top-left flags
-                    if ((w0 >= 0 if c0 else w0 > 0) and
-                        (w1 >= 0 if c1 else w1 > 0) and
-                        (w2 >= 0 if c2 else w2 > 0)):
+                    if (w2 >= 0 if c2 else w2 > 0):
                         alpha = w0 * inv_area
                         beta = w1 * inv_area
                         gamma = w2 * inv_area
