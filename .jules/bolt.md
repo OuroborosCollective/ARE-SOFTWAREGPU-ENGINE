@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2023-10-30 - Replace np.stack with np.empty for Performance Optimization
+**Learning:** In NumPy hot paths, using `np.stack([...]).astype(...)` introduces intermediate object allocation overhead and a secondary type cast array allocation pass. Replacing it with an explicit `np.empty(..., dtype=...)` and assigning directly into the columns prevents these unnecessary allocations and performs the type casting dynamically during the assignment, resulting in measurable runtime efficiency gains.
+**Action:** When finding `np.stack` operations on raw lists/arrays inside high-frequency evaluation loops (like graphics rasterization pipelines), replace them with pre-allocated `np.empty` arrays and assign the values individually per dimension.
