@@ -36,11 +36,22 @@ def inspect_glb(data: bytes) -> dict:
         doc = json.loads(chunks[0][1].decode("utf-8").rstrip(" "))
     except (UnicodeError, ValueError) as exc:
         raise ValueError("invalid JSON chunk") from exc
-    if not isinstance(doc, dict) or doc.get("asset", {}).get("version") != "2.0":
+    if not isinstance(doc, dict) or not isinstance(doc.get("asset"), dict) or doc["asset"].get("version") != "2.0":
         raise ValueError("not a glTF 2.0 asset")
+    for name in ("meshes", "animations", "buffers"):
+        if not isinstance(doc.get(name, []), list):
+            raise ValueError(f"{name} must be an array")
+    for mesh in doc.get("meshes", []):
+        if not isinstance(mesh, dict) or not isinstance(mesh.get("primitives", []), list):
+            raise ValueError("invalid mesh primitives")
+        for primitive in mesh.get("primitives", []):
+            if not isinstance(primitive, dict) or not isinstance(primitive.get("targets", []), list):
+                raise ValueError("invalid primitive targets")
     buffers = doc.get("buffers", [])
     if len(buffers) > 1 or (buffers and not isinstance(buffers[0], dict)):
         raise ValueError("unsupported embedded buffer layout")
+    if len(chunks) == 2 and (not buffers or "uri" in buffers[0]):
+        raise ValueError("unreferenced BIN chunk")
     if buffers and "uri" not in buffers[0]:
         if len(chunks) != 2:
             raise ValueError("missing BIN chunk")
