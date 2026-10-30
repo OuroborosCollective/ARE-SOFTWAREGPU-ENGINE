@@ -51,6 +51,23 @@ class GLBContainerPreflightTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             inspect_glb(data)
 
+    def test_malformed_asset_object_rejected_cleanly(self):
+        with self.assertRaises(ValueError):
+            inspect_glb(glb({"asset": "malformed"}))
+
+    def test_non_array_meshes_rejected_cleanly(self):
+        with self.assertRaises(ValueError):
+            inspect_glb(glb({"asset": {"version": "2.0"}, "meshes": "not-an-array"}))
+
+    def test_unreferenced_bin_chunk_rejected(self):
+        with self.assertRaises(ValueError):
+            inspect_glb(glb({"asset": {"version": "2.0"}}, b"data"))
+
+    def test_padding_must_not_exceed_three_bytes(self):
+        doc = {"asset": {"version": "2.0"}, "buffers": [{"byteLength": 0}]}
+        with self.assertRaises(ValueError):
+            inspect_glb(glb(doc, b"data"))
+
 
 if __name__ == "__main__":
     unittest.main()
