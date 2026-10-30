@@ -179,8 +179,23 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     ndc = fpos[..., :3] * inv_w[..., None]
     sx = (ndc[..., 0] + 1.0) * 0.5 * width
     sy = (1.0 - ndc[..., 1]) * 0.5 * height
-    screen = np.stack([sx, sy, ndc[..., 2]], axis=-1).astype(np.float32)
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # Pre-allocate output array instead of np.stack to recombine coordinates.
+    # Preserve arbitrary leading dimensions by using sx.shape
+    screen = np.empty(sx.shape + (3,), dtype=np.float32)
+    screen[..., 0] = sx
+    screen[..., 1] = sy
+    screen[..., 2] = ndc[..., 2]
+
+    # Unroll the finite check on the 3 vertices to avoid .all() reduction overhead
+    if screen.ndim == 3 and screen.shape[1] == 3:
+        # Fx3x3: fast path for faces
+        finite = (np.isfinite(screen[:, 0, 0]) & np.isfinite(screen[:, 1, 0]) & np.isfinite(screen[:, 2, 0]) &
+                  np.isfinite(screen[:, 0, 1]) & np.isfinite(screen[:, 1, 1]) & np.isfinite(screen[:, 2, 1]) &
+                  np.isfinite(screen[:, 0, 2]) & np.isfinite(screen[:, 1, 2]) & np.isfinite(screen[:, 2, 2]))
+    else:
+        # Fallback for arbitrary leading batch dimensions
+        finite = np.isfinite(screen).all(axis=tuple(range(1, screen.ndim)))
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
