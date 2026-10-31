@@ -184,9 +184,11 @@ class SoftwareRasterizer:
                     if not (w1 >= 0 if c1 else w1 > 0):
                         continue
                     w2 = (p_x - s0x) * dy01 - w2_y_term
+                    if not (w2 >= 0 if c2 else w2 > 0):
+                        continue
 
                     # Inside triangle test using precalculated top-left flags
-                    if (w2 >= 0 if c2 else w2 > 0):
+                    if True:
                         alpha = w0 * inv_area
                         beta = w1 * inv_area
                         gamma = w2 * inv_area
