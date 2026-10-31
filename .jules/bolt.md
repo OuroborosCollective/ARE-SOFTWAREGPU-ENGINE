@@ -18,3 +18,6 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+## 2026-10-21 - Optimizing vector normalization in pure Python hot loops
+**Learning:** In highly iterated fragment shaders, calculating the magnitude squared, comparing against an appropriately scaled threshold (e.g., 1e-12), and dividing components by the square root and storing them in a tuple is faster than creating a new NumPy array and dividing. The time spent unboxing NumPy values is dwarfed by the object allocation savings.
+**Action:** Prioritize scalar math and tuple packing over small NumPy array creation and division in innermost pixel loops.

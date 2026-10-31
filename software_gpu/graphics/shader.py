@@ -189,9 +189,14 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = math.sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
-        if n_len > 1e-6:
-            normal = normal / n_len
+        # PERFORMANCE OPTIMIZATION:
+        # Calculate normal vector length squared first.
+        # Use a scalar tuple for normal instead of a new NumPy array
+        # to avoid array allocation overhead and division in the hot loop.
+        n_len_sq = normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]
+        if n_len_sq > 1e-12:
+            n_len = math.sqrt(n_len_sq)
+            normal = (normal[0] / n_len, normal[1] / n_len, normal[2] / n_len)
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
