@@ -12,6 +12,7 @@ from typing import Optional
 
 from ..network.dispatcher import GPUCommandDispatcher
 from ..network.protocol import unpack_header, pack_message, MsgType, HEADER_SIZE
+from ..network.security import validate_request, SecurityLimits
 
 
 class AndroidIPCServer(threading.Thread):
@@ -79,6 +80,7 @@ class AndroidIPCServer(threading.Thread):
                 req_id = req.get("id")
 
                 try:
+                    validate_request(method, params, SecurityLimits())
                     res_data = self.dispatcher.handle_request(method, params)
                     resp_bytes = pack_message(MsgType.JSON_RESPONSE, {"result": res_data, "id": req_id})
                 except Exception as e:
