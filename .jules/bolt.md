@@ -18,3 +18,11 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2023-11-01 - Rasterizer barycentric early return
+**Learning:** In pixel rasterization loops involving barycentric edge equations, computing all three barycentric coordinates unconditionally adds overhead and unnecessarily deepens the indentation of the subsequent code.
+**Action:** Always add early returns using `continue` (e.g., `if not (...): continue`) after each barycentric coordinate evaluation to skip remaining computations and flatten the indentation of the hot path logic when the pixel fails the coverage test.
+
+## 2023-11-01 - Python fragment shader built-in max overhead
+**Learning:** In pure-Python hot loops like fragment shaders, replacing built-in function calls such as `max(0.0, val)` with an inline Python ternary expression (`val if val > 0.0 else 0.0`) significantly eliminates call overhead and improves FPS while preserving exact NaN handling behavior.
+**Action:** Always inline pure Python ternary bounding in highly iterated functions.
