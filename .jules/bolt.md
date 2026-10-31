@@ -26,3 +26,7 @@
 ## 2023-11-01 - Python fragment shader built-in max overhead
 **Learning:** In pure-Python hot loops like fragment shaders, replacing built-in function calls such as `max(0.0, val)` with an inline Python ternary expression (`val if val > 0.0 else 0.0`) significantly eliminates call overhead and improves FPS while preserving exact NaN handling behavior.
 **Action:** Always inline pure Python ternary bounding in highly iterated functions.
+
+## 2023-11-01 - Windows HTTP client test teardown exceptions
+**Learning:** On Windows CI environments, Python's `http.client` may raise `ConnectionAbortedError` (WinError 10053) or `ConnectionResetError` when testing oversized requests (e.g., triggering a 413 Payload Too Large) because the server may tear down the socket before the client reads the response.
+**Action:** When writing boundary tests for oversized network limits (like `test_reject_oversize_json_and_integer`), catch `ConnectionAbortedError` and `ConnectionResetError` to prevent flakiness on Windows runners.
