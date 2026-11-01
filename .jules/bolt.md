@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-27 - Blinn-Phong Fragment Shader Vector Math Unrolling
+**Learning:** In highly iterated pure Python fragment shaders, breaking out vector math like length calculations and explicit `.dot` equivalents into scalar components (e.g., `x/len, y/len, z/len` instead of `np.array / len` and explicit scalar additions for dot products) eliminates NumPy array allocation and dynamic dispatch overhead. Replacing built-in functions like `max()` with inline ternaries further eliminates function call overhead.
+**Action:** When optimizing hot loops in Python, systematically unpack small fixed-size vectors to scalars, use inline ternaries for bounds clamping, and use direct division to preserve exact byte-parity with original NumPy operations.

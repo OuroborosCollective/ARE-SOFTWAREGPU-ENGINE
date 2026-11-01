@@ -191,7 +191,9 @@ class BlinnPhongShader(Shader):
         normal = varyings['normal']
         n_len = math.sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
         if n_len > 1e-6:
-            normal = normal / n_len
+            # ⚡ Bolt Optimization: Unpack into scalar tuple to avoid NumPy array creation overhead
+            # Use direct division to maintain IEEE 754 byte-parity with original NumPy division.
+            normal = (normal[0] / n_len, normal[1] / n_len, normal[2] / n_len)
 
         # Base surface color (either from texture or vertex/material diffuse)
         base_color = self.diffuse_color
@@ -211,7 +213,9 @@ class BlinnPhongShader(Shader):
 
         # Diffuse component (Lambertian)
         # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
+        dot_diff = float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2])
+        # ⚡ Bolt Optimization: Replace max() with inline ternary to remove call overhead.
+        diff = dot_diff if dot_diff > 0.0 else 0.0
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -233,7 +237,10 @@ class BlinnPhongShader(Shader):
             self._half_cache = cache
         if cache[2]:
             # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-            spec = max(0.0, float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])) ** self.shininess
+            dot_spec = float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])
+            # ⚡ Bolt Optimization: Replace max() with inline ternary to remove call overhead.
+            spec_base = dot_spec if dot_spec > 0.0 else 0.0
+            spec = spec_base ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
