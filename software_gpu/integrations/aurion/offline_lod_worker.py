@@ -231,8 +231,16 @@ class _FlatShader:
         return vertex.position, {"color": vertex.color}
 
     def fragment_shader(self, varyings):
-        rgb = np.clip(np.asarray(varyings["color"]) * 255, 0, 255).astype(np.uint8)
-        return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
+        color = varyings["color"]
+        r = color[0] * 255
+        g = color[1] * 255
+        b = color[2] * 255
+        return (
+            0 if r <= 0 else 255 if r >= 255 else int(r),
+            0 if g <= 0 else 255 if g >= 255 else int(g),
+            0 if b <= 0 else 255 if b >= 255 else int(b),
+            255
+        )
 
 
 def render_lod(path: Path, entry: dict, camera: dict, out: Path, pixels=192, repeats=2):

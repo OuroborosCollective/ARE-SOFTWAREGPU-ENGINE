@@ -187,7 +187,15 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
     screen[..., 0] = sx
     screen[..., 1] = sy
     screen[..., 2] = ndc[..., 2]
-    finite = np.isfinite(screen).all(axis=(1, 2))
+
+    # ⚡ Bolt Optimization: Replace slow .all(axis=(1,2)) array reduction
+    # with explicitly unrolled operations to avoid overhead.
+    # We must use dynamic shapes '...' instead of hardcoded slices to preserve broadcasting
+    # of leading batch dimensions from the original code!
+    finite = (np.isfinite(screen[..., 0, 0]) & np.isfinite(screen[..., 0, 1]) & np.isfinite(screen[..., 0, 2]) &
+              np.isfinite(screen[..., 1, 0]) & np.isfinite(screen[..., 1, 1]) & np.isfinite(screen[..., 1, 2]) &
+              np.isfinite(screen[..., 2, 0]) & np.isfinite(screen[..., 2, 1]) & np.isfinite(screen[..., 2, 2]))
+
     # Signed area with the exact operand order of edge_function(s0, s1, s2):
     # (s2x - s0x) * (s1y - s0y) - (s2y - s0y) * (s1x - s0x), all float32.
     area = ((screen[:, 2, 0] - screen[:, 0, 0]) * (screen[:, 1, 1] - screen[:, 0, 1])
