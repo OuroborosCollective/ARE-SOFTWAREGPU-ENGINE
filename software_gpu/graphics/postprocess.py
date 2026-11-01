@@ -222,20 +222,54 @@ class MSAARasterizer:
             if min_x > max_x or min_y > max_y:
                 continue
 
+            # ⚡ Bolt Optimization: Precomputing explicit edge deltas and coverage rules outside
+            # the per-pixel loop eliminates np.array allocations and edge_function/edge_covered calls.
+            # This yields significant performance speedups while preserving exact np.float32 byte-parity.
+            dy12 = np.float32(s2[1] - s1[1])
+            dx12 = np.float32(s2[0] - s1[0])
+            dy20 = np.float32(s0[1] - s2[1])
+            dx20 = np.float32(s0[0] - s2[0])
+            dy01 = np.float32(s1[1] - s0[1])
+            dx01 = np.float32(s1[0] - s0[0])
+
+            s1x = np.float32(s1[0])
+            s1y = np.float32(s1[1])
+            s2x = np.float32(s2[0])
+            s2y = np.float32(s2[1])
+            s0x = np.float32(s0[0])
+            s0y = np.float32(s0[1])
+
+            is_tl0 = edge_covered(0, s1, s2)
+            is_tl1 = edge_covered(0, s2, s0)
+            is_tl2 = edge_covered(0, s0, s1)
+
             for py in range(min_y, max_y + 1):
+                p_y_center = np.float32(py + 0.5)
+
+                w0_y_term = (p_y_center - s1y) * dx12
+                w1_y_term = (p_y_center - s2y) * dx20
+                w2_y_term = (p_y_center - s0y) * dx01
+
                 for px in range(min_x, max_x + 1):
+                    p_x_center = np.float32(px + 0.5)
                     # Test each of the 4 sub-pixel sample points!
                     sub_covered = []
                     sub_depths = []
 
                     for s_idx, (ox, oy) in enumerate(self.msaa_fb.sample_offsets):
-                        sample_pt = np.array([px + 0.5 + ox, py + 0.5 + oy], dtype=np.float32)
-                        w0 = edge_function(s1, s2, sample_pt)
-                        w1 = edge_function(s2, s0, sample_pt)
-                        w2 = edge_function(s0, s1, sample_pt)
+                        ox_f = np.float32(ox)
+                        oy_f = np.float32(oy)
 
-                        if (edge_covered(w0, s1, s2) and edge_covered(w1, s2, s0) and
-                                edge_covered(w2, s0, s1)):
+                        w0 = (p_x_center + ox_f - s1x) * dy12 - (p_y_center + oy_f - s1y) * dx12
+                        if not (w0 >= 0 if is_tl0 else w0 > 0):
+                            continue
+
+                        w1 = (p_x_center + ox_f - s2x) * dy20 - (p_y_center + oy_f - s2y) * dx20
+                        if not (w1 >= 0 if is_tl1 else w1 > 0):
+                            continue
+
+                        w2 = (p_x_center + ox_f - s0x) * dy01 - (p_y_center + oy_f - s0y) * dx01
+                        if (w2 >= 0 if is_tl2 else w2 > 0):
                             a = w0 * inv_area
                             b = w1 * inv_area
                             c = w2 * inv_area
@@ -248,10 +282,14 @@ class MSAARasterizer:
                         continue
 
                     # Evaluate fragment shader once per pixel (standard MSAA optimization)
-                    center_pt = np.array([px + 0.5, py + 0.5], dtype=np.float32)
-                    cw0 = max(0.0, edge_function(s1, s2, center_pt)) * inv_area
-                    cw1 = max(0.0, edge_function(s2, s0, center_pt)) * inv_area
-                    cw2 = max(0.0, edge_function(s0, s1, center_pt)) * inv_area
+                    cw0_raw = (p_x_center - s1x) * dy12 - w0_y_term
+                    cw0 = float(cw0_raw if cw0_raw > 0.0 else 0.0) * inv_area
+
+                    cw1_raw = (p_x_center - s2x) * dy20 - w1_y_term
+                    cw1 = float(cw1_raw if cw1_raw > 0.0 else 0.0) * inv_area
+
+                    cw2_raw = (p_x_center - s0x) * dy01 - w2_y_term
+                    cw2 = float(cw2_raw if cw2_raw > 0.0 else 0.0) * inv_area
                     c_sum = cw0 + cw1 + cw2
                     if c_sum > 1e-6:
                         cw0 /= c_sum
