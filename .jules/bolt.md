@@ -22,3 +22,7 @@
 ## 2026-11-01 - MSAARasterizer Barycentric Math Optimization
 **Learning:** In the `MSAARasterizer` inner loops, dynamic `np.array` allocations for sub-pixel coordinates and generic `edge_function` calls create substantial Python overhead.
 **Action:** By extracting the edge deltas to the outer loop and inlining explicit barycentric evaluations inside the pixel loops (with explicit `np.float32` casts to preserve byte parity), we can eliminate function calls and array allocations, dramatically speeding up MSAA rasterization (~50% improvement).
+
+## 2026-11-01 - Windows CI http.client Connection Resets
+**Learning:** On Windows CI environments, Python's `http.client` may raise `ConnectionAbortedError` (WinError 10053) or `ConnectionResetError` when testing oversized requests (e.g., triggering a 413 Payload Too Large) because the server tears down the socket early before the client reads the response.
+**Action:** When testing oversized payload limits on network endpoints, catch these connection reset exceptions in exact test clauses to prevent flaky test failures on Windows platforms.
