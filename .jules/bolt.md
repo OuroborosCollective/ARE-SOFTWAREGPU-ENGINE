@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-31 - Replace min/max built-ins in rasterizer bounding box calculation
+**Learning:** In the SoftwareGPU pipeline's hot paths (e.g., rasterizer), replacing Python's built-in `min()` and `max()` functions with explicit inline ternary operations (e.g., `s0x if s0x < s1x_val else s1x_val`) for the triangle bounding box calculation improves performance by eliminating function call overhead in the innermost loops, leading to observable speedups across benchmark scenes.
+**Action:** Always prefer explicit inline ternary operations over built-in `min`/`max` functions in highly iterated Python hot paths to maximize performance while strictly maintaining functional correctness.

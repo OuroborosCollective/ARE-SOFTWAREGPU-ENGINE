@@ -121,7 +121,10 @@ class FXAAPass:
         out_img = np.where(edge_mask[..., None], blended, img)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(out_img * 255.0, 0.0, 255.0).astype(np.uint8)
+        # Inline np.clip for byte-parity check, ensuring float array doesn't implicitly cast early
+        rgb_work = out_img * 255.0
+        np.clip(rgb_work, 0.0, 255.0, out=rgb_work)
+        out_fb.color_buffer[..., :3] = rgb_work.astype(np.uint8)
         out_fb.color_buffer[..., 3] = fb.color_buffer[..., 3]
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb
@@ -193,7 +196,9 @@ class GamingPostProcessing:
         gamma_corrected = cls.gamma_correction(tone_mapped, gamma=2.2)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(gamma_corrected * 255.0, 0.0, 255.0).astype(np.uint8)
+        rgb_work = gamma_corrected * 255.0
+        np.clip(rgb_work, 0.0, 255.0, out=rgb_work)
+        out_fb.color_buffer[..., :3] = rgb_work.astype(np.uint8)
         out_fb.color_buffer[..., 3] = 255
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb
