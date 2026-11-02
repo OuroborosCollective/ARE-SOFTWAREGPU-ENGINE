@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-31 - Replace built-in min/max functions with inline ternary operators for calculating AABB bounds
+**Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders, rasterizer), replacing built-in min/max functions and multiple calls with faster inline ternary operators for calculating AABB bounds improves performance by reducing built-in function call overhead in the innermost fragment loop.
+**Action:** Replace built-in min/max functions and multiple calls with faster inline ternary operators for calculating AABB bounds.

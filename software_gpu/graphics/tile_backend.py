@@ -60,10 +60,22 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        # ⚡ Bolt Optimization: Replace built-in min/max functions and multiple calls
+        # with faster inline ternary operators for calculating AABB bounds.
+        min_sx = s0[0] if s0[0] < s1[0] else s1[0]; min_sx = min_sx if min_sx < s2[0] else s2[0]
+        max_sx = s0[0] if s0[0] > s1[0] else s1[0]; max_sx = max_sx if max_sx > s2[0] else s2[0]
+        min_sy = s0[1] if s0[1] < s1[1] else s1[1]; min_sy = min_sy if min_sy < s2[1] else s2[1]
+        max_sy = s0[1] if s0[1] > s1[1] else s1[1]; max_sy = max_sy if max_sy > s2[1] else s2[1]
+
+        x0 = int(np.floor(min_sx))
+        x0 = 0 if 0 > x0 else x0
+        x1 = int(np.ceil(max_sx))
+        x1 = frame_w - 1 if (frame_w - 1) < x1 else x1
+
+        y0 = int(np.floor(min_sy))
+        y0 = 0 if 0 > y0 else y0
+        y1 = int(np.ceil(max_sy))
+        y1 = frame_h - 1 if (frame_h - 1) < y1 else y1
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
@@ -166,8 +178,8 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         tile_x1 = min(frame_w - 1, tile_x0 + tile_size - 1)
         tile_y1 = min(frame_h - 1, tile_y0 + tile_size - 1)
         for tri, x0, x1, y0, y1 in candidates:
-            left, right = max(x0, tile_x0), min(x1, tile_x1)
-            top, bottom = max(y0, tile_y0), min(y1, tile_y1)
+            left, right = (x0 if x0 > tile_x0 else tile_x0), (x1 if x1 < tile_x1 else tile_x1)
+            top, bottom = (y0 if y0 > tile_y0 else tile_y0), (y1 if y1 < tile_y1 else tile_y1)
             if left > right or top > bottom:
                 continue
             (s0, s1, s2, iw0, iw1, iw2, v0, v1, v2, area) = tri

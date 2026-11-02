@@ -214,10 +214,22 @@ class MSAARasterizer:
              v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(self.msaa_fb.width - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(self.msaa_fb.height - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # ⚡ Bolt Optimization: Replace built-in min/max functions and multiple calls
+            # with faster inline ternary operators for calculating AABB bounds.
+            min_sx = s0[0] if s0[0] < s1[0] else s1[0]; min_sx = min_sx if min_sx < s2[0] else s2[0]
+            max_sx = s0[0] if s0[0] > s1[0] else s1[0]; max_sx = max_sx if max_sx > s2[0] else s2[0]
+            min_sy = s0[1] if s0[1] < s1[1] else s1[1]; min_sy = min_sy if min_sy < s2[1] else s2[1]
+            max_sy = s0[1] if s0[1] > s1[1] else s1[1]; max_sy = max_sy if max_sy > s2[1] else s2[1]
+
+            min_x = int(np.floor(min_sx))
+            min_x = 0 if 0 > min_x else min_x
+            max_x = int(np.ceil(max_sx))
+            max_x = self.msaa_fb.width - 1 if (self.msaa_fb.width - 1) < max_x else max_x
+
+            min_y = int(np.floor(min_sy))
+            min_y = 0 if 0 > min_y else min_y
+            max_y = int(np.ceil(max_sy))
+            max_y = self.msaa_fb.height - 1 if (self.msaa_fb.height - 1) < max_y else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue
@@ -249,9 +261,9 @@ class MSAARasterizer:
 
                     # Evaluate fragment shader once per pixel (standard MSAA optimization)
                     center_pt = np.array([px + 0.5, py + 0.5], dtype=np.float32)
-                    cw0 = max(0.0, edge_function(s1, s2, center_pt)) * inv_area
-                    cw1 = max(0.0, edge_function(s2, s0, center_pt)) * inv_area
-                    cw2 = max(0.0, edge_function(s0, s1, center_pt)) * inv_area
+                    cw0 = (cw0_val if (cw0_val := edge_function(s1, s2, center_pt)) > 0.0 else 0.0) * inv_area
+                    cw1 = (cw1_val if (cw1_val := edge_function(s2, s0, center_pt)) > 0.0 else 0.0) * inv_area
+                    cw2 = (cw2_val if (cw2_val := edge_function(s0, s1, center_pt)) > 0.0 else 0.0) * inv_area
                     c_sum = cw0 + cw1 + cw2
                     if c_sum > 1e-6:
                         cw0 /= c_sum
