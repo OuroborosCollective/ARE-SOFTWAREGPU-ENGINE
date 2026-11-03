@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2025-02-23 - Performance Optimization in geometry.py
+**Learning:** Python tuple unpacking of Numpy arrays (e.g., `x, y, z, w = position`) inside highly iterated functions introduces unnecessary Python object creation overhead, drastically slowing down execution.
+**Action:** Replace array unpacking with direct indexing (e.g., `position[0]`) in performance-critical hot paths to eliminate the object creation overhead and achieve significant speedups.
