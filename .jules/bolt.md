@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-10-27 - Built-in max function overhead in Python fragment shaders
+**Learning:** Calling the built-in `max()` function adds significant call overhead per pixel in innermost fragment shader loops. Replacing it with an inline Python ternary operator (`val if val > 0.0 else 0.0`) significantly eliminates this overhead while preserving the exact semantic behavior for standard floats and NaNs (since `NaN > 0.0` is False, it correctly returns `0.0` like `max(0.0, NaN)`).
+**Action:** When working in pure-Python hot loops (like fragment shaders or pixel-level blending), prefer inline ternary expressions over built-in `max()` or `min()` functions for simple bounding logic to eliminate Python call stack overhead.
