@@ -166,8 +166,12 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
         tile_x1 = min(frame_w - 1, tile_x0 + tile_size - 1)
         tile_y1 = min(frame_h - 1, tile_y0 + tile_size - 1)
         for tri, x0, x1, y0, y1 in candidates:
-            left, right = max(x0, tile_x0), min(x1, tile_x1)
-            top, bottom = max(y0, tile_y0), min(y1, tile_y1)
+            # ⚡ Bolt Optimization: Replacing built-in min/max functions with inline
+            # ternary operators for AABB bounds reduces function call overhead.
+            left = x0 if x0 > tile_x0 else tile_x0
+            right = x1 if x1 < tile_x1 else tile_x1
+            top = y0 if y0 > tile_y0 else tile_y0
+            bottom = y1 if y1 < tile_y1 else tile_y1
             if left > right or top > bottom:
                 continue
             (s0, s1, s2, iw0, iw1, iw2, v0, v1, v2, area) = tri

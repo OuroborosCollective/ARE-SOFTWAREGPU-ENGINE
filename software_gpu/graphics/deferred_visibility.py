@@ -53,8 +53,14 @@ def rasterize_deferred(fb, triangles, shader, tile_size, executor: Executor, wor
         candidates_values = []
         depth_passes = 0
         for index, (tri, bx0, bx1, by0, by1) in enumerate(candidates):
-            left, right = max(bx0, x0), min(bx1, x1 - 1)
-            top, bottom = max(by0, y0), min(by1, y1 - 1)
+            # ⚡ Bolt Optimization: Replacing built-in min/max functions with inline
+            # ternary operators for AABB bounds reduces function call overhead.
+            left = bx0 if bx0 > x0 else x0
+            x1_bound = x1 - 1
+            right = bx1 if bx1 < x1_bound else x1_bound
+            top = by0 if by0 > y0 else y0
+            y1_bound = y1 - 1
+            bottom = by1 if by1 < y1_bound else y1_bound
             if left > right or top > bottom:
                 candidates_values.append(None)
                 continue

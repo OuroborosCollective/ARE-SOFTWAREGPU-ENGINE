@@ -129,11 +129,34 @@ class SoftwareRasterizer:
         """Rasterizes triangles that overlap the vertical band [y_start, y_end)."""
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
-            # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # ⚡ Bolt Optimization: Replacing built-in min/max functions with inline
+            # ternary operators for AABB bounds reduces function call overhead.
+            s0x, s1x, s2x = s0[0], s1[0], s2[0]
+            s0y, s1y, s2y = s0[1], s1[1], s2[1]
+
+            min_sx = s0x if s0x < s1x else s1x
+            min_sx = min_sx if min_sx < s2x else s2x
+            max_sx = s0x if s0x > s1x else s1x
+            max_sx = max_sx if max_sx > s2x else s2x
+
+            min_sy = s0y if s0y < s1y else s1y
+            min_sy = min_sy if min_sy < s2y else s2y
+            max_sy = s0y if s0y > s1y else s1y
+            max_sy = max_sy if max_sy > s2y else s2y
+
+            min_x = int(np.floor(min_sx))
+            min_x = 0 if min_x < 0 else min_x
+
+            max_x = int(np.ceil(max_sx))
+            max_x_bound = fb_w - 1
+            max_x = max_x_bound if max_x > max_x_bound else max_x
+
+            min_y = int(np.floor(min_sy))
+            min_y = y_start if min_y < y_start else min_y
+
+            max_y = int(np.ceil(max_sy))
+            max_y_bound = y_end - 1
+            max_y = max_y_bound if max_y > max_y_bound else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue
