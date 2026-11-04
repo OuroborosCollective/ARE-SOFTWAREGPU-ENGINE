@@ -89,7 +89,13 @@ class AndroidIpcValidationTest(unittest.TestCase):
         kind, body = self.response()
         self.assertEqual(kind, MsgType.ERROR)
         self.assertEqual(body["error"], "MESSAGE_TYPE_NOT_ALLOWED")
-        self.assertEqual(self.client.recv(1), b"", "Rejected wrong-type frame must close UDS")
+        # A peer with unread request bytes may observe either an orderly EOF
+        # or ECONNRESET when the server closes its Unix stream socket.
+        try:
+            trailing = self.client.recv(1)
+        except ConnectionResetError:
+            trailing = b""
+        self.assertEqual(trailing, b"", "Rejected wrong-type frame must close UDS")
 
 
 if __name__ == "__main__":
