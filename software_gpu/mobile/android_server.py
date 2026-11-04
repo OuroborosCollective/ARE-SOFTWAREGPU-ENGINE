@@ -12,7 +12,7 @@ from typing import Optional
 
 from ..network.dispatcher import GPUCommandDispatcher
 from ..network.protocol import unpack_header, pack_message, MsgType, HEADER_SIZE
-from ..network.security import validate_request, SecurityLimits
+from ..network.security import validate_request, SecurityLimits, bounded_json
 
 
 def _reject_nonfinite(_value):
@@ -100,13 +100,22 @@ class AndroidIPCServer(threading.Thread):
                                      parse_constant=_reject_nonfinite)
                     if type(req) is not dict:
                         raise ValueError("REQUEST_INVALID")
+                    # Validate the entire document, including request ID, before
+                    # constructing a response or invoking the dispatcher.
+                    bounded_json(req)
                     req_id = req.get("id")
                     method = req.get("method", "")
                     params = req.get("params", {})
                     validate_request(method, params, limits)
                     res_data = self.dispatcher.handle_request(method, params)
                     resp_bytes = pack_message(MsgType.JSON_RESPONSE, {"result": res_data, "id": req_id})
-                except (ValueError, TypeError, KeyError, UnicodeError, OSError) as exc:
+                except socket.timeout:
+                    # An idle/incomplete read has no valid response correlation.
+                    # Close rather than emitting an unsolicited error frame.
+                    break
+                except (json.JSONDecodeError, UnicodeError):
+                    resp_bytes = pack_message(MsgType.ERROR, {"error": "REQUEST_INVALID", "id": req_id})
+                except (ValueError, TypeError, KeyError, OSError) as exc:
                     code = str(exc)
                     if not code or code.startswith("Expecting") or code.startswith("Invalid"):
                         code = "REQUEST_INVALID"

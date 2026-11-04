@@ -50,6 +50,14 @@ class PostprocessClipParityTest(unittest.TestCase):
             np.testing.assert_array_equal(fb.color_buffer, color_before)
             np.testing.assert_array_equal(fb.depth_buffer, depth_before)
 
+    def test_aces_zero_dimensional_and_numpy_scalar_are_supported(self):
+        for source in (np.array(0.5), np.float32(0.5), np.float64(0.5)):
+            actual = GamingPostProcessing.aces_tone_mapping(source)
+            x = np.maximum(0.0, source)
+            expected = np.clip((x * (2.51 * x + 0.03)) /
+                               (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0)
+            np.testing.assert_equal(actual, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

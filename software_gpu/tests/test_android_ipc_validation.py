@@ -97,6 +97,29 @@ class AndroidIpcValidationTest(unittest.TestCase):
             trailing = b""
         self.assertEqual(trailing, b"", "Rejected wrong-type frame must close UDS")
 
+    def test_overflowing_exponent_id_rejected_before_dispatch(self):
+        payload = b'{"method":"device_info","params":{},"id":1e999}'
+        self.client.sendall(struct.pack("!4sIIQ", MAGIC_HEADER, MsgType.JSON_REQUEST, 0, len(payload)) + payload)
+        kind, body = self.response()
+        self.assertEqual(kind, MsgType.ERROR)
+        self.assertEqual(body["error"], "NONFINITE_NUMBER")
+        self.client.sendall(pack_message(MsgType.JSON_REQUEST, {"method": "device_info", "params": {}, "id": 23}))
+        kind, body = self.response()
+        self.assertEqual(kind, MsgType.JSON_RESPONSE)
+        self.assertEqual(body["id"], 23)
+
+    def test_invalid_utf8_and_extra_json_are_generic_errors(self):
+        for payload in (b'\xff', b'{"method":"device_info"} trailing'):
+            self.client.sendall(struct.pack("!4sIIQ", MAGIC_HEADER, MsgType.JSON_REQUEST, 0, len(payload)) + payload)
+            kind, body = self.response()
+            self.assertEqual(kind, MsgType.ERROR)
+            self.assertEqual(body["error"], "REQUEST_INVALID")
+
+    def test_idle_socket_timeout_closes_without_unsolicited_response(self):
+        # Real I/O timeout; a server-generated unsolicited ERROR would return data.
+        self.client.settimeout(5)
+        self.assertEqual(self.client.recv(1), b"", "idle timeout must close without a response")
+
 
 if __name__ == "__main__":
     unittest.main()

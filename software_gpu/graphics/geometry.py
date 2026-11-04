@@ -35,9 +35,8 @@ def edge_covered(value, a: np.ndarray, b: np.ndarray):
 
 
 def _distance(position: np.ndarray, plane: int) -> float:
-    # ⚡ Bolt Optimization: Avoid unpacking the NumPy array into a tuple to reduce
-    # Python object creation overhead. Indexing the array directly provides a ~3-4x
-    # speedup for this highly iterated geometry clipping function.
+    # Indexing avoids temporary tuple unpacking in this clipping hot path.
+    # No quantitative speedup is claimed without a source-bound CPU receipt.
     if plane == 0:
         return position[3] + position[0]
     if plane == 1:

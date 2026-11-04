@@ -20,7 +20,7 @@
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
 
 ## 2026-10-27 - Fast homogenous plane distance via direct array indexing
-**Learning:** In highly iterated Python functions like geometric evaluation hot paths (e.g., `_distance` in `geometry.py`), avoiding the unpacking of NumPy arrays into tuples (e.g., `x, y, z, w = position`) and instead using direct indexing (e.g., `position[3] + position[0]`) significantly reduces Python object creation overhead, resulting in a ~3-4x execution speedup.
+**Learning:** In highly iterated Python functions like geometric evaluation hot paths (e.g., `_distance` in `geometry.py`), avoiding the unpacking of NumPy arrays into tuples (e.g., `x, y, z, w = position`) and instead using direct indexing (e.g., `position[3] + position[0]`) may reduce intermediate Python objects; measured end-to-end speedup remains unverified.
 **Action:** When working with frequently called functions operating on small NumPy arrays, prioritize direct element indexing over unpacking to reduce overhead, while remaining mindful that for large arrays, vectorized operations are still preferable.
 
 ## 2026-11-03 - np.clip in-place optimization and safe framebuffer clearing

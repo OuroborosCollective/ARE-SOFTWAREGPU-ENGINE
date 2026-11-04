@@ -145,7 +145,9 @@ class GamingPostProcessing:
         e = 0.14
         x = np.maximum(0.0, color_linear)
         res = (x * (a * x + b)) / (x * (c * x + d) + e)
-        # Optimization: In-place np.clip prevents intermediate array allocations
+        # NumPy scalar results do not support an out= destination.
+        if np.isscalar(res):
+            return np.clip(res, 0.0, 1.0)
         return np.clip(res, 0.0, 1.0, out=res)
 
     @staticmethod
