@@ -18,3 +18,11 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2024-11-04 - Eliminate built-in function overhead in bounds checking hot loops
+**Learning:** In heavily iterated hot paths like the rasterizer loop and postprocessing, using built-in Python functions like `min()`, `max()`, `np.floor()`, and `np.ceil()` causes significant call overhead.
+**Action:** Replace calls to `min` and `max` with inline Python ternary operators (`a if a < b else b`), and unpack array coordinates into scalar values. Also, swap out Numpy vector functions with explicit `math.floor` and `math.ceil` calls for primitive scalar values, reducing function overhead and improving performance.
+
+## 2024-11-04 - Minimize function call overhead in highly iterated loops (AABB Bounds)
+**Learning:** In heavily iterated hot paths like the rasterizer loop and postprocessing, using built-in Python functions like `min()`, `max()`, and numpy functions like `np.floor()` and `np.ceil()` for bounds checking logic on small numbers causes significant call overhead.
+**Action:** Replace `np.floor()` and `np.ceil()` with `math.floor()` and `math.ceil()`, reducing overhead by avoiding Numpy scalar math, without sacrificing code readability like an inline ternary operator sequence would. Do not optimize reference test fixtures used for parity matching (`band_reference.py`) to prevent corrupting test integrity.
