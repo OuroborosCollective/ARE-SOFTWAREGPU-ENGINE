@@ -19,6 +19,15 @@ def _reject_nonfinite(_value):
     raise ValueError("REQUEST_INVALID")
 
 
+def _correlatable_id(value):
+    """Echo only bounded JSON-RPC IDs, never arbitrary client objects."""
+    if type(value) is str and len(value) <= 128:
+        return value
+    if type(value) is int and value.bit_length() <= 64:
+        return value
+    return None
+
+
 class AndroidIPCServer(threading.Thread):
     """Unix Domain Socket server tailored for Android's LocalSocket IPC."""
     def __init__(
@@ -102,8 +111,11 @@ class AndroidIPCServer(threading.Thread):
                         raise ValueError("REQUEST_INVALID")
                     # Validate the entire document, including request ID, before
                     # constructing a response or invoking the dispatcher.
+                    candidate_id = req.get("id")
+                    req_id = _correlatable_id(candidate_id)
                     bounded_json(req)
-                    req_id = req.get("id")
+                    if candidate_id is not None and req_id is None:
+                        raise ValueError("REQUEST_INVALID")
                     method = req.get("method", "")
                     params = req.get("params", {})
                     validate_request(method, params, limits)

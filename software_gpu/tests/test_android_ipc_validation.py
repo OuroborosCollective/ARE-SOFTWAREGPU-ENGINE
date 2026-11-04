@@ -120,6 +120,26 @@ class AndroidIpcValidationTest(unittest.TestCase):
         self.client.settimeout(5)
         self.assertEqual(self.client.recv(1), b"", "idle timeout must close without a response")
 
+    def test_rejected_nonfinite_param_keeps_safe_request_id(self):
+        payload = b'{"method":"device_info","params":{"x":1e999},"id":7}'
+        self.client.sendall(struct.pack("!4sIIQ", MAGIC_HEADER, MsgType.JSON_REQUEST, 0, len(payload)) + payload)
+        kind, body = self.response()
+        self.assertEqual(kind, MsgType.ERROR)
+        self.assertEqual(body["error"], "NONFINITE_NUMBER")
+        self.assertEqual(body["id"], 7)
+
+    def test_invalid_request_ids_are_not_echoed_or_dispatched(self):
+        for invalid in (b'1e999', b'{"nested":7}', b'true'):
+            payload = b'{"method":"device_info","params":{},"id":' + invalid + b'}'
+            self.client.sendall(struct.pack("!4sIIQ", MAGIC_HEADER, MsgType.JSON_REQUEST, 0, len(payload)) + payload)
+            kind, body = self.response()
+            self.assertEqual(kind, MsgType.ERROR)
+            self.assertIsNone(body["id"])
+        self.client.sendall(pack_message(MsgType.JSON_REQUEST, {"method": "device_info", "params": {}, "id": 31}))
+        kind, body = self.response()
+        self.assertEqual(kind, MsgType.JSON_RESPONSE)
+        self.assertEqual(body["id"], 31)
+
 
 if __name__ == "__main__":
     unittest.main()
