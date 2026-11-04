@@ -75,6 +75,9 @@ class AndroidIPCServer(threading.Thread):
             client_sock.settimeout(limits.io_timeout_seconds)
             while self._running:
                 req_id = None
+                # Fail closed while any framed bytes remain unread. An invalid
+                # header/type/length cannot be safely resynchronized.
+                close_after_response = True
                 try:
                     header_bytes = self._recv_all(client_sock, HEADER_SIZE)
                     if not header_bytes:
@@ -90,6 +93,9 @@ class AndroidIPCServer(threading.Thread):
                     payload_bytes = self._recv_all(client_sock, payload_len)
                     if len(payload_bytes) != payload_len:
                         raise ValueError("REQUEST_INVALID")
+                    # A fully consumed body can yield a JSON/schema error and
+                    # still leave the next framed request at a valid boundary.
+                    close_after_response = False
                     req = json.loads(payload_bytes.decode("utf-8"),
                                      parse_constant=_reject_nonfinite)
                     if type(req) is not dict:
@@ -111,6 +117,8 @@ class AndroidIPCServer(threading.Thread):
                 try:
                     client_sock.sendall(resp_bytes)
                 except OSError:
+                    break
+                if close_after_response:
                     break
 
     def _recv_all(self, sock: socket.socket, length: int) -> bytes:
