@@ -55,6 +55,7 @@ class AndroidIpcValidationTest(unittest.TestCase):
         kind, body = self.response()  # must not wait for the undeclared body
         self.assertEqual(kind, MsgType.ERROR)
         self.assertEqual(body["error"], "REQUEST_SIZE_LIMIT")
+        self.assertEqual(self.client.recv(1), b"", "Rejected unread frame must close UDS")
 
     def test_json_list_is_rejected_not_crashed(self):
         self.client.sendall(pack_message(MsgType.JSON_REQUEST, [1, 2]))
@@ -68,6 +69,13 @@ class AndroidIpcValidationTest(unittest.TestCase):
         kind, body = self.response()
         self.assertEqual(kind, MsgType.ERROR)
         self.assertEqual(body["error"], "REQUEST_INVALID")
+        # The body was fully consumed, so this connection may safely be reused.
+        self.client.sendall(pack_message(MsgType.JSON_REQUEST, {
+            "method": "device_info", "params": {}, "id": 17,
+        }))
+        kind, valid = self.response()
+        self.assertEqual(kind, MsgType.JSON_RESPONSE)
+        self.assertEqual(valid["id"], 17)
 
     def test_nonfinite_json_rejected_before_dispatch(self):
         payload = b'{"method":"device_info","params":{"x":NaN}}'
@@ -81,6 +89,7 @@ class AndroidIpcValidationTest(unittest.TestCase):
         kind, body = self.response()
         self.assertEqual(kind, MsgType.ERROR)
         self.assertEqual(body["error"], "MESSAGE_TYPE_NOT_ALLOWED")
+        self.assertEqual(self.client.recv(1), b"", "Rejected wrong-type frame must close UDS")
 
 
 if __name__ == "__main__":
