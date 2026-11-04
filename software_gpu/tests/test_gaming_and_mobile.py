@@ -120,5 +120,24 @@ class TestGamingAndMobile(unittest.TestCase):
         self.assertEqual(int(ctx.framebuffer.color_buffer[30, 40, 2]), int(0.6 * 255))
 
 
+
+    def test_postprocess_performance(self):
+        """Performance test for post-processing clip optimization."""
+        import time
+        from software_gpu.graphics.postprocess import MSAAFramebuffer, FXAAPass, GamingPostProcessing
+        from software_gpu.graphics.framebuffer import Framebuffer
+        import numpy as np
+
+        # Test GamingPostProcessing bounds
+        fb = Framebuffer(192, 108)
+        fb.color_buffer[...] = np.random.rand(108, 192, 4) * 255.0
+
+        t0 = time.perf_counter()
+        for _ in range(5):
+            GamingPostProcessing.apply_bloom_and_hdr(fb, bloom_intensity=0.5)
+        t1 = time.perf_counter()
+
+        self.assertLess(t1 - t0, 15.0, "Post-processing is too slow!")
+
 if __name__ == "__main__":
     unittest.main()

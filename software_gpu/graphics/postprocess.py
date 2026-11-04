@@ -121,7 +121,10 @@ class FXAAPass:
         out_img = np.where(edge_mask[..., None], blended, img)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(out_img * 255.0, 0.0, 255.0).astype(np.uint8)
+        # PERFORMANCE: Using out= parameter in np.clip eliminates a large array allocation per frame
+        out_img *= 255.0
+        np.clip(out_img, 0.0, 255.0, out=out_img)
+        out_fb.color_buffer[..., :3] = out_img.astype(np.uint8)
         out_fb.color_buffer[..., 3] = fb.color_buffer[..., 3]
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb
@@ -140,7 +143,10 @@ class GamingPostProcessing:
         d = 0.59
         e = 0.14
         x = np.maximum(0.0, color_linear)
-        return np.clip((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0)
+        # PERFORMANCE: Using out= parameter in np.clip eliminates an intermediate allocation
+        res = (x * (a * x + b)) / (x * (c * x + d) + e)
+        np.clip(res, 0.0, 1.0, out=res)
+        return res
 
     @staticmethod
     def gamma_correction(color_linear: np.ndarray, gamma: float = 2.2) -> np.ndarray:
@@ -193,7 +199,10 @@ class GamingPostProcessing:
         gamma_corrected = cls.gamma_correction(tone_mapped, gamma=2.2)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(gamma_corrected * 255.0, 0.0, 255.0).astype(np.uint8)
+        # PERFORMANCE: Using out= parameter in np.clip eliminates a large array allocation per frame
+        gamma_corrected *= 255.0
+        np.clip(gamma_corrected, 0.0, 255.0, out=gamma_corrected)
+        out_fb.color_buffer[..., :3] = gamma_corrected.astype(np.uint8)
         out_fb.color_buffer[..., 3] = 255
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb

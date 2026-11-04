@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2024-11-04 - In-place clipping in NumPy
+**Learning:** Supplying the `out=` parameter to `np.clip` operations in postprocessing hot paths (like FXAA and ACES tone mapping) significantly eliminates intermediate array allocations per frame.
+**Action:** Always check `np.clip` operations in framebuffers or image processing loops for the opportunity to pass `out=` when the output matches the input's shape and dtype.
