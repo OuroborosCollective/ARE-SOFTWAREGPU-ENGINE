@@ -38,9 +38,9 @@ class MSAAFramebuffer:
         # Optimization: Casting the NumPy array view to np.uint32 and using a single fill()
         # operation improves MSAA framebuffer clear performance by ~4x-10x.
         if sys.byteorder == 'little':
-            color_val = r | (g << 8) | (b << 16) | (a << 24)
+            color_val = int(r) | (int(g) << 8) | (int(b) << 16) | (int(a) << 24)
         else:
-            color_val = (r << 24) | (g << 16) | (b << 8) | a
+            color_val = (int(r) << 24) | (int(g) << 16) | (int(b) << 8) | int(a)
         self.color_samples.view(np.uint32).fill(color_val)
         self.depth_samples.fill(depth)
 
@@ -92,7 +92,9 @@ class FXAAPass:
             np.pad(luma[1:, 1:], ((0, 1), (0, 1)), mode='edge')
         )
         luma_avg = (2.0 * (luma_n + luma_s + luma_w + luma_e) + luma_corners) / 12.0
-        subpixel_offset = np.clip(np.abs(luma_avg - luma_m) / np.maximum(range_contrast, 1e-4), 0.0, 1.0)
+        subpixel_offset = np.abs(luma_avg - luma_m) / np.maximum(range_contrast, 1e-4)
+        # Optimization: In-place np.clip prevents intermediate array allocations
+        np.clip(subpixel_offset, 0.0, 1.0, out=subpixel_offset)
         blend_factor = subpixel_offset * subpixel_quality
 
         # Determine edge direction (horizontal vs vertical gradient)
@@ -121,7 +123,9 @@ class FXAAPass:
         out_img = np.where(edge_mask[..., None], blended, img)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(out_img * 255.0, 0.0, 255.0).astype(np.uint8)
+        out_img *= 255.0
+        # Optimization: In-place np.clip prevents intermediate array allocations
+        out_fb.color_buffer[..., :3] = np.clip(out_img, 0.0, 255.0, out=out_img).astype(np.uint8)
         out_fb.color_buffer[..., 3] = fb.color_buffer[..., 3]
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb
@@ -140,7 +144,9 @@ class GamingPostProcessing:
         d = 0.59
         e = 0.14
         x = np.maximum(0.0, color_linear)
-        return np.clip((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0)
+        res = (x * (a * x + b)) / (x * (c * x + d) + e)
+        # Optimization: In-place np.clip prevents intermediate array allocations
+        return np.clip(res, 0.0, 1.0, out=res)
 
     @staticmethod
     def gamma_correction(color_linear: np.ndarray, gamma: float = 2.2) -> np.ndarray:
@@ -193,7 +199,9 @@ class GamingPostProcessing:
         gamma_corrected = cls.gamma_correction(tone_mapped, gamma=2.2)
 
         out_fb = Framebuffer(w, h)
-        out_fb.color_buffer[..., :3] = np.clip(gamma_corrected * 255.0, 0.0, 255.0).astype(np.uint8)
+        gamma_corrected *= 255.0
+        # Optimization: In-place np.clip prevents intermediate array allocations
+        out_fb.color_buffer[..., :3] = np.clip(gamma_corrected, 0.0, 255.0, out=gamma_corrected).astype(np.uint8)
         out_fb.color_buffer[..., 3] = 255
         out_fb.depth_buffer[...] = fb.depth_buffer[...]
         return out_fb

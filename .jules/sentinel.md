@@ -1,0 +1,4 @@
+## 2024-03-24 - [CRITICAL] Added explicit JSON payload limit and parameter structure boundary checks to Android local IPC socket server subsystem.
+**Vulnerability:** Missing request schema and limits boundary check. The `AndroidIPCServer` deserialized unsanitized UDS local requests using JSON without validating length limits, schema fields or input bounds using `validate_request` from `security.py`.
+**Learning:** Even loopback-bound Unix domain sockets intended for local IPC must defensively validate request payloads using the existing security boundaries, otherwise any local user could send malformed requests causing application crash/resource exhaustion, or bypass method/parameter restrictions.
+**Prevention:** Always wrap request unmarshalling paths, including local sockets/IPC, with the application's central `validate_request` contract bounds enforcement.
