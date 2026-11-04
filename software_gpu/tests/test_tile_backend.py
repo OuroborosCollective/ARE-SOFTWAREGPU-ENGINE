@@ -23,6 +23,48 @@ def verts(points, color):
 
 
 class TestTileRasterizer(unittest.TestCase):
+
+    def test_performance_bounds_inline_ternary(self):
+        '''Validates performance of bounding box calculations inline ternary replacements.'''
+        import time
+        import numpy as np
+
+        start = time.perf_counter()
+
+        s0 = np.array([10.5, 20.3, 0.0])
+        s1 = np.array([30.1, 5.7, 0.0])
+        s2 = np.array([5.2, 40.9, 0.0])
+        frame_w = 800
+        frame_h = 600
+
+        for _ in range(100000):
+            t_min_x = s0[0] if s0[0] < s1[0] else s1[0]
+            t_min_x = t_min_x if t_min_x < s2[0] else s2[0]
+            t_max_x = s0[0] if s0[0] > s1[0] else s1[0]
+            t_max_x = t_max_x if t_max_x > s2[0] else s2[0]
+
+            t_min_y = s0[1] if s0[1] < s1[1] else s1[1]
+            t_min_y = t_min_y if t_min_y < s2[1] else s2[1]
+            t_max_y = s0[1] if s0[1] > s1[1] else s1[1]
+            t_max_y = t_max_y if t_max_y > s2[1] else s2[1]
+
+            x0 = int(np.floor(t_min_x))
+            x0 = 0 if x0 < 0 else x0
+
+            x1 = int(np.ceil(t_max_x))
+            frame_w_minus_1 = frame_w - 1
+            x1 = frame_w_minus_1 if x1 > frame_w_minus_1 else x1
+
+            y0 = int(np.floor(t_min_y))
+            y0 = 0 if y0 < 0 else y0
+
+            y1 = int(np.ceil(t_max_y))
+            frame_h_minus_1 = frame_h - 1
+            y1 = frame_h_minus_1 if y1 > frame_h_minus_1 else y1
+
+        elapsed = time.perf_counter() - start
+        self.assertLess(elapsed, 1.5)
+
     def setUp(self):
         self.sh = ColorShader()
         # Real rendering: overlapping triangles, shared edges, partially

@@ -60,10 +60,31 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        # Optimization: Replacing built-in min/max functions with faster inline
+        # ternary operators reduces call overhead in innermost loops.
+        t_min_x = s0[0] if s0[0] < s1[0] else s1[0]
+        t_min_x = t_min_x if t_min_x < s2[0] else s2[0]
+        t_max_x = s0[0] if s0[0] > s1[0] else s1[0]
+        t_max_x = t_max_x if t_max_x > s2[0] else s2[0]
+
+        t_min_y = s0[1] if s0[1] < s1[1] else s1[1]
+        t_min_y = t_min_y if t_min_y < s2[1] else s2[1]
+        t_max_y = s0[1] if s0[1] > s1[1] else s1[1]
+        t_max_y = t_max_y if t_max_y > s2[1] else s2[1]
+
+        x0 = int(np.floor(t_min_x))
+        x0 = 0 if x0 < 0 else x0
+
+        x1 = int(np.ceil(t_max_x))
+        frame_w_minus_1 = frame_w - 1
+        x1 = frame_w_minus_1 if x1 > frame_w_minus_1 else x1
+
+        y0 = int(np.floor(t_min_y))
+        y0 = 0 if y0 < 0 else y0
+
+        y1 = int(np.ceil(t_max_y))
+        frame_h_minus_1 = frame_h - 1
+        y1 = frame_h_minus_1 if y1 > frame_h_minus_1 else y1
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:

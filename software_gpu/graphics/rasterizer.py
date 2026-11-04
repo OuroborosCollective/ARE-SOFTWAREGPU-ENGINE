@@ -130,10 +130,31 @@ class SoftwareRasterizer:
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # Optimization: Replacing built-in min/max functions with faster inline
+            # ternary operators reduces call overhead in innermost loops.
+            t_min_x = s0[0] if s0[0] < s1[0] else s1[0]
+            t_min_x = t_min_x if t_min_x < s2[0] else s2[0]
+            t_max_x = s0[0] if s0[0] > s1[0] else s1[0]
+            t_max_x = t_max_x if t_max_x > s2[0] else s2[0]
+
+            t_min_y = s0[1] if s0[1] < s1[1] else s1[1]
+            t_min_y = t_min_y if t_min_y < s2[1] else s2[1]
+            t_max_y = s0[1] if s0[1] > s1[1] else s1[1]
+            t_max_y = t_max_y if t_max_y > s2[1] else s2[1]
+
+            min_x = int(np.floor(t_min_x))
+            min_x = 0 if min_x < 0 else min_x
+
+            max_x = int(np.ceil(t_max_x))
+            fb_w_minus_1 = fb_w - 1
+            max_x = fb_w_minus_1 if max_x > fb_w_minus_1 else max_x
+
+            min_y = int(np.floor(t_min_y))
+            min_y = y_start if min_y < y_start else min_y
+
+            max_y = int(np.ceil(t_max_y))
+            y_end_minus_1 = y_end - 1
+            max_y = y_end_minus_1 if max_y > y_end_minus_1 else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue

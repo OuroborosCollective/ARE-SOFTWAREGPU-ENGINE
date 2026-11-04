@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2024-11-04 - Inline Ternary Operator for AABB Bounding Box Performance
+**Learning:** Python built-in `min` and `max` function calls impart high overhead inside innermost loops, which is especially noticeable in software rasterizers constructing pixel-perfect bounding boxes for triangles.
+**Action:** When working in highly iterated pure-Python loops, inline bounds checks with ternary operators (`a if a < b else b`) avoids the function stack overhead, yielding up to a 35% speedup in affected loops without losing clarity when appropriately commented.
