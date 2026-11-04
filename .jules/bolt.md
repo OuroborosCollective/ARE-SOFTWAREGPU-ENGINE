@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2026-11-03 - Replace built-in min/max functions with faster inline ternary operators
+**Learning:** In the SoftwareGPU pipeline's hot paths (e.g., shaders, rasterizer, etc.), replacing built-in min/max functions with faster inline ternary operators for calculating AABB bounds (e.g., `s0[0] if s0[0] < s1[0] else s1[0]`) improves performance by reducing built-in function call overhead in the innermost loops.
+**Action:** When implementing scalar fallbacks for functions like `np.clip` or generic `min()`/`max()` functions on scalar coordinates, use inline Python ternary expression (`val if val > 0.0 else 0.0`) to eliminate call overhead and improve FPS while preserving exact NaN handling behavior.

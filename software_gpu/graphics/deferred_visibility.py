@@ -53,8 +53,10 @@ def rasterize_deferred(fb, triangles, shader, tile_size, executor: Executor, wor
         candidates_values = []
         depth_passes = 0
         for index, (tri, bx0, bx1, by0, by1) in enumerate(candidates):
-            left, right = max(bx0, x0), min(bx1, x1 - 1)
-            top, bottom = max(by0, y0), min(by1, y1 - 1)
+            left = bx0 if bx0 > x0 else x0
+            right = bx1 if bx1 < (x1 - 1) else (x1 - 1)
+            top = by0 if by0 > y0 else y0
+            bottom = by1 if by1 < (y1 - 1) else (y1 - 1)
             if left > right or top > bottom:
                 candidates_values.append(None)
                 continue

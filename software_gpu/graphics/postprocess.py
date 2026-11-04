@@ -214,10 +214,19 @@ class MSAARasterizer:
              v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(self.msaa_fb.width - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(self.msaa_fb.height - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # ⚡ Bolt Optimization: Replace built-in min/max functions with faster inline ternary operators
+            # for calculating AABB bounds, which reduces built-in function call overhead in the innermost loops.
+            tmp_min_x = int(np.floor(s0[0] if s0[0] < s1[0] and s0[0] < s2[0] else (s1[0] if s1[0] < s2[0] else s2[0])))
+            min_x = tmp_min_x if tmp_min_x > 0 else 0
+
+            tmp_max_x = int(np.ceil(s0[0] if s0[0] > s1[0] and s0[0] > s2[0] else (s1[0] if s1[0] > s2[0] else s2[0])))
+            max_x = tmp_max_x if tmp_max_x < (self.msaa_fb.width - 1) else (self.msaa_fb.width - 1)
+
+            tmp_min_y = int(np.floor(s0[1] if s0[1] < s1[1] and s0[1] < s2[1] else (s1[1] if s1[1] < s2[1] else s2[1])))
+            min_y = tmp_min_y if tmp_min_y > 0 else 0
+
+            tmp_max_y = int(np.ceil(s0[1] if s0[1] > s1[1] and s0[1] > s2[1] else (s1[1] if s1[1] > s2[1] else s2[1])))
+            max_y = tmp_max_y if tmp_max_y < (self.msaa_fb.height - 1) else (self.msaa_fb.height - 1)
 
             if min_x > max_x or min_y > max_y:
                 continue
