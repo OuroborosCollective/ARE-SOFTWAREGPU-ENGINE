@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2024-11-20 - Inline AABB bounding box calculations
+**Learning:** In highly iterated Python hot loops, replacing `np.floor()` and `np.ceil()` on primitive scalars with `math.floor()` and `math.ceil()`, and swapping `min`/`max` with inline ternary chains, significantly reduces execution overhead by bypassing Numpy's dynamic dispatch and function call overhead.
+**Action:** Use `math` module equivalents and inline conditional chains for single scalar bounding calculations in the innermost rasterization pipelines.
