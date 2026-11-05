@@ -63,7 +63,7 @@ class SoftwareGPUClient:
             "height": height
         }
         res = self._post("/api/v1/graphics/render", "render_mesh", payload)
-        return base64.b64decode(res["image_b64"])
+        return base64.b64decode(res["image_b64"], validate=True)
 
     def _post(self, path: str, method: str, params: dict) -> dict:
         if self.use_tcp:
