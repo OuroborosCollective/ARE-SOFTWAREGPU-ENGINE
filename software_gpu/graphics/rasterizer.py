@@ -205,11 +205,25 @@ class SoftwareRasterizer:
                             for k in v0_var:
                                 val0, val1, val2 = v0_var[k], v1_var[k], v2_var[k]
                                 if isinstance(val0, np.ndarray):
-                                    weighted = (
-                                        alpha * (val0 * inv_w0) +
-                                        beta * (val1 * inv_w1) +
-                                        gamma * (val2 * inv_w2)
-                                    ) * interp_factor
+                                    # ⚡ Bolt Optimization: Unroll array operations for small arrays
+                                    # This avoids array boxing/unboxing overhead in the hot inner loop.
+                                    if val0.shape == (3,):
+                                        weighted = np.array([
+                                            (alpha * (val0[0] * inv_w0) + beta * (val1[0] * inv_w1) + gamma * (val2[0] * inv_w2)) * interp_factor,
+                                            (alpha * (val0[1] * inv_w0) + beta * (val1[1] * inv_w1) + gamma * (val2[1] * inv_w2)) * interp_factor,
+                                            (alpha * (val0[2] * inv_w0) + beta * (val1[2] * inv_w1) + gamma * (val2[2] * inv_w2)) * interp_factor
+                                        ], dtype=val0.dtype)
+                                    elif val0.shape == (2,):
+                                        weighted = np.array([
+                                            (alpha * (val0[0] * inv_w0) + beta * (val1[0] * inv_w1) + gamma * (val2[0] * inv_w2)) * interp_factor,
+                                            (alpha * (val0[1] * inv_w0) + beta * (val1[1] * inv_w1) + gamma * (val2[1] * inv_w2)) * interp_factor
+                                        ], dtype=val0.dtype)
+                                    else:
+                                        weighted = (
+                                            alpha * (val0 * inv_w0) +
+                                            beta * (val1 * inv_w1) +
+                                            gamma * (val2 * inv_w2)
+                                        ) * interp_factor
                                     interpolated_varyings[k] = weighted
                                 else:
                                     interpolated_varyings[k] = val0

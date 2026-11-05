@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## 2025-02-12 - Unroll small arrays during interpolation inside `rasterizer.py`
+**Learning:** Checking the shape of `numpy` arrays and unconditionally unwrapping the calculation into explicit scalar multiplication and additions explicitly placed into a single `.array()` initialization works considerably faster than doing standard array broadcast multiplications, particularly with small matrices like varying attributes (e.g. RGB and UV arrays).
+**Action:** Unroll elements for highly iterated interpolation arrays using index indexing inside a direct `np.array` initialization where the array shape length is small enough (like 2 and 3 items). Ensure the array shapes are checked prior to unrolling using `if array.shape == (length,)` to ensure it is bounded to a correct size for that specific unroll branch to prevent regressions.
