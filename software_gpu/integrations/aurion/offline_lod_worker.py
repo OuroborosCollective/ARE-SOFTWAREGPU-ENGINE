@@ -219,8 +219,12 @@ def _camera_transform(vertices, config):
     rz = np.sin(yaw)*x + np.cos(yaw)*z
     ry = np.cos(pitch)*(y-cy) - np.sin(pitch)*rz
     depth = np.sin(pitch)*(y-cy) + np.cos(pitch)*rz
-    homogeneous = np.stack((rx/span_x, ry/span_y, depth, np.ones(len(vertices))),
-                           axis=1).astype(np.float32)
+    # Avoid np.stack and .astype overhead by allocating empty and assigning directly
+    homogeneous = np.empty((len(vertices), 4), dtype=np.float32)
+    homogeneous[:, 0] = rx / span_x
+    homogeneous[:, 1] = ry / span_y
+    homogeneous[:, 2] = depth
+    homogeneous[:, 3] = 1.0
     if not np.isfinite(homogeneous).all() or np.max(np.abs(homogeneous)) > 1e4:
         raise ValueError("CAMERA_PROJECTED_NONFINITE")
     return homogeneous
