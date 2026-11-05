@@ -7,6 +7,7 @@ early-Z depth testing, and perspective-correct interpolation.
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -129,11 +130,31 @@ class SoftwareRasterizer:
         """Rasterizes triangles that overlap the vertical band [y_start, y_end)."""
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
-            # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # ⚡ Bolt Optimization: Replacing built-in min/max and np.floor/np.ceil
+            # with explicit inline ternary operators and math.floor/ceil to calculate
+            # the AABB bounds reduces function call overhead in the innermost loop.
+            s00, s10, s20 = s0[0], s1[0], s2[0]
+            s01, s11, s21 = s0[1], s1[1], s2[1]
+
+            m_x = s00 if s00 < s10 else s10
+            m_x = m_x if m_x < s20 else s20
+            min_x = math.floor(m_x)
+            min_x = 0 if min_x < 0 else min_x
+
+            m_x = s00 if s00 > s10 else s10
+            m_x = m_x if m_x > s20 else s20
+            max_x = math.ceil(m_x)
+            max_x = fb_w - 1 if max_x > fb_w - 1 else max_x
+
+            m_y = s01 if s01 < s11 else s11
+            m_y = m_y if m_y < s21 else s21
+            min_y = math.floor(m_y)
+            min_y = y_start if min_y < y_start else min_y
+
+            m_y = s01 if s01 > s11 else s11
+            m_y = m_y if m_y > s21 else s21
+            max_y = math.ceil(m_y)
+            max_y = y_end - 1 if max_y > y_end - 1 else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue
