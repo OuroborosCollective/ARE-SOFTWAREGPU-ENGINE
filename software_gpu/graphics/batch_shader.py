@@ -22,11 +22,11 @@ class VertexColorShader(Shader):
         # NumPy scalar multiplication (including float32 rounding) and avoid
         # three temporary arrays and dispatch into np.clip/astype per pixel.
         # Other dtypes, shapes and NaN retain the original NumPy conversion.
-        if (isinstance(color, np.ndarray) and color.shape == (3,)
-                and color.dtype in (np.dtype("float32"), np.dtype("float64"))):
-            r = color[0] * 255
-            g = color[1] * 255
-            b = color[2] * 255
+        _color = np.asarray(color)
+        if _color.ndim == 1 and _color.shape[0] == 3 and _color.dtype in (np.dtype("float32"), np.dtype("float64")):
+            r = _color[0] * 255
+            g = _color[1] * 255
+            b = _color[2] * 255
             if r == r and g == g and b == b:
                 return (
                     0 if r <= 0 else 255 if r >= 255 else int(r),
@@ -34,7 +34,7 @@ class VertexColorShader(Shader):
                     0 if b <= 0 else 255 if b >= 255 else int(b),
                     255
                 )
-        rgb = np.clip(np.asarray(color) * 255, 0, 255).astype(np.uint8)
+        rgb = np.clip(_color * 255, 0, 255).astype(np.uint8)
         return int(rgb[0]), int(rgb[1]), int(rgb[2]), 255
 
     batch_fragment_equivalent_to = fragment_shader

@@ -249,9 +249,13 @@ class MSAARasterizer:
 
                     # Evaluate fragment shader once per pixel (standard MSAA optimization)
                     center_pt = np.array([px + 0.5, py + 0.5], dtype=np.float32)
-                    cw0 = max(0.0, edge_function(s1, s2, center_pt)) * inv_area
-                    cw1 = max(0.0, edge_function(s2, s0, center_pt)) * inv_area
-                    cw2 = max(0.0, edge_function(s0, s1, center_pt)) * inv_area
+                    # Inline ternary eliminates call overhead
+                    _cw0 = edge_function(s1, s2, center_pt) * inv_area
+                    cw0 = _cw0 if _cw0 > 0.0 else 0.0
+                    _cw1 = edge_function(s2, s0, center_pt) * inv_area
+                    cw1 = _cw1 if _cw1 > 0.0 else 0.0
+                    _cw2 = edge_function(s0, s1, center_pt) * inv_area
+                    cw2 = _cw2 if _cw2 > 0.0 else 0.0
                     c_sum = cw0 + cw1 + cw2
                     if c_sum > 1e-6:
                         cw0 /= c_sum
