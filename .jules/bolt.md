@@ -18,3 +18,7 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+
+## $(date +%Y-%m-%d) - Optimize innermost rasterizer loops
+**Learning:** In CPython, manual scalar unrolling of small NumPy array math (e.g., `np.array([alpha * val0[0]...])`) can be slower than vectorized operations because of interpreter overhead. However, using inline ternary expressions (e.g. `a if a < b else b`) for scalar bounds mapping is faster than functions like `min/max` or `np.clip`. `math.floor` is also faster than `np.floor` for scalar floats.
+**Action:** Always test Python math micro-optimizations inside representative performance test gates using realistic array and loop boundaries before concluding speedups hold. Avoid de-optimizing NumPy if vectorization avoids a deep `__getitem__` interpreter hot loop.

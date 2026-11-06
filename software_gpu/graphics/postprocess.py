@@ -6,6 +6,7 @@ HDR Bloom / Glow, and ACES Filmic Tone Mapping with Gamma 2.2 Correction.
 
 from typing import Tuple, List, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -214,10 +215,26 @@ class MSAARasterizer:
              v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(self.msaa_fb.width - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(self.msaa_fb.height - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # ⚡ Bolt Optimization: Use inline ternary expressions for min/max
+            # to avoid the overhead of function calls. Use math.floor/ceil instead of np.floor/ceil
+            s00, s10, s20 = float(s0[0]), float(s1[0]), float(s2[0])
+            s01, s11, s21 = float(s0[1]), float(s1[1]), float(s2[1])
+
+            min_x = s00 if s00 < s10 else s10
+            min_x = min_x if min_x < s20 else s20
+            min_x = max(0, int(math.floor(min_x)))
+
+            max_x = s00 if s00 > s10 else s10
+            max_x = max_x if max_x > s20 else s20
+            max_x = min(self.msaa_fb.width - 1, int(math.ceil(max_x)))
+
+            min_y = s01 if s01 < s11 else s11
+            min_y = min_y if min_y < s21 else s21
+            min_y = max(0, int(math.floor(min_y)))
+
+            max_y = s01 if s01 > s11 else s11
+            max_y = max_y if max_y > s21 else s21
+            max_y = min(self.msaa_fb.height - 1, int(math.ceil(max_y)))
 
             if min_x > max_x or min_y > max_y:
                 continue
