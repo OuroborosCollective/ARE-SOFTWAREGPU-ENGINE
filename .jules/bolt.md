@@ -18,3 +18,6 @@
 ## 2026-10-26 - Geometry vector bounds consolidation (#176 into #177)
 **Learning:** Preserve the exact signed homogeneous plane predicates and fixed three-vertex order while removing a temporary `(F,3,7)` stack; real raster parity is the authority, not isolated Python-array speed claims.
 **Action:** Use in-place `np.logical_and` per plane/vertex, preserve float64 clip-distance input and existing float32 screen projection; require exact geometry-oracle and renderer CI on the combined branch before integration.
+## $(date +%Y-%m-%d) - math.floor over np.floor
+**Learning:** In highly iterated Python loops, manual scalar unrolling of small NumPy array math or using `np.floor()` and `np.ceil()` on primitive scalars can be significantly slower than vectorized operations due to CPython interpreter overhead and dynamic dispatch and type-checking logic.
+**Action:** Replacing `np.floor()` and `np.ceil()` on primitive scalars with `math.floor()` and `math.ceil()` significantly reduces execution overhead. Additionally, in Python 3, `math.floor` and `math.ceil` return `int` directly, cleanly removing the need for redundant `int()` casting around the result.
