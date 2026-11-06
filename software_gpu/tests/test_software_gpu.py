@@ -26,8 +26,8 @@ from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.redirector.cuda_runtime import cuda
 from software_gpu.redirector.interceptor import GPURedirector
 
-
 class TestSoftwareGPU(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.device = VirtualGPU.get_current_device()
@@ -242,7 +242,6 @@ class TestSoftwareGPU(unittest.TestCase):
         self.assertEqual(stats["redirected_from"], "cuda")
         self.assertIn("SoftwareGPU", stats["redirected_to"])
         np.testing.assert_allclose(res, A @ B, rtol=1e-5, atol=1e-5)
-
 
 if __name__ == "__main__":
     unittest.main()
