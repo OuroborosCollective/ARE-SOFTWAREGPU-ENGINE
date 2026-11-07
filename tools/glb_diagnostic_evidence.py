@@ -265,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", default="-")
     args = parser.parse_args(argv)
     try:
+        _need(args.glb.stat().st_size <= MAX_SOURCE_BYTES, "SOURCE_SIZE_INVALID")
         raw = args.glb.read_bytes()
         result = inspect_diagnostic_glb(raw, max_triangles=args.max_triangles)
     except (ValueError, OSError) as exc:
