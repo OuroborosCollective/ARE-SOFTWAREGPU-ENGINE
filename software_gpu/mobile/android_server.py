@@ -12,6 +12,20 @@ from typing import Optional
 
 from ..network.dispatcher import GPUCommandDispatcher
 from ..network.protocol import unpack_header, pack_message, MsgType, HEADER_SIZE
+from ..network.security import validate_request, SecurityLimits, bounded_json
+
+
+def _reject_nonfinite(_value):
+    raise ValueError("REQUEST_INVALID")
+
+
+def _correlatable_id(value):
+    """Echo only bounded JSON-RPC IDs, never arbitrary client objects."""
+    if type(value) is str and len(value) <= 128:
+        return value
+    if type(value) is int and value.bit_length() <= 64:
+        return value
+    return None
 
 
 class AndroidIPCServer(threading.Thread):
@@ -65,26 +79,68 @@ class AndroidIPCServer(threading.Thread):
                 break
 
     def _handle_client(self, client_sock: socket.socket):
+        limits = SecurityLimits()
         with client_sock:
+            client_sock.settimeout(limits.io_timeout_seconds)
             while self._running:
-                header_bytes = self._recv_all(client_sock, HEADER_SIZE)
-                if not header_bytes:
-                    break
-                msg_type, flags, payload_len = unpack_header(header_bytes)
-                payload_bytes = self._recv_all(client_sock, payload_len)
-
-                req = json.loads(payload_bytes.decode("utf-8"))
-                method = req.get("method", "")
-                params = req.get("params", {})
-                req_id = req.get("id")
-
+                req_id = None
+                # Fail closed while any framed bytes remain unread. An invalid
+                # header/type/length cannot be safely resynchronized.
+                close_after_response = True
                 try:
+                    header_bytes = self._recv_all(client_sock, HEADER_SIZE)
+                    if not header_bytes:
+                        break
+                    msg_type, flags, payload_len = unpack_header(header_bytes)
+                    # The generic binary frame permits 1 MiB; UDS RPC has a
+                    # stricter 262 KiB request policy, enforced BEFORE reading
+                    # the body, JSON decoding, or allocating a tensor.
+                    if payload_len > limits.max_request_bytes:
+                        raise ValueError("REQUEST_SIZE_LIMIT")
+                    if msg_type != MsgType.JSON_REQUEST or flags != 0:
+                        raise ValueError("MESSAGE_TYPE_NOT_ALLOWED")
+                    payload_bytes = self._recv_all(client_sock, payload_len)
+                    if len(payload_bytes) != payload_len:
+                        raise ValueError("REQUEST_INVALID")
+                    # A fully consumed body can yield a JSON/schema error and
+                    # still leave the next framed request at a valid boundary.
+                    close_after_response = False
+                    req = json.loads(payload_bytes.decode("utf-8"),
+                                     parse_constant=_reject_nonfinite)
+                    if type(req) is not dict:
+                        raise ValueError("REQUEST_INVALID")
+                    # Validate the entire document, including request ID, before
+                    # constructing a response or invoking the dispatcher.
+                    candidate_id = req.get("id")
+                    req_id = _correlatable_id(candidate_id)
+                    bounded_json(req)
+                    if candidate_id is not None and req_id is None:
+                        raise ValueError("REQUEST_INVALID")
+                    method = req.get("method", "")
+                    params = req.get("params", {})
+                    validate_request(method, params, limits)
                     res_data = self.dispatcher.handle_request(method, params)
                     resp_bytes = pack_message(MsgType.JSON_RESPONSE, {"result": res_data, "id": req_id})
-                except Exception as e:
-                    resp_bytes = pack_message(MsgType.ERROR, {"error": str(e), "id": req_id})
-
-                client_sock.sendall(resp_bytes)
+                except socket.timeout:
+                    # An idle/incomplete read has no valid response correlation.
+                    # Close rather than emitting an unsolicited error frame.
+                    break
+                except (json.JSONDecodeError, UnicodeError):
+                    resp_bytes = pack_message(MsgType.ERROR, {"error": "REQUEST_INVALID", "id": req_id})
+                except (ValueError, TypeError, KeyError, OSError) as exc:
+                    code = str(exc)
+                    if not code or code.startswith("Expecting") or code.startswith("Invalid"):
+                        code = "REQUEST_INVALID"
+                    resp_bytes = pack_message(MsgType.ERROR, {"error": code, "id": req_id})
+                except Exception:
+                    # Unexpected dispatcher failure must not leak stack traces.
+                    resp_bytes = pack_message(MsgType.ERROR, {"error": "REQUEST_FAILED", "id": req_id})
+                try:
+                    client_sock.sendall(resp_bytes)
+                except OSError:
+                    break
+                if close_after_response:
+                    break
 
     def _recv_all(self, sock: socket.socket, length: int) -> bytes:
         data = bytearray()

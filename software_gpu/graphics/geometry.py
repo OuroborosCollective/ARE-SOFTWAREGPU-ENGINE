@@ -35,20 +35,21 @@ def edge_covered(value, a: np.ndarray, b: np.ndarray):
 
 
 def _distance(position: np.ndarray, plane: int) -> float:
-    x, y, z, w = position
+    # Indexing avoids temporary tuple unpacking in this clipping hot path.
+    # No quantitative speedup is claimed without a source-bound CPU receipt.
     if plane == 0:
-        return w + x
+        return position[3] + position[0]
     if plane == 1:
-        return w - x
+        return position[3] - position[0]
     if plane == 2:
-        return w + y
+        return position[3] + position[1]
     if plane == 3:
-        return w - y
+        return position[3] - position[1]
     if plane == 4:
-        return w + z
+        return position[3] + position[2]
     if plane == 5:
-        return w - z
-    return w - _MIN_W
+        return position[3] - position[2]
+    return position[3] - _MIN_W
 
 
 def _interpolate(first, second, fraction: float):
