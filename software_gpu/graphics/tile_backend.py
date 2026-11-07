@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+import math
 from .geometry import edge_covered
 
 
@@ -60,10 +61,12 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        # ⚡ Bolt Optimization: Replace np.floor/np.ceil on scalars with math.floor/math.ceil
+        # This eliminates Numpy's dynamic dispatch overhead in the hot loop
+        x0 = max(0, math.floor(min(s0[0], s1[0], s2[0])))
+        x1 = min(frame_w - 1, math.ceil(max(s0[0], s1[0], s2[0])))
+        y0 = max(0, math.floor(min(s0[1], s1[1], s2[1])))
+        y1 = min(frame_h - 1, math.ceil(max(s0[1], s1[1], s2[1])))
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
