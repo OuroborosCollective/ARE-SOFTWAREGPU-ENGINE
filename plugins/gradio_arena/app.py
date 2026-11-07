@@ -49,7 +49,7 @@ def make_job(seed: int, pixels: int, backend: str) -> dict:
 
 def execute(seed: int, pixels: int, backend: str):
     """Run the real bounded subprocess, hash-check disk outputs before exposure."""
-    from PIL import Image
+    from PIL import Image, BmpImagePlugin  # register BMP decoder before worker execution
     from software_gpu.integrations.aurion.offline_render_worker import run_job
 
     job = make_job(seed, pixels, backend)
