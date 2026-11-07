@@ -218,7 +218,9 @@ def validate_request(method, params, limits: SecurityLimits) -> None:
         return
     if method == "activation":
         tensor_shape(params.get("x"), limits)
-        if params.get("type", "relu") not in ("relu", "gelu"):
+        activation_type = params.get("type", "relu")
+        if (not isinstance(activation_type, str)
+                or activation_type.lower() not in ("relu", "gelu")):
             raise RequestRejected("ACTIVATION_UNSUPPORTED")
         return
     if method in ("physics_step", "boids_swarm"):
