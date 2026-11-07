@@ -48,6 +48,21 @@ class AndroidIpcValidationTest(unittest.TestCase):
         self.assertEqual(body["id"], 9)
         self.assertIn("name", body["result"])
 
+    def test_uppercase_activation_executes_real_local_dispatcher(self):
+        import numpy as np
+        from software_gpu.network.protocol import decode_tensor_base64
+
+        self.client.sendall(pack_message(MsgType.JSON_REQUEST, {
+            "method": "activation",
+            "params": {"x": [[-2.0, 0.5]], "type": "RELU"},
+            "id": 42,
+        }))
+        kind, body = self.response()
+        self.assertEqual(kind, MsgType.JSON_RESPONSE)
+        self.assertEqual(body["id"], 42)
+        result = decode_tensor_base64(body["result"]["result"])
+        np.testing.assert_array_equal(result, np.array([[0.0, 0.5]], dtype=np.float32))
+
     def test_predecode_rejects_oversized_payload_length_without_body(self):
         # 262145 is below the generic 1MiB frame cap but exceeds the stricter UDS request cap.
         size = SecurityLimits().max_request_bytes + 1
