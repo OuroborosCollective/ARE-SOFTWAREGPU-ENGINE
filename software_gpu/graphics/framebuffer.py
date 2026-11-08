@@ -51,8 +51,8 @@ class Framebuffer:
             f.write(header)
             f.write(rgb.tobytes())
 
-    def save_bmp(self, file_path: str) -> None:
-        """Exports the framebuffer as an uncompressed 24-bit BMP image file."""
+    def to_bmp_bytes(self) -> bytes:
+        """Exports the framebuffer as an uncompressed 24-bit BMP image byte string."""
         w, h = self.width, self.height
         row_stride = (w * 3 + 3) & ~3
         img_size = row_stride * h
@@ -96,51 +96,9 @@ class Framebuffer:
         else:
             pixel_data = bgr.tobytes()
 
-        with open(file_path, "wb") as f:
-            f.write(bmp_header)
-            f.write(dib_header)
-            f.write(pixel_data)
-
-    def to_bmp_bytes(self) -> bytes:
-        """Exports the framebuffer as an uncompressed 24-bit BMP image byte string."""
-        w, h = self.width, self.height
-        row_stride = (w * 3 + 3) & ~3
-        img_size = row_stride * h
-        file_size = 54 + img_size
-
-        bmp_header = struct.pack(
-            "<2sIHHI",
-            b"BM",
-            file_size,
-            0,
-            0,
-            54
-        )
-        dib_header = struct.pack(
-            "<IIIHHIIIIII",
-            40,
-            w,
-            h,  # bottom-to-top order
-            1,  # planes
-            24, # bpp
-            0,  # uncompressed BI_RGB
-            img_size,
-            2835, # 72 DPI
-            2835,
-            0,
-            0
-        )
-
-        bgr = self.color_buffer[::-1, :, :3][..., [2, 1, 0]]
-
-        padding = row_stride - (w * 3)
-        if padding > 0:
-            padded_rows = []
-            pad_bytes = bytes(padding)
-            for row in bgr:
-                padded_rows.append(row.tobytes() + pad_bytes)
-            pixel_data = b"".join(padded_rows)
-        else:
-            pixel_data = bgr.tobytes()
-
         return bmp_header + dib_header + pixel_data
+
+    def save_bmp(self, file_path: str) -> None:
+        """Exports the framebuffer as an uncompressed 24-bit BMP image file."""
+        with open(file_path, "wb") as f:
+            f.write(self.to_bmp_bytes())
