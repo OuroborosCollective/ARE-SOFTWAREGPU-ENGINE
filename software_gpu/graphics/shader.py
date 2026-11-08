@@ -174,9 +174,11 @@ class BlinnPhongShader(Shader):
 
         # World normal
         world_normal = self.normal_matrix @ vertex.normal
-        norm_len = np.linalg.norm(world_normal)
-        if norm_len > 1e-6:
-            world_normal /= norm_len
+        nx, ny, nz = world_normal[0], world_normal[1], world_normal[2]
+        n_sqr = nx*nx + ny*ny + nz*nz
+        if n_sqr > 1e-12:
+            n_len = math.sqrt(n_sqr)
+            world_normal = world_normal / n_len
 
         varyings = {
             'normal': world_normal,
@@ -189,8 +191,10 @@ class BlinnPhongShader(Shader):
 
     def fragment_shader(self, varyings: dict) -> Tuple[int, int, int, int]:
         normal = varyings['normal']
-        n_len = math.sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2])
-        if n_len > 1e-6:
+        nx, ny, nz = normal[0], normal[1], normal[2]
+        n_sqr = nx*nx + ny*ny + nz*nz
+        if n_sqr > 1e-12:
+            n_len = math.sqrt(n_sqr)
             normal = normal / n_len
 
         # Base surface color (either from texture or vertex/material diffuse)
@@ -211,7 +215,8 @@ class BlinnPhongShader(Shader):
 
         # Diffuse component (Lambertian)
         # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-        diff = max(0.0, float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2]))
+        dot_diff = float(normal[0]*self.light_dir[0] + normal[1]*self.light_dir[1] + normal[2]*self.light_dir[2])
+        diff = dot_diff if dot_diff > 0.0 else 0.0
         diffuse = base_color * self.light_color * diff
 
         # Ambient component
@@ -225,15 +230,18 @@ class BlinnPhongShader(Shader):
         cache = self._half_cache
         if cache is None or cache[0] != light_key:
             half_dir = self.light_dir + self._view_dir
-            half_len = np.linalg.norm(half_dir)
-            valid = bool(half_len > 1e-6)
+            hx, hy, hz = half_dir[0], half_dir[1], half_dir[2]
+            h_sqr = hx*hx + hy*hy + hz*hz
+            valid = bool(h_sqr > 1e-12)
             if valid:
-                half_dir /= half_len
+                half_len = math.sqrt(h_sqr)
+                half_dir = half_dir / half_len
             cache = (light_key, half_dir, valid)
             self._half_cache = cache
         if cache[2]:
             # Inline dot product eliminates NumPy dispatch overhead in fragment loop
-            spec = max(0.0, float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])) ** self.shininess
+            dot_spec = float(normal[0]*cache[1][0] + normal[1]*cache[1][1] + normal[2]*cache[1][2])
+            spec = (dot_spec if dot_spec > 0.0 else 0.0) ** self.shininess
         else:
             spec = 0.0
         specular = self.specular_color * self.light_color * spec
