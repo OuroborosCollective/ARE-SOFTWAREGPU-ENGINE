@@ -7,14 +7,13 @@ early-Z depth testing, and perspective-correct interpolation.
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
 from ..core.device import VirtualGPU
 from .tile_backend import rasterize_tiles
 from .geometry import prepare_triangles, is_top_left
-
-
 
 class SoftwareRasterizer:
     """CPU renderer with selectable tile and historical band backends.
@@ -129,11 +128,30 @@ class SoftwareRasterizer:
         """Rasterizes triangles that overlap the vertical band [y_start, y_end)."""
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
+            # ⚡ Bolt Optimization: Replacing min/max and np.floor/ceil with inline ternary
+            # operators and math.floor/ceil to eliminate function call overhead and
+            # NumPy dispatch overhead in this hot path.
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            s0_0, s1_0, s2_0 = s0[0], s1[0], s2[0]
+            s0_1, s1_1, s2_1 = s0[1], s1[1], s2[1]
+            min_s_0 = s0_0 if s0_0 < s1_0 else s1_0
+            min_s_0 = min_s_0 if min_s_0 < s2_0 else s2_0
+            max_s_0 = s0_0 if s0_0 > s1_0 else s1_0
+            max_s_0 = max_s_0 if max_s_0 > s2_0 else s2_0
+            min_s_1 = s0_1 if s0_1 < s1_1 else s1_1
+            min_s_1 = min_s_1 if min_s_1 < s2_1 else s2_1
+            max_s_1 = s0_1 if s0_1 > s1_1 else s1_1
+            max_s_1 = max_s_1 if max_s_1 > s2_1 else s2_1
+
+            min_x = math.floor(min_s_0)
+            min_x = 0 if min_x < 0 else min_x
+            max_x = math.ceil(max_s_0)
+            max_x = fb_w - 1 if max_x > fb_w - 1 else max_x
+
+            min_y = math.floor(min_s_1)
+            min_y = y_start if min_y < y_start else min_y
+            max_y = math.ceil(max_s_1)
+            max_y = y_end - 1 if max_y > y_end - 1 else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue

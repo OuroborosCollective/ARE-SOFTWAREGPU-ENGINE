@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from .geometry import edge_covered
+import math
 
+from .geometry import edge_covered
 
 def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
     """Count bounded rectangles in O(1), without a second pass over every bin."""
@@ -36,7 +37,6 @@ def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
     return pairs, sum(nw * nh for w, nw in widths.items() for h, nh in heights.items()
                       if w * h < scan_min_samples)
 
-
 @dataclass(frozen=True)
 class TileBins:
     """Prepared candidate order only; no coverage, visibility or depth results."""
@@ -50,7 +50,6 @@ class TileBins:
     binned_pairs: int
     small_pairs: int
 
-
 def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     """Pure setup shared by uncached draws and the explicit preparation cache."""
     bins = defaultdict(list)
@@ -60,10 +59,30 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+
+        # ⚡ Bolt Optimization: Replacing min/max and np.floor/ceil with inline ternary
+        # operators and math.floor/ceil to eliminate function call overhead and
+        # NumPy dispatch overhead in this hot path.
+        s0_0, s1_0, s2_0 = s0[0], s1[0], s2[0]
+        s0_1, s1_1, s2_1 = s0[1], s1[1], s2[1]
+        min_s_0 = s0_0 if s0_0 < s1_0 else s1_0
+        min_s_0 = min_s_0 if min_s_0 < s2_0 else s2_0
+        max_s_0 = s0_0 if s0_0 > s1_0 else s1_0
+        max_s_0 = max_s_0 if max_s_0 > s2_0 else s2_0
+        min_s_1 = s0_1 if s0_1 < s1_1 else s1_1
+        min_s_1 = min_s_1 if min_s_1 < s2_1 else s2_1
+        max_s_1 = s0_1 if s0_1 > s1_1 else s1_1
+        max_s_1 = max_s_1 if max_s_1 > s2_1 else s2_1
+
+        x0 = math.floor(min_s_0)
+        x0 = 0 if x0 < 0 else x0
+        x1 = math.ceil(max_s_0)
+        x1 = frame_w - 1 if x1 > frame_w - 1 else x1
+
+        y0 = math.floor(min_s_1)
+        y0 = 0 if y0 < 0 else y0
+        y1 = math.ceil(max_s_1)
+        y1 = frame_h - 1 if y1 > frame_h - 1 else y1
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
@@ -81,7 +100,6 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     tasks = tuple((coordinate, tuple(candidates)) for coordinate, candidates in sorted(bins.items()))
     return TileBins(triangles, width, height, tile_size, scan_min_samples,
                     tasks, bbox_samples, binned_pairs, small_pairs)
-
 
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     executor: Executor, workers: int, compiled: bool = False,
