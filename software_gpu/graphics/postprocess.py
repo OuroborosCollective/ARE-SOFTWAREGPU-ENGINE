@@ -6,6 +6,7 @@ HDR Bloom / Glow, and ACES Filmic Tone Mapping with Gamma 2.2 Correction.
 
 from typing import Tuple, List, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -224,10 +225,22 @@ class MSAARasterizer:
              v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(self.msaa_fb.width - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(self.msaa_fb.height - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            min_x_val = s0[0] if s0[0] < s1[0] else s1[0]
+            min_x_val = min_x_val if min_x_val < s2[0] else s2[0]
+            # Optimization: Use math.floor instead of np.floor to avoid NumPy dispatch overhead in hot loop
+            min_x = max(0, math.floor(min_x_val))
+            max_x_val = s0[0] if s0[0] > s1[0] else s1[0]
+            max_x_val = max_x_val if max_x_val > s2[0] else s2[0]
+            # Optimization: Use math.ceil instead of np.ceil to avoid NumPy dispatch overhead in hot loop
+            max_x = min(self.msaa_fb.width - 1, math.ceil(max_x_val))
+            min_y_val = s0[1] if s0[1] < s1[1] else s1[1]
+            min_y_val = min_y_val if min_y_val < s2[1] else s2[1]
+            # Optimization: Use math.floor instead of np.floor to avoid NumPy dispatch overhead in hot loop
+            min_y = max(0, math.floor(min_y_val))
+            max_y_val = s0[1] if s0[1] > s1[1] else s1[1]
+            max_y_val = max_y_val if max_y_val > s2[1] else s2[1]
+            # Optimization: Use math.ceil instead of np.ceil to avoid NumPy dispatch overhead in hot loop
+            max_y = min(self.msaa_fb.height - 1, math.ceil(max_y_val))
 
             if min_x > max_x or min_y > max_y:
                 continue
@@ -259,9 +272,15 @@ class MSAARasterizer:
 
                     # Evaluate fragment shader once per pixel (standard MSAA optimization)
                     center_pt = np.array([px + 0.5, py + 0.5], dtype=np.float32)
-                    cw0 = max(0.0, edge_function(s1, s2, center_pt)) * inv_area
-                    cw1 = max(0.0, edge_function(s2, s0, center_pt)) * inv_area
-                    cw2 = max(0.0, edge_function(s0, s1, center_pt)) * inv_area
+                    cw0_val = edge_function(s1, s2, center_pt)
+                    # Optimization: Inline ternary expression avoids max() function call overhead in hot loop
+                    cw0 = (cw0_val if cw0_val > 0.0 else 0.0) * inv_area
+                    cw1_val = edge_function(s2, s0, center_pt)
+                    # Optimization: Inline ternary expression avoids max() function call overhead in hot loop
+                    cw1 = (cw1_val if cw1_val > 0.0 else 0.0) * inv_area
+                    cw2_val = edge_function(s0, s1, center_pt)
+                    # Optimization: Inline ternary expression avoids max() function call overhead in hot loop
+                    cw2 = (cw2_val if cw2_val > 0.0 else 0.0) * inv_area
                     c_sum = cw0 + cw1 + cw2
                     if c_sum > 1e-6:
                         cw0 /= c_sum
