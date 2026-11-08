@@ -13,6 +13,7 @@ from concurrent.futures import Executor
 from dataclasses import dataclass
 from typing import Any
 
+import math
 import numpy as np
 from .geometry import edge_covered
 
@@ -60,10 +61,34 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        # Optimization: Use math.floor/ceil and inline ternary operators instead of
+        # np.floor/ceil and built-in min/max functions to significantly reduce
+        # function call overhead in this hot path.
+        s0x, s0y = s0[0], s0[1]
+        s1x, s1y = s1[0], s1[1]
+        s2x, s2y = s2[0], s2[1]
+
+        min_x_val = s0x if s0x < s1x else s1x
+        min_x_val = min_x_val if min_x_val < s2x else s2x
+        x0 = math.floor(min_x_val)
+        x0 = 0 if x0 < 0 else x0
+
+        max_x_val = s0x if s0x > s1x else s1x
+        max_x_val = max_x_val if max_x_val > s2x else s2x
+        x1 = math.ceil(max_x_val)
+        fw_m1 = frame_w - 1
+        x1 = fw_m1 if x1 > fw_m1 else x1
+
+        min_y_val = s0y if s0y < s1y else s1y
+        min_y_val = min_y_val if min_y_val < s2y else s2y
+        y0 = math.floor(min_y_val)
+        y0 = 0 if y0 < 0 else y0
+
+        max_y_val = s0y if s0y > s1y else s1y
+        max_y_val = max_y_val if max_y_val > s2y else s2y
+        y1 = math.ceil(max_y_val)
+        fh_m1 = frame_h - 1
+        y1 = fh_m1 if y1 > fh_m1 else y1
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:

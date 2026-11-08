@@ -6,6 +6,7 @@ early-Z depth testing, and perspective-correct interpolation.
 
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
+import math
 import numpy as np
 
 from .framebuffer import Framebuffer
@@ -130,10 +131,34 @@ class SoftwareRasterizer:
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            # Optimization: Use math.floor/ceil and inline ternary operators instead of
+            # np.floor/ceil and built-in min/max functions to significantly reduce
+            # function call overhead in this hot path.
+            s0x, s0y = s0[0], s0[1]
+            s1x, s1y = s1[0], s1[1]
+            s2x, s2y = s2[0], s2[1]
+
+            min_x_val = s0x if s0x < s1x else s1x
+            min_x_val = min_x_val if min_x_val < s2x else s2x
+            min_x = math.floor(min_x_val)
+            min_x = 0 if min_x < 0 else min_x
+
+            max_x_val = s0x if s0x > s1x else s1x
+            max_x_val = max_x_val if max_x_val > s2x else s2x
+            max_x = math.ceil(max_x_val)
+            fb_w_m1 = fb_w - 1
+            max_x = fb_w_m1 if max_x > fb_w_m1 else max_x
+
+            min_y_val = s0y if s0y < s1y else s1y
+            min_y_val = min_y_val if min_y_val < s2y else s2y
+            min_y = math.floor(min_y_val)
+            min_y = y_start if min_y < y_start else min_y
+
+            max_y_val = s0y if s0y > s1y else s1y
+            max_y_val = max_y_val if max_y_val > s2y else s2y
+            max_y = math.ceil(max_y_val)
+            y_end_m1 = y_end - 1
+            max_y = y_end_m1 if max_y > y_end_m1 else max_y
 
             if min_x > max_x or min_y > max_y:
                 continue

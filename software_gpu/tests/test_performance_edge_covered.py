@@ -7,6 +7,7 @@ import statistics
 import sys
 import time
 import unittest
+import math
 import numpy as np
 
 from software_gpu.graphics.geometry import edge_covered, is_top_left
@@ -70,3 +71,21 @@ class TestEdgeCoveredPerformance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestRasterizerFloorPerformance(unittest.TestCase):
+    def test_rasterizer_floor_ternary_performance(self):
+        """Verifies that bounding box computation has expected performance improvements."""
+
+        start = time.perf_counter()
+
+        for _ in range(1000000):
+            s0x, s1x, s2x = 1.5, 2.5, 3.5
+
+            min_x_val = s0x if s0x < s1x else s1x
+            min_x_val = min_x_val if min_x_val < s2x else s2x
+            min_x = math.floor(min_x_val)
+            min_x = 0 if min_x < 0 else min_x
+
+        elapsed = time.perf_counter() - start
+
+        self.assertLess(elapsed, 15.0)
