@@ -6,6 +6,7 @@ HDR Bloom / Glow, and ACES Filmic Tone Mapping with Gamma 2.2 Correction.
 
 from typing import Tuple, List, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -224,10 +225,10 @@ class MSAARasterizer:
              v0_var, v1_var, v2_var, area) in triangles:
             inv_area = 1.0 / area
 
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(self.msaa_fb.width - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(self.msaa_fb.height - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            min_x = max(0, math.floor(min(s0[0], s1[0], s2[0])))
+            max_x = min(self.msaa_fb.width - 1, math.ceil(max(s0[0], s1[0], s2[0])))
+            min_y = max(0, math.floor(min(s0[1], s1[1], s2[1])))
+            max_y = min(self.msaa_fb.height - 1, math.ceil(max(s0[1], s1[1], s2[1])))
 
             if min_x > max_x or min_y > max_y:
                 continue

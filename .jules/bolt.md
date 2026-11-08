@@ -26,3 +26,7 @@
 ## 2026-11-03 - np.clip in-place optimization and safe framebuffer clearing
 **Learning:** Utilizing `out=` in numpy functions like `np.clip` avoids redundant full-screen array allocations per frame during post-processing, significantly boosting speed. When implementing framebuffer clear optimizations using 32-bit packed color integers, explicitly casting RGB integer components to Python `int()` before bitwise shifts is critical to prevent silent integer overflow errors on varying CPU architectures.
 **Action:** When working with full-frame numpy transformations (e.g. bloom or HDR tone mapping), always check for opportunities to perform the operations in-place by supplying the array to the `out=` argument. When writing bit manipulation code on arrays initialized with uint8/uint32 formats, manually cast variables to unbounded Python ints during shifts to ensure platform safety.
+
+## $(date +%Y-%m-%d) - NumPy np.floor and np.ceil Overhead
+**Learning:** Using `np.floor` and `np.ceil` on standard scalar variables in high-frequency innermost loops like triangle rasterization (bounding box calculation) incurs noticeable Python dispatch/checking overhead compared to the standard library `math.floor` and `math.ceil`.
+**Action:** Always replace `np.floor` and `np.ceil` on simple types with `math.floor` and `math.ceil` in Python hot loops to avoid NumPy type casting and function call overhead, thereby speeding up execution. Be sure to import math where necessary.
