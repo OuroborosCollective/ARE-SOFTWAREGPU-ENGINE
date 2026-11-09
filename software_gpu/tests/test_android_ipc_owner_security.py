@@ -88,6 +88,18 @@ class AndroidOwnerBoundIpcTest(unittest.TestCase):
                 server.stop()
             self.assertTrue((private / "ipc.sock").is_symlink())
 
+    def test_dotdot_path_cannot_bypass_private_parent_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private = Path(directory) / "private"
+            private.mkdir(mode=0o700)
+            noncanonical = str(private / ".." / "ipc.sock")
+            server = AndroidIPCServer(socket_path=noncanonical, abstract_name=None)
+            server.start()
+            server.join(timeout=2)
+            self.assertIsNotNone(server.startup_error)
+            self.assertFalse((Path(directory) / "ipc.sock").exists())
+            server.stop()
+
     def test_rejects_different_expected_uid_before_request_dispatch(self):
         a, b = socket.socketpair(socket.AF_UNIX)
         server = AndroidIPCServer(abstract_name=None, owner_uid=os.geteuid() + 1)
