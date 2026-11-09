@@ -7,6 +7,7 @@ early-Z depth testing, and perspective-correct interpolation.
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -130,10 +131,26 @@ class SoftwareRasterizer:
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            v0x, v1x, v2x = s0[0], s1[0], s2[0]
+            min_vx = v0x if v0x < v1x else v1x
+            min_vx = min_vx if min_vx < v2x else v2x
+            min_x = 0 if min_vx < 0 else int(min_vx) # min_vx >= 0, so int acts like floor
+
+            max_vx = v0x if v0x > v1x else v1x
+            max_vx = max_vx if max_vx > v2x else v2x
+            max_vx_c = math.ceil(max_vx)
+            max_x = fb_w - 1 if max_vx_c > fb_w - 1 else max_vx_c
+
+            v0y, v1y, v2y = s0[1], s1[1], s2[1]
+            min_vy = v0y if v0y < v1y else v1y
+            min_vy = min_vy if min_vy < v2y else v2y
+            min_vy_f = math.floor(min_vy)
+            min_y = y_start if min_vy_f < y_start else min_vy_f
+
+            max_vy = v0y if v0y > v1y else v1y
+            max_vy = max_vy if max_vy > v2y else v2y
+            max_vy_c = math.ceil(max_vy)
+            max_y = y_end - 1 if max_vy_c > y_end - 1 else max_vy_c
 
             if min_x > max_x or min_y > max_y:
                 continue

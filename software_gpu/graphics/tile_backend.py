@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+import math
 from .geometry import edge_covered
 
 
@@ -60,10 +61,25 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        v0x, v1x, v2x = s0[0], s1[0], s2[0]
+        min_vx = v0x if v0x < v1x else v1x
+        min_vx = min_vx if min_vx < v2x else v2x
+        x0 = 0 if min_vx < 0 else int(min_vx) # min_vx >= 0, so int acts like floor
+
+        max_vx = v0x if v0x > v1x else v1x
+        max_vx = max_vx if max_vx > v2x else v2x
+        max_vx_c = math.ceil(max_vx)
+        x1 = frame_w - 1 if max_vx_c > frame_w - 1 else max_vx_c
+
+        v0y, v1y, v2y = s0[1], s1[1], s2[1]
+        min_vy = v0y if v0y < v1y else v1y
+        min_vy = min_vy if min_vy < v2y else v2y
+        y0 = 0 if min_vy < 0 else int(min_vy) # min_vy >= 0, so int acts like floor
+
+        max_vy = v0y if v0y > v1y else v1y
+        max_vy = max_vy if max_vy > v2y else v2y
+        max_vy_c = math.ceil(max_vy)
+        y1 = frame_h - 1 if max_vy_c > frame_h - 1 else max_vy_c
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
