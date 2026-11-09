@@ -1,3 +1,4 @@
+from unittest import mock
 """Real Blinn-Phong RGBA semantics before/after inlining scalar clamp.
 
 CPU-only exact-output tests. Microbenchmark results are separately measured
@@ -203,3 +204,41 @@ class VertexColorBatchAllocationParity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class MathFloorCeilOptimizationTest(unittest.TestCase):
+    @mock.patch('numpy.floor')
+    @mock.patch('numpy.ceil')
+    def test_math_floor_ceil_used_instead_of_numpy(self, mock_np_ceil, mock_np_floor):
+        """Ensures that math.floor and math.ceil are used in tile rasterization hot paths instead of numpy."""
+        from software_gpu.graphics.tile_backend import bin_triangles
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader
+        from software_gpu.graphics.postprocess import MSAAFramebuffer
+        from software_gpu.graphics.postprocess import MSAARasterizer
+        import numpy as np
+
+        # Test tile_backend
+        triangles = [
+            (np.array([0.0, 0.0, 0.0]), np.array([10.0, 0.0, 0.0]), np.array([0.0, 10.0, 0.0]))
+        ]
+        bin_triangles(triangles, 128, 128, 16)
+
+        # Test rasterizer
+        fb = Framebuffer(128, 128)
+        rast = SoftwareRasterizer(fb)
+        triangles = [(np.array([10.0, 10.0, 0.5]), np.array([100.0, 10.0, 0.5]), np.array([10.0, 100.0, 0.5]), 1.0, 1.0, 1.0, {}, {}, {}, 1.0)]
+        rast._rasterize_band(triangles, Shader(), 0, 128)
+
+        # Test postprocess
+        msaa_fb = MSAAFramebuffer(128, 128)
+        msaa_rast = MSAARasterizer(msaa_fb)
+        triangles_msaa = [(np.array([10.0, 10.0, 0.5]), np.array([100.0, 10.0, 0.5]), np.array([10.0, 100.0, 0.5]), 1.0, 1.0, 1.0, {}, {}, {}, 1.0)]
+
+        # MSAA is more annoying because it expects prepare_triangles output inside draw_mesh
+        # so let's mock prepare_triangles
+        with unittest.mock.patch('software_gpu.graphics.postprocess.prepare_triangles', return_value=triangles_msaa):
+            msaa_rast.draw_mesh([], [], Shader())
+
+        mock_np_floor.assert_not_called()
+        mock_np_ceil.assert_not_called()
