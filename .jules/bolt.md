@@ -26,3 +26,7 @@
 ## 2026-11-03 - np.clip in-place optimization and safe framebuffer clearing
 **Learning:** Utilizing `out=` in numpy functions like `np.clip` avoids redundant full-screen array allocations per frame during post-processing, significantly boosting speed. When implementing framebuffer clear optimizations using 32-bit packed color integers, explicitly casting RGB integer components to Python `int()` before bitwise shifts is critical to prevent silent integer overflow errors on varying CPU architectures.
 **Action:** When working with full-frame numpy transformations (e.g. bloom or HDR tone mapping), always check for opportunities to perform the operations in-place by supplying the array to the `out=` argument. When writing bit manipulation code on arrays initialized with uint8/uint32 formats, manually cast variables to unbounded Python ints during shifts to ensure platform safety.
+
+## 2026-11-10 - Replacing np.floor and np.ceil with inline ternaries and math functions
+**Learning:** In the SoftwareGPU pipeline's hot paths (e.g. bounding box calculation for rasterizer), replacing `np.floor` and `np.ceil` inside small expressions like `max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))` with inline ternary operators combined with math.ceil and math.floor provides a substantial performance speedup by reducing python built-in overhead and function calls.
+**Action:** When calculating AABB bounds or other hotpath minimums/maximums, consider replacing built-in `min`, `max`, and `np.floor`/`np.ceil` calls with inline ternary expressions to eliminate overhead.
