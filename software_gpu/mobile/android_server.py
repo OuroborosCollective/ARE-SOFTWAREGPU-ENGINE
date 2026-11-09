@@ -127,6 +127,10 @@ class AndroidIPCServer(threading.Thread):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 try:
                     sock.bind(path)
+                    # Record the kernel socket identity immediately after bind:
+                    # even chmod/listen failure must clean only our own socket.
+                    info = os.lstat(path)
+                    self._owned_fs_socket = (info.st_dev, info.st_ino)
                     os.chmod(path, 0o600)
                     info = os.lstat(path)
                     if (not stat.S_ISSOCK(info.st_mode)
