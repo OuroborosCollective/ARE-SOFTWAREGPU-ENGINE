@@ -110,6 +110,38 @@ class TestFramebufferContract(unittest.TestCase):
             last = 54 + stride + (width - 1) * 3
             self.assertEqual(raw[last:last + 3], bytes([6, 5, 4]))
 
+    def test_to_bmp_bytes_matches_save_bmp(self):
+        fb = Framebuffer(8, 8)
+        fb.clear(10, 20, 30, 255)
+        in_memory = fb.to_bmp_bytes()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            fb.save_bmp(tmp_path)
+            with open(tmp_path, "rb") as f:
+                on_disk = f.read()
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        self.assertEqual(in_memory, on_disk)
+
+    def test_to_bmp_bytes_padding_logic(self):
+        fb = Framebuffer(7, 7) # Width not aligned to 4 bytes
+        fb.clear(10, 20, 30, 255)
+        in_memory = fb.to_bmp_bytes()
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            fb.save_bmp(tmp_path)
+            with open(tmp_path, "rb") as f:
+                on_disk = f.read()
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        self.assertEqual(in_memory, on_disk)
+
     def test_save_bmp_deterministic_bytes(self):
         import hashlib
         fb = Framebuffer(5, 3)

@@ -51,8 +51,8 @@ class Framebuffer:
             f.write(header)
             f.write(rgb.tobytes())
 
-    def save_bmp(self, file_path: str) -> None:
-        """Exports the framebuffer as an uncompressed 24-bit BMP image file."""
+    def to_bmp_bytes(self) -> bytes:
+        """Exports the framebuffer as an uncompressed 24-bit BMP image byte string."""
         w, h = self.width, self.height
         row_stride = (w * 3 + 3) & ~3
         img_size = row_stride * h
@@ -96,7 +96,9 @@ class Framebuffer:
         else:
             pixel_data = bgr.tobytes()
 
+        return bmp_header + dib_header + pixel_data
+
+    def save_bmp(self, file_path: str) -> None:
+        """Exports the framebuffer as an uncompressed 24-bit BMP image file."""
         with open(file_path, "wb") as f:
-            f.write(bmp_header)
-            f.write(dib_header)
-            f.write(pixel_data)
+            f.write(self.to_bmp_bytes())

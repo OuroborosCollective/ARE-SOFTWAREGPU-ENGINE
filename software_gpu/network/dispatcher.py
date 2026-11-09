@@ -139,16 +139,7 @@ class GPUCommandDispatcher:
         rasterizer.draw_mesh(vertices, indices, shader)
 
         # Export to in-memory BMP
-        import tempfile, os
-        with tempfile.NamedTemporaryFile(suffix=".bmp", delete=False) as f:
-            tmp_path = f.name
-        try:
-            fb.save_bmp(tmp_path)
-            with open(tmp_path, "rb") as f:
-                bmp_bytes = f.read()
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+        bmp_bytes = fb.to_bmp_bytes()
 
         return {
             "width": width,
