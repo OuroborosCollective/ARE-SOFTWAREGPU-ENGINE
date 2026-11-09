@@ -22,6 +22,53 @@ python main.py --server
 
 Then configure the Python client with its \`token=\` argument or the same environment variable. The service binds only to 127.0.0.1; no remote override is accepted.
 
+## Experimental Android/Linux UDS owner boundary (PR #265)
+
+The `AndroidIPCServer` remains **opt-in**. Its default constructor does **not** start a listener.
+An operator must provide an explicit filesystem socket under a pre-existing,
+owner-controlled **0700** directory. The final path must not exist (including
+symlinks); its components must not traverse symlinks. On successful bind the
+server enforces **0600** on the socket and verifies its owning UID; shutdown
+removes only the exact socket inode created by this process. No shared
+`/tmp/software_gpu.sock` unlink or anonymous abstract namespace fallback.
+
+Linux `SO_PEERCRED` is required and the kernel-attested peer UID must equal
+the owner UID **before** the first framed request is read. Explicit abstract
+namespaces, when selected by a local caller, enforce the same peer check but
+do not acquire filesystem permissions. Environments without kernel peer
+credentials fail closed. The existing framing, schema, size, timeout and
+four-client admission limits remain active.
+
+Example for a private local process (not an Android production endorsement):
+
+```python
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from software_gpu.mobile.android_server import AndroidIPCServer
+
+with TemporaryDirectory() as private_directory:
+    path = str(Path(private_directory) / "ipc.sock")
+    service = AndroidIPCServer(socket_path=path, abstract_name=None)
+    service.start()
+    if not service.ready.wait(3):
+        raise RuntimeError(service.startup_error or "UDS_LISTENER_NOT_READY")
+    try:
+        # Run the actual owner-UID client while this block remains active.
+        ...
+    finally:
+        service.stop()
+        service.join(timeout=3)
+```
+
+Migration: legacy callers that relied on `/tmp/software_gpu.sock` or an
+implicitly enabled `software_gpu` abstract socket must provision an explicit
+private socket directory and pass the path to both server and client. Do not
+turn the unsafe defaults back on for compatibility. This source contract is
+**not proof of Android SELinux label isolation**, cross-app UID enforcement
+on an actual device, or deployed multi-tenant authorization. Those require
+native Android instrumentation and device/UID/readback evidence under
+[Issue #235](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/issues/235).
+
 ## Explicit remaining blockers
 
 1. Real TLS termination, mutually authenticated reverse proxy, threat-model review and deployment-specific CIDR firewall evidence.
