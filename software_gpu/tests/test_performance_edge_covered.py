@@ -68,5 +68,33 @@ class TestEdgeCoveredPerformance(unittest.TestCase):
         self.assertGreaterEqual(ratio, 1.05, "array edge predicate performance regressed")
 
 
+
+import unittest
+from unittest.mock import patch
+
+class TestEdgeCoveredMock(unittest.TestCase):
+    @patch('numpy.floor')
+    @patch('numpy.ceil')
+    def test_rasterizer_bounds_optimization(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader, Vertex
+
+        fb = Framebuffer(64, 64)
+        rast = SoftwareRasterizer(fb)
+
+        class MockShader(Shader):
+            def vertex_shader(self, v): return v.position, {}
+            def fragment_shader(self, var): return 1.0, 1.0, 1.0, 1.0
+
+        v1 = Vertex([10.0, 10.0, 0.5, 1.0])
+        v2 = Vertex([50.0, 10.0, 0.5, 1.0])
+        v3 = Vertex([30.0, 50.0, 0.5, 1.0])
+
+        rast.draw_mesh([v1, v2, v3], [(0, 1, 2)], MockShader())
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
+
 if __name__ == "__main__":
     unittest.main()

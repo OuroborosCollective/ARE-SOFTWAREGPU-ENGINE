@@ -91,3 +91,29 @@ class TestBandInlineParity(unittest.TestCase):
         self.assertFalse(np.any(masks[0]&masks[1]))
         self.assertTrue(np.all(masks[0]|masks[1]))
         self.assertEqual(shader.calls,1024)
+import unittest
+from unittest.mock import patch
+
+class TestRasterizerBandMock(unittest.TestCase):
+    @patch('numpy.floor')
+    @patch('numpy.ceil')
+    def test_band_backend_bounds_optimization(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader, Vertex
+
+        fb = Framebuffer(64, 64)
+        rast = SoftwareRasterizer(fb, backend="bands")
+
+        class MockShader(Shader):
+            def vertex_shader(self, v): return v.position, {}
+            def fragment_shader(self, var): return 1.0, 1.0, 1.0, 1.0
+
+        v1 = Vertex([10.0, 10.0, 0.5, 1.0])
+        v2 = Vertex([50.0, 10.0, 0.5, 1.0])
+        v3 = Vertex([30.0, 50.0, 0.5, 1.0])
+
+        rast.draw_mesh([v1, v2, v3], [(0, 1, 2)], MockShader())
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
