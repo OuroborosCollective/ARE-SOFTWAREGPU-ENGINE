@@ -14,7 +14,7 @@ from software_gpu.graphics.shader import BlinnPhongShader, Matrix4
 def reference_byte(value):
     if math.isnan(value):
         raise ValueError("cannot convert float NaN to integer")
-    return int(min(1.0, max(0.0, value)) * 255.0)
+    return int((1.0 if value > 1.0 else (value if value > 0.0 else 0.0)) * 255.0)
 
 
 def ambient_only(colors, ambient=(1.0, 1.0, 1.0)):
