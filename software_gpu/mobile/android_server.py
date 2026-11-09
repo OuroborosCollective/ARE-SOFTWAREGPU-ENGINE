@@ -48,6 +48,7 @@ class AndroidIPCServer(threading.Thread):
         self._running = False
         self._sockets = []
         self._active_clients = threading.BoundedSemaphore(SecurityLimits().max_clients)
+        self._active_jobs = threading.BoundedSemaphore(SecurityLimits().max_jobs)
         self._owned_fs_socket = None
         self.ready = threading.Event()
         self.startup_error = None
@@ -55,7 +56,8 @@ class AndroidIPCServer(threading.Thread):
     def _private_socket_path(self):
         """Reject shared/symlinked paths before bind; never unlink a preexisting object."""
         path = self.socket_path
-        if not isinstance(path, str) or not os.path.isabs(path) or "\0" in path:
+        if (not isinstance(path, str) or not os.path.isabs(path)
+                or "\0" in path or os.path.normpath(path) != path):
             raise ValueError("UDS_PRIVATE_ABSOLUTE_PATH_REQUIRED")
         if len(os.fsencode(path)) >= 104:
             raise ValueError("UDS_PATH_TOO_LONG")
@@ -233,7 +235,12 @@ class AndroidIPCServer(threading.Thread):
                     method = req.get("method", "")
                     params = req.get("params", {})
                     validate_request(method, params, limits)
-                    res_data = self.dispatcher.handle_request(method, params)
+                    if not self._active_jobs.acquire(blocking=False):
+                        raise ValueError("UDS_JOB_QUOTA_EXCEEDED")
+                    try:
+                        res_data = self.dispatcher.handle_request(method, params)
+                    finally:
+                        self._active_jobs.release()
                     resp_bytes = pack_message(MsgType.JSON_RESPONSE, {"result": res_data, "id": req_id})
                 except socket.timeout:
                     # An idle/incomplete read has no valid response correlation.
