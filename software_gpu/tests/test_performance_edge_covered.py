@@ -70,3 +70,30 @@ class TestEdgeCoveredPerformance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestClippingPerformanceGate(unittest.TestCase):
+    def test_triangle_clipping_avoids_np_floor_ceil(self):
+        from unittest import mock
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.batch_shader import VertexColorShader
+        from software_gpu.graphics.shader import Vertex
+        import numpy as np
+
+        fb = Framebuffer(32, 32)
+        raster = SoftwareRasterizer(fb, backend="bands")
+
+        verts = [
+            Vertex(np.array([-10, -10, 0.5], dtype=np.float32), color=np.array([1,0,0,1], dtype=np.float32)),
+            Vertex(np.array([40, 40, 0.5], dtype=np.float32), color=np.array([1,0,0,1], dtype=np.float32)),
+            Vertex(np.array([-10, 40, 0.5], dtype=np.float32), color=np.array([1,0,0,1], dtype=np.float32)),
+        ]
+        shader = VertexColorShader()
+        indices = [(0, 1, 2)]
+
+        with mock.patch('numpy.floor') as mock_floor, \
+             mock.patch('numpy.ceil') as mock_ceil:
+            raster.draw_mesh(verts, indices, shader)
+
+            mock_floor.assert_not_called()
+            mock_ceil.assert_not_called()
