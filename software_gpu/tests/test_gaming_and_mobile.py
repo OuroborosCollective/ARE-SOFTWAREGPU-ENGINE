@@ -84,28 +84,42 @@ class TestGamingAndMobile(unittest.TestCase):
                          "Linux/Android POSIX Unix-domain-socket test; unsupported on Windows")
     def test_android_unix_domain_socket_ipc(self):
         """Test Android UDS / LocalSocket IPC server and client communication."""
-        sock_path = "/tmp/test_android_gpu.sock"
-        server = AndroidIPCServer(socket_path=sock_path, abstract_name="test_soft_gpu")
-        server.start()
-        time.sleep(0.05)
-
-        # Connect via Unix Domain Socket
-        client_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        client_sock.connect(sock_path)
-
-        req_payload = {"method": "device_info", "params": {}, "id": 42}
-        client_sock.sendall(pack_message(MsgType.JSON_REQUEST, req_payload))
-
-        header = client_sock.recv(HEADER_SIZE)
-        msg_type, flags, length = unpack_header(header)
-        body = client_sock.recv(length)
         import json
-        resp = json.loads(body.decode("utf-8"))
+        import tempfile
+        from pathlib import Path
 
-        self.assertIn("result", resp)
-        self.assertIn("name", resp["result"])
-        client_sock.close()
-        server.stop()
+        # Real AF_UNIX communication through a 0700 owner directory.
+        # No old /tmp shared socket or unauthenticated abstract fallback.
+        with tempfile.TemporaryDirectory() as directory:
+            sock_path = str(Path(directory) / "ipc.sock")
+            server = AndroidIPCServer(socket_path=sock_path, abstract_name=None)
+            try:
+                server.start()
+                self.assertTrue(server.ready.wait(2), server.startup_error)
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                    client.settimeout(2)
+                    client.connect(sock_path)
+                    client.sendall(pack_message(MsgType.JSON_REQUEST, {
+                        "method": "device_info", "params": {}, "id": 42,
+                    }))
+                    header = bytearray()
+                    while len(header) < HEADER_SIZE:
+                        part = client.recv(HEADER_SIZE - len(header))
+                        self.assertNotEqual(part, b"")
+                        header.extend(part)
+                    msg_type, flags, length = unpack_header(bytes(header))
+                    body = bytearray()
+                    while len(body) < length:
+                        part = client.recv(length - len(body))
+                        self.assertNotEqual(part, b"")
+                        body.extend(part)
+                    self.assertEqual(msg_type, MsgType.JSON_RESPONSE)
+                    resp = json.loads(body.decode("utf-8"))
+                    self.assertIn("result", resp)
+                    self.assertIn("name", resp["result"])
+            finally:
+                server.stop()
+                server.join(timeout=2)
 
     def test_opengles_mobile_context(self):
         """Test OpenGL ES 3.0 / EGL mobile graphics interface."""
