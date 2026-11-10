@@ -13,6 +13,7 @@ from concurrent.futures import Executor
 from dataclasses import dataclass
 from typing import Any
 
+import math
 import numpy as np
 from .geometry import edge_covered
 
@@ -60,10 +61,29 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        # ⚡ Bolt Optimization: Use inline ternaries and math instead of
+        # built-in min/max and np.floor/np.ceil to eliminate overhead in the innermost loops.
+        s0x, s1x, s2x = s0[0], s1[0], s2[0]
+        min_sx = s0x if s0x < s1x else s1x
+        min_sx = min_sx if min_sx < s2x else s2x
+        max_sx = s0x if s0x > s1x else s1x
+        max_sx = max_sx if max_sx > s2x else s2x
+
+        s0y, s1y, s2y = s0[1], s1[1], s2[1]
+        min_sy = s0y if s0y < s1y else s1y
+        min_sy = min_sy if min_sy < s2y else s2y
+        max_sy = s0y if s0y > s1y else s1y
+        max_sy = max_sy if max_sy > s2y else s2y
+
+        x0 = int(math.floor(min_sx))
+        x0 = 0 if x0 < 0 else x0
+        x1 = int(math.ceil(max_sx))
+        x1 = frame_w - 1 if x1 > frame_w - 1 else x1
+
+        y0 = int(math.floor(min_sy))
+        y0 = 0 if y0 < 0 else y0
+        y1 = int(math.ceil(max_sy))
+        y1 = frame_h - 1 if y1 > frame_h - 1 else y1
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
