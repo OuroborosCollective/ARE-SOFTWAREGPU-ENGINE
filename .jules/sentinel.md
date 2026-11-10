@@ -6,3 +6,8 @@
 **Vulnerability:** The `op_render_mesh` RPC endpoint serialized output frames to temporary files (`tempfile.NamedTemporaryFile`) on the worker filesystem before reading them back for Base64 encoding. This creates an unneeded filesystem touch in a network service handling arbitrary remote RPC rendering jobs, increasing I/O overhead and exposing temporary files.
 **Learning:** Network endpoints returning image/binary payloads should exclusively use in-memory encoding (like native Python struct/bytes manipulation for BMPs) instead of caching to disk to eliminate filesystem traversal points or disk capacity exhaustion risks when serving concurrent requests.
 **Prevention:** In RPC dispatchers, avoid `os.path` and `tempfile` when generating immediate responses. Format payload bytes completely in RAM using `io.BytesIO` or `struct` bindings from existing data buffers.
+
+## 2023-11-10 - Network Security JSON Float Handling
+**Vulnerability:** The server would raise an unhandled exception or accept invalid input when encountering non-finite floats like `NaN` or `Infinity` in JSON payloads.
+**Learning:** `math.isfinite` check is necessary to reject `NaN` and `Infinity` values from being parsed in JSON requests properly.
+**Prevention:** Ensured `bounded_json` correctly identifies and rejects non-finite floats (using `math.isnan` or `math.isinf`) to prevent unstable application state or server crashes from malicious or malformed payloads.

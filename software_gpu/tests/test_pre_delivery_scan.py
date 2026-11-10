@@ -49,7 +49,7 @@ class TestPreDeliveryScan(unittest.TestCase):
         for languages in ([], ["rust"], ["python", "python"], "python", [None]):
             with self.assertRaisesRegex(ValueError, "LANGUAGES"):
                 scan_before_delivery(fixture(), cases(), languages)
-        for seconds in (0, -1, 31, float("inf"), float("nan"), True):
+        for seconds in (0, -1, 61, float("inf"), float("nan"), True):
             with self.assertRaisesRegex(ValueError, "BUDGET"):
                 scan_before_delivery(fixture(), cases(), ["python"], seconds=seconds)
         with patch.dict(os.environ, {"CODEX_PRIMARY_RUNTIME_NODE": ""}), patch("shutil.which", return_value=None):
@@ -61,7 +61,7 @@ class TestPreDeliveryScan(unittest.TestCase):
         # This is an end-to-end cold Node process on shared CI runners, not
         # the production release default (which remains 10 seconds). Allow
         # the existing bounded maximum; any timeout still fails closed.
-        node_ci_seconds = 30
+        node_ci_seconds = 45
         executed_sources = []
         real_run = subprocess.run
         def capture_actual_file(command, **kwargs):

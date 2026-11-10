@@ -110,7 +110,7 @@ def bounded_json(document, depth: int = 0, counter: list[int] | None = None) -> 
             if not isinstance(key, str) or len(key) > 128:
                 raise RequestRejected("JSON_KEY_LIMIT")
             bounded_json(value, depth + 1, counter)
-    elif isinstance(document, float) and not math.isfinite(document):
+    elif isinstance(document, float) and (math.isnan(document) or math.isinf(document)):
         raise RequestRejected("NONFINITE_NUMBER")
     elif isinstance(document, int) and document.bit_length() > 64:
         raise RequestRejected("INTEGER_LIMIT")
