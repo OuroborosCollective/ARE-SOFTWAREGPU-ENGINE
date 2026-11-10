@@ -248,8 +248,8 @@ class BlinnPhongShader(Shader):
             raise ValueError("cannot convert float NaN to integer")
 
         return (
-            int((r if r < 1.0 else 1.0) * 255.0) if r > 0.0 else 0,
-            int((g if g < 1.0 else 1.0) * 255.0) if g > 0.0 else 0,
-            int((b if b < 1.0 else 1.0) * 255.0) if b > 0.0 else 0,
+            255 if r >= 1.0 else (0 if r <= 0.0 else int(r * 255.0)),
+            255 if g >= 1.0 else (0 if g <= 0.0 else int(g * 255.0)),
+            255 if b >= 1.0 else (0 if b <= 0.0 else int(b * 255.0)),
             255
         )
