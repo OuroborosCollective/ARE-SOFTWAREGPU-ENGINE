@@ -7,6 +7,7 @@ early-Z depth testing, and perspective-correct interpolation.
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -130,10 +131,23 @@ class SoftwareRasterizer:
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            m_x0 = s1[0] if s1[0] < s2[0] else s2[0]
+            m_min_x = math.floor(s0[0] if s0[0] < m_x0 else m_x0)
+            min_x = m_min_x if m_min_x > 0 else 0
+
+            M_x0 = s1[0] if s1[0] > s2[0] else s2[0]
+            m_max_x = math.ceil(s0[0] if s0[0] > M_x0 else M_x0)
+            lim_x = fb_w - 1
+            max_x = m_max_x if m_max_x < lim_x else lim_x
+
+            m_y0 = s1[1] if s1[1] < s2[1] else s2[1]
+            m_min_y = math.floor(s0[1] if s0[1] < m_y0 else m_y0)
+            min_y = m_min_y if m_min_y > y_start else y_start
+
+            M_y0 = s1[1] if s1[1] > s2[1] else s2[1]
+            m_max_y = math.ceil(s0[1] if s0[1] > M_y0 else M_y0)
+            lim_y = y_end - 1
+            max_y = m_max_y if m_max_y < lim_y else lim_y
 
             if min_x > max_x or min_y > max_y:
                 continue
