@@ -180,5 +180,42 @@ class TestAlphaNonGoal(unittest.TestCase):
                          (255, 0, 0, 0))
 
 
+
+
+from software_gpu.graphics.shader import Shader, Vertex
+class _MockShader(Shader):
+    def vertex_shader(self, vertex: Vertex):
+        return vertex.position, {}
+    def fragment_shader(self, varyings):
+        return 1.0, 1.0, 1.0, 1.0
+
+class TestRasterizerOptimization(unittest.TestCase):
+    def test_rasterizer_aabb_optimization(self):
+        """Ensures that np.floor/np.ceil are not called in the rasterizer bounding box calculation."""
+        import unittest.mock as mock
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader, Vertex
+
+        fb = Framebuffer(100, 100)
+        rasterizer = SoftwareRasterizer(fb)
+
+        # Create a simple triangle
+        v0 = Vertex([10, 10, 0], [1, 0, 0, 1])
+        v1 = Vertex([50, 10, 0], [0, 1, 0, 1])
+        v2 = Vertex([10, 50, 0], [0, 0, 1, 1])
+
+        shader = _MockShader()
+
+        with mock.patch('numpy.floor') as mock_np_floor, \
+             mock.patch('numpy.ceil') as mock_np_ceil:
+
+            rasterizer.draw_mesh([v0, v1, v2], [(0, 1, 2)], shader)
+
+            mock_np_floor.assert_not_called()
+            mock_np_ceil.assert_not_called()
+
+
+
 if __name__ == "__main__":
     unittest.main()
