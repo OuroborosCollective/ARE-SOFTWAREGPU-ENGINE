@@ -7,6 +7,7 @@ early-Z depth testing, and perspective-correct interpolation.
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
+import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
@@ -130,10 +131,10 @@ class SoftwareRasterizer:
         fb_w = self.fb.width
         for (s0, s1, s2, inv_w0, inv_w1, inv_w2, v0_var, v1_var, v2_var, area) in triangles:
             # Triangle 2D bounding box
-            min_x = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-            max_x = min(fb_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-            min_y = max(y_start, int(np.floor(min(s0[1], s1[1], s2[1]))))
-            max_y = min(y_end - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+            min_x = max(0, math.floor(min(s0[0], s1[0], s2[0])))
+            max_x = min(fb_w - 1, math.ceil(max(s0[0], s1[0], s2[0])))
+            min_y = max(y_start, math.floor(min(s0[1], s1[1], s2[1])))
+            max_y = min(y_end - 1, math.ceil(max(s0[1], s1[1], s2[1])))
 
             if min_x > max_x or min_y > max_y:
                 continue
@@ -162,7 +163,7 @@ class SoftwareRasterizer:
             c1 = is_top_left(s2, s0)
             c2 = is_top_left(s0, s1)
 
-            for py in range(min_y, max_y + 1):
+            for py in range(int(min_y), int(max_y) + 1):
                 p_y = np.float32(py + 0.5)
 
                 # ⚡ Bolt Optimization: Precompute the y-dependent and constant terms
@@ -173,7 +174,7 @@ class SoftwareRasterizer:
                 w1_y_term = (p_y - s2y) * dx20
                 w2_y_term = (p_y - s0y) * dx01
 
-                for px in range(min_x, max_x + 1):
+                for px in range(int(min_x), int(max_x) + 1):
                     p_x = np.float32(px + 0.5)
 
                     # Inline barycentric coordinates (exact evaluation without np.array)
