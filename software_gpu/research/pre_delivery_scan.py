@@ -29,7 +29,7 @@ def scan_before_delivery(ir, cases, languages=("python", "javascript"), *, secon
             or len(set(languages)) != len(languages)):
         raise ValueError("PRE_DELIVERY_LANGUAGES")
     if (type(cases) is not list or not 1 <= len(cases) <= 32
-            or type(seconds) not in (int, float) or not math.isfinite(seconds) or not 0 < seconds <= 30):
+            or type(seconds) not in (int, float) or not math.isfinite(seconds) or not 0 < seconds <= 60):
         raise ValueError("PRE_DELIVERY_CASE_OR_TIME_BUDGET")
     by_id = plan.node_map()
     for case in cases:
