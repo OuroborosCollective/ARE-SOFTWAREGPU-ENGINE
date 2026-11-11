@@ -244,9 +244,11 @@ class BlinnPhongShader(Shader):
 
         # Inline comparisons preserve the existing scalar NaN, infinity and
         # truncation semantics without per-channel min/max function calls.
-        if r != r or g != g or b != b:
+        if math.isnan(r) or math.isnan(g) or math.isnan(b):
             raise ValueError("cannot convert float NaN to integer")
 
+        # ⚡ Bolt Optimization: Use pure inline scalar ternaries and direct int casting
+        # which eliminates call overhead and preserves ValueError semantics for byte-parity.
         return (
             int((r if r < 1.0 else 1.0) * 255.0) if r > 0.0 else 0,
             int((g if g < 1.0 else 1.0) * 255.0) if g > 0.0 else 0,
