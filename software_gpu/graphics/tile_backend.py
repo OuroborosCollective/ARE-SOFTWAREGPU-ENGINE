@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+import math
 from .geometry import edge_covered
 
 
@@ -60,10 +61,10 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
-        x0 = max(0, int(np.floor(min(s0[0], s1[0], s2[0]))))
-        x1 = min(frame_w - 1, int(np.ceil(max(s0[0], s1[0], s2[0]))))
-        y0 = max(0, int(np.floor(min(s0[1], s1[1], s2[1]))))
-        y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
+        x0 = max(0, int(math.floor((s0[0] if s0[0] < s1[0] else s1[0]) if (s0[0] if s0[0] < s1[0] else s1[0]) < s2[0] else s2[0])))
+        x1 = min(frame_w - 1, int(math.ceil((s0[0] if s0[0] > s1[0] else s1[0]) if (s0[0] if s0[0] > s1[0] else s1[0]) > s2[0] else s2[0])))
+        y0 = max(0, int(math.floor((s0[1] if s0[1] < s1[1] else s1[1]) if (s0[1] if s0[1] < s1[1] else s1[1]) < s2[1] else s2[1])))
+        y1 = min(frame_h - 1, int(math.ceil((s0[1] if s0[1] > s1[1] else s1[1]) if (s0[1] if s0[1] > s1[1] else s1[1]) > s2[1] else s2[1])))
         if x0 > x1 or y0 > y1:
             continue
         if scan_min_samples is not None:
