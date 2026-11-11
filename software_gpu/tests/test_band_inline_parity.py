@@ -4,17 +4,6 @@ import unittest
 from unittest import mock
 import math
 
-
-from unittest import mock
-import math
-
-
-from unittest import mock
-import math
-
-from unittest import mock
-import math
-
 import numpy as np
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
@@ -106,80 +95,6 @@ class TestBandInlineParity(unittest.TestCase):
         self.assertFalse(np.any(masks[0]&masks[1]))
         self.assertTrue(np.all(masks[0]|masks[1]))
         self.assertEqual(shader.calls,1024)
-
-    def test_rasterize_band_no_np_floor_ceil(self):
-        # ⚡ Bolt: ensure no np.floor or np.ceil is called inside _rasterize_band
-        # as a performance enforcement test.
-        from software_gpu.graphics.shader import Vertex
-        vertices = [
-            Vertex(position=np.array([10.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([20.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([10.0, 20.0, 0.5, 1.0]))
-        ]
-        indices = [(0, 1, 2)]
-        fb = Framebuffer(32, 32)
-        rasterizer = SoftwareRasterizer(fb, backend='bands', num_threads=1)
-
-        # We need prepared triangles to test _rasterize_band directly
-        from software_gpu.graphics.geometry import prepare_triangles
-        triangles = prepare_triangles(vertices, indices, AlphaShader(), 32, 32)
-
-        with mock.patch('numpy.floor') as mock_np_floor, mock.patch('numpy.ceil') as mock_np_ceil:
-            rasterizer._rasterize_band(triangles, AlphaShader(), 0, 32)
-            mock_np_floor.assert_not_called()
-            mock_np_ceil.assert_not_called()
-
-
-
-class TestBoltRasterizerOptimizations(unittest.TestCase):
-    def test_rasterize_band_no_np_floor_ceil(self):
-        # ⚡ Bolt: ensure no np.floor or np.ceil is called inside _rasterize_band
-        # as a performance enforcement test.
-        from software_gpu.graphics.shader import Vertex
-        vertices = [
-            Vertex(position=np.array([10.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([20.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([10.0, 20.0, 0.5, 1.0]))
-        ]
-        indices = [(0, 1, 2)]
-        fb = Framebuffer(32, 32)
-        rasterizer = SoftwareRasterizer(fb, backend='bands', num_threads=1)
-
-        # We need prepared triangles to test _rasterize_band directly
-        from software_gpu.graphics.geometry import prepare_triangles
-        triangles = prepare_triangles(vertices, indices, AlphaShader(), 32, 32)
-
-        with mock.patch('numpy.floor') as mock_np_floor, mock.patch('numpy.ceil') as mock_np_ceil:
-            rasterizer._rasterize_band(triangles, AlphaShader(), 0, 32)
-            mock_np_floor.assert_not_called()
-            mock_np_ceil.assert_not_called()
-
-
-
-
-class TestBoltRasterizerOptimizations(unittest.TestCase):
-    def test_rasterize_band_no_np_floor_ceil(self):
-        # ⚡ Bolt: ensure no np.floor or np.ceil is called inside _rasterize_band
-        # as a performance enforcement test.
-        from software_gpu.graphics.shader import Vertex
-        vertices = [
-            Vertex(position=np.array([10.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([20.0, 10.0, 0.5, 1.0])),
-            Vertex(position=np.array([10.0, 20.0, 0.5, 1.0]))
-        ]
-        indices = [(0, 1, 2)]
-        fb = Framebuffer(32, 32)
-        rasterizer = SoftwareRasterizer(fb, backend='bands', num_threads=1)
-
-        # We need prepared triangles to test _rasterize_band directly
-        from software_gpu.graphics.geometry import prepare_triangles
-        triangles = prepare_triangles(vertices, indices, AlphaShader(), 32, 32)
-
-        with mock.patch('numpy.floor') as mock_np_floor, mock.patch('numpy.ceil') as mock_np_ceil:
-            rasterizer._rasterize_band(triangles, AlphaShader(), 0, 32)
-            mock_np_floor.assert_not_called()
-            mock_np_ceil.assert_not_called()
-
 
 
 

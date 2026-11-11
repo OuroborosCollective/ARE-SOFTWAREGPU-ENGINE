@@ -8,9 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
 import math
-import math
-import math
-import math
 
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
