@@ -182,3 +182,151 @@ class TestAlphaNonGoal(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+from unittest import mock
+class TestRasterizerOptimization(unittest.TestCase):
+    @mock.patch('numpy.floor')
+    @mock.patch('numpy.ceil')
+    def test_rasterizer_uses_math_not_numpy_for_bounding_box(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader
+
+        fb = Framebuffer(width=16, height=16)
+        r = SoftwareRasterizer(framebuffer=fb, backend='bands')
+
+        class MockShader(Shader):
+            def vertex_shader(self, vertex, uniforms):
+                return vertex.position, {}
+            def fragment_shader(self, varyings):
+                return 1.0, 1.0, 1.0, 1.0
+
+        shader = MockShader()
+
+        # A simple triangle
+        s0 = np.array([1.0, 1.0, 0.5])
+        s1 = np.array([5.0, 1.0, 0.5])
+        s2 = np.array([3.0, 5.0, 0.5])
+
+        v0_var = {}
+        v1_var = {}
+        v2_var = {}
+        area = 10.0
+
+        triangle = (s0, s1, s2, 1.0, 1.0, 1.0, v0_var, v1_var, v2_var, area)
+
+        r._rasterize_band([triangle], shader, 0, 16)
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
+
+from unittest import mock
+class TestRasterizerOptimization(unittest.TestCase):
+    @mock.patch('numpy.floor')
+    @mock.patch('numpy.ceil')
+    def test_rasterizer_uses_math_not_numpy_for_bounding_box(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader
+
+        fb = Framebuffer(width=16, height=16)
+        r = SoftwareRasterizer(framebuffer=fb, backend='bands')
+
+        class MockShader(Shader):
+            def vertex_shader(self, vertex, uniforms):
+                return vertex.position, {}
+            def fragment_shader(self, varyings):
+                return 1.0, 1.0, 1.0, 1.0
+
+        shader = MockShader()
+
+        # A simple triangle
+        s0 = np.array([1.0, 1.0, 0.5])
+        s1 = np.array([5.0, 1.0, 0.5])
+        s2 = np.array([3.0, 5.0, 0.5])
+
+        v0_var = {}
+        v1_var = {}
+        v2_var = {}
+        area = 10.0
+
+        triangle = (s0, s1, s2, 1.0, 1.0, 1.0, v0_var, v1_var, v2_var, area)
+
+        r._rasterize_band([triangle], shader, 0, 16)
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
+
+from unittest import mock
+class TestRasterizerOptimization(unittest.TestCase):
+    @mock.patch('numpy.floor')
+    @mock.patch('numpy.ceil')
+    def test_rasterizer_uses_math_not_numpy_for_bounding_box(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader
+
+        fb = Framebuffer(width=16, height=16)
+        r = SoftwareRasterizer(framebuffer=fb, backend='bands')
+
+        class MockShader(Shader):
+            def vertex_shader(self, vertex, uniforms):
+                return vertex.position, {}
+            def fragment_shader(self, varyings):
+                return 1.0, 1.0, 1.0, 1.0
+
+        shader = MockShader()
+
+        # A simple triangle
+        s0 = np.array([1.0, 1.0, 0.5])
+        s1 = np.array([5.0, 1.0, 0.5])
+        s2 = np.array([3.0, 5.0, 0.5])
+
+        v0_var = {}
+        v1_var = {}
+        v2_var = {}
+        area = 10.0
+
+        triangle = (s0, s1, s2, 1.0, 1.0, 1.0, v0_var, v1_var, v2_var, area)
+
+        r._rasterize_band([triangle], shader, 0, 16)
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
+
+from unittest import mock
+class TestRasterizerOptimization(unittest.TestCase):
+    @mock.patch('numpy.floor')
+    @mock.patch('numpy.ceil')
+    def test_rasterizer_uses_math_not_numpy_for_bounding_box(self, mock_ceil, mock_floor):
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.shader import Shader
+
+        fb = Framebuffer(width=16, height=16)
+        r = SoftwareRasterizer(framebuffer=fb, backend='bands')
+
+        class MockShader(Shader):
+            def vertex_shader(self, vertex, uniforms):
+                return vertex.position, {}
+            def fragment_shader(self, varyings):
+                return 1.0, 1.0, 1.0, 1.0
+
+        shader = MockShader()
+
+        # A simple triangle
+        s0 = np.array([1.0, 1.0, 0.5])
+        s1 = np.array([5.0, 1.0, 0.5])
+        s2 = np.array([3.0, 5.0, 0.5])
+
+        v0_var = {}
+        v1_var = {}
+        v2_var = {}
+        area = 10.0
+
+        triangle = (s0, s1, s2, 1.0, 1.0, 1.0, v0_var, v1_var, v2_var, area)
+
+        r._rasterize_band([triangle], shader, 0, 16)
+
+        mock_floor.assert_not_called()
+        mock_ceil.assert_not_called()
