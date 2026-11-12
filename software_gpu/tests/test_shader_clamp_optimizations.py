@@ -203,3 +203,72 @@ class VertexColorBatchAllocationParity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class TestFloorCeilOptimizations(unittest.TestCase):
+    def test_rasterizer_does_not_call_np_floor_or_ceil(self):
+        from unittest import mock
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+        fb = Framebuffer(16, 16)
+        rasterizer = SoftwareRasterizer(fb)
+
+        # mock triangles
+        triangles = [
+            (np.array([1.5, 1.5, 0.5]), np.array([5.5, 1.5, 0.5]), np.array([3.5, 5.5, 0.5]),
+             1.0, 1.0, 1.0, {}, {}, {}, 10.0)
+        ]
+
+        # create dummy shader
+        class DummyShader:
+            def fragment_shader(self, varyings):
+                return (255, 0, 0, 255)
+        shader = DummyShader()
+
+        with mock.patch('numpy.floor') as mock_floor, mock.patch('numpy.ceil') as mock_ceil:
+            rasterizer._rasterize_band(triangles, shader, 0, 16)
+            mock_floor.assert_not_called()
+            mock_ceil.assert_not_called()
+
+class TestMSAARasterizerOptimizations(unittest.TestCase):
+    def test_msaa_rasterizer_does_not_call_np_floor_or_ceil(self):
+        from unittest import mock
+        from software_gpu.graphics.postprocess import MSAARasterizer
+        from software_gpu.graphics.framebuffer import Framebuffer
+
+        class MockMSAAFramebuffer(Framebuffer):
+            def __init__(self, w, h):
+                super().__init__(w, h)
+                self.sample_offsets = [(0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)]
+                self.depth_samples = np.full((h, w, 4), 1.0, dtype=np.float32)
+                self.color_samples = np.zeros((h, w, 4, 4), dtype=np.uint8)
+
+        fb = MockMSAAFramebuffer(16, 16)
+        rasterizer = MSAARasterizer(fb)
+
+        # mock triangles
+        class DummyVertex:
+            def __init__(self, pos):
+                self.position = pos
+                self.normal = np.array([0,0,1])
+                self.uv = np.array([0,0])
+                self.color = np.array([1,1,1])
+
+        vertices = [
+            DummyVertex(np.array([1.5, 1.5, 0.5, 1.0])),
+            DummyVertex(np.array([5.5, 1.5, 0.5, 1.0])),
+            DummyVertex(np.array([3.5, 5.5, 0.5, 1.0]))
+        ]
+        indices = [(0, 1, 2)]
+
+        # create dummy shader
+        class DummyShader:
+            def vertex_shader(self, v):
+                return v.position, {}
+            def fragment_shader(self, varyings):
+                return (255, 0, 0, 255)
+        shader = DummyShader()
+
+        with mock.patch('numpy.floor') as mock_floor, mock.patch('numpy.ceil') as mock_ceil:
+            rasterizer.draw_mesh(vertices, indices, shader)
+            mock_floor.assert_not_called()
+            mock_ceil.assert_not_called()
