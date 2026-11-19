@@ -81,6 +81,17 @@ class CodeOntologyContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "IMPACT_STATUS"):
             summarize_static_impact({"status": "ambiguous", "impact": []}, "snap-fixture")
 
+    def test_architecture_guard_runs_for_any_pr_not_only_doc_edits(self):
+        workflow = (Path(__file__).resolve().parents[2] /
+                    ".github/workflows/code-ontology-companion.yml")
+        text = workflow.read_text(encoding="utf-8")
+        self.assertIn("  pull_request:", text)
+        self.assertIn("    branches: [main]", text)
+        self.assertNotIn("    paths:", text)
+        self.assertIn("permissions:\n  contents: read", text)
+        self.assertIn("sha256sum --check --status", text)
+        self.assertNotIn("actions/upload-artifact", text)
+
     def test_diff_refuses_analyzer_reinterpretation_as_source_change(self):
         source_delta = {"status": "ok", "changeBasis": "source_change",
                         "counts": {"nodesAdded": 1, "nodesRemoved": 0,
