@@ -4,6 +4,16 @@
 >
 > Die öffentliche Website liest bestehende, revisionsgebundene CPU-Evidence aus diesem Repository. Historische Werte sind keine Live-FPS; neue Rekorde erfordern reale, geprüfte Benchmark-Receipts. Kein VPS-Zugriff durch die Website.
 
+## Neue Testreihen zuerst · Visual Asset Lab (19. November 2026)
+
+**Neue Tests erscheinen ab jetzt vor den historischen Ranglisten.** Die [CPU-Rangliste](docs/CPU_WAVE_RANGLISTEN.md) enthält oben einen automatisch aus [dem Testreihen-Katalog](evidence/test-series-catalog-v1.json) aufgebauten, nach Datum absteigend sortierten Abschnitt. Gleiche Daten werden stabil nach Test-ID sortiert. **Registriert** heißt nicht bestanden oder schneller: Ein neuer Leistungseintrag darf nur mit echten, vollständigen, SHA-gebundenen CPU-Messungen sowie RGBA-/Depth-Parität veröffentlicht werden. Bestehende historische Ergebnisse und ihre Semantik bleiben unverändert.
+
+**Visual Asset Lab – opt-in, lokal, read-only:** `python -m tools.visual_asset_lab ORIGINAL.glb --output-dir /tmp/are-visual-asset`
+
+Das Werkzeug erstellt `wireframe.svg`, bei vorhandenen UVs `uv.svg` und `visual-asset-receipt.json` aus **tatsächlichen GLB-BIN-Koordinaten**. Die Ansichten sind 2D-Strukturprojektionen, **kein** PBR-Beauty-Render; Material-URIs werden nicht geladen, die Asset-Qualität wird nicht erfunden und große/unsupported Eingaben werden geschlossen abgewiesen. Der erste Pilot begrenzt die Ansicht auf ein indiziertes Dreiecks-Primitive mit maximal 5000 Dreiecken – Originale mit Millionen Dreiecken benötigen einen separaten, gemessenen LOD-/Streaming-Pfad. [Details](docs/VISUAL_ASSET_LAB_20261119.md).
+
+**Neue Regressionen:** `python -m unittest software_gpu.tests.test_visual_asset_lab software_gpu.tests.test_test_series_catalog -v`. Diese Tests sind noch **keine Performance-Messwerte**; ihren CI-Status zeigt der jeweilige GitHub-PR.
+
 ## Verifizierter Stand – 9. November 2026
 
 **Netzwerk-Rendering:** [PR #255](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/255) ist mit Merge `01f2e00f7066d1d03428fa67fa81f329d0c5e4df` integriert. Der RPC-Dispatcher serialisiert das BMP jetzt mit `Framebuffer.to_bmp_bytes()` direkt im Speicher statt über temporäre Dateien; `save_bmp()` bleibt als kompatibler Datei-Export bestehen. Die Regressionen prüfen Bytegleichheit einschließlich nicht vierfach ausgerichteter Zeilenbreite. Auf dem geprüften PR-Head `c00b4e92887a51eedcdc71e66842384b16d402b7` waren **16/16 fachliche CI-Checks erfolgreich** (Linux/Windows, Python 3.11/3.12, Mesa, LLVM, NumPy-1.26, Renderparität und Netzwerk-Smoketests). [Exakte CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879587) · [Mesa-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879572). Externe Code-Review-Dienste sind von dieser technischen CI-Aussage getrennt.

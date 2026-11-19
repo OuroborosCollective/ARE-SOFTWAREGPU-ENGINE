@@ -6,6 +6,18 @@
 
 Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-/Depth-Parität. Die Rangfolge gilt **nur innerhalb der jeweiligen Szene und Auflösung**. Keinerlei GPU-, Gameplay-FPS- oder Julia-Renderer-Parität ist daraus ableitbar.
 
+## Neue Testreihen (neueste zuerst, getrennt von CPU-Leistungsrängen)
+
+**Regel:** Neuere registrierte Testreihen stehen stets oben; gleiche Daten werden nach stabiler Test-ID sortiert. Registrierung ist **kein CI-Erfolg, FPS-Wert oder Benchmark-Sieg**. Erst originale SHA- gebundene CPU-Receipts und bestandene vollständige Frame-/Depth-Gates dürfen in eine vergleichbare Leistungsrangliste übernommen werden.
+
+| Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
+|:--|:--|:--|:--|:--|
+| 2026-11-19 | Neue Tests zuerst: Ranglistenvertrag (`software_gpu/tests/test_test_series_catalog.py`) | persistence | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-19 | Visual Asset Lab: UV and material evidence (`software_gpu/tests/test_visual_asset_lab.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-19 | Visual Asset Lab: GLB wireframe (`software_gpu/tests/test_visual_asset_lab.py`) | effects | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-07 | GLB-BIN-Strukturdiagnose (`software_gpu/tests/test_glb_diagnostic_evidence.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-10-20 | Historische CPU-Wellenreceipts (`software_gpu/tests/test_spherepop_rankings.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
+
 ## CAG/SpherePop/Doppler: ganzer Draw mit Welle
 
 **x-Faktor:** Median der 15 gepaarten Tiles-/Backend-Zeiten. 1,00× = Gleichstand, unter 1,00× = Backend langsamer.

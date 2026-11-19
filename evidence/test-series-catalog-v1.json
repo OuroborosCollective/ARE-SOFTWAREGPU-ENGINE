@@ -1,0 +1,45 @@
+{
+  "protocol": "are.test-series-catalog.v1",
+  "tests": [
+    {
+      "id": "visual-asset-wireframe",
+      "introduced": "2026-11-19",
+      "title": "Visual Asset Lab: GLB wireframe",
+      "module": "software_gpu/tests/test_visual_asset_lab.py",
+      "surface": "effects",
+      "status": "registered"
+    },
+    {
+      "id": "visual-asset-uv",
+      "introduced": "2026-11-19",
+      "title": "Visual Asset Lab: UV and material evidence",
+      "module": "software_gpu/tests/test_visual_asset_lab.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "catalog-chronology",
+      "introduced": "2026-11-19",
+      "title": "Neue Tests zuerst: Ranglistenvertrag",
+      "module": "software_gpu/tests/test_test_series_catalog.py",
+      "surface": "persistence",
+      "status": "registered"
+    },
+    {
+      "id": "glb-bin-structural",
+      "introduced": "2026-11-07",
+      "title": "GLB-BIN-Strukturdiagnose",
+      "module": "software_gpu/tests/test_glb_diagnostic_evidence.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "cpu-wave-historical",
+      "introduced": "2026-10-20",
+      "title": "Historische CPU-Wellenreceipts",
+      "module": "software_gpu/tests/test_spherepop_rankings.py",
+      "surface": "test",
+      "status": "registered"
+    }
+  ]
+}
