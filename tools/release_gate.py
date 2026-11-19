@@ -61,14 +61,15 @@ def select_run(payload, sha, repo):
     return selected["id"]
 
 
-def verify_jobs(payload, run_id):
+def verify_jobs(payload, run_id, minimum=8):
     """Read back all jobs; incomplete pagination, failures and skips block publishing."""
     if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list):
         raise ReleaseGateError("Missing CPU CI jobs data")
     entries = payload["jobs"]
     count = payload.get("total_count")
-    if type(count) is not int or count < 8 or len(entries) != count:
-        raise ReleaseGateError("Missing one or more of the eight required CI jobs")
+    if (type(minimum) is not int or minimum < 1
+            or type(count) is not int or count < minimum or len(entries) != count):
+        raise ReleaseGateError("Missing one or more required CI jobs")
     if any(not isinstance(item, dict) or item.get("run_id") != run_id
            or item.get("status") != "completed" or item.get("conclusion") != "success"
            for item in entries):
