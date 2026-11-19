@@ -53,7 +53,7 @@ def main() -> int:
     if len(paths) != 1:
         raise ValueError("EXPECTED_ONE_BUILT_WHEEL")
     version = paths[0].name.removeprefix("ouroboroscollective_softwaregpu-").split("-", 1)[0]
-    match = re.fullmatch(r"(\\d+\\.\\d+\\.\\d+)(?:(a|b|rc)(\\d+))?", version)
+    match = re.fullmatch(r"(\d+\.\d+\.\d+)(?:(a|b|rc)(\d+))?", version)
     if match is None:
         raise ValueError("WHEEL_PEP440_VERSION_INVALID")
     suffix = "" if match[2] is None else "-{}.{}".format(
