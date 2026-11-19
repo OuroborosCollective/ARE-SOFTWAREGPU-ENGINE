@@ -75,7 +75,7 @@ def render_catalog(document):
     ]
     for row in rows:
         lines.append(f'| {row["introduced"]} | {row["title"]} '
-                     f'(\`{row["module"]}\`) | {row["surface"]} | '
+                     f'(`{row["module"]}`) | {row["surface"]} | '
                      "**registriert; CI separat prüfen** | **nicht gemessen** |")
     return "\n".join(lines)
 
