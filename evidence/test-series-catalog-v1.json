@@ -2,11 +2,19 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
-      "id": "visual-asset-wireframe",
+      "id": "catalog-chronology",
       "introduced": "2026-11-19",
-      "title": "Visual Asset Lab: GLB wireframe",
-      "module": "software_gpu/tests/test_visual_asset_lab.py",
-      "surface": "effects",
+      "title": "Neue Tests zuerst: Ranglistenvertrag",
+      "module": "software_gpu/tests/test_test_series_catalog.py",
+      "surface": "persistence",
+      "status": "registered"
+    },
+    {
+      "id": "code-ontology-structural",
+      "introduced": "2026-11-19",
+      "title": "Code Ontology: Suche, Impact und Diff",
+      "module": "software_gpu/tests/test_code_ontology_ci.py",
+      "surface": "test",
       "status": "registered"
     },
     {
@@ -18,11 +26,11 @@
       "status": "registered"
     },
     {
-      "id": "catalog-chronology",
+      "id": "visual-asset-wireframe",
       "introduced": "2026-11-19",
-      "title": "Neue Tests zuerst: Ranglistenvertrag",
-      "module": "software_gpu/tests/test_test_series_catalog.py",
-      "surface": "persistence",
+      "title": "Visual Asset Lab: GLB wireframe",
+      "module": "software_gpu/tests/test_visual_asset_lab.py",
+      "surface": "effects",
       "status": "registered"
     },
     {
