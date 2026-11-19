@@ -13,6 +13,7 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
 | 2026-11-19 | Neue Tests zuerst: Ranglistenvertrag (`software_gpu/tests/test_test_series_catalog.py`) | persistence | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-19 | Code Ontology: Suche, Impact und Diff (`software_gpu/tests/test_code_ontology_ci.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-19 | Visual Asset Lab: UV and material evidence (`software_gpu/tests/test_visual_asset_lab.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-19 | Visual Asset Lab: GLB wireframe (`software_gpu/tests/test_visual_asset_lab.py`) | effects | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-07 | GLB-BIN-Strukturdiagnose (`software_gpu/tests/test_glb_diagnostic_evidence.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
