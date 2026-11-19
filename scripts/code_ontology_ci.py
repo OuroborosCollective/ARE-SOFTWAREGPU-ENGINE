@@ -26,7 +26,7 @@ def check_bundle(companion: Path) -> Path:
     """Refuse missing, symlinked, or displaced upstream helper files."""
     companion = Path(companion)
     scripts = companion.parent
-    if not str(companion).endswith(EXPECTED_RELATIVE.as_posix()):
+    if tuple(companion.parts[-len(EXPECTED_RELATIVE.parts):]) != EXPECTED_RELATIVE.parts:
         # Unit tests may create this exact suffix beneath their temp root.
         raise ValueError("BUNDLE_PATH_INVALID")
     for name in EXPECTED_FILES:
