@@ -29,7 +29,12 @@ class CodeOntologyContractTests(unittest.TestCase):
             (scripts / "local_llm.py").unlink()
             with self.assertRaisesRegex(ValueError, "BUNDLE_INCOMPLETE"):
                 check_bundle(scripts / "companion.py")
-            (scripts / "local_llm.py").symlink_to(scripts / "companion.py")
+            try:
+                (scripts / "local_llm.py").symlink_to(scripts / "companion.py")
+            except OSError:
+                # Windows runners without symlink privileges still exercise
+                # the same fail-closed non-regular helper-file contract.
+                (scripts / "local_llm.py").mkdir()
             with self.assertRaisesRegex(ValueError, "BUNDLE_NOT_REGULAR"):
                 check_bundle(scripts / "companion.py")
 
