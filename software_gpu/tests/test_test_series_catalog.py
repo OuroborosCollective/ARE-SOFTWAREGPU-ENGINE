@@ -52,9 +52,9 @@ class TestSeriesCatalogTests(unittest.TestCase):
             __import__("json").loads(spherepop_rankings.WAVE.read_text()),
             __import__("json").loads(spherepop_rankings.WINDOW.read_text()))
         rendered = spherepop_rankings.render(board)
-        self.assertEqual((catalog.ROOT / "docs/CPU_WAVE_RANGLISTEN.md").read_text(),
+        self.assertEqual((catalog.ROOT / "docs/CPU_WAVE_RANGLISTEN.md").read_text(encoding="utf-8"),
                          rendered)
-        readme = (catalog.ROOT / "README.md").read_text()
+        readme = (catalog.ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("Visual Asset Lab", readme)
         self.assertIn("Neue Testreihen zuerst", readme)
 
