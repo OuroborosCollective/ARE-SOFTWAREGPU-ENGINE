@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import venv
 
-from release_gate import verify_wheel, verify_sdist
+from release_gate import verify_wheel, verify_sdist, wheel_version
 
 
 def run(*argv: str, cwd: Path) -> None:
@@ -46,9 +47,23 @@ def verify_install(dist: Path, tag: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dist", type=Path, required=True)
-    parser.add_argument("--tag", default="v1.2.0")
+    parser.add_argument("--tag", default=None)
     args = parser.parse_args()
-    verify_install(args.dist.resolve(strict=True), args.tag)
+    paths = list(args.dist.resolve(strict=True).glob("*.whl"))
+    if len(paths) != 1:
+        raise ValueError("EXPECTED_ONE_BUILT_WHEEL")
+    version = paths[0].name.removeprefix("ouroboroscollective_softwaregpu-").split("-", 1)[0]
+    match = re.fullmatch(r"(\\d+\\.\\d+\\.\\d+)(?:(a|b|rc)(\\d+))?", version)
+    if match is None:
+        raise ValueError("WHEEL_PEP440_VERSION_INVALID")
+    suffix = "" if match[2] is None else "-{}.{}".format(
+        {"a": "alpha", "b": "beta", "rc": "rc"}[match[2]], match[3])
+    derived_tag = "v" + match[1] + suffix
+    if args.tag is not None and args.tag != derived_tag:
+        raise ValueError("EXPLICIT_TAG_WHEEL_MISMATCH")
+    if wheel_version(derived_tag) != version:
+        raise ValueError("WHEEL_TAG_VERSION_MISMATCH")
+    verify_install(args.dist.resolve(strict=True), derived_tag)
     return 0
 
 
