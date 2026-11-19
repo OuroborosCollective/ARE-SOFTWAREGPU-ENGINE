@@ -54,7 +54,7 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--dist", type=Path, required=True)
     args = parser.parse_args()
-    from tools.release_gate import wheel_version
+    from release_gate import wheel_version
     version = wheel_version("v" + args.version)
     if version != args.version:
         raise SystemExit("PYPI_VERSION_NOT_PEP440")
