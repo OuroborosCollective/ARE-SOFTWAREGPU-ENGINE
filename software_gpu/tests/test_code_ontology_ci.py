@@ -126,6 +126,30 @@ class CodeOntologyContractTests(unittest.TestCase):
         self.assertIn("sha256sum --check --status", text)
         self.assertNotIn("actions/upload-artifact", text)
 
+    def test_red_truncated_symbol_search_cannot_prove_uniqueness(self):
+        partial = {"snapshotId": "snap-fixture", "truncated": True, "matches": [
+            {"id": "same-named-symbol", "name": "SoftwareRasterizer",
+             "language": "Python", "path": "software_gpu/graphics/rasterizer.py"}]}
+        with self.assertRaisesRegex(ValueError, "QUERY_TRUNCATED"):
+            require_query_symbol(partial, "SoftwareRasterizer",
+                                 "software_gpu/graphics/rasterizer.py", "snap-fixture")
+
+    def test_red_invalid_runtime_evidence_is_not_counted_as_static_proof(self):
+        fabricated = {"snapshotId": "snap-fixture", "status": "ok",
+                      "impact_count": 1, "impact": [
+                          {"depth": 1, "relationship": "imports", "evidence": [
+                              {"rule_id": "python.import.v1", "basis": "observed",
+                               "runtime_status": "live_executed",
+                               "path": "software_gpu/graphics/rasterizer.py",
+                               "line_start": 3}], "node": {"name": "framebuffer"}}]}
+        with self.assertRaisesRegex(ValueError, "IMPACT_RUNTIME_STATUS_UNTRUSTED"):
+            summarize_static_impact(fabricated, "snap-fixture")
+
+    def test_red_preflight_bool_must_not_become_a_file_count(self):
+        with self.assertRaisesRegex(ValueError, "NO_PYTHON"):
+            validate_preflight({"status": "ready", "source_file_count": 3,
+                                "supported_languages": {"Python": True}})
+
     def test_diff_refuses_analyzer_reinterpretation_as_source_change(self):
         source_delta = {"status": "ok", "changeBasis": "source_change",
                         "counts": {"nodesAdded": 1, "nodesRemoved": 0,
