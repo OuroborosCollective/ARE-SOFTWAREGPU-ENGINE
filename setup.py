@@ -21,7 +21,7 @@ setup(
     keywords=["software gpu", "cpu renderer", "rasterization", "graphics", "deterministic", "research"],
     packages=find_packages(),
     py_modules=["main"],
-    python_requires=">=3.11",
+    python_requires=">=3.11,<3.13",
     install_requires=[
         "numpy>=1.20.0",
     ],
