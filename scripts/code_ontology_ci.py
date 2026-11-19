@@ -44,10 +44,11 @@ def validate_preflight(report: dict[str, Any]) -> int:
     if report.get("status") != "ready":
         raise ValueError("PREFLIGHT_STATUS")
     languages = report.get("supported_languages", {})
-    if not isinstance(languages, dict) or not isinstance(languages.get("Python"), int):
+    if not isinstance(languages, dict) or type(languages.get("Python")) is not int:
         raise ValueError("NO_PYTHON")
     count = languages["Python"]
-    if count < 1 or report.get("source_file_count", 0) < count:
+    if (count < 1 or type(report.get("source_file_count")) is not int
+            or report["source_file_count"] < count):
         raise ValueError("NO_PYTHON")
     return count
 
@@ -56,6 +57,8 @@ def require_query_symbol(result: dict[str, Any], name: str,
                          relative_path: str, snapshot: str) -> str:
     if result.get("snapshotId") != snapshot:
         raise ValueError("SNAPSHOT_MISMATCH")
+    if result.get("truncated"):
+        raise ValueError("QUERY_TRUNCATED")
     matches = [n for n in result.get("matches", [])
                if n.get("name") == name and n.get("path") == relative_path
                and n.get("language") == "Python" and isinstance(n.get("id"), str)]
@@ -70,10 +73,19 @@ def summarize_static_impact(result: dict[str, Any], snapshot: str) -> dict[str, 
     impacts = result.get("impact", [])
     if not isinstance(impacts, list):
         raise ValueError("IMPACT_INVALID")
-    evidence = [part for edge in impacts for part in edge.get("evidence", [])
-                if isinstance(part, dict) and all(
+    evidence = []
+    for edge in impacts:
+        if not isinstance(edge, dict) or not isinstance(edge.get("evidence", []), list):
+            raise ValueError("IMPACT_EVIDENCE_INVALID")
+        for part in edge.get("evidence", []):
+            if not isinstance(part, dict) or not all(
                     isinstance(part.get(k), str)
-                    for k in ("rule_id", "basis", "runtime_status"))]
+                    for k in ("rule_id", "basis", "runtime_status")):
+                raise ValueError("IMPACT_EVIDENCE_INVALID")
+            # Official Companion 0.6.0 admits static-only status values.
+            if part["runtime_status"] not in ("not_applicable", "runtime_unknown"):
+                raise ValueError("IMPACT_RUNTIME_STATUS_UNTRUSTED")
+            evidence.append(part)
     return {
         "related_nodes": len(impacts),
         "source_evidence": len(evidence),
