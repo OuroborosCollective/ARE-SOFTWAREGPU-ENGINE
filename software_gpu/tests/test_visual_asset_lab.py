@@ -28,7 +28,9 @@ class VisualAssetLabTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(svg).hexdigest(), entry["sha256"])
                 self.assertTrue(svg.startswith(b"<svg "))
                 self.assertNotIn(b"<script", svg)
-                self.assertNotIn(b"http:", svg)
+                self.assertNotIn(b"<image", svg)
+                self.assertNotIn(b"javascript:", svg)
+                self.assertNotIn(b"href=", svg)
             self.assertEqual(json.loads((Path(one) / "visual-asset-receipt.json").read_text()), left)
 
     def test_disconnected_or_degenerate_remains_diagnostic_not_bad_asset_verdict(self):
