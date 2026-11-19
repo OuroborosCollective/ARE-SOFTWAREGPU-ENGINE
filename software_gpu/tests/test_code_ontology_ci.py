@@ -11,6 +11,7 @@ from scripts.code_ontology_ci import (
     check_bundle,
     require_query_symbol,
     summarize_static_impact,
+    assert_local_artifacts,
     validate_diff,
     validate_preflight,
 )
@@ -80,6 +81,27 @@ class CodeOntologyContractTests(unittest.TestCase):
         self.assertEqual(result["runtime"], "not_measured")
         with self.assertRaisesRegex(ValueError, "IMPACT_STATUS"):
             summarize_static_impact({"status": "ambiguous", "impact": []}, "snap-fixture")
+
+    def test_visual_graph_and_rdf_exist_but_cannot_escape_workspace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            snapshots = root / "snapshots" / "snap-check"
+            snapshots.mkdir(parents=True)
+            html = snapshots / "graph.html"
+            rdf = snapshots / "ontology.ttl"
+            html.write_text("<html>" + "x" * 256 + "</html>", encoding="utf-8")
+            rdf.write_text("@prefix co: <https://example.invalid/> ." + "x" * 256,
+                           encoding="utf-8")
+            self.assertEqual(
+                assert_local_artifacts({
+                    "visualization": str(html),
+                    "portableRdf": str(rdf),
+                }, root), "local_only")
+            html.unlink()
+            html.symlink_to(rdf)
+            with self.assertRaisesRegex(ValueError, "ARTIFACT_SYMLINK"):
+                assert_local_artifacts({"visualization": str(html),
+                                        "portableRdf": str(rdf)}, root)
 
     def test_architecture_guard_runs_for_any_pr_not_only_doc_edits(self):
         workflow = (Path(__file__).resolve().parents[2] /
