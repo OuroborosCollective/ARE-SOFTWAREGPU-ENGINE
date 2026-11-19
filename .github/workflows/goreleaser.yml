@@ -9,6 +9,7 @@ on:
       - 'tools/release_gate.py'
       - 'software_gpu/tests/test_release_gate.py'
       - 'setup.py'
+      - 'pyproject.toml'
       - 'MANIFEST.in'
       - 'docs/PYPI_PACKAGE.md'
       - 'tools/pypi_index_readback.py'
