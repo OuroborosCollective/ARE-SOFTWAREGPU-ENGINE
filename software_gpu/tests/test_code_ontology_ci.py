@@ -103,8 +103,15 @@ class CodeOntologyContractTests(unittest.TestCase):
                     "portableRdf": str(rdf),
                 }, root), "local_only")
             html.unlink()
-            html.symlink_to(rdf)
-            with self.assertRaisesRegex(ValueError, "ARTIFACT_SYMLINK"):
+            try:
+                html.symlink_to(rdf)
+            except OSError:
+                # Exercise a non-regular path if Windows forbids symlinks.
+                html.mkdir()
+                expected = "ARTIFACT_EMPTY"
+            else:
+                expected = "ARTIFACT_SYMLINK"
+            with self.assertRaisesRegex(ValueError, expected):
                 assert_local_artifacts({"visualization": str(html),
                                         "portableRdf": str(rdf)}, root)
 
