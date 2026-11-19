@@ -53,6 +53,15 @@ class ReleaseGateTest(unittest.TestCase):
                 with self.assertRaises(release_gate.ReleaseGateError):
                     release_gate.verify_jobs(bad, 91)
 
+    def test_four_job_installed_package_matrix_stays_fail_closed(self):
+        self.assertEqual(4, release_gate.verify_jobs(jobs(count=4), 91, minimum=4))
+        for invalid in (jobs(count=3), jobs(count=4, conclusion='skipped'),
+                        {**jobs(count=4), 'total_count': 5}, jobs(run_id=92, count=4)):
+            with self.subTest(invalid=invalid), self.assertRaises(release_gate.ReleaseGateError):
+                release_gate.verify_jobs(invalid, 91, minimum=4)
+        with self.assertRaises(release_gate.ReleaseGateError):
+            release_gate.verify_jobs(jobs(count=4), 91, minimum=0)
+
     def test_requires_semver_tag_and_full_sha(self):
         for bad in ('gradio-android-abcdef', 'v1.2.0/evil', 'v01.2.0', '1.2.0'):
             with self.subTest(tag=bad), self.assertRaises(release_gate.ReleaseGateError):
