@@ -71,7 +71,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
-          wheels = list(Path("wheelhouse").glob("software_gpu-*.whl"))
+          wheels = list(Path("wheelhouse").glob("ouroboroscollective_softwaregpu-*.whl"))
           assert len(wheels) == 1
           with ZipFile(wheels[0]) as wheel:
               assert "main.py" in wheel.namelist(), "CLI main module missing from wheel"
@@ -81,7 +81,7 @@ jobs:
           PY
       - name: Install and run console script from outside checkout
         run: |
-          python -m pip install wheelhouse/software_gpu-*.whl
+          python -m pip install wheelhouse/ouroboroscollective_softwaregpu-*.whl
           cd "${RUNNER_TEMP}"
           software-gpu --help
 
