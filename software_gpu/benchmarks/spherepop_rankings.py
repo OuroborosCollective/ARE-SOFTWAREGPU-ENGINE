@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import re
 import statistics
+from software_gpu.benchmarks.test_series_catalog import load_catalog, render_catalog
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -225,6 +226,8 @@ def render(board):
         " Bild-/Depth-Parität. Die Rangfolge gilt **nur innerhalb der jeweiligen"
         " Szene und Auflösung**. Keinerlei GPU-, Gameplay-FPS- oder"
         " Julia-Renderer-Parität ist daraus ableitbar.",
+        "",
+        render_catalog(load_catalog()),
         "",
         "## CAG/SpherePop/Doppler: ganzer Draw mit Welle",
         "",
