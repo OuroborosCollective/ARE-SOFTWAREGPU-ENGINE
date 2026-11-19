@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'setup.py'
+      - 'pyproject.toml'
       - 'MANIFEST.in'
       - 'docs/PYPI_PACKAGE.md'
       - '.github/workflows/goreleaser.yml'
