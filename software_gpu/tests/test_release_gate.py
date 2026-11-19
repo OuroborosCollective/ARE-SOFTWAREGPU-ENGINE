@@ -63,17 +63,20 @@ class ReleaseGateTest(unittest.TestCase):
 
     def test_requires_version_matching_wheel_with_licence_and_notice(self):
         with tempfile.TemporaryDirectory() as folder:
-            wheel = Path(folder) / 'software_gpu-1.2.0-py3-none-any.whl'
+            wheel = Path(folder) / 'ouroboroscollective_softwaregpu-1.2.0-py3-none-any.whl'
             with ZipFile(wheel, 'w') as z:
-                z.writestr('software_gpu-1.2.0.dist-info/METADATA',
-                           'Metadata-Version: 2.1\nName: software_gpu\nVersion: 1.2.0\n')
-                z.writestr('software_gpu-1.2.0.dist-info/licenses/LICENSE.md', 'PolyForm Noncommercial')
-                z.writestr('software_gpu-1.2.0.dist-info/licenses/NOTICE', 'Required Notice: Copyright ...')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/METADATA',
+                           'Metadata-Version: 2.1\nName: ouroboroscollective-softwaregpu\nVersion: 1.2.0\n')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/licenses/LICENSE.md', 'PolyForm Noncommercial')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/licenses/NOTICE', 'Required Notice: Copyright ...')
+            with ZipFile(wheel, 'a') as z:
+                z.writestr('main.py', 'def main(): pass')
+                z.writestr('software_gpu/__init__.py', '__version__ = "1.2.0"')
             release_gate.verify_wheel(wheel, 'v1.2.0')
             with self.assertRaises(release_gate.ReleaseGateError):
                 release_gate.verify_wheel(wheel, 'v1.2.1')
             with ZipFile(wheel, 'w') as z:
-                z.writestr('software_gpu-1.2.0.dist-info/METADATA', 'Version: 1.2.0\n')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/METADATA', 'Version: 1.2.0\n')
             with self.assertRaises(release_gate.ReleaseGateError):
                 release_gate.verify_wheel(wheel, 'v1.2.0')
 
