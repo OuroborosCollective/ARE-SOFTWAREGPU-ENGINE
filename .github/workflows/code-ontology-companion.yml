@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Verify local integration contract tests
-        run: python -m unittest software_gpu.tests.test_code_ontology_ci -v
+        run: python -m unittest discover -s software_gpu/tests -p "test_code_ontology_ci.py" -v
       - name: Download official pinned Code Ontology Companion 0.6.0 bundle
         shell: bash
         run: |
