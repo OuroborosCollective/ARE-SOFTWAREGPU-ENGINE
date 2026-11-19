@@ -96,6 +96,29 @@ def validate_diff(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def assert_local_artifacts(status: dict[str, Any], workspace: Path) -> str:
+    """Prove the offline HTML/RDF outputs exist without publishing their bytes."""
+    base = Path(workspace).resolve(strict=True)
+    for field, expected in (("visualization", "graph.html"),
+                            ("portableRdf", "ontology.ttl")):
+        raw = status.get(field)
+        if not isinstance(raw, str):
+            raise ValueError("ARTIFACT_MISSING")
+        path = Path(raw)
+        if path.is_symlink():
+            raise ValueError("ARTIFACT_SYMLINK")
+        try:
+            resolved = path.resolve(strict=True)
+        except (OSError, RuntimeError) as exc:
+            raise ValueError("ARTIFACT_MISSING") from exc
+        if (not resolved.is_relative_to(base)
+                or resolved.name != expected):
+            raise ValueError("ARTIFACT_ESCAPED")
+        if not resolved.is_file() or resolved.stat().st_size < 80:
+            raise ValueError("ARTIFACT_EMPTY")
+    return "local_only"
+
+
 def _run(companion: Path, *args: str) -> dict[str, Any]:
     process = subprocess.run(
         [sys.executable, str(companion), *args],
@@ -144,6 +167,7 @@ def real_checkout_smoke(bundle: Path, repo: Path, output: Path) -> dict[str, Any
         status = _run(companion, "status", "--workspace", str(workspace))
         if status.get("status") != "ok" or status.get("freshness") != "current":
             raise ValueError("NOT_FRESH")
+        assert_local_artifacts(status, workspace)
         snapshot = status["snapshotId"]
         if snapshot != initialized.get("snapshotId"):
             raise ValueError("SNAPSHOT_MISMATCH")
