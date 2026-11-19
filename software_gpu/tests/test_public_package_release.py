@@ -106,6 +106,15 @@ class PublicPackageContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 pypi_index_readback.validate_registry_payload(payload, (wheel, sdist), VERSION)
 
+    def test_cpu_wheel_ci_uses_public_distribution_name(self):
+        """All package smoke paths must match the real distribution name."""
+        workflow = (ROOT / ".github/workflows/cpu-regressions.yml").read_text(
+            encoding="utf-8")
+        self.assertIn('glob("ouroboroscollective_softwaregpu-*.whl")', workflow)
+        self.assertIn(
+            "pip install wheelhouse/ouroboroscollective_softwaregpu-*.whl", workflow)
+        self.assertNotIn('glob("software_gpu-*.whl")', workflow)
+
     def test_release_workflow_has_exact_sha_ci_gate_then_oidc_publishing(self):
         content = (ROOT / ".github/workflows/goreleaser.yml").read_text(encoding="utf-8")
         self.assertIn("publish-pypi:", content)
