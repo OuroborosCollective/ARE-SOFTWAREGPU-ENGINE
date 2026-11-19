@@ -69,8 +69,18 @@ jobs:
           from tools.release_gate import verify_wheel, verify_sdist
           wheel, = Path("pypi-dist").glob("*.whl")
           sdist, = Path("pypi-dist").glob("*.tar.gz")
-          verify_wheel(wheel, "v1.2.0")
-          verify_sdist(sdist, "v1.2.0")
+          from tools.release_gate import wheel_version
+          name = wheel.name.removeprefix("ouroboroscollective_softwaregpu-")
+          version = name.split("-", 1)[0]
+          import re
+          match = re.fullmatch(r"(\d+\.\d+\.\d+)(?:(a|b|rc)(\d+))?", version)
+          if match is None:
+              raise SystemExit("WHEEL_VERSION_INVALID")
+          suffix = "" if match[2] is None else "-{}.{}".format(
+              {"a": "alpha", "b": "beta", "rc": "rc"}[match[2]], match[3])
+          tag = "v" + match[1] + suffix
+          verify_wheel(wheel, tag)
+          verify_sdist(sdist, tag)
           print("PYPI_DIST_CONTRACT_OK")
           PY
       - name: Install and validate GoReleaser OSS
@@ -128,6 +138,35 @@ jobs:
             --sha "$GITHUB_SHA" --repo "$GITHUB_REPOSITORY" \
             --runs "$RUNNER_TEMP/cpu-runs.json" --jobs "$RUNNER_TEMP/cpu-jobs.json" \
             --wheel release-assets/ouroboroscollective_softwaregpu-*.whl
+      - name: Require exact-main Windows/Linux installed-package matrix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/public-package-install.yml/runs" \
+            -f head_sha="$GITHUB_SHA" -f event=push -f per_page=100 > "$RUNNER_TEMP/package-runs.json"
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          from tools.release_gate import select_run, verify_jobs
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          runs = json.loads((Path(os.environ["RUNNER_TEMP"]) / "package-runs.json").read_text())
+          run_id = select_run(runs, sha, repo)
+          raw = subprocess.check_output(
+              ["gh", "api", f"repos/{repo}/actions/runs/{run_id}/jobs?per_page=100"],
+              text=True)
+          jobs = json.loads(raw)
+          verify_jobs(jobs, run_id, minimum=4)
+          names = [item.get("name", "") for item in jobs["jobs"]]
+          for platform in ("ubuntu-latest", "windows-latest"):
+              for py in ("3.11", "3.12"):
+                  if not any(platform in n and "Python " + py in n for n in names):
+                      raise SystemExit("PACKAGE_MATRIX_MISSING_" + platform + "_" + py)
+          print("EXACT_MAIN_PACKAGE_MATRIX_OK", run_id)
+          PY
       - name: Install GoReleaser OSS
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -194,7 +233,8 @@ jobs:
               raise SystemExit("PUBLIC_DIST_WRONG_FILE_COUNT")
           wheel, = [f for f in files if f.suffix == ".whl"]
           sdist, = [f for f in files if f.name.endswith(".tar.gz")]
-          tag = "v" + version
+          import os
+          tag = os.environ["GITHUB_REF_NAME"]
           verify_wheel(wheel, tag)
           verify_sdist(sdist, tag)
           print("PUBLIC_DIST_REAL_WHEEL_SDIST_LICENSE_OK")
