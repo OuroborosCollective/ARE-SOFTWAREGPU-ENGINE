@@ -61,7 +61,13 @@ from .integrations.mmorpg.game_compute_adapter import GameComputeEngine
 from .integrations.blender.blender_render_engine import StandaloneBlenderBridge
 from .integrations.image_editor.image_filter_endpoint import ImageFilterPipeline
 
-__version__ = "1.2.0"
+from importlib.metadata import PackageNotFoundError, version as distribution_version
+try:
+    __version__ = distribution_version("ouroboroscollective-softwaregpu")
+except PackageNotFoundError:
+    from pathlib import Path
+    from ._version import build_version
+    __version__ = build_version(Path(__file__).resolve().parents[1])
 __all__ = [
     # Core
     "VirtualGPU",

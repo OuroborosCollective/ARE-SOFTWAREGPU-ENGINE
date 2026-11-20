@@ -1,0 +1,7 @@
+[Unit]
+Description=Pick up completed World Forge exports
+[Timer]
+OnBootSec=90s
+OnUnitInactiveSec=1min
+[Install]
+WantedBy=timers.target
