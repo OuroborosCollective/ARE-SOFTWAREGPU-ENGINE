@@ -41,6 +41,10 @@ def verify_install(dist: Path, tag: str) -> None:
             "assert m.version('ouroboroscollective-softwaregpu') == software_gpu.__version__",
             cwd=root)
         run(str(cli), "--help", cwd=root)
+        forge = cli.with_name("are-worldforge.exe" if sys.platform == "win32" else "are-worldforge")
+        installed = subprocess.check_output([str(forge), "--version"], cwd=root, text=True).strip()
+        if installed != wheel_version(tag):
+            raise ValueError("Installed World Forge CLI version differs from the verified tag")
     print("REAL_WHEEL_INSTALL_API_CLI_OK: " + sys.platform)
 
 

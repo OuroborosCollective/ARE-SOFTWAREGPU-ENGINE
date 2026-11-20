@@ -1,7 +1,7 @@
 [Unit]
 Description=Compare completed World Forge Blender models with ARE SoftwareGPU
 After=worldforge-blender.service
-ConditionPathIsExecutable=/opt/are-media/learning-current/venv/bin/are-worldforge
+ConditionFileIsExecutable=/opt/are-media/learning-current/venv/bin/are-worldforge
 
 [Service]
 Type=oneshot
