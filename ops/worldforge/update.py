@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import subprocess
 import tempfile
 from urllib.parse import urlsplit
@@ -30,6 +31,13 @@ def semver(value):
     if not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)", value):
         raise ValueError("Expected a stable package release")
     return tuple(int(i) for i in value.split("."))
+
+
+def studio_launcher(path, interpreter):
+    # Python searches for pyvenv.cfg next to its invoked path. An external symlink
+    # to bin/python can silently select the host interpreter.
+    path.write_text('#!/bin/sh\nexec ' + shlex.quote(str(interpreter)) + ' "$@"\n')
+    path.chmod(0o755)
 
 
 def update():
@@ -77,7 +85,13 @@ def update():
         subprocess.run(["/usr/local/bin/uv", "pip", "install", "--python", str(env / "bin/python"),
                         "--default-index", "https://pypi.org/simple", "--only-binary", ":all:",
                         str(wheel), "numpy==1.26.4", "Pillow==12.3.0"], check=True)
-        (target / "studio-python").symlink_to(env / "bin/python")
+        launcher = target / "studio-python"
+        studio_launcher(launcher, env / "bin/python")
+        probe = subprocess.check_output(["runuser", "-u", "unityarpg", "--", str(launcher), "-I", "-c",
+                          "import sys,software_gpu;print(sys.prefix,software_gpu.__version__,sep='\\n')"],
+                          cwd="/tmp", text=True).splitlines()
+        if probe != [str(env), version]:
+            raise ValueError("Studio interpreter does not resolve the verified release")
         for cli in ("are-learning", "software-gpu", "are-render-video", "are-worldforge"):
             subprocess.run(["runuser", "-u", "unityarpg", "--", str(env / "bin" / cli), "--help"],
                            cwd="/tmp", stdout=subprocess.DEVNULL, check=True)
