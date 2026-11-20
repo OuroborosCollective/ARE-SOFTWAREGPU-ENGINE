@@ -49,6 +49,24 @@ def validate_registry_payload(payload: dict, artifacts, version: str) -> None:
         raise ValueError("PYPI_MISSING_ARTIFACT")
 
 
+def collect_local_distributions(directory: Path) -> list[Path]:
+    """Select only wheel/sdist; accept publisher-created attestations, nothing else."""
+    if not directory.is_dir():
+        raise ValueError("PYPI_LOCAL_DIST_INVALID")
+    entries = sorted(directory.iterdir())
+    artifacts = [p for p in entries if p.is_file() and (
+        p.name.endswith(".whl") or p.name.endswith(".tar.gz"))]
+    if (len(artifacts) != 2 or
+            sum(p.name.endswith(".whl") for p in artifacts) != 1 or
+            sum(p.name.endswith(".tar.gz") for p in artifacts) != 1):
+        raise ValueError("PYPI_LOCAL_DIST_INVALID")
+    allowed = {p.name for p in artifacts}
+    allowed.update(p.name + ".publish.attestation" for p in artifacts)
+    if any(not p.is_file() or p.name not in allowed for p in entries):
+        raise ValueError("PYPI_UNEXPECTED_LOCAL_FILE")
+    return artifacts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
@@ -58,9 +76,10 @@ def main() -> int:
     version = wheel_version("v" + args.version)
     if version != args.version:
         raise SystemExit("PYPI_VERSION_NOT_PEP440")
-    files = sorted(args.dist.iterdir()) if args.dist.is_dir() else []
-    if not files or len(files) != 2 or not all(path.is_file() for path in files):
-        raise SystemExit("PYPI_LOCAL_DIST_INVALID")
+    try:
+        files = collect_local_distributions(args.dist)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
     url = f"https://pypi.org/pypi/{PROJECT}/{version}/json"
     error = None
     for attempt in range(6):
