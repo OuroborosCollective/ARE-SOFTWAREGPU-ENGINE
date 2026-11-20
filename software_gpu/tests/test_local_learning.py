@@ -1,10 +1,10 @@
 """Contract and real raster/encoder regressions for the local authoring tuner."""
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from fractions import Fraction
 import hashlib
 import os
 from pathlib import Path
-import shutil
 import sqlite3
 import subprocess
 import sys
@@ -138,22 +138,24 @@ class LocalLearningTests(unittest.TestCase):
             with patch.dict(os.environ, {"ARE_LEARNING_DB": bad}), self.assertWarns(RuntimeWarning):
                 self.assertIsNone(configured_learner())
         other = Path(self.tmp.name) / "other.db"
-        with sqlite3.connect(other) as con:
+        with closing(sqlite3.connect(other)) as con, con:
             con.execute("CREATE TABLE important(value)")
         with self.assertRaises(ValueError):
             LocalLearner(other)
-        with sqlite3.connect(other) as con:
+        with closing(sqlite3.connect(other)) as con:
             self.assertEqual(con.execute("PRAGMA user_version").fetchone()[0], 0)
 
 
-@unittest.skipUnless(shutil.which("ffmpeg-9.1") or shutil.which("ffmpeg"), "requires real FFmpeg")
 class VideoLearningTests(unittest.TestCase):
     def test_real_video_entrypoint_keeps_pixels_and_count(self):
-        if os.name == "nt" and not shutil.which("ffprobe"):
-            self.skipTest("requires ffprobe")
         from software_gpu.integrations.render_video import encode_frames, media_binaries
+        try:
+            ffmpeg, ffprobe = media_binaries()
+        except FileNotFoundError as exc:
+            self.skipTest(str(exc))
         with TemporaryDirectory() as folder:
-            root = Path(folder)
+            root = Path(folder) / "100% complete"
+            root.mkdir()
             db = root / "video.sqlite3"
             frames, source = [], []
             for i in range(3):
@@ -162,7 +164,6 @@ class VideoLearningTests(unittest.TestCase):
                 p.write_bytes(b"P6\n17 15\n255\n" + rgb)
                 frames.append(p)
                 source.append(rgb)
-            ffmpeg, ffprobe = media_binaries()
             with patch.dict(os.environ, {"ARE_LEARNING_DB": str(db)}):
                 out = root / "frames.mkv"
                 result = encode_frames(out, frames, Fraction(12), ffmpeg, ffprobe)

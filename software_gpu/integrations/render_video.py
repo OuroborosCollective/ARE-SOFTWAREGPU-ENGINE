@@ -64,8 +64,8 @@ def encode_frames(out, frames, rate, ffmpeg, ffprobe):
             decoder = ["-threads", "1"] if single_decoder_thread else []
             subprocess.run([ffmpeg, "-nostdin", "-v", "error", "-xerror", "-filter_threads", "1",
                             "-f", "image2", "-framerate", str(rate), "-start_number", "0",
-                            *decoder, "-i", work / ("%08d" + extension), *encode, "-threads", "2", result],
-                           check=True)
+                            *decoder, "-i", "%08d" + extension, *encode, "-threads", "2", result],
+                           cwd=work, check=True)
             report = json.loads(subprocess.check_output([
                 ffprobe, "-v", "error", "-count_frames", "-select_streams", "v:0",
                 "-show_entries", "stream=codec_name,width,height,nb_read_frames,avg_frame_rate",
@@ -90,7 +90,11 @@ def encode_frames(out, frames, rate, ffmpeg, ffprobe):
             return digest.hexdigest()
 
         def publish(result):
-            os.link(result[0], out)
+            if os.name == "nt":
+                # Windows rename fails if another process has published this name.
+                os.rename(result[0], out)
+            else:
+                os.link(result[0], out)
 
         if learner is None:
             result = run(False)
