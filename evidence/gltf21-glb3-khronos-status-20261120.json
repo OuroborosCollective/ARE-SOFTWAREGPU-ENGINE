@@ -1,0 +1,160 @@
+{
+  "basis": {
+    "draft_branch": "draft-2.1",
+    "draft_commit": "c330f9e5a324c9858145be183d2a1e63718fd3e8",
+    "draft_path": "specification/2.1/Specification.adoc",
+    "draft_repository": "KhronosGroup/glTF",
+    "draft_sha256": "83e76b6eb2cdd33a2b525948fcb3929dbcbf10b9554e8027c736d2de84ebecd1",
+    "extension_registry_commit": "5b00b913b74c8f0260c64578b98a09ef2dde0b41",
+    "extension_registry_sha256": "32868b162d85305f633cbb78747abfddda8ebbf9c51f4bf4456cafc2af54952d",
+    "glb_container_v3": "unratified-working-draft",
+    "gltf_2_1": "unratified-working-draft",
+    "khronos_registry_current_version": "2.0",
+    "ratified": false,
+    "verified_on": "2026-11-20"
+  },
+  "conclusion": {
+    "ratified": false,
+    "released": false,
+    "statement": "glTF 2.1 and GLB container version 3 are announced and under active development. No released or ratified glTF 2.1 specification and no official GLB v3 conformance assets were found. The byte layout may still change.",
+    "status": "unratified-working-draft"
+  },
+  "contradicted_secondary_claim": "At least one third-party news article describes glTF 2.1 as officially released in June 2026. The Khronos registry and the open tracking issue contradict this; the June 2026 Khronos post announces plans.",
+  "draft_layout_read": {
+    "alignment": "Each chunk starts on an 8-byte boundary. Padding after a chunk is outside chunkLength, is not read and should be zero. The file length need not be a multiple of any number.",
+    "buffers": "buffer.chunk references a chunk by index; buffer 0 without chunk and uri implicitly uses a BIN chunk at index 1 directly after a JSON chunk at index 0; the chunk must be at least as long as the buffer.",
+    "byte_order": "little endian",
+    "chunk_encoding": "0 means plain. Clients must refuse chunks with unknown encoding. The draft defines no other value.",
+    "chunk_header": "uint32 chunkType, uint32 chunkEncoding, uint64 chunkLength (most significant bit must be 0)",
+    "chunk_types": "JSON 0x4E4F534A and BIN 0x004E4942; other types may appear. The first JSON chunk is the glTF JSON; chunks may precede it.",
+    "file_header": "uint32 magic 0x46546C67, uint32 version 3, uint64 length (most significant bit must be 0)",
+    "sandbox_stricter_than_draft": [
+      "A nonzero chunkEncoding on any chunk refuses the whole file.",
+      "Only asset versions 2.0 and 2.1 are inspected; other versions are refused.",
+      "A buffer that defines both chunk and uri is refused.",
+      "Trailing bytes after the last chunk are accepted only as padding up to the next 8-byte boundary."
+    ]
+  },
+  "extension_registry": {
+    "announced_as_required_functionality_of_the_2_1_draft": [
+      "EXT_texture_webp",
+      "KHR_materials_emissive_strength",
+      "KHR_mesh_quantization",
+      "KHR_node_visibility"
+    ],
+    "note": "The blog post says the exact syntax for the promoted functionality 'will be defined as the specification develops'. The sandbox reports names only and decodes no extension payload.",
+    "ratified_khronos_extensions": [
+      "EXT_mesh_gpu_instancing",
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_animation_pointer",
+      "KHR_draco_mesh_compression",
+      "KHR_gaussian_splatting",
+      "KHR_interactivity",
+      "KHR_lights_punctual",
+      "KHR_materials_anisotropy",
+      "KHR_materials_clearcoat",
+      "KHR_materials_dispersion",
+      "KHR_materials_emissive_strength",
+      "KHR_materials_ior",
+      "KHR_materials_iridescence",
+      "KHR_materials_sheen",
+      "KHR_materials_specular",
+      "KHR_materials_transmission",
+      "KHR_materials_unlit",
+      "KHR_materials_variants",
+      "KHR_materials_volume",
+      "KHR_mesh_quantization",
+      "KHR_node_hoverability",
+      "KHR_node_selectability",
+      "KHR_node_visibility",
+      "KHR_texture_basisu",
+      "KHR_texture_transform",
+      "KHR_xmp_json_ld"
+    ]
+  },
+  "interoperability": {
+    "observations": [
+      {
+        "commit": "a4faaba29ad530c05d89cbfa1285122b997e9892",
+        "files": [
+          {
+            "path": "modules/scene/test/gltf/test-utils/create-glb-v3.ts",
+            "sha256": "acf5c4cebde16ec2083ad83ac06ed0d42fc52a3b83677bf7697335d13ce9eb54"
+          },
+          {
+            "path": "modules/scene/src/gltf/lib/parsers/parse-glb.ts",
+            "sha256": "9426e8cc77a223558d4bc43e948adba53cc02663ea3e91dfe2f74d4cc9b33850"
+          }
+        ],
+        "finding": "The merged draft GLB v3 reader and its fixture writer pad and advance chunks to 4-byte boundaries inside chunkLength. The Khronos draft text at the pinned commit requires 8-byte aligned chunk starts with padding outside chunkLength. Files from both layouts agree only when every padded chunk length is a multiple of eight.",
+        "implementation": "visgl/loaders.gl"
+      },
+      {
+        "finding": "Shown as a draft pull request, not merged.",
+        "implementation": "godotengine/godot pull request 120670"
+      },
+      {
+        "finding": "Not retrieved: the download host path was not reachable from this session. The archive is therefore not SHA-pinned here. One layout table printed in the issue comment is reconstructed as a test vector; its six filler bytes are not published.",
+        "implementation": "Khronos issue 2594 community sample archive GLBv3-2026-10-10.zip"
+      }
+    ],
+    "official_conformance_assets": "none found",
+    "status": "not_established"
+  },
+  "method": "Primary Khronos sources were read on the stated date. Git refs were resolved with git ls-remote and files were fetched at the resolved commit and hashed. Statements about issue and pull-request pages are recorded as read from the rendered page and are not API records.",
+  "protocol": "are.khronos-spec-status-readback.v1",
+  "read_on": "2026-11-20",
+  "sha256": "d946c9ecf1d6f005fce9c6f318f47ec1e131d829d6b3c2fd0478762264808928",
+  "sources": [
+    {
+      "id": "khronos-registry",
+      "observed": "States 'The current version of glTF is 2.0' and links the glTF 2.0.1 specification. No glTF 2.1 entry is listed.",
+      "read_on": "2026-11-20",
+      "url": "https://registry.khronos.org/glTF/"
+    },
+    {
+      "id": "khronos-blog-2026-06-11",
+      "observed": "Dated June 11, 2026. Announces 'plans for glTF 2.1', says glTF 2.1 'defines binary format version 3' with 64-bit length fields and a reserved chunk-encoding field that is always zero, and ends with 'Stay tuned for further announcements as we approach the release of glTF 2.1.'",
+      "read_on": "2026-11-20",
+      "url": "https://www.khronos.org/blog/introducing-gltf-2.1-with-complex-scenes"
+    },
+    {
+      "id": "gltf-tracking-issue-2585",
+      "observed": "Open; shows 0 of 14 sub-issues completed; milestone 2.1 without due date. Text: 'The specification is under active development. Feature explainers are the current stable reference; schema and normative text to follow.'",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/issues/2585"
+    },
+    {
+      "id": "gltf-issue-2594-64-bit-binary",
+      "observed": "Open explainer for binary format version 3. A contributor comment of 2026-10-10 attaches sample files described as 'supposed to be valid GLBv3 files. (No guarantees ...)' and prints a layout table. A comment of 2026-11-14 lists engine pull requests (Godot, UnityGLTF, glTFast, loaders.gl).",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/issues/2594"
+    },
+    {
+      "id": "gltf-pr-2628-draft-text",
+      "observed": "Titled 'Draft changes for 64-bit Upgrade to Binary Format in glTF 2.1'; shown as merged into the branch draft-2.1, not into main.",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/pull/2628"
+    },
+    {
+      "id": "gltf-draft-branch",
+      "observed": "refs/heads/draft-2.1 resolved to c330f9e5a324c9858145be183d2a1e63718fd3e8. specification/2.1/Specification.adoc at that commit has 241666 bytes and SHA-256 83e76b6eb2cdd33a2b525948fcb3929dbcbf10b9554e8027c736d2de84ebecd1. Its note says published versions of the Specification are located in the glTF Registry.",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/tree/draft-2.1"
+    },
+    {
+      "id": "gltf-main-branch",
+      "observed": "refs/heads/main resolved to 5b00b913b74c8f0260c64578b98a09ef2dde0b41. specification/2.1/Specification.adoc does not exist there (HTTP 404); specification/2.0/Specification.adoc exists (SHA-256 c1c51c15738dfbbb6a32899c48be79ac08de0e3ad353204635dcc8c88cff5f03).",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/tree/main"
+    },
+    {
+      "id": "gltf-extension-registry",
+      "observed": "extensions/README.md at main 5b00b913b74c8f0260c64578b98a09ef2dde0b41 (SHA-256 32868b162d85305f633cbb78747abfddda8ebbf9c51f4bf4456cafc2af54952d) lists 27 ratified Khronos extensions for glTF 2.0 and describes ratification as a vote of the Khronos Board of Promoters after a Release Candidate review.",
+      "read_on": "2026-11-20",
+      "url": "https://github.com/KhronosGroup/glTF/blob/main/extensions/README.md"
+    }
+  ],
+  "subject": "glTF 2.1 core revision and GLB container version 3 (64-bit binary format)"
+}

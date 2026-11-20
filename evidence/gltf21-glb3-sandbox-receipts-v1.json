@@ -1,0 +1,553 @@
+{
+  "authority": "generated-in-process-test-vectors",
+  "claims": {
+    "interoperability": "not_established",
+    "khronos_conformance": "not_claimed",
+    "performance": "not_measured",
+    "ratified": false,
+    "runtime_admission": "refused"
+  },
+  "contract": "are.gltf21-glb3-sandbox.v1",
+  "fuzz": {
+    "framing": {
+      "accepted": 1031,
+      "cases": 4000,
+      "codes": {
+        "BIG_ENDIAN_REFUSED": 26,
+        "CHUNK_ENCODING_REFUSED": 81,
+        "CHUNK_HEADER_TRUNCATED": 137,
+        "CHUNK_LENGTH_MSB": 29,
+        "CHUNK_LENGTH_OVERFLOW": 545,
+        "HEADER_TRUNCATED": 47,
+        "JSON_CHUNK_MISSING": 50,
+        "JSON_UTF8": 256,
+        "LENGTH_MISMATCH": 1404,
+        "LENGTH_MSB": 26,
+        "MAGIC": 260,
+        "NO_CHUNKS": 3,
+        "TRAILING_BYTES": 27,
+        "VERSION_2_OUT_OF_SCOPE": 2,
+        "VERSION_UNSUPPORTED": 76
+      },
+      "corpus_sha256": "31104b06aadf37f2529c725ad13403c57226beeef80cf0ce9bf3e19ff2e5fae5",
+      "rejected": 2969,
+      "seed": 2766498304288,
+      "verdicts_sha256": "6558fddfc0d012a62352f0ce7c3f0a8d5759ba9dc69bca1adb4e2b834721bcdf"
+    },
+    "json": {
+      "accepted": 246,
+      "cases": 1500,
+      "codes": {
+        "ACCESSORS": 47,
+        "ACCESSOR_BOUNDS": 7,
+        "ACCESSOR_BUFFERVIEW": 13,
+        "ACCESSOR_COMPONENT_TYPE": 26,
+        "ACCESSOR_COUNT": 12,
+        "ACCESSOR_TYPE": 16,
+        "ARRAYS": 20,
+        "ASSET": 43,
+        "ASSET_MIN_VERSION": 19,
+        "ASSET_VERSION": 159,
+        "BUFFERS": 48,
+        "BUFFERVIEWS": 55,
+        "BUFFERVIEW_BOUNDS": 69,
+        "BUFFERVIEW_BUFFER": 51,
+        "BUFFER_CHUNK_BOUNDS": 7,
+        "BUFFER_CHUNK_MISSING": 17,
+        "BUFFER_IMPLICIT_BIN_MISSING": 4,
+        "BUFFER_LENGTH": 69,
+        "EXTENSIONS": 32,
+        "EXTENSIONS_REQUIRED_NOT_USED": 3,
+        "EXTERNAL_ASSETS": 7,
+        "EXTERNAL_ASSET_FILE": 19,
+        "EXTERNAL_ASSET_MEDIA_TYPE": 3,
+        "FILES": 11,
+        "FILE_ALIASES": 2,
+        "FILE_BUFFERVIEW": 1,
+        "FILE_MIMETYPE": 16,
+        "FILE_REFERENCES_MAIN_JSON": 1,
+        "FILE_SOURCE_MISSING": 2,
+        "IMAGES": 18,
+        "IMAGE_BUFFERVIEW": 5,
+        "JSON_SYNTAX": 78,
+        "JSON_UTF8": 360,
+        "URI_TYPE": 14
+      },
+      "corpus_sha256": "781f1d17bc32dedd6fd9910f9f4d13e3970c873940ca9a4c467d84daafe265d8",
+      "rejected": 1254,
+      "seed": 2765958938657,
+      "verdicts_sha256": "6c5fa4fc93bd7a91af6d022aca6f35625a54cbc6d8e2ccbb067c2ed8d4a5418d"
+    }
+  },
+  "protocol": "are.gltf21-glb3-sandbox-evidence.v1",
+  "sha256": "d045721a4253ab3b474a2728078b325f8865ffa0dab8074e1b12aa4e0e2eb508",
+  "specification": {
+    "draft_branch": "draft-2.1",
+    "draft_commit": "c330f9e5a324c9858145be183d2a1e63718fd3e8",
+    "draft_path": "specification/2.1/Specification.adoc",
+    "draft_repository": "KhronosGroup/glTF",
+    "draft_sha256": "83e76b6eb2cdd33a2b525948fcb3929dbcbf10b9554e8027c736d2de84ebecd1",
+    "extension_registry_commit": "5b00b913b74c8f0260c64578b98a09ef2dde0b41",
+    "extension_registry_sha256": "32868b162d85305f633cbb78747abfddda8ebbf9c51f4bf4456cafc2af54952d",
+    "glb_container_v3": "unratified-working-draft",
+    "gltf_2_1": "unratified-working-draft",
+    "khronos_registry_current_version": "2.0",
+    "ratified": false,
+    "verified_on": "2026-11-20"
+  },
+  "vectors": [
+    {
+      "bytes": 59,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:27",
+      "name": "minimal-json-only",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "d209aa1b1e593472b9e19084e0042d5ada9ed9fd75dcb87003f74107bd065ae1",
+      "sha256": "0ef8ee501d20f3f546bcec1ec3df7782adefebc9c2886b24c8fe013f6ddc0c24",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 546,
+      "draft_features_observed": [
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:455;004e4942:0:504:42",
+      "name": "implicit-bin-triangle-gltf20",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "c8b69c2ae374a462684cbdda9139b7ab2d721f0e9281585bd17f9112f281e8ff",
+      "sha256": "33ac173d928a8fbe72f72d6da40bd8709c6680f81146254d0ec54363b55a99cf",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 594,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "buffer_chunk_reference",
+        "chunk_before_main_json",
+        "glb_container_v3",
+        "unknown_chunk_types"
+      ],
+      "framing": "A glb3;chunks=3;main_json=1;pad_nonzero=7;trailing_pad=0;0000007b:0:32:16;4e4f534a:0:64:465;004e4942:0:552:42",
+      "name": "custom-chunk-before-json-explicit-bin",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "64eb78f5d941c9b229783e2b8f2597263bc30b5f75ddd569b0adcc24168ac752",
+      "sha256": "bade6605d306086135a651c172e1563111432c5555596b3bc6436eeabbf82c76",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 1283,
+      "draft_features_observed": [
+        "accessor_component_types_2_1",
+        "asset_thumbnail",
+        "asset_version_2_1",
+        "buffer_chunk_reference",
+        "external_assets",
+        "files",
+        "glb_container_v3",
+        "multiple_binary_chunks",
+        "multiple_json_chunks",
+        "shapes"
+      ],
+      "framing": "A glb3;chunks=4;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:1101;004e4942:0:1152:42;004e4942:0:1216:24;4e4f534a:0:1256:27",
+      "name": "multi-chunk-files-external-assets",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "bd0b281394f415760d43e40b3815efcc29e117f85bda80516b9c66477b15f567",
+      "sha256": "f6495f1fde1ce972baa7eccc593640f8408fd8ed9f5a05b7c3e83ebc01643178",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 64,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=5;4e4f534a:0:32:27",
+      "name": "trailing-padding-after-last-chunk",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "b7431a291ddf7ebd5ed3c316dbae57430a051a776a5b0428ee84e75260c30a77",
+      "sha256": "55287392ebdf52b2de7a917ffb3e46a5b1cde29a129b94e5806ab2d977e63ae6",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 96,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "chunk_before_main_json",
+        "glb_container_v3",
+        "unknown_chunk_types"
+      ],
+      "framing": "A glb3;chunks=2;main_json=1;pad_nonzero=0;trailing_pad=0;0000007b:0:32:16;4e4f534a:0:64:32",
+      "name": "khronos-issue-2594-custom-before-json-layout",
+      "origin": "layout table by a Khronos contributor, issue #2594, 2026-10-10",
+      "receipt_sha256": "f72f38182070c11ea719d9862e40c824f9a29a3b25b8f6a501b2dd06a8e7333d",
+      "sha256": "7b7c4f0ad707b18a0c754d6af0d25c0517e7d3ccf1f3bdb7f66d6e278f739d52",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 144,
+      "draft_features_observed": [
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:88;004e4942:0:136:8",
+      "name": "loaders-gl-a4faaba-lengths-multiple-of-8",
+      "origin": "port of visgl/loaders.gl createGLBV3 (independent implementation)",
+      "receipt_sha256": "fc91db45dac3ebbd9d91ff193152fe97882d933b786c63d6551691fc315c0ae4",
+      "sha256": "50331efdf713751846f465fb063d0048f9828b3b75e1b7a921cd02cc4207860d",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 146,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:114",
+      "name": "data-uri-with-gzip-signature-not-decoded",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "e9545d33f1ebd8e016375e75ea5e7291d5df01e1f5c7b6e8b3c8af3c97d4bd9d",
+      "sha256": "410518bcf90fc7767248983733211793dfd0d01fde8382454a0af521f9493a78",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 146,
+      "draft_features_observed": [
+        "asset_version_2_1",
+        "buffer_chunk_reference",
+        "glb_container_v3"
+      ],
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:67;004e4942:0:120:26",
+      "name": "bin-chunk-with-gzip-signature-stays-opaque",
+      "origin": "in-process draft encoder",
+      "receipt_sha256": "b8fcab8e0987e9be8dc517fb56cd2719ca83ad42d3b519412e5f277ef3b7afc5",
+      "sha256": "d63191092f7e999cb47b8ec0450a2b9d38be6ae1f89f501089cf20d6f103982f",
+      "verdict": "accepted"
+    },
+    {
+      "bytes": 140,
+      "code": "CHUNK_LENGTH_OVERFLOW",
+      "framing": "R CHUNK_LENGTH_OVERFLOW",
+      "name": "loaders-gl-a4faaba-4-byte-alignment-divergence",
+      "origin": "port of visgl/loaders.gl createGLBV3 (independent implementation)",
+      "sha256": "f93c998a5635ce2859c8f0f35fa3b2a81d4c9ffa26883ead38cf5aa920db7977",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 59,
+      "code": "BIG_ENDIAN_REFUSED",
+      "framing": "R BIG_ENDIAN_REFUSED",
+      "name": "big-endian-file",
+      "origin": "in-process negative",
+      "sha256": "da1fde185cfc407b2493e8720eb6cc6c597a53d7baf9d9e32885ae952c5025ea",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 48,
+      "code": "VERSION_2_OUT_OF_SCOPE",
+      "framing": "R VERSION_2_OUT_OF_SCOPE",
+      "name": "glb-version-2-container",
+      "origin": "in-process negative",
+      "sha256": "51d153f29a2389554f79ca879acf6e86867f61e0db10e684cb2029c5f2fa483c",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 16,
+      "code": "VERSION_UNSUPPORTED",
+      "framing": "R VERSION_UNSUPPORTED",
+      "name": "glb-version-4-container",
+      "origin": "in-process negative",
+      "sha256": "55c582961d0e8f78fc6f0cd725195f83c2d180012c15af911699ec8dedc8c68e",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "LENGTH_MSB",
+      "framing": "R LENGTH_MSB",
+      "name": "declared-length-msb",
+      "origin": "in-process negative",
+      "sha256": "9c057e327110c3a616ad5ad8f7a2edca9facedfc66171afcd0b91ae19030d186",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "LENGTH_MISMATCH",
+      "framing": "R LENGTH_MISMATCH",
+      "name": "declared-length-32-bit-truncation-trap",
+      "origin": "in-process negative",
+      "sha256": "995d428da5943f2dc69d9a3b08963b296ca9b31e81a403bd1e205e278f7efebe",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "CHUNK_LENGTH_MSB",
+      "framing": "R CHUNK_LENGTH_MSB",
+      "name": "chunk-length-msb-wraparound",
+      "origin": "in-process negative",
+      "sha256": "eb070a8fa280ded0c87eb7151323a0082ae8efc81f44aaa65c79925e45f622b9",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "CHUNK_LENGTH_OVERFLOW",
+      "framing": "R CHUNK_LENGTH_OVERFLOW",
+      "name": "chunk-length-32-bit-truncation-trap",
+      "origin": "in-process negative",
+      "sha256": "2fdf169f1df53d49419d0ef6fd4f4748d0b77b7c878e71b5836877c1ab2cbdca",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "CHUNK_LENGTH_OVERFLOW",
+      "framing": "R CHUNK_LENGTH_OVERFLOW",
+      "name": "chunk-length-beyond-file",
+      "origin": "in-process negative",
+      "sha256": "239e51a3229187a6e1d5a3032eb5881b9bf86960f7d3b1d28e5d36a752b74df4",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 24,
+      "code": "LENGTH_MISMATCH",
+      "framing": "R LENGTH_MISMATCH",
+      "name": "truncated-inside-chunk-header",
+      "origin": "in-process negative",
+      "sha256": "49ec340438b6d467cdd5e112087203dc35c4aeea19feed3addc5eaf7feae0632",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 24,
+      "code": "CHUNK_HEADER_TRUNCATED",
+      "framing": "R CHUNK_HEADER_TRUNCATED",
+      "name": "truncated-inside-chunk-header-length-repaired",
+      "origin": "in-process negative",
+      "sha256": "fffb42d8623043dc9f4dc07661a3cb26351009d4368637487aacc9fd951839d7",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 541,
+      "code": "LENGTH_MISMATCH",
+      "framing": "R LENGTH_MISMATCH",
+      "name": "truncated-inside-payload",
+      "origin": "in-process negative",
+      "sha256": "8cd9f2700393c65d2e7db69abf6ae46ea8e36e3af3313436f9030e616788661d",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 541,
+      "code": "CHUNK_LENGTH_OVERFLOW",
+      "framing": "R CHUNK_LENGTH_OVERFLOW",
+      "name": "truncated-inside-payload-length-repaired",
+      "origin": "in-process negative",
+      "sha256": "4150b10f20a7644203ef09146d45d242b823995201e44f13272519bf0ea22ad9",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 61,
+      "code": "TRAILING_BYTES",
+      "framing": "R TRAILING_BYTES",
+      "name": "stray-bytes-short-of-alignment",
+      "origin": "in-process negative",
+      "sha256": "1d80bc26a9ce213d92fa50d6a02818f882ef189bda75d4d44c5a93a91d7a6161",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 16,
+      "code": "NO_CHUNKS",
+      "framing": "R NO_CHUNKS",
+      "name": "header-only-no-chunks",
+      "origin": "in-process negative",
+      "sha256": "784858e3ae850641903b338114ca4ba904caf448d9cbe80221f9345e6f7362ae",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 74,
+      "code": "JSON_CHUNK_MISSING",
+      "framing": "R JSON_CHUNK_MISSING",
+      "name": "bin-only-no-json-chunk",
+      "origin": "in-process negative",
+      "sha256": "cf173a90602daa37a88e61db3aa5bfd930f3901b3b33d2c19baa1b42e615a771",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 106,
+      "code": "CHUNK_ENCODING_REFUSED",
+      "framing": "R CHUNK_ENCODING_REFUSED",
+      "name": "chunk-encoding-nonzero-is-never-decoded",
+      "origin": "in-process negative",
+      "sha256": "5cdeb752b2a52463d42a4c83d7cb5a0690c27411762aa2363d629ce8004604a9",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 26,
+      "code": "COMPRESSED_INPUT_REFUSED",
+      "framing": "R COMPRESSED_INPUT_REFUSED",
+      "name": "gzip-signature-instead-of-glb",
+      "origin": "in-process negative",
+      "sha256": "f68b3c0bd0c48108ba1c54124d4b11eba26511b7445bcd29d6556a38b6424b00",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 30,
+      "code": "COMPRESSED_INPUT_REFUSED",
+      "framing": "R COMPRESSED_INPUT_REFUSED",
+      "name": "zip-signature-instead-of-glb",
+      "origin": "in-process negative",
+      "sha256": "ec0107caac2815eb1ff191d66a2878ed6a1f6b52f44d9cc8357ce738935128e0",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 62,
+      "code": "JSON_BOM",
+      "framing": "R JSON_BOM",
+      "name": "json-utf8-bom",
+      "origin": "in-process negative",
+      "sha256": "63007448d4052bea856a43eac9857300258840c90cc23a5006ebfe0acbb72cd8",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 76,
+      "code": "JSON_UTF8",
+      "framing": "R JSON_UTF8",
+      "name": "json-invalid-utf8-overlong",
+      "origin": "in-process negative",
+      "sha256": "b0b5e4985d1666dd48b18bf7a282e86dec3a5b81dfd6469cafb75fe754cea357",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 72,
+      "code": "JSON_NONFINITE",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:40",
+      "name": "json-nan-constant",
+      "origin": "in-process negative",
+      "sha256": "5784fa95adc4e3eb4298d35913a92951a72b4de04aa8ded1a64e7d6d1ab105d5",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 74,
+      "code": "JSON_NONFINITE",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:42",
+      "name": "json-float-overflow",
+      "origin": "in-process negative",
+      "sha256": "277fb79c98cb9c89e6d920d9df064cfa2614e2029380e80f82bceb893becf640",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 85,
+      "code": "JSON_DUPLICATE_KEY",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:53",
+      "name": "json-duplicate-key",
+      "origin": "in-process negative",
+      "sha256": "da115e074f95557d5c0862e720fb1008632ba26f2d1a7edcbb1f0e359b18c0fe",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 199,
+      "code": "JSON_DEPTH",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:167",
+      "name": "json-depth-bomb",
+      "origin": "in-process negative",
+      "sha256": "1f7a2075b5a0af6b2d37cf880b68aa56a5135957c586e0e926f4d481d3180bdf",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 80,
+      "code": "JSON_LONE_SURROGATE",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:48",
+      "name": "json-lone-surrogate-escape",
+      "origin": "in-process negative",
+      "sha256": "c68c40874487597a7b9048dcea9b3dc6c0d88cec42c42617a77feeb6ef9f3017",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 60,
+      "code": "JSON_SYNTAX",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:28",
+      "name": "json-trailing-nul-padding-inside-chunk",
+      "origin": "in-process negative",
+      "sha256": "3460876b1870f5742d7b216dcc5df5df0ecb4424126823cca202075ad23c5e09",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 59,
+      "code": "ASSET_VERSION_UNSUPPORTED",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:27",
+      "name": "asset-version-2-2-unknown-minor",
+      "origin": "in-process negative",
+      "sha256": "5b74abfdf109269345266069db6d40fd7fcae802f9a12d7321212bf8972e04b8",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 78,
+      "code": "ASSET_MIN_VERSION",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:46",
+      "name": "asset-min-version-above-version",
+      "origin": "in-process negative",
+      "sha256": "e8aefbaa14d31eb71e60b1823e4b7af3e224f74fb5e8e289448a72bbb992d016",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 546,
+      "code": "BUFFERVIEW_BOUNDS",
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:455;004e4942:0:504:42",
+      "name": "bufferview-out-of-bounds",
+      "origin": "in-process negative",
+      "sha256": "fc41c4ef094c921ac8a69a7181d05a98fa2f9bed7f058c5d6014cfca2a5d36e2",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 306,
+      "code": "BUFFER_CHUNK_BOUNDS",
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:215;004e4942:0:264:42",
+      "name": "buffer-larger-than-chunk",
+      "origin": "in-process negative",
+      "sha256": "87bce4b39a89bb9b8fda6cce728e20c5f7106eb2bd697abc40252eea20a75db6",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 562,
+      "code": "BUFFER_CHUNK_MISSING",
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:465;004e4942:0:520:42",
+      "name": "buffer-chunk-index-missing",
+      "origin": "in-process negative",
+      "sha256": "17669ff29170eb9e4428bb67f16a7ab2c14d36fc1e41b6e05e4097433a366d20",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 570,
+      "code": "BUFFER_SOURCE_AMBIGUOUS",
+      "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:479;004e4942:0:528:42",
+      "name": "buffer-chunk-and-uri-ambiguous",
+      "origin": "in-process negative",
+      "sha256": "788f183802b74b0f4c04856c958491b28035c4810cbe6309dc9adf13808b8c00",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 198,
+      "code": "FILE_REFERENCES_MAIN_JSON",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:166",
+      "name": "file-references-main-json-chunk",
+      "origin": "in-process negative",
+      "sha256": "4dd3f1d091ad0ce489cb7967d7f6ca7ea4020a792dee2fecef4c721f6582e80d",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 4843,
+      "code": "EXTERNAL_REFERENCE_BUDGET",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:4811",
+      "name": "external-reference-budget",
+      "origin": "in-process negative",
+      "sha256": "9218715ee43997e079ec8a2a285e920d2b27226356748de1d67b509a53b77bdd",
+      "verdict": "rejected"
+    },
+    {
+      "bytes": 1048694,
+      "code": "DATA_URI_BUDGET",
+      "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:1048662",
+      "name": "data-uri-over-budget",
+      "origin": "in-process negative",
+      "sha256": "e07be9b772b5d2d197cc354551591172e40b03a369b9f12e1b919c88ede4ba26",
+      "verdict": "rejected"
+    }
+  ]
+}
