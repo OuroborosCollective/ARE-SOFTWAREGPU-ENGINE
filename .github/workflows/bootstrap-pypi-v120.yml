@@ -78,7 +78,6 @@ jobs:
           workflows = (
               ("cpu-regressions.yml", 9),
               ("public-package-install.yml", 4),
-              ("cpu-wave-leaderboard.yml", 0),
           )
 
           def api(path):
