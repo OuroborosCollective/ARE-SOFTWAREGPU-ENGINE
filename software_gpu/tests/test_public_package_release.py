@@ -126,6 +126,34 @@ class PublicPackageContractTests(unittest.TestCase):
         self.assertIn("git merge-base --is-ancestor", content)
         self.assertNotIn("skip-existing: true", content)
 
+    def test_one_shot_runner_dispatch_requires_exact_main_ci(self):
+        """The first public release may be bootstrapped only from verified main."""
+        gate = (ROOT / ".github/workflows/bootstrap-pypi-v120.yml").read_text(
+            encoding="utf-8")
+        release = (ROOT / ".github/workflows/goreleaser.yml").read_text(
+            encoding="utf-8")
+        self.assertIn("bootstrap-softwaregpu-pypi-v1.2.0", gate)
+        self.assertIn("branches: [main]", gate)
+        self.assertIn("'refs/heads/main'", gate)
+        self.assertIn("contents: write", gate)
+        self.assertIn("actions: write", gate)
+        self.assertIn('assert validate_tag("v1.2.0") == "1.2.0"', gate)
+        self.assertIn('select_run(data, sha, repo)', gate)
+        self.assertIn('verify_jobs(job_data, run_id, minimum=minimum)', gate)
+        self.assertIn('("cpu-regressions.yml", 9)', gate)
+        self.assertIn('("public-package-install.yml", 4)', gate)
+        self.assertIn("PYPI_V120_ALREADY_PUBLISHED", gate)
+        self.assertIn("git/ref/heads/main", gate)
+        self.assertIn("git/ref/tags/v1.2.0", gate)
+        self.assertIn("EXACT_RELEASE_TAG_READBACK_OK", gate)
+        self.assertIn("RELEASE_WORKFLOW_DISPATCH_ACCEPTED", gate)
+        self.assertIn('actions/workflows/goreleaser.yml/dispatches', gate)
+        self.assertNotIn("skip-existing: true", gate)
+        self.assertIn("  workflow_dispatch:", release)
+        self.assertEqual(
+            2, release.count(
+                "github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')"))
+
     def test_source_package_will_not_claim_native_cpp_is_embedded(self):
         page = (ROOT / "docs/PYPI_PACKAGE.md").read_text(encoding="utf-8")
         self.assertIn("C++17", page)
