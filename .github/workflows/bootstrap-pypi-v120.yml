@@ -1,0 +1,161 @@
+# One-shot owner-approved v1.2.0 release bootstrap. Runs only when this file first lands on main.
+# The workflow token's tag push cannot start another workflow; dispatch the verified tag explicitly.
+name: Bootstrap public PyPI v1.2.0 (exact-main CI gated)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bootstrap-pypi-v120.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: bootstrap-softwaregpu-pypi-v1.2.0
+  cancel-in-progress: false
+
+jobs:
+  verify-and-tag:
+    name: Require real main-push CI, then create and dispatch the immutable version tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Select supported Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Assert exact owner, main and v1.2.0 package metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'OuroborosCollective/ARE-SOFTWAREGPU-ENGINE'
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          from tools.release_gate import validate_tag
+          assert validate_tag("v1.2.0") == "1.2.0"
+          setup = ast.parse(Path("setup.py").read_text())
+          calls = [n for n in ast.walk(setup) if isinstance(n, ast.Call)
+                   and isinstance(n.func, ast.Name) and n.func.id == "setup"]
+          assert len(calls) == 1
+          args = {k.arg: k.value for k in calls[0].keywords}
+          assert ast.literal_eval(args["name"]) == "ouroboroscollective-softwaregpu"
+          assert ast.literal_eval(args["version"]) == "1.2.0"
+          module = ast.parse(Path("software_gpu/__init__.py").read_text())
+          versions = [n.value for n in module.body if isinstance(n, ast.Assign)
+                      and any(isinstance(t, ast.Name) and t.id == "__version__"
+                              for t in n.targets)]
+          assert len(versions) == 1 and ast.literal_eval(versions[0]) == "1.2.0"
+          print("PACKAGE_AND_VERSION_CONTRACT_OK")
+          PY
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" = "$GITHUB_SHA"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.0" --silent > /dev/null 2>&1; then
+            echo 'RELEASE_TAG_ALREADY_EXISTS: stop; inspect the existing tag and release before recovery' >&2
+            exit 1
+          fi
+      - name: Require complete exact-main CPU, package and leaderboard runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import time
+          from tools.release_gate import ReleaseGateError, select_run, verify_jobs
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          workflows = (
+              ("cpu-regressions.yml", 9),
+              ("public-package-install.yml", 4),
+          )
+
+          def api(path):
+              return json.loads(subprocess.check_output(
+                  ["gh", "api", "-X", "GET", path], text=True))
+
+          def run_data(workflow):
+              return api(f"repos/{repo}/actions/workflows/{workflow}/runs"
+                         f"?head_sha={sha}&event=push&per_page=100")
+
+          for attempt in range(48):
+              unresolved = []
+              for workflow, minimum in workflows:
+                  try:
+                      data = run_data(workflow)
+                      run_id = select_run(data, sha, repo)
+                      if minimum:
+                          job_data = api(f"repos/{repo}/actions/runs/{run_id}/jobs?per_page=100")
+                          verify_jobs(job_data, run_id, minimum=minimum)
+                          if workflow == "public-package-install.yml":
+                              names = [j["name"] for j in job_data["jobs"]]
+                              for os_name in ("ubuntu-latest", "windows-latest"):
+                                  for py in ("3.11", "3.12"):
+                                      if not any(os_name in name and "Python " + py in name
+                                                 for name in names):
+                                          raise RuntimeError("MISSING_INSTALLED_PACKAGE_MATRIX")
+                      print("CHECK_OK", workflow, sha, run_id)
+                  except ReleaseGateError as exc:
+                      # Fail fast if any exact-main run is terminal but not successful.
+                      candidates = [
+                          j for j in (data.get("workflow_runs", []) if "data" in locals() else [])
+                          if j.get("head_sha") == sha and j.get("event") == "push"
+                          and j.get("head_branch") == "main"]
+                      if candidates:
+                          newest = max(candidates, key=lambda x: x.get("id", 0))
+                          if newest.get("status") == "completed":
+                              raise RuntimeError(f"TERMINAL_CI_NOT_GREEN {workflow}: {exc}")
+                      unresolved.append(workflow)
+              if not unresolved:
+                  break
+              if attempt == 47:
+                  raise SystemExit("RELEASE_BLOCKED_PENDING_EXACT_MAIN_CI " + ",".join(unresolved))
+              print("WAITING_FOR_REAL_MAIN_CI", ",".join(unresolved), flush=True)
+              time.sleep(15)
+          else:
+              raise SystemExit("RELEASE_CI_GATE_UNREACHABLE")
+          print("ALL_EXACT_MAIN_CI_GATES_GREEN", sha)
+          PY
+      - name: Confirm no existing public v1.2.0 before creating tag
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+          url = "https://pypi.org/pypi/ouroboroscollective-softwaregpu/1.2.0/json"
+          try:
+              with urlopen(Request(url, headers={"Accept": "application/json"}), timeout=20) as response:
+                  raise SystemExit("PYPI_V120_ALREADY_PUBLISHED")
+          except HTTPError as exc:
+              if exc.code != 404:
+                  raise
+          print("PYPI_VERSION_NOT_YET_PUBLISHED")
+          PY
+      - name: Create SHA-bound tag exactly once and explicitly start release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" = "$GITHUB_SHA"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.0" --silent > /dev/null 2>&1; then
+            echo 'RELEASE_TAG_COLLISION: refusing to overwrite existing ref' >&2
+            exit 1
+          fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref='refs/tags/v1.2.0' -f sha="$GITHUB_SHA" > /dev/null
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.0" --jq '.object.sha')" = "$GITHUB_SHA"
+          echo "EXACT_RELEASE_TAG_READBACK_OK sha=$GITHUB_SHA tag=v1.2.0"
+          # Tag push with GITHUB_TOKEN does not trigger other Actions; use explicit dispatch.
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/goreleaser.yml/dispatches" \
+            -f ref='v1.2.0' > /dev/null
+          echo 'RELEASE_WORKFLOW_DISPATCH_ACCEPTED tag=v1.2.0; publishing is NOT yet verified'
