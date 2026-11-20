@@ -56,3 +56,4 @@ class VertexColorShader(Shader):
 
 # Captured implementation identity for the opt-in native specialization.
 _NATIVE_VERTEX_COLOR_METHODS = (VertexColorShader.vertex_shader, VertexColorShader.fragment_shader)
+_VERTEX_COLOR_BATCH = VertexColorShader.fragment_shader_batch

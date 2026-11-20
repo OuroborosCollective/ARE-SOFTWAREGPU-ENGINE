@@ -11,6 +11,7 @@ import numpy as np
 from .framebuffer import Framebuffer
 from .shader import Shader, Vertex
 from ..core.device import VirtualGPU
+from ..learning import configured_learner
 from .tile_backend import rasterize_tiles
 from .geometry import prepare_triangles, is_top_left
 
@@ -48,6 +49,8 @@ class SoftwareRasterizer:
             from .surface_plan import SurfacePlanPolicy
             if backend != "tiles-plan" or not isinstance(plan_policy, SurfacePlanPolicy):
                 raise ValueError("plan_policy requires tiles-plan and SurfacePlanPolicy")
+        self.local_learner = configured_learner()
+        self.last_learning_receipt = None
         self.fb = framebuffer
         self.tile_size = tile_size
         self.backend = backend
@@ -68,6 +71,7 @@ class SoftwareRasterizer:
         """Processes 3D mesh through Vertex Shader -> Clipping -> Rasterization -> Fragment Shader."""
         device = VirtualGPU.get_current_device()
         device.total_draw_calls += 1
+        self.last_learning_receipt = None
 
         self.last_plan_receipt = None
         self.last_deferred_receipt = None
@@ -87,6 +91,13 @@ class SoftwareRasterizer:
                 vertices, indices, shader, self.fb.width, self.fb.height,
                 self.tile_size, scan_min_samples)
             triangles, prepared_bins = prepared.triangles, prepared.bins
+        if self.local_learner is not None:
+            from .learned_tiles import measured_draw
+            self.last_learning_receipt = measured_draw(self, triangles, shader, prepared_bins)
+            return
+        self._draw_prepared(triangles, shader, prepared_bins)
+
+    def _draw_prepared(self, triangles, shader, prepared_bins):
         if self.native_kernel is not None:
             self.last_native_receipt = self.native_kernel.draw(self.fb, triangles, shader)
             return

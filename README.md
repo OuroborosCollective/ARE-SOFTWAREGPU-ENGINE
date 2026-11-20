@@ -293,3 +293,7 @@ Die Android-Begleitapp erhält einen klaren Einstieg statt einer unbeschrifteten
 ### Privater VPS-Worker und disk-sichere Bereinigung
 
 [ARE-Worker-Deployment-Vertrag](ops/softwaregpu-worker/README.md): geplante authentifizierte HTTPS-Adresse `https://gpu.arelorian.de` (noch nicht live bestätigt), **3-vCPU-Quota**, 3 GiB Container-RAM, localhost-only Proxy-Upstream, kein persistentes Docker-Volume. Das eigens gebundene Installationsskript entfernt nach gesundem Rollout nur gestoppte ARE-Container, ungenutzte ARE-Images und doppelt gekennzeichnete disponierbare Volumes; keine globalen Prune-Befehle. Der CI-Docker-Test prüft den realen Standard-128px-Render und die HTTP-401-Grenze. **VPS-Deployment erst nach Allowlist-/DNS-/TLS-Readback**, nicht aus grüner CI ableiten.
+
+## Lokale Render- und Videokalibrierung
+
+Mit `are-learning enable` lernen Rasterizer und ARE-Videoexport aus lokalen Laufzeiten. [Einrichtung, Datensatz und Vergleich auf zurückgehaltener Geometrie](docs/LOCAL_RENDER_LEARNING.md)
