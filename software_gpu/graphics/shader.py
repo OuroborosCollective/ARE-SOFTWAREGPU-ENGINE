@@ -253,3 +253,7 @@ class BlinnPhongShader(Shader):
             int((b if b < 1.0 else 1.0) * 255.0) if b > 0.0 else 0,
             255
         )
+
+
+# Pin the pure fragment method used by the opt-in scheduler.
+_BLINN_PHONG_FRAGMENT = BlinnPhongShader.fragment_shader

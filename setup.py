@@ -37,6 +37,8 @@ setup(
     entry_points={
         "console_scripts": [
             "software-gpu=main:main",
+            "are-learning=software_gpu.learning:main",
+            "are-render-video=software_gpu.integrations.render_video:main",
         ],
     },
     classifiers=[

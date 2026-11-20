@@ -6,6 +6,10 @@ Erst `scripts/workbench.py analyze` auf echten Ablationen ausführen. Batch-Gewi
 
 Dreiecksanzahl und -größe unabhängig sweepen; 128/256/512 px und budgetiert 1024 px prüfen. Mindestens eine SHA-gepinnte reale GLB-Geometrie durch den bestehenden Offline-Worker messen. Dessen Flat-Color-Ergebnis belegt keine Textur-/PBR- oder vollständige Game-Äquivalenz. Ganze Szenenfamilien zum Test zurückhalten; Leave-one-row-out ersetzt diesen Test nicht. Koeffizienten, Einheiten, Feature-Schema, Trainings-/Holdout-Hashes und Policy-Version speichern. Ein kleines synthetisches Dataset rechtfertigt keinen universellen Runtime-Gate.
 
+## Lokale Gewichte im Produktionslauf
+
+Für die ausdrücklich gewünschte fortlaufende Kalibrierung den vorhandenen Engine-Befehl `are-learning` und `are-render-video` verwenden. Speicherpfad, aktive Implementierung, Gewichte sowie echte Paar- und Einzelmessungen mit `are-learning status` und `are-learning dataset` zurücklesen. Ein Host-Vergleich auf zurückgehaltener Geometrie läuft über `python -m software_gpu.benchmarks.compare_local_learning --output holdout.json`. Vertrag und Schalter beschreibt `docs/LOCAL_RENDER_LEARNING.md` im Engine-Checkout.
+
 ## CPU-LoRA abstimmen
 
 Die SoftwareGPU ist ein CPU-Renderer; sie ersetzt weder PyTorch-Autograd noch eine Trainings-GPU. Vor ML-Läufen `scripts/miha_cpu_runner.py`, `fixtures/miha/training.json` und `.github/workflows/miha-cpu-training.yml` lesen. Den realen RAM-/Langsequenz-/Modellrevision-Gates folgen. `scripts/workbench.py train-preflight` ruft den vorhandenen CPU-Preflight auf, trainiert aber nicht und lädt keine Modellgewichte.
