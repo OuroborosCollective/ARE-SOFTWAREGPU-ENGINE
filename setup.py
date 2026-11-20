@@ -1,9 +1,10 @@
 from pathlib import Path
+from runpy import run_path
 from setuptools import setup, find_packages
 
 setup(
     name="ouroboroscollective-softwaregpu",
-    version="1.2.0",
+    version=run_path(str(Path(__file__).parent / "software_gpu" / "_version.py"))["build_version"](Path(__file__).parent),
     description="Software GPU Processor on Multi-Core CPU (SIMT, DirectX 11, Gaming AA, VPS Governor, Android IPC)",
     author="OuroborosCollective",
     author_email=None,
@@ -37,6 +38,7 @@ setup(
     entry_points={
         "console_scripts": [
             "software-gpu=main:main",
+            "are-worldforge=software_gpu.integrations.worldforge:main",
             "are-learning=software_gpu.learning:main",
             "are-render-video=software_gpu.integrations.render_video:main",
         ],

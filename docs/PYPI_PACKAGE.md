@@ -61,3 +61,25 @@ read back, no live PyPI availability is claimed.
 
 Do not expose experimental HTTP/Gradio servers to the public without
 a separate security review and real authentication.
+
+### Ashen Crypt World Forge
+
+After both main-push CI suites pass, every new first-parent integration after
+`22c436385fad7bf79d074d9eaf2cce458a81810e` gets a stable patch release in
+the 1.2 series. CI on an open PR builds and tests without publishing.
+The Trusted Publisher uploads the same wheel and sdist served by the GitHub release.
+
+On the World Forge VPS, run `sudo bash ops/worldforge/install.sh` once.
+A five-minute timer checks PyPI against the GitHub wheel digest, installs in a new
+versioned environment and switches the existing CLI link after smoke tests.
+To inspect the active version and commit, read `/opt/are-media/learning-current/release.json`.
+Previous environments and the local learning database are retained.
+
+The independent review timer reads completed Blender receipts and their hashes.
+It writes six static silhouette images and a JSON comparison under
+`~unityarpg/.local/share/are-arpg/worldforge-are/<job>/<version>/<receipt-sha>/`.
+For a single export, run `are-worldforge review <completed-job> <review-directory>`.
+The two lower-detail candidates are geometry-only vertex clusters evaluated from two fixed
+views. Animation, skins and unsupported geometry require manual review. The
+recommended preview level describes silhouette fidelity at 96 pixels. Original
+Unity assets, materials, LODGroups and gameplay are managed by World Forge.

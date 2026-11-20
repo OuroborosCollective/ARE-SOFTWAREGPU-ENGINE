@@ -1,0 +1,23 @@
+[Unit]
+Description=Compare completed World Forge Blender models with ARE SoftwareGPU
+After=worldforge-blender.service
+ConditionPathIsExecutable=/opt/are-media/learning-current/venv/bin/are-worldforge
+
+[Service]
+Type=oneshot
+User=unityarpg
+Group=unityarpg
+UMask=0077
+ExecStart=/opt/are-media/learning-current/venv/bin/are-worldforge scan /var/lib/unityarpg/.local/share/are-arpg/worldforge-blender/results /var/lib/unityarpg/.local/share/are-arpg/worldforge-are
+Environment=HOME=/var/lib/unityarpg
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=ARE_LEARNING_DB=/var/lib/unityarpg/.local/state/are-softwaregpu/learning-v1.sqlite3
+ProtectSystem=strict
+ReadWritePaths=/var/lib/unityarpg/.local/share/are-arpg/worldforge-are /var/lib/unityarpg/.local/state/are-softwaregpu
+PrivateNetwork=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+MemoryMax=1500M
+CPUQuota=100%
+Nice=10
+TimeoutStartSec=12min

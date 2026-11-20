@@ -1,0 +1,15 @@
+[Unit]
+Description=Update ARE SoftwareGPU from the verified GitHub and PyPI release
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/are-worldforge/update.py
+TimeoutStartSec=5min
+UMask=0022
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/are-media
+Environment=UV_CACHE_DIR=/var/cache/are-worldforge-update
+CacheDirectory=are-worldforge-update

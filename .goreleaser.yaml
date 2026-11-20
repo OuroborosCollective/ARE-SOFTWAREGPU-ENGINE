@@ -15,7 +15,7 @@ source:
 checksum:
   name_template: checksums.txt
   extra_files:
-    - glob: ./release-assets/ouroboroscollective_softwaregpu-*.whl
+    - glob: ./release-assets/ouroboroscollective_softwaregpu-*
 
 release:
   github:
@@ -23,7 +23,7 @@ release:
     name: ARE-SOFTWAREGPU-ENGINE
   prerelease: auto
   extra_files:
-    - glob: ./release-assets/ouroboroscollective_softwaregpu-*.whl
+    - glob: ./release-assets/ouroboroscollective_softwaregpu-*
   header: |
     CPU-only software rasterization research, with reproducible tests and
     source-bound evidence. No hardware-GPU parity or FPS guarantee.
