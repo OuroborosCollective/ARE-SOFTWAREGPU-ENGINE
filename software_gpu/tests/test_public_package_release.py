@@ -115,6 +115,29 @@ class PublicPackageContractTests(unittest.TestCase):
             "pip install wheelhouse/ouroboroscollective_softwaregpu-*.whl", workflow)
         self.assertNotIn('glob("software_gpu-*.whl")', workflow)
 
+    def test_real_pypi_publish_attestation_sidecars_are_not_distributions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            wheel = make_wheel(directory)
+            sdist = make_sdist(directory)
+            for artifact in (wheel, sdist):
+                (Path(directory) / (artifact.name + ".publish.attestation")).write_text(
+                    "signed provenance", encoding="utf-8")
+            self.assertEqual(
+                {wheel.name, sdist.name},
+                {x.name for x in pypi_index_readback.collect_local_distributions(
+                    Path(directory))})
+            (Path(directory) / "unexpected-extra.json").write_text("{}")
+            with self.assertRaises(ValueError):
+                pypi_index_readback.collect_local_distributions(Path(directory))
+
+    def test_pypi_dist_rejects_missing_primary_even_with_attestations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            wheel = make_wheel(directory)
+            (Path(directory) / (wheel.name + ".publish.attestation")).write_text(
+                "signed provenance", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                pypi_index_readback.collect_local_distributions(Path(directory))
+
     def test_release_workflow_has_exact_sha_ci_gate_then_oidc_publishing(self):
         content = (ROOT / ".github/workflows/goreleaser.yml").read_text(encoding="utf-8")
         self.assertIn("publish-pypi:", content)
