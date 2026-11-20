@@ -154,6 +154,35 @@ class PublicPackageContractTests(unittest.TestCase):
             2, release.count(
                 "github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')"))
 
+    def test_failed_v120_release_recovers_same_immutable_tag_without_dirty_bypass(self):
+        """Regression: generated release-assets must not invalidate a real release."""
+        ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/goreleaser.yml").read_text(
+            encoding="utf-8")
+        dispatch = (ROOT / ".github/workflows/recover-pypi-v120-dispatch.yml").read_text(
+            encoding="utf-8")
+        self.assertIn("release-assets/", ignore)
+        self.assertIn("pypi-dist/", ignore)
+        self.assertIn("recover-v120-github:", workflow)
+        self.assertIn("recover-v120-pypi:", workflow)
+        self.assertIn("needs: recover-v120-github", workflow)
+        self.assertIn("environment: pypi", workflow)
+        self.assertIn("ref: v1.2.0", workflow)
+        self.assertIn("d8c5c2f883d48ee965938abd258790b32f5e6577", workflow)
+        self.assertIn(".git/info/exclude", workflow)
+        self.assertIn("test -z \"$(git status --porcelain --untracked-files=normal)\"", workflow)
+        self.assertIn("goreleaser release --clean", workflow)
+        self.assertIn("tools/pypi_index_readback.py --version 1.2.0", workflow)
+        self.assertIn("pypa/gh-action-pypi-publish@release/v1", workflow)
+        self.assertIn("  workflow_dispatch:", workflow)
+        self.assertNotIn("goreleaser release --skip=validate", workflow)
+        self.assertNotIn("git tag -f", workflow)
+        self.assertIn("branches: [main]", dispatch)
+        self.assertIn("actions: write", dispatch)
+        self.assertIn("ref=main", dispatch)
+        self.assertIn("'inputs[recovery_tag]=v1.2.0'", dispatch)
+        self.assertIn("EXISTING_RELEASE_STOP_NO_DUPLICATE", dispatch)
+
     def test_source_package_will_not_claim_native_cpp_is_embedded(self):
         page = (ROOT / "docs/PYPI_PACKAGE.md").read_text(encoding="utf-8")
         self.assertIn("C++17", page)

@@ -1,0 +1,50 @@
+# One-shot immutable v1.2.0 recovery trigger, merges once and then remains inert.
+name: Dispatch immutable PyPI v1.2.0 recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recover-pypi-v120-dispatch.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: dispatch-recover-softwaregpu-v120
+  cancel-in-progress: false
+
+jobs:
+  dispatch-verified-recovery:
+    name: Check failed release state and dispatch recovery without moving tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact main commit without persisting credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Confirm immutable tag and missing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'OuroborosCollective/ARE-SOFTWAREGPU-ENGINE'
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.0" --jq '.object.sha')" = 'd8c5c2f883d48ee965938abd258790b32f5e6577'
+          git merge-base --is-ancestor d8c5c2f883d48ee965938abd258790b32f5e6577 HEAD
+          if gh release view v1.2.0 --repo "$GITHUB_REPOSITORY" --json tagName >/dev/null 2>&1; then
+            echo 'EXISTING_RELEASE_STOP_NO_DUPLICATE' >&2
+            exit 1
+          fi
+          echo 'IMMUTABLE_TAG_AND_MISSING_RELEASE_VERIFIED'
+      - name: Dispatch original goreleaser.yml Trusted Publisher workflow on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/goreleaser.yml/dispatches" \
+            -f ref=main -f 'inputs[recovery_tag]=v1.2.0' >/dev/null
+          echo 'RECOVERY_WORKFLOW_DISPATCH_ACCEPTED; actual publication requires separate readback'
