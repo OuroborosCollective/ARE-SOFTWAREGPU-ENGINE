@@ -4,6 +4,23 @@
 >
 > Die öffentliche Website liest bestehende, revisionsgebundene CPU-Evidence aus diesem Repository. Historische Werte sind keine Live-FPS; neue Rekorde erfordern reale, geprüfte Benchmark-Receipts. Kein VPS-Zugriff durch die Website.
 
+## Linux / Windows: öffentliche Python-Paketinstallation (in Vorbereitung)
+
+Die CPU-only-Python-Engine hat einen separaten öffentlichen PyPI-Veröffentlichungspfad
+[`ouroboroscollective-softwaregpu`](docs/PYPI_PACKAGE.md); der importierbare
+API-Name bleibt `software_gpu`, der CLI-Befehl `software-gpu`.
+**Nach erstmalig bestätigtem PyPI-Registry-Readback** lautet die Installation
+`python -m pip install ouroboroscollective-softwaregpu` (Python 3.11/3.12).
+Vorher ist der [Quellcode-Schnellstart](docs/QUICKSTART.md) der verifizierte Weg.
+Die `[jit]`-Option nutzt optional Numba; die native C++17-Rasterizer-Binärdatei
+ist nicht Teil dieses Wheels. Die separate npm-/Node-Gradio-Vorschau installiert
+keine Engine. Jede SemVer-Veröffentlichung benötigt erfolgreiche exakte
+GitHub-CI inkl. Linux-/Windows-Wheel-Installation und PyPI Trusted Publisher;
+ein grüner Workflow ist noch keine bestätigte Veröffentlichung.
+Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
+Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
+ohne erfundene Leistungswerte.
+
 ## Neue Testreihen zuerst · Visual Asset Lab (19. November 2026)
 
 **Neue Tests erscheinen ab jetzt vor den historischen Ranglisten.** Die [CPU-Rangliste](docs/CPU_WAVE_RANGLISTEN.md) enthält oben einen automatisch aus [dem Testreihen-Katalog](evidence/test-series-catalog-v1.json) aufgebauten, nach Datum absteigend sortierten Abschnitt. Gleiche Daten werden stabil nach Test-ID sortiert. **Registriert** heißt nicht bestanden oder schneller: Ein neuer Leistungseintrag darf nur mit echten, vollständigen, SHA-gebundenen CPU-Messungen sowie RGBA-/Depth-Parität veröffentlicht werden. Bestehende historische Ergebnisse und ihre Semantik bleiben unverändert.

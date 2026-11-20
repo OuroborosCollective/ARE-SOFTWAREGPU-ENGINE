@@ -53,6 +53,15 @@ class ReleaseGateTest(unittest.TestCase):
                 with self.assertRaises(release_gate.ReleaseGateError):
                     release_gate.verify_jobs(bad, 91)
 
+    def test_four_job_installed_package_matrix_stays_fail_closed(self):
+        self.assertEqual(4, release_gate.verify_jobs(jobs(count=4), 91, minimum=4))
+        for invalid in (jobs(count=3), jobs(count=4, conclusion='skipped'),
+                        {**jobs(count=4), 'total_count': 5}, jobs(run_id=92, count=4)):
+            with self.subTest(invalid=invalid), self.assertRaises(release_gate.ReleaseGateError):
+                release_gate.verify_jobs(invalid, 91, minimum=4)
+        with self.assertRaises(release_gate.ReleaseGateError):
+            release_gate.verify_jobs(jobs(count=4), 91, minimum=0)
+
     def test_requires_semver_tag_and_full_sha(self):
         for bad in ('gradio-android-abcdef', 'v1.2.0/evil', 'v01.2.0', '1.2.0'):
             with self.subTest(tag=bad), self.assertRaises(release_gate.ReleaseGateError):
@@ -63,17 +72,20 @@ class ReleaseGateTest(unittest.TestCase):
 
     def test_requires_version_matching_wheel_with_licence_and_notice(self):
         with tempfile.TemporaryDirectory() as folder:
-            wheel = Path(folder) / 'software_gpu-1.2.0-py3-none-any.whl'
+            wheel = Path(folder) / 'ouroboroscollective_softwaregpu-1.2.0-py3-none-any.whl'
             with ZipFile(wheel, 'w') as z:
-                z.writestr('software_gpu-1.2.0.dist-info/METADATA',
-                           'Metadata-Version: 2.1\nName: software_gpu\nVersion: 1.2.0\n')
-                z.writestr('software_gpu-1.2.0.dist-info/licenses/LICENSE.md', 'PolyForm Noncommercial')
-                z.writestr('software_gpu-1.2.0.dist-info/licenses/NOTICE', 'Required Notice: Copyright ...')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/METADATA',
+                           'Metadata-Version: 2.1\nName: ouroboroscollective-softwaregpu\nVersion: 1.2.0\n')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/licenses/LICENSE.md', 'PolyForm Noncommercial')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/licenses/NOTICE', 'Required Notice: Copyright ...')
+            with ZipFile(wheel, 'a') as z:
+                z.writestr('main.py', 'def main(): pass')
+                z.writestr('software_gpu/__init__.py', '__version__ = "1.2.0"')
             release_gate.verify_wheel(wheel, 'v1.2.0')
             with self.assertRaises(release_gate.ReleaseGateError):
                 release_gate.verify_wheel(wheel, 'v1.2.1')
             with ZipFile(wheel, 'w') as z:
-                z.writestr('software_gpu-1.2.0.dist-info/METADATA', 'Version: 1.2.0\n')
+                z.writestr('ouroboroscollective_softwaregpu-1.2.0.dist-info/METADATA', 'Version: 1.2.0\n')
             with self.assertRaises(release_gate.ReleaseGateError):
                 release_gate.verify_wheel(wheel, 'v1.2.0')
 

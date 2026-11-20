@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import sys
 from zipfile import BadZipFile, ZipFile
+import tarfile
+from pathlib import PurePosixPath
 
 
 class ReleaseGateError(ValueError):
@@ -59,14 +61,15 @@ def select_run(payload, sha, repo):
     return selected["id"]
 
 
-def verify_jobs(payload, run_id):
+def verify_jobs(payload, run_id, minimum=8):
     """Read back all jobs; incomplete pagination, failures and skips block publishing."""
     if not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list):
         raise ReleaseGateError("Missing CPU CI jobs data")
     entries = payload["jobs"]
     count = payload.get("total_count")
-    if type(count) is not int or count < 8 or len(entries) != count:
-        raise ReleaseGateError("Missing one or more of the eight required CI jobs")
+    if (type(minimum) is not int or minimum < 1
+            or type(count) is not int or count < minimum or len(entries) != count):
+        raise ReleaseGateError("Missing one or more required CI jobs")
     if any(not isinstance(item, dict) or item.get("run_id") != run_id
            or item.get("status") != "completed" or item.get("conclusion") != "success"
            for item in entries):
@@ -78,7 +81,7 @@ def verify_wheel(path, tag):
     """Check artifact version and embedded noncommercial redistribution notices."""
     version = wheel_version(tag)
     path = Path(path)
-    if not path.name.startswith("software_gpu-" + version + "-") or path.suffix != ".whl":
+    if not path.name.startswith("ouroboroscollective_softwaregpu-" + version + "-") or path.suffix != ".whl":
         raise ReleaseGateError("Wheel filename does not match release tag version")
     try:
         with ZipFile(path) as archive:
@@ -89,6 +92,10 @@ def verify_wheel(path, tag):
             manifest = archive.read(metadata[0]).decode("utf-8")
             if f"Version: {version}" not in manifest.splitlines():
                 raise ReleaseGateError("Wheel metadata version does not match tag")
+            if "Name: ouroboroscollective-softwaregpu" not in manifest.splitlines():
+                raise ReleaseGateError("Wheel distribution name does not match")
+            if "main.py" not in names or "software_gpu/__init__.py" not in names:
+                raise ReleaseGateError("Wheel missing real Python API or CLI")
             license_files = [name for name in names if ".dist-info/" in name]
             if not any(name.endswith("/LICENSE.md") for name in license_files):
                 raise ReleaseGateError("Wheel missing PolyForm LICENSE.md")
@@ -96,6 +103,48 @@ def verify_wheel(path, tag):
                 raise ReleaseGateError("Wheel missing Required Notice")
     except (OSError, BadZipFile, UnicodeError):
         raise ReleaseGateError("Wheel is missing, corrupt or unreadable") from None
+
+
+def verify_sdist(path, tag):
+    """Accept only the expected Python source distribution, not the GoReleaser archive."""
+    version = wheel_version(tag)
+    path = Path(path)
+    basename = f"ouroboroscollective_softwaregpu-{version}"
+    if path.name != basename + ".tar.gz":
+        raise ReleaseGateError("Source distribution filename/version mismatch")
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            members = archive.getmembers()
+            if not members or len(members) > 20000:
+                raise ReleaseGateError("Source distribution member budget invalid")
+            included = {}
+            for member in members:
+                parts = PurePosixPath(member.name).parts
+                if (not parts or parts[0] != basename
+                        or any(p in ("", ".", "..") for p in parts)
+                        or member.issym() or member.islnk()
+                        or not (member.isdir() or member.isfile())):
+                    raise ReleaseGateError("Unsafe source distribution member")
+                if member.isfile():
+                    if member.size > 30_000_000 or member.name in included:
+                        raise ReleaseGateError("Source distribution file invalid")
+                    included[member.name] = member
+            for rel in ("setup.py", "main.py", "software_gpu/__init__.py",
+                        "LICENSE.md", "NOTICE", "PKG-INFO", "docs/PYPI_PACKAGE.md"):
+                if f"{basename}/{rel}" not in included:
+                    raise ReleaseGateError("Source distribution missing " + rel)
+            metadata = archive.extractfile(included[f"{basename}/PKG-INFO"])
+            if metadata is None:
+                raise ReleaseGateError("Source distribution missing metadata")
+            text = metadata.read(1_000_000).decode("utf-8")
+            if (f"Version: {version}" not in text.splitlines()
+                    or "Name: ouroboroscollective-softwaregpu" not in text.splitlines()):
+                raise ReleaseGateError("Source distribution metadata mismatch")
+            notice = archive.extractfile(included[f"{basename}/NOTICE"])
+            if notice is None or b"Required Notice:" not in notice.read(100_000):
+                raise ReleaseGateError("Source distribution missing Required Notice")
+    except (OSError, tarfile.TarError, UnicodeError, EOFError):
+        raise ReleaseGateError("Source distribution corrupt or unreadable") from None
 
 
 def main(argv=None):

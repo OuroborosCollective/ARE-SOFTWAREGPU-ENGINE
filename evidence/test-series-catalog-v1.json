@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "public-pypi-distribution",
+      "introduced": "2026-11-20",
+      "title": "PyPI: Linux-/Windows-Installation und Registry-Integritaet",
+      "module": "software_gpu/tests/test_public_package_release.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "catalog-chronology",
       "introduced": "2026-11-19",
       "title": "Neue Tests zuerst: Ranglistenvertrag",

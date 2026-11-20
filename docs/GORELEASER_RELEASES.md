@@ -29,6 +29,41 @@ A wheel is Python software, NOT a native Windows GPU, Android APK or
 production-ready publicly exposed Gradio server. No FPS or hardware-GPU
 performance promises should be made in announcements.
 
+## Public PyPI registry (Linux and Windows)
+
+The Python engine has a separate PyPI distribution named
+`ouroboroscollective-softwaregpu`, import name `software_gpu`,
+CLI `software-gpu`. Native C++17 binaries, GPU drivers and the separate
+Gradio npm launcher are **not** included in this wheel.
+
+- PR and every main-push package gate: `.github/workflows/public-package-install.yml`
+  builds a real wheel and sdist, installs that wheel in a fresh virtualenv on
+  Ubuntu and Windows under Python 3.11 and 3.12, and runs import/CLI checks.
+- The tagged release gate additionally checks the exact SHA's completed
+  main-push package matrix, *not* a previous green run or mocked results.
+- Only after the successful GitHub release does `publish-pypi` use OIDC
+  Trusted Publishing to upload the two tested distribution types.
+- A separate API readback at `pypi.org/pypi/<project>/<version>/json`
+  compares both published filenames and their SHA-256 digests.
+  `PYPI_REGISTRY_SHA256_READBACK_OK` is the only PyPI success receipt.
+- PyPI rejects re-uploading the same version. Every new SemVer release must
+  bump both `setup.py` and `software_gpu/__init__.py` before tagging.
+
+**One-time owner setup on PyPI (outside GitHub and not automated here):**
+Create a *pending trusted publisher* for the name
+`ouroboroscollective-softwaregpu`, owner `OuroborosCollective`,
+repository `ARE-SOFTWAREGPU-ENGINE`, workflow `goreleaser.yml`,
+environment `pypi`. Confirm the project namespace is available and the
+account has the corresponding publishing rights. No static PyPI API token
+or private credentials are committed. Without that setup, GitHub release
+can still succeed but PyPI publishing is blocked, never falsely reported
+successful. `npm.pkg.github.com` and public `registry.npmjs.org` are
+different registries; the existing npm item is a Gradio launcher, not the engine.
+
+This distribution remains **PolyForm Noncommercial 1.0.0**, source-available,
+not unrestricted OSI open source. Both source and wheel must carry the
+license and Required Notice.
+
 ## Publicity and DEV.to
 
 The GitHub Release is publicly visible on success and automatically contains

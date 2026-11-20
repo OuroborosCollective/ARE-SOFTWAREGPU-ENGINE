@@ -1,0 +1,9 @@
+# Public PyPI source distribution, not a C++17 binary installer.
+include LICENSE.md
+include NOTICE
+include README.md
+include main.py
+include setup.py
+include docs/PYPI_PACKAGE.md
+recursive-include software_gpu *.py
+global-exclude __pycache__ *.py[cod] *.so *.dll *.dylib
