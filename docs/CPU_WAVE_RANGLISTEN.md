@@ -12,6 +12,8 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
+| 2026-11-21 | KTX2/BasisU: Khronos 4.4.2 Echt-Transcode, PBR/Depth, negative Aufnahme-Gates (`software_gpu/tests/test_ktx2_texture_admission.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-21 | Learn-Weight: 6 Raster-Backends, SQLite-Route, FFmpeg und 12 Output-Flaechen (`software_gpu/tests/test_learning_route_coverage.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-21 | Visual Asset Lab Phase 2: echter AREMDL03-PBR/Depth + drei Ansichten (`software_gpu/tests/test_visual_asset_lab_native.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-20 | glTF 2.1/GLB v3 Entwurf: unabhaengige Khronos-Assets, SHA-Replay (`software_gpu/tests/test_gltf21_glb3_independent_assets.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-20 | glTF 2.1/GLB v3 Entwurf: Python/C++17-Fuzz-Negativtests (`software_gpu/tests/test_gltf21_glb3_fuzz.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
