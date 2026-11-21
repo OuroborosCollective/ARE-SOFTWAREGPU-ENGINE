@@ -19,6 +19,8 @@ def inspect_glb(data: bytes) -> dict:
         raise ValueError("GLB version/length mismatch")
     pos = 12
     chunks = []
+    # Only framing is inspected: hold the original BIN as a view, no full copy.
+    view = memoryview(data)
     while pos < total:
         if total - pos < 8:
             raise ValueError("truncated chunk header")
@@ -26,14 +28,14 @@ def inspect_glb(data: bytes) -> dict:
         pos += 8
         if size % 4 or size > total - pos:
             raise ValueError("invalid chunk size")
-        chunks.append((kind, data[pos:pos + size]))
+        chunks.append((kind, view[pos:pos + size]))
         pos += size
     if not chunks or chunks[0][0] != JSON_CHUNK:
         raise ValueError("first chunk must be JSON")
     if len(chunks) > 2 or (len(chunks) == 2 and chunks[1][0] != BIN_CHUNK):
         raise ValueError("unexpected GLB chunk layout")
     try:
-        doc = json.loads(chunks[0][1].decode("utf-8").rstrip(" "))
+        doc = json.loads(bytes(chunks[0][1]).decode("utf-8").rstrip(" "))
     except (UnicodeError, ValueError) as exc:
         raise ValueError("invalid JSON chunk") from exc
     if not isinstance(doc, dict) or not isinstance(doc.get("asset"), dict) or doc["asset"].get("version") != "2.0":
