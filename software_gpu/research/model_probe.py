@@ -412,15 +412,23 @@ def run_model(executable, request, workers=4, repeats=15, policy='combined', mod
                                weight_used=False)
         return out
 
+    # A model pair is a proof about an exact native request, not merely the
+    # request's size bucket. Do not reuse weights across distinct geometry,
+    # materials, animation or camera input with coincidentally equal size.
+    with open(request, 'rb') as source:
+        request_sha256 = hashlib.file_digest(source, 'sha256').hexdigest()
     key = scope_key(
         stage='native-model', implementation=implementation_id(__file__, executable),
         variant='workers-1-vs-2', mode=mode, policy=policy,
         profile=render_profile, repeats=bucket(repeats),
+        request_sha256=request_sha256,
         input_bytes=bucket(Path(request).stat().st_size))
     def fingerprint(out):
         digest = hashlib.sha256()
         if mode == 'pose':
-            digest.update(bytes.fromhex(out['response_sha256']))
+            for pose_frame in out['poses']:
+                for model_vertices in pose_frame:
+                    digest.update(np.ascontiguousarray(model_vertices).tobytes())
         else:
             for key in ('frames', 'resolved', 'depth'):
                 digest.update(out[key].tobytes())
