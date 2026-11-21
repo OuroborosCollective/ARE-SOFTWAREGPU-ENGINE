@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "glb-import-buffer-resource",
+      "introduced": "2026-11-21",
+      "title": "GLB2-Import: BIN-Kopien, 100 Freigaben, echte CPU-Depth-Regression",
+      "module": "software_gpu/tests/test_glb_import_resource.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "surface-cost-calibration-holdout",
       "introduced": "2026-11-21",
       "title": "Offline SurfacePlanner-Kostenmodell: 4 Ablationen und SHA-Holdout",
