@@ -213,8 +213,16 @@ def main(argv=None) -> int:
         parser.exit(2, "INDEPENDENT_REPLAY_REJECTED:%s\n" % error)
     text = json.dumps(report, sort_keys=True, indent=2) + "\n"
     if args.receipt:
-        args.receipt.parent.mkdir(parents=True, exist_ok=True)
-        args.receipt.write_text(text, encoding="utf-8")
+        try:
+            args.receipt.parent.mkdir(parents=True, exist_ok=True)
+            # Exclusive creation: never replace an existing file, e.g. a pinned asset.
+            with args.receipt.open("x", encoding="utf-8", newline="\n") as target:
+                target.write(text)
+        except FileExistsError:
+            parser.exit(2, "INDEPENDENT_REPLAY_REJECTED:RECEIPT_EXISTS\n")
+        except OSError as error:
+            parser.exit(2, "INDEPENDENT_REPLAY_REJECTED:RECEIPT_UNWRITABLE:%s\n"
+                        % type(error).__name__)
     print(json.dumps({"status": report["status"], "assets": len(report["results"])},
                      sort_keys=True))
     return 0

@@ -225,6 +225,13 @@ int main(int argc, char** argv) {
         return 3;
     }
     output += "GLB3_PROBE_END\n";
-    std::fwrite(output.data(), 1, output.size(), stdout);
-    return std::fflush(stdout) == 0 ? 0 : 4;
+    // A short or failed write must not look like success: large outputs bypass the
+    // stdio buffer, so fflush alone would still return 0 after a failed fwrite.
+    const std::size_t written = std::fwrite(output.data(), 1, output.size(), stdout);
+    const bool flushed = std::fflush(stdout) == 0;
+    if (written != output.size() || !flushed || std::ferror(stdout) != 0) {
+        std::fputs("GLB3_PROBE_OUTPUT_FAILED\n", stderr);
+        return 4;
+    }
+    return 0;
 }

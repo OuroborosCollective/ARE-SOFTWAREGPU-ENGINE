@@ -31,6 +31,8 @@ from tools.gltf21_glb3_sandbox import CONTRACT, inspect_glb3_sandbox
 receipt = inspect_glb3_sandbox(data, contract=CONTRACT)   # oder SandboxRejection
 ```
 
+Die Kommandozeile liest nur reguläre Dateien (keine Symlinks, Geräte oder Pipes) und höchstens 64 MiB. `--output DATEI` legt die Receipt-Datei **exklusiv neu** an: Ein bestehender Pfad wird mit `OUTPUT_EXISTS` abgelehnt – auch die geprüfte Datei selbst oder ein Hard- bzw. Symlink darauf. Die Quelle wird nie verändert.
+
 Die Kennung ist an genau den gelesenen Entwurfsstand gebunden (`SPEC_BASIS` im Modul). Ein späterer Entwurf oder ein ratifizierter Text braucht eine neue Vertragsversion mit neuem Readback.
 
 Jedes Receipt enthält `specification.ratified: false`, `runtime_admission: "refused"`, `verdict: "not_assessed"`, die SHA‑256 der Quelle und jedes Chunk-Payloads, die beobachteten Entwurfsmerkmale sowie alle Grenzen.
@@ -50,12 +52,20 @@ Jedes Receipt enthält `specification.ratified: false`, `runtime_admission: "ref
 | Abschneiden | jedes Präfix jeder gültigen Datei wird abgewiesen; nach Längenkorrektur überlebt nur das Weglassen reinen End-Paddings |
 | Chunk-Encoding | nur `0`; jeder andere Wert → `CHUNK_ENCODING_REFUSED`, das Payload wird nicht berührt |
 | Kompression | gzip/zstd/xz/bzip2/zip-Signaturen → `COMPRESSED_INPUT_REFUSED`; nichts wird entpackt, Bilder, Data-URIs und Extension-Payloads werden nicht dekodiert |
-| JSON | striktes UTF‑8 ohne BOM, keine doppelten Schlüssel, kein `NaN`/`Infinity`, keine einzelnen Surrogate, Tiefe ≤ 64, Werte ≤ 524 288, Ganzzahlen ≤ 19 Stellen |
-| Schema | `asset.version` nur `2.0`/`2.1`, `minVersion` ≤ `version`; `buffers`/`chunk`-Bindung, BufferView- und Accessor-Grenzen exakt |
-| Externe Ressourcen | werden nur gezählt (≤ 256 Verweise, URI ≤ 2048 Zeichen, Data-URIs ≤ 1 MiB), **nie** geöffnet oder geladen: `external_resolution.policy = "never"` |
-| Budgets | Quelle ≤ 64 MiB, ≤ 64 Chunks, JSON-Chunk ≤ 4 MiB |
+| JSON | striktes UTF‑8 ohne BOM, keine doppelten Schlüssel, kein `NaN`/`Infinity`, keine einzelnen Surrogate, Tiefe ≤ 64, Werte ≤ 524 288, Ganzzahlen ≤ 19 Stellen; Ganzzahlen dürfen wie im Entwurf als `8.0` oder `1e2` geschrieben sein, ein Nachkommaanteil wird abgelehnt |
+| Schema | `asset.version` nur `2.0`/`2.1`, `minVersion` ≤ `version`; `buffers`/`chunk`-Bindung; BufferView- und Accessor-Grenzen exakt, Offsets und Stride als Vielfache der Komponentengröße, Stride ≤ BufferView-Länge, kein Accessor-Offset ohne BufferView; Bilder mit genau einer Quelle |
+| Externe Ressourcen | werden nur gezählt (≤ 256 Verweise, URI ≤ 2048 Zeichen, Data-URIs ≤ 1 MiB), **nie** geöffnet oder geladen: `external_resolution.policy = "never"`. Gezählt wird, was ein Loader auflösen würde: Rand-Leerzeichen und Steuerzeichen entfernt, `%2e`/`%2f`/`%5c` dekodiert |
+| Budgets | Quelle ≤ 64 MiB, ≤ 64 Chunks, JSON-Chunk ≤ 4 MiB, ≤ 256 Erweiterungsnamen zu je ≤ 128 Zeichen, Medientyp ≤ 255 Zeichen, Ganzzahlwerte ≤ 2^53. Jedes Budget steht in `limits` jedes Receipts |
 
-Strenger als der Entwurf (bewusst): ein Nicht-Null-Encoding auf *irgendeinem* Chunk verweigert die ganze Datei; unbekannte `asset`-Minor-Versionen werden nicht „vorwärtskompatibel“ akzeptiert; `chunk` und `uri` zugleich ist ein Fehler.
+Strenger als der Entwurf (bewusst):
+
+- Ein Nicht-Null-Encoding auf *irgendeinem* Chunk verweigert die ganze Datei (Entwurf: nur der betroffene Chunk bzw. der Haupt-JSON-Chunk).
+- Unbekannte `asset`-Versionen werden nicht „vorwärtskompatibel“ akzeptiert.
+- Doppelte JSON-Schlüssel werden abgelehnt (Entwurf: sollen eindeutig sein, sonst gilt der letzte Wert).
+- `chunk` und `uri` zugleich an einem Buffer ist ein Fehler; ein `files`-Eintrag braucht genau eine Quelle.
+- Größen über 2^53 werden abgelehnt (Entwurf: sollen vermieden werden).
+- Nach dem letzten Chunk sind nur Füllbytes bis zur nächsten 8‑Byte-Grenze erlaubt.
+- Alle Budgets oben sind Ablehnungsgründe; der Entwurf kennt solche Obergrenzen nicht.
 
 ## Nachweise
 

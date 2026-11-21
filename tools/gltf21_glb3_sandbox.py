@@ -61,6 +61,8 @@ MAX_URI_CHARS = 2048
 MAX_EXTERNAL_REFERENCES = 256
 MAX_DATA_URI_CHARS = 1024 * 1024
 MAX_EXTENSION_NAMES = 256
+MAX_EXTENSION_NAME_CHARS = 128
+MAX_MEDIA_TYPE_CHARS = 255
 
 LIMITS = {
     "source_bytes": MAX_SOURCE_BYTES, "chunks": MAX_CHUNKS,
@@ -68,6 +70,8 @@ LIMITS = {
     "json_values": MAX_JSON_VALUES, "integer_digits": MAX_INTEGER_DIGITS,
     "uri_chars": MAX_URI_CHARS, "external_references": MAX_EXTERNAL_REFERENCES,
     "data_uri_chars": MAX_DATA_URI_CHARS, "extension_names": MAX_EXTENSION_NAMES,
+    "extension_name_chars": MAX_EXTENSION_NAME_CHARS,
+    "media_type_chars": MAX_MEDIA_TYPE_CHARS, "integer_value": MAX_SAFE_INTEGER,
 }
 
 # Leading bytes of common compressed containers. They are refused, never inflated.
@@ -101,6 +105,8 @@ _TYPE_COMPONENTS = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4,
                     "MAT2": 4, "MAT3": 9, "MAT4": 16}
 _VERSION = re.compile(r"(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\Z")
 _SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+_IRI_EDGE = "".join(map(chr, range(0x21)))  # U+0000..U+0020
+_ENCODED_PATH_CHARACTER = re.compile(r"%(2[eEfF]|5[cC])")  # ".", "/" and "\\"
 # Linear time and constant memory: a string always ends at its closing quote or
 # at the end of input (no rescans), and the possessive quantifiers (Python >=
 # 3.11) keep no backtracking state. The plain ``(?:..|..)*`` form needed about
@@ -115,6 +121,10 @@ class SandboxRejection(ValueError):
     def __init__(self, code: str):
         super().__init__("GLB3_SANDBOX_" + code)
         self.code = code
+
+    def __reduce__(self):
+        # Rebuild from the code: the default would apply the prefix a second time.
+        return (type(self), (self.code,))
 
 
 def _need(condition, code: str) -> None:
@@ -132,9 +142,12 @@ def _u64(view, offset: int) -> int:
 
 def _view(data):
     _need(type(data) in (bytes, bytearray, memoryview), "SOURCE_TYPE")
-    view = memoryview(data)
-    _need(view.ndim == 1 and view.itemsize == 1 and view.c_contiguous, "SOURCE_TYPE")
-    view = view.cast("B")
+    try:
+        view = memoryview(data)
+        _need(view.ndim == 1 and view.itemsize == 1 and view.c_contiguous, "SOURCE_TYPE")
+        view = view.cast("B")
+    except (TypeError, ValueError):  # e.g. a memoryview that was already released
+        raise SandboxRejection("SOURCE_TYPE") from None
     _need(len(view) <= MAX_SOURCE_BYTES, "SOURCE_BUDGET")
     return view
 
@@ -238,6 +251,10 @@ def _reject_constant(_name):
 def _finite_float(text):
     value = float(text)
     _need(math.isfinite(value), "JSON_NONFINITE")
+    # The draft lets integer properties be written as 100.0 or 1e2; a non-zero
+    # fraction stays a float and is refused wherever an integer is required.
+    if value.is_integer() and abs(value) <= MAX_SAFE_INTEGER:
+        return int(value)
     return value
 
 
@@ -303,16 +320,20 @@ class _Externals:
 
     def classify(self, uri) -> str:
         _need(isinstance(uri, str), "URI_TYPE")
-        if uri[:5].lower() == "data:":
+        # Classify what a loader would resolve: the draft recommends stripping
+        # edge whitespace/control characters and every TAB/LF/CR first, and a
+        # loader may percent-decode dots and separators. Budgets use the raw text.
+        cleaned = uri.strip(_IRI_EDGE).replace("\t", "").replace("\n", "").replace("\r", "")
+        if cleaned[:5].lower() == "data:":
             self.data_chars += len(uri)
             _need(self.data_chars <= MAX_DATA_URI_CHARS, "DATA_URI_BUDGET")
             return "embedded_data_uri_not_decoded"
         _need(len(uri) <= MAX_URI_CHARS, "URI_BUDGET")
         self.count_reference()
-        parts = re.split(r"[/\\]", uri)
-        if ".." in parts:
+        decoded = _ENCODED_PATH_CHARACTER.sub(lambda m: chr(int(m.group(1), 16)), cleaned)
+        if ".." in re.split(r"[/\\]", decoded):
             self.traversal += 1
-        if _SCHEME.match(uri) or uri[:1] in ("/", "\\"):
+        if _SCHEME.match(cleaned) or decoded[:1] in ("/", "\\"):
             self.absolute += 1
         return "external_unresolved"
 
@@ -375,8 +396,8 @@ def _buffer_views(document, buffers) -> list:
               "BUFFERVIEW_BOUNDS")
         if "byteStride" in view:
             stride = view["byteStride"]
-            _need(type(stride) is int and 4 <= stride <= 252 and stride % 4 == 0,
-                  "BUFFERVIEW_STRIDE")
+            _need(type(stride) is int and 4 <= stride <= 252 and stride % 4 == 0
+                  and stride <= length, "BUFFERVIEW_STRIDE")
     return views
 
 
@@ -405,6 +426,8 @@ def _accessors(document, views, features) -> tuple:
         _need(_size(count, 1), "ACCESSOR_COUNT")
         sparse += "sparse" in accessor
         if "bufferView" not in accessor:
+            # Without a buffer view there is nothing an offset could point into.
+            _need("byteOffset" not in accessor, "ACCESSOR_BOUNDS")
             continue
         _need(_index(accessor["bufferView"], len(views)), "ACCESSOR_BUFFERVIEW")
         view = views[accessor["bufferView"]]
@@ -413,6 +436,9 @@ def _accessors(document, views, features) -> tuple:
         width = _COMPONENT_BYTES.get(component) or _DRAFT_COMPONENT_BYTES[component]
         element = _element_bytes(kind, width)
         stride = view.get("byteStride", element)
+        # Both offsets and a defined stride are multiples of the component size.
+        _need(offset % width == 0 and view.get("byteOffset", 0) % width == 0
+              and stride % width == 0, "ACCESSOR_ALIGNMENT")
         _need(stride >= element and
               offset + (count - 1) * stride + element <= view["byteLength"],
               "ACCESSOR_BOUNDS")
@@ -421,7 +447,7 @@ def _accessors(document, views, features) -> tuple:
 
 def _images(document, views, externals) -> dict:
     states = {"embedded_image_not_decoded": 0, "embedded_data_uri_not_decoded": 0,
-              "external_unresolved": 0, "unresolved": 0}
+              "external_unresolved": 0}
     for image in _objects(document, "images", "IMAGES"):
         _need(not ("uri" in image and "bufferView" in image), "IMAGE_SOURCE_AMBIGUOUS")
         if "bufferView" in image:
@@ -430,7 +456,7 @@ def _images(document, views, externals) -> dict:
         elif "uri" in image:
             states[externals.classify(image["uri"])] += 1
         else:
-            states["unresolved"] += 1
+            raise SandboxRejection("IMAGE_SOURCE_MISSING")
     return states
 
 
@@ -439,7 +465,8 @@ def _files(document, buffers, views, main_json, externals, features) -> tuple:
     aliases = 0
     for entry in files:
         media = entry.get("mimeType")
-        _need(isinstance(media, str) and 1 <= len(media) <= 255, "FILE_MIMETYPE")
+        _need(isinstance(media, str) and 1 <= len(media) <= MAX_MEDIA_TYPE_CHARS,
+              "FILE_MIMETYPE")
         _need(not ("uri" in entry and "bufferView" in entry), "FILE_SOURCE_AMBIGUOUS")
         if "bufferView" in entry:
             _need(_index(entry["bufferView"], len(views)), "FILE_BUFFERVIEW")
@@ -474,7 +501,8 @@ def _extensions(document) -> list:
     for key in ("extensionsUsed", "extensionsRequired"):
         value = document.get(key, [])
         _need(isinstance(value, list) and len(value) <= MAX_EXTENSION_NAMES
-              and all(isinstance(v, str) and 1 <= len(v) <= 128 for v in value)
+              and all(isinstance(v, str) and 1 <= len(v) <= MAX_EXTENSION_NAME_CHARS
+                      for v in value)
               and len(set(value)) == len(value), "EXTENSIONS")
         names[key] = value
     _need(set(names["extensionsRequired"]) <= set(names["extensionsUsed"]),
@@ -514,6 +542,16 @@ def inspect_glb3_sandbox(data, *, contract: str) -> dict:
     caller cannot reach the unratified path by accident.
     """
     _need(type(contract) is str and contract == CONTRACT, "OPT_IN_REQUIRED")
+    try:
+        return _inspect(data)
+    except SandboxRejection as rejection:
+        code = rejection.code
+    # Raised from here, after the inner frames are gone: no memoryview of ``data``
+    # survives, so a caller may resize its bytearray while handling the refusal.
+    raise SandboxRejection(code)
+
+
+def _inspect(data) -> dict:
     view = _view(data)
     frame = _frame(view)
     document = _parse_json(frame["json_text"], frame["json_raw"])
@@ -597,21 +635,35 @@ def main(argv=None) -> int:
     parser.add_argument("glb", type=Path, help="local file; never uploaded or modified")
     parser.add_argument("--contract", required=True,
                         help="must be exactly " + CONTRACT + " (explicit opt-in)")
-    parser.add_argument("--output", default="-")
+    parser.add_argument("--output", default="-",
+                        help="new file for the receipt; an existing path is refused")
     args = parser.parse_args(argv)
     try:
         _need(args.contract == CONTRACT, "OPT_IN_REQUIRED")
         _need(not args.glb.is_symlink(), "SOURCE_SYMLINK")
-        _need(args.glb.stat().st_size <= MAX_SOURCE_BYTES, "SOURCE_BUDGET")
-        receipt = inspect_glb3_sandbox(args.glb.read_bytes(), contract=args.contract)
+        args.glb.stat()  # a missing path raises here
+        # Devices, pipes and directories report size 0 but can be endless.
+        _need(args.glb.is_file(), "SOURCE_NOT_REGULAR_FILE")
+        with args.glb.open("rb") as source:
+            raw = source.read(MAX_SOURCE_BYTES + 1)
+        _need(len(raw) <= MAX_SOURCE_BYTES, "SOURCE_BUDGET")
+        receipt = inspect_glb3_sandbox(raw, contract=args.contract)
     except (ValueError, OSError) as error:
         code = error.code if isinstance(error, SandboxRejection) else "SOURCE_UNREADABLE"
         parser.exit(2, "GLB3_SANDBOX_REJECTED:" + code + "\n")
     output = json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n"
     if args.output == "-":
         print(output, end="")
-    else:
-        Path(args.output).write_text(output, encoding="utf-8")
+        return 0
+    try:
+        # Exclusive creation: an existing path is never truncated or replaced --
+        # not the inspected source, not a hard link or symlink to it, nothing.
+        with Path(args.output).open("x", encoding="utf-8", newline="\n") as target:
+            target.write(output)
+    except FileExistsError:
+        parser.exit(2, "GLB3_SANDBOX_REJECTED:OUTPUT_EXISTS\n")
+    except OSError:
+        parser.exit(2, "GLB3_SANDBOX_REJECTED:OUTPUT_UNWRITABLE\n")
     return 0
 
 

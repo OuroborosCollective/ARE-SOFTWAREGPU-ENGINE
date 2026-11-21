@@ -198,6 +198,16 @@ class IndependentAssetReplayTests(unittest.TestCase):
             report = json.loads(receipt.read_text(encoding="utf-8"))
             self.assertEqual(report["protocol"], independent.REPORT_PROTOCOL)
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), before)
+            # A receipt path never replaces an existing file, least of all an asset.
+            base = [sys.executable, "-m", "tools.gltf21_glb3_independent_assets",
+                    "--assets-dir", folder, "--manifest", str(path)]
+            for target in (receipt, Path(folder) / "Quad.glb", path):
+                kept = target.read_bytes()
+                refused = subprocess.run(base + ["--receipt", str(target)], cwd=ROOT,
+                                         capture_output=True, text=True, timeout=60)
+                self.assertEqual(refused.returncode, 2, target.name)
+                self.assertIn("INDEPENDENT_REPLAY_REJECTED:RECEIPT_EXISTS", refused.stderr)
+                self.assertEqual(target.read_bytes(), kept, target.name)
 
     def test_pinned_originals_replay_when_a_verified_directory_is_provided(self):
         manifest = independent.load_manifest()

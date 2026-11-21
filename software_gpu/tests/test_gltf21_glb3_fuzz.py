@@ -245,6 +245,15 @@ class NativeDifferentialFuzzTests(unittest.TestCase):
         missing = subprocess.run([str(self.exe), str(folder / "absent.bundle")],
                                  capture_output=True, text=True, timeout=60)
         self.assertEqual(missing.returncode, 3)
+        if os.path.exists("/dev/full"):
+            # Output larger than the stdio buffer that cannot be written at all.
+            path = folder / "large.bundle"
+            path.write_bytes(vectors.bundle([b"glTF"] * 1000))
+            with open("/dev/full", "w", encoding="ascii") as full:
+                failed = subprocess.run([str(self.exe), str(path)], stdout=full,
+                                        stderr=subprocess.PIPE, text=True, timeout=60)
+            self.assertEqual(failed.returncode, 4)
+            self.assertIn("GLB3_PROBE_OUTPUT_FAILED", failed.stderr)
         usage = subprocess.run([str(self.exe)], capture_output=True, text=True, timeout=60)
         self.assertEqual(usage.returncode, 2)
 

@@ -28,11 +28,15 @@
     "chunk_header": "uint32 chunkType, uint32 chunkEncoding, uint64 chunkLength (most significant bit must be 0)",
     "chunk_types": "JSON 0x4E4F534A and BIN 0x004E4942; other types may appear. The first JSON chunk is the glTF JSON; chunks may precede it.",
     "file_header": "uint32 magic 0x46546C67, uint32 version 3, uint64 length (most significant bit must be 0)",
+    "json_integers": "Integer properties may be written as decimals with a zero fraction or in exponent notation (100, 100.0, 1e2); the sandbox accepts these and refuses a non-zero fraction.",
     "sandbox_stricter_than_draft": [
       "A nonzero chunkEncoding on any chunk refuses the whole file.",
       "Only asset versions 2.0 and 2.1 are inspected; other versions are refused.",
-      "A buffer that defines both chunk and uri is refused.",
-      "Trailing bytes after the last chunk are accepted only as padding up to the next 8-byte boundary."
+      "Duplicate JSON object keys are refused (the draft says keys should be unique and that the last value should win).",
+      "A buffer that defines both chunk and uri is refused; a files entry needs exactly one of uri and bufferView.",
+      "Integer values above 2^53 are refused (the draft says such buffers should not be used).",
+      "Trailing bytes after the last chunk are accepted only as padding up to the next 8-byte boundary.",
+      "Every resource budget reported under limits in a receipt is a refusal reason; the draft defines no such upper bounds."
     ]
   },
   "extension_registry": {
@@ -105,7 +109,7 @@
   "method": "Primary Khronos sources were read on the stated date. Git refs were resolved with git ls-remote and files were fetched at the resolved commit and hashed. Statements about issue and pull-request pages are recorded as read from the rendered page and are not API records.",
   "protocol": "are.khronos-spec-status-readback.v1",
   "read_on": "2026-11-20",
-  "sha256": "d946c9ecf1d6f005fce9c6f318f47ec1e131d829d6b3c2fd0478762264808928",
+  "sha256": "2e2c57c806296768bb6f893dff7da9fe59331971aa22b46602250985a39a6057",
   "sources": [
     {
       "id": "khronos-registry",

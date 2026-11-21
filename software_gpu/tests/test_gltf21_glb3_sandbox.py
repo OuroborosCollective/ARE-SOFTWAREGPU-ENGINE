@@ -11,6 +11,7 @@ import inspect
 import json
 import os
 from pathlib import Path
+import pickle
 import re
 import struct
 import subprocess
@@ -165,6 +166,40 @@ class OptInContractTests(unittest.TestCase):
         for wrong in ("glTF", None, 3, [103, 108], Path("asset.glb")):
             with self.assertRaisesRegex(SandboxRejection, "SOURCE_TYPE"):
                 inspect_glb3_sandbox(wrong, contract=CONTRACT)
+        released = memoryview(frozen)
+        released.release()
+        with self.assertRaisesRegex(SandboxRejection, "SOURCE_TYPE"):
+            inspect_glb3_sandbox(released, contract=CONTRACT)
+        self.assertEqual(frame_verdict(released, contract=CONTRACT), "R SOURCE_TYPE")
+
+    def test_a_refusal_leaves_no_lock_on_the_callers_buffer(self):
+        for hostile in (b"glTF\x03\x00\x00\x00junkjunkjunk",
+                        vectors.rejected_vectors()[0][2],
+                        with_document({"asset": {"version": "9.9"}})):
+            buffer = bytearray(hostile)
+            try:
+                inspect_glb3_sandbox(buffer, contract=CONTRACT)
+            except SandboxRejection as rejection:
+                self.assertRegex(rejection.code, r"\A[A-Z0-9_]+\Z")
+                buffer.clear()  # BufferError here if a view were still exported
+            else:
+                self.fail("hostile input was accepted")
+            self.assertEqual(len(buffer), 0)
+        good = bytearray(accepted("minimal-json-only"))
+        inspect_glb3_sandbox(good, contract=CONTRACT)
+        self.assertEqual(frame_verdict(good, contract=CONTRACT)[:2], "A ")
+        good.extend(b"x")
+
+    def test_rejection_keeps_code_and_message_through_pickle_and_copy(self):
+        import copy
+        try:
+            inspect_glb3_sandbox(b"", contract=CONTRACT)
+        except SandboxRejection as rejection:
+            for clone in (pickle.loads(pickle.dumps(rejection)), copy.copy(rejection)):
+                self.assertIs(type(clone), SandboxRejection)
+                self.assertEqual(clone.code, "HEADER_TRUNCATED")
+                self.assertEqual(str(clone), "GLB3_SANDBOX_HEADER_TRUNCATED")
+                self.assertEqual(clone.args, rejection.args)
 
     def test_cli_needs_the_contract_and_writes_the_same_receipt(self):
         data = accepted("custom-chunk-before-json-explicit-bin")
@@ -197,6 +232,76 @@ class OptInContractTests(unittest.TestCase):
                 cwd=ROOT, capture_output=True, text=True, timeout=60)
             self.assertEqual(absent.returncode, 2)
             self.assertIn("GLB3_SANDBOX_REJECTED:SOURCE_UNREADABLE", absent.stderr)
+
+
+class CliReadOnlyTests(unittest.TestCase):
+    """The CLI must never modify the inspected asset or any existing file."""
+
+    def run_cli(self, *arguments):
+        return subprocess.run(
+            [sys.executable, "-m", "tools.gltf21_glb3_sandbox", *map(str, arguments),
+             "--contract", CONTRACT], cwd=ROOT, capture_output=True, text=True, timeout=60)
+
+    def test_output_can_never_overwrite_the_source_or_any_existing_file(self):
+        data = accepted("custom-chunk-before-json-explicit-bin")
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            source = folder / "draft.glb"
+            source.write_bytes(data)
+            other = folder / "unrelated.txt"
+            other.write_bytes(b"keep me")
+            targets = {"the source itself": source, "an unrelated existing file": other,
+                       "a directory": folder}
+            hard = folder / "hardlink.glb"
+            try:
+                os.link(source, hard)
+                targets["a hard link to the source"] = hard
+            except (OSError, NotImplementedError):
+                pass
+            for name, target in (("a symlink to the source", source),
+                                 ("a dangling symlink", folder / "nowhere")):
+                link = folder / (name.replace(" ", "-") + ".lnk")
+                try:
+                    os.symlink(target, link)
+                    targets[name] = link
+                except (OSError, NotImplementedError):
+                    pass  # unprivileged Windows cannot create symlinks
+            self.assertGreaterEqual(len(targets), 3)
+            for name, target in targets.items():
+                result = self.run_cli(source, "--output", target)
+                self.assertEqual(result.returncode, 2, name)
+                self.assertIn("GLB3_SANDBOX_REJECTED:OUTPUT_EXISTS", result.stderr, name)
+                self.assertEqual(source.read_bytes(), data, name)
+                self.assertEqual(other.read_bytes(), b"keep me", name)
+            self.assertFalse((folder / "nowhere").exists())
+            fresh = folder / "receipt.json"
+            written = self.run_cli(source, "--output", fresh)
+            self.assertEqual(written.returncode, 0, written.stderr)
+            self.assertEqual(json.loads(fresh.read_text(encoding="utf-8")),
+                             inspect_glb3_sandbox(data, contract=CONTRACT))
+            again = self.run_cli(source, "--output", fresh)
+            self.assertEqual(again.returncode, 2)
+            self.assertIn("GLB3_SANDBOX_REJECTED:OUTPUT_EXISTS", again.stderr)
+            missing_parent = self.run_cli(source, "--output", folder / "no" / "dir" / "r.json")
+            self.assertEqual(missing_parent.returncode, 2)
+            self.assertIn("GLB3_SANDBOX_REJECTED:OUTPUT_UNWRITABLE", missing_parent.stderr)
+            self.assertEqual(source.read_bytes(), data)
+
+    def test_only_regular_files_are_read_and_never_beyond_the_budget(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = self.run_cli(folder)
+            self.assertEqual(directory.returncode, 2)
+            self.assertIn("GLB3_SANDBOX_REJECTED:SOURCE_NOT_REGULAR_FILE", directory.stderr)
+            large = Path(folder) / "large.glb"
+            with large.open("wb") as handle:
+                handle.truncate(sandbox.MAX_SOURCE_BYTES + 1)  # sparse, no real bytes
+            over = self.run_cli(large)
+            self.assertEqual(over.returncode, 2)
+            self.assertIn("GLB3_SANDBOX_REJECTED:SOURCE_BUDGET", over.stderr)
+        if os.path.exists("/dev/zero"):  # endless character device, size 0 in stat
+            endless = self.run_cli("/dev/zero")
+            self.assertEqual(endless.returncode, 2)
+            self.assertIn("GLB3_SANDBOX_REJECTED:SOURCE_NOT_REGULAR_FILE", endless.stderr)
 
 
 class RatificationClaimTests(unittest.TestCase):
@@ -527,18 +632,29 @@ class JsonAndBoundsTests(unittest.TestCase):
         self.assertEqual(code(view(1, byteOffset=37)), "BUFFERVIEW_BOUNDS")
         self.assertEqual(code(view(0, byteOffset=-1)), "BUFFERVIEW_BOUNDS")
         self.assertEqual(code(view(0, byteLength=0)), "BUFFERVIEW_BOUNDS")
-        self.assertEqual(code(view(0, byteLength=36.0)), "BUFFERVIEW_BOUNDS")
+        self.assertEqual(code(view(0, byteLength=36.5)), "BUFFERVIEW_BOUNDS")
         self.assertEqual(code(view(0, byteLength=True)), "BUFFERVIEW_BOUNDS")
         self.assertEqual(code(view(0, byteLength=2 ** 53 + 1)), "BUFFERVIEW_BOUNDS")
         self.assertEqual(code(view(0, buffer=1)), "BUFFERVIEW_BUFFER")
         self.assertEqual(code(view(0, buffer=-1)), "BUFFERVIEW_BUFFER")
-        self.assertEqual(code(view(0, buffer=0.0)), "BUFFERVIEW_BUFFER")
+        self.assertEqual(code(view(0, buffer=0.5)), "BUFFERVIEW_BUFFER")
         self.assertEqual(code(view(0, byteStride=12)), "ACCEPTED")
         self.assertEqual(code(view(0, byteStride=16)), "ACCESSOR_BOUNDS")
-        for stride in (0, 2, 6, 256, 12.0, "12"):
+        for stride in (0, 2, 6, 256, 12.5, "12", True):
             self.assertEqual(code(view(0, byteStride=stride)), "BUFFERVIEW_STRIDE", stride)
+        # A stride may not be larger than the view it steps through.
+        self.assertEqual(code(view(0, byteStride=36)), "ACCESSOR_BOUNDS")
+        self.assertEqual(code(view(0, byteStride=40)), "BUFFERVIEW_STRIDE")
+        self.assertEqual(code(view(1, byteStride=8)), "BUFFERVIEW_STRIDE")
         self.assertEqual(code(accessor(0, count=4)), "ACCESSOR_BOUNDS")
-        self.assertEqual(code(accessor(0, byteOffset=1)), "ACCESSOR_BOUNDS")
+        # Offsets are multiples of the component size (float32: four bytes).
+        for misaligned in (1, 2, 3):
+            self.assertEqual(code(accessor(0, byteOffset=misaligned)),
+                             "ACCESSOR_ALIGNMENT", misaligned)
+        self.assertEqual(code(accessor(0, byteOffset=4)), "ACCESSOR_BOUNDS")
+        self.assertEqual(code(accessor(0, byteOffset=4, count=2)), "ACCEPTED")
+        self.assertEqual(code(accessor(1, byteOffset=1, count=2)), "ACCESSOR_ALIGNMENT")
+        self.assertEqual(code(accessor(1, byteOffset=2, count=2)), "ACCEPTED")
         self.assertEqual(code(accessor(1, count=4)), "ACCESSOR_BOUNDS")
         self.assertEqual(code(accessor(1, componentType=5125)), "ACCESSOR_BOUNDS")
         self.assertEqual(code(accessor(1, componentType=5121)), "ACCEPTED")
@@ -546,7 +662,7 @@ class JsonAndBoundsTests(unittest.TestCase):
         self.assertEqual(code(accessor(0, bufferView=2)), "ACCESSOR_BUFFERVIEW")
         self.assertEqual(code(accessor(0, type="VEC5")), "ACCESSOR_TYPE")
         self.assertEqual(code(accessor(0, type=["VEC3"])), "ACCESSOR_TYPE")
-        for component in (5127, 5126.0, True, "5126", None, 0):
+        for component in (5127, 5126.5, True, "5126", None, 0):
             self.assertEqual(code(accessor(0, componentType=component)),
                              "ACCESSOR_COMPONENT_TYPE", component)
         # Matrix columns are padded: nine one-byte components need twelve bytes.
@@ -554,6 +670,62 @@ class JsonAndBoundsTests(unittest.TestCase):
                          "ACCEPTED")
         self.assertEqual(code(accessor(0, type="MAT3", componentType=5121, count=4)),
                          "ACCESSOR_BOUNDS")
+
+    def test_accessor_alignment_follows_the_component_size_including_draft_types(self):
+        def code(view, accessor, length=48):
+            document = {"asset": {"version": "2.1"},
+                        "buffers": [{"byteLength": length, "chunk": 1}],
+                        "bufferViews": [dict(buffer=0, **view)],
+                        "accessors": [dict(bufferView=0, type="SCALAR", **accessor)]}
+            return code_of(with_document(document, (vectors.BIN_CHUNK, bytes(length))))
+
+        double = {"componentType": 5130, "count": 2}  # float64 from the 2.1 draft
+        self.assertEqual(code({"byteLength": 48}, double), "ACCEPTED")
+        self.assertEqual(code({"byteLength": 48, "byteStride": 16}, double), "ACCEPTED")
+        # Twelve is a multiple of four but not of the eight-byte component.
+        self.assertEqual(code({"byteLength": 48, "byteStride": 12}, double),
+                         "ACCESSOR_ALIGNMENT")
+        self.assertEqual(code({"byteLength": 40, "byteOffset": 4}, double),
+                         "ACCESSOR_ALIGNMENT")
+        self.assertEqual(code({"byteLength": 40, "byteOffset": 8}, double), "ACCEPTED")
+        self.assertEqual(code({"byteLength": 48}, dict(double, byteOffset=4)),
+                         "ACCESSOR_ALIGNMENT")
+        short = {"componentType": 5123, "count": 2}
+        self.assertEqual(code({"byteLength": 5, "byteOffset": 1}, short),
+                         "ACCESSOR_ALIGNMENT")
+        self.assertEqual(code({"byteLength": 5, "byteOffset": 1},
+                              {"componentType": 5121, "count": 5}), "ACCEPTED")
+
+        def without_view(**accessor):
+            document = {"asset": {"version": "2.1"},
+                        "accessors": [dict(componentType=5126, count=3, type="VEC3",
+                                           **accessor)]}
+            return code_of(with_document(document))
+
+        self.assertEqual(without_view(), "ACCEPTED")
+        for offset in (0, 4, "x", None):
+            self.assertEqual(without_view(byteOffset=offset), "ACCESSOR_BOUNDS", offset)
+
+    def test_integers_written_as_decimals_or_exponents_are_the_same_value(self):
+        text = (b'{"asset":{"version":"2.1"},"buffers":[{"byteLength":4.2e1,"chunk":1.0}],'
+                b'"bufferViews":[{"buffer":0.0,"byteOffset":0e0,"byteLength":36.000,'
+                b'"byteStride":1.2E1},{"buffer":-0.0,"byteOffset":3.6e1,"byteLength":6}],'
+                b'"accessors":[{"bufferView":0,"componentType":5126.0,"count":3.0,'
+                b'"type":"VEC3"},{"bufferView":1.0,"componentType":5.123e3,"count":3,'
+                b'"type":"SCALAR"}]}')
+        data = vectors.encode_glb3([(vectors.JSON_CHUNK, text),
+                                    (vectors.BIN_CHUNK, vectors.TRIANGLE_BIN)])
+        receipt = inspect_glb3_sandbox(data, contract=CONTRACT)
+        self.assertEqual(receipt["gltf"]["buffers"],
+                         [{"source": "glb_chunk", "chunk": 1, "byte_length": 42}])
+        self.assertIs(type(receipt["gltf"]["buffers"][0]["byte_length"]), int)
+        self.assertEqual(receipt["gltf"]["accessors_checked"], 2)
+        json.dumps(receipt, allow_nan=False)
+        for fractional in (b"41.5", b"4.25e1", b"42.0000001", b"1e-1", b"9.1e15", b"1e300"):
+            broken = text.replace(b"4.2e1", fractional)
+            self.assertEqual(code_of(vectors.encode_glb3(
+                [(vectors.JSON_CHUNK, broken), (vectors.BIN_CHUNK, vectors.TRIANGLE_BIN)])),
+                "BUFFER_LENGTH", fractional)
 
     def test_buffer_to_chunk_binding_rules(self):
         triangle = (vectors.BIN_CHUNK, vectors.TRIANGLE_BIN)
@@ -574,12 +746,12 @@ class JsonAndBoundsTests(unittest.TestCase):
         self.assertEqual(code({"byteLength": 43}, triangle), "BUFFER_CHUNK_BOUNDS")
         self.assertEqual(code({"byteLength": 42, "chunk": 2}, triangle),
                          "BUFFER_CHUNK_MISSING")
-        for wrong in (-1, 1.0, True, "1", None):
+        for wrong in (-1, 1.5, True, "1", None):
             self.assertEqual(code({"byteLength": 42, "chunk": wrong}, triangle),
                              "BUFFER_CHUNK_MISSING", wrong)
         self.assertEqual(code({"byteLength": 42, "chunk": 1, "uri": "a.bin"}, triangle),
                          "BUFFER_SOURCE_AMBIGUOUS")
-        for wrong in (0, -1, 42.0, True, None, "42", 2 ** 53 + 1):
+        for wrong in (0, -1, 42.5, True, None, "42", 2 ** 53 + 1):
             self.assertEqual(code({"byteLength": wrong, "chunk": 1}, triangle),
                              "BUFFER_LENGTH", wrong)
         prefix = vectors.encode_glb3([
@@ -653,6 +825,8 @@ class JsonAndBoundsTests(unittest.TestCase):
         self.assertEqual(code(images=[{"uri": "a.png", "bufferView": 0}]),
                          "IMAGE_SOURCE_AMBIGUOUS")
         self.assertEqual(code(images=[{"bufferView": 99}]), "IMAGE_BUFFERVIEW")
+        self.assertEqual(code(images=[{}]), "IMAGE_SOURCE_MISSING")
+        self.assertEqual(code(images=[{"mimeType": "image/png"}]), "IMAGE_SOURCE_MISSING")
         self.assertEqual(code(images=[{"uri": 7}]), "URI_TYPE")
         self.assertEqual(code(shapes={"type": "box"}), "ARRAYS")
 
@@ -809,8 +983,33 @@ class ExternalResourceTests(unittest.TestCase):
                                           contract=CONTRACT)["external_resolution"]
         self.assertEqual(resolution, {
             "policy": "never", "resolved": 0, "external_references": 10,
-            "absolute_or_scheme_references": 5, "parent_traversal_references": 3,
+            "absolute_or_scheme_references": 5, "parent_traversal_references": 4,
             "data_uri_chars_not_decoded": 0})
+
+    def test_uris_are_classified_as_a_loader_would_resolve_them(self):
+        def resolution(*uris):
+            document = {"asset": {"version": "2.1"},
+                        "images": [{"uri": uri} for uri in uris]}
+            return inspect_glb3_sandbox(with_document(document),
+                                        contract=CONTRACT)["external_resolution"]
+
+        # The draft recommends that loaders strip edge whitespace and control
+        # characters and every TAB/LF/CR before resolving a reference.
+        hidden = resolution(" ../secret.bin", "..\t/..\t/x", "\t/etc/shadow",
+                            " https://169.254.169.254/latest/meta-data",
+                            "fi\nle:///etc/hosts", "\x00\x1f//server/share",
+                            "%2e%2E%2fsecret.bin", "%2F%2Fserver/share", "%5cshare")
+        self.assertEqual((hidden["external_references"],
+                          hidden["parent_traversal_references"],
+                          hidden["absolute_or_scheme_references"]), (9, 3, 6))
+        plain = resolution("textures/a.png", "a..b/c.png", "x%2egif", "..a/b", "a/..b")
+        self.assertEqual((plain["external_references"],
+                          plain["parent_traversal_references"],
+                          plain["absolute_or_scheme_references"]), (5, 0, 0))
+        # A data URL behind edge whitespace is still data, not an external reference.
+        data = resolution(" data:,x", "\tDATA:,y\n", "data:" + "A" * 3000)
+        self.assertEqual((data["external_references"], data["data_uri_chars_not_decoded"]),
+                         (0, 8 + 9 + 3005))
 
     def test_reference_and_uri_budgets(self):
         def images(count, length=5):
@@ -862,6 +1061,32 @@ class ReceiptEvidenceTests(unittest.TestCase):
         self.assertNotEqual(receipt_digest(other), receipt_digest(receipt))
         self.assertEqual(other["container"]["framing"], receipt["container"]["framing"])
         json.dumps(receipt, allow_nan=False)
+        self.assertEqual(receipt["limits"], sandbox.LIMITS)
+        self.assertEqual({key: receipt["limits"][key] for key in (
+            "extension_name_chars", "media_type_chars", "integer_value")},
+            {"extension_name_chars": 128, "media_type_chars": 255,
+             "integer_value": 2 ** 53})
+
+    def test_declared_limits_are_the_enforced_ones(self):
+        def code(**document):
+            return code_of(with_document(dict({"asset": {"version": "2.1"}}, **document)))
+
+        name = "VENDOR_" + "x" * (sandbox.MAX_EXTENSION_NAME_CHARS - 7)
+        self.assertEqual(code(extensionsUsed=[name]), "ACCEPTED")
+        self.assertEqual(code(extensionsUsed=[name + "x"]), "EXTENSIONS")
+        media = "model/gltf+json; p=" + "y" * (sandbox.MAX_MEDIA_TYPE_CHARS - 19)
+        self.assertEqual(code(files=[{"uri": "a.gltf", "mimeType": media}]), "ACCEPTED")
+        self.assertEqual(code(files=[{"uri": "a.gltf", "mimeType": media + "y"}]),
+                         "FILE_MIMETYPE")
+        limit = sandbox.MAX_SAFE_INTEGER
+        self.assertEqual(code(buffers=[{"uri": "huge.bin", "byteLength": limit}]),
+                         "ACCEPTED")
+        self.assertEqual(code(buffers=[{"uri": "huge.bin", "byteLength": limit + 1}]),
+                         "BUFFER_LENGTH")
+        self.assertEqual(code(extensionsUsed=["E%d" % i for i in range(
+            sandbox.MAX_EXTENSION_NAMES)]), "ACCEPTED")
+        self.assertEqual(code(extensionsUsed=["E%d" % i for i in range(
+            sandbox.MAX_EXTENSION_NAMES + 1)]), "EXTENSIONS")
 
     def test_independent_layouts_agree_only_where_the_draft_alignment_allows(self):
         table = inspect_glb3_sandbox(
