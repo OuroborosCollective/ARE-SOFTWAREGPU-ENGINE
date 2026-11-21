@@ -1,0 +1,27 @@
+name: Release each verified main integration
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    if: github.repository == 'OuroborosCollective/ARE-SOFTWAREGPU-ENGINE' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    concurrency:
+      group: main-pypi-${{ github.sha }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Wait for both main CI suites and dispatch the immutable tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/main_pypi_release.py

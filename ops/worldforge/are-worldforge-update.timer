@@ -1,0 +1,9 @@
+[Unit]
+Description=Check for new public ARE releases every five minutes
+
+[Timer]
+OnBootSec=60s
+OnUnitInactiveSec=5min
+
+[Install]
+WantedBy=timers.target

@@ -113,9 +113,27 @@ def _node_matrix(node):
 
 
 def load_glb(path: Path, expected: dict):
+    return _load_glb(path, expected, worldforge=False)
+
+
+def load_worldforge_glb(path: Path, file_record: dict):
+    """Use the World Forge exporter receipt as the trusted size/hash input."""
+    return _load_glb(path, {"bytes": file_record["size"], "source_sha256": file_record["sha256"]},
+                     worldforge=True)
+
+
+def _load_glb(path: Path, expected: dict, *, worldforge: bool):
     if path.is_symlink() or not path.is_file():
         raise ValueError("SOURCE_FILE_MISSING_OR_LINK")
     size = path.stat().st_size
+    if worldforge and size == expected["bytes"] and size > MAX_GLB_BYTES:
+        with path.open("rb") as stream:
+            state = hashlib.sha256()
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                state.update(chunk)
+        if state.hexdigest() != expected["source_sha256"]:
+            raise ValueError("SOURCE_SHA256_MISMATCH")
+        raise ValueError("GLB_REVIEW_SIZE_LIMIT")
     if size > MAX_GLB_BYTES or size < 32 or size != expected["bytes"]:
         raise ValueError("SOURCE_SIZE_MISMATCH")
     data = path.read_bytes()
@@ -150,7 +168,10 @@ def load_glb(path: Path, expected: dict):
     if (len(doc.get("nodes", [])) > 128 or len(doc.get("meshes", [])) > 32 or
         len(doc.get("accessors", [])) > 128 or len(doc.get("bufferViews", [])) > 128):
         raise ValueError("SCENE_COMPLEXITY_LIMIT")
-    if (len(doc.get("meshes", [])) != expected["meshes"] or
+    if worldforge and (doc.get("animations") or doc.get("skins") or doc.get("extensionsRequired")
+                       or any(p.get("targets") for m in doc.get("meshes", []) for p in m["primitives"])):
+        raise ValueError("STATIC_GEOMETRY_REVIEW_REQUIRED")
+    if not worldforge and (len(doc.get("meshes", [])) != expected["meshes"] or
         len(doc.get("materials", [])) != expected["materials"] or
         len(doc.get("images", [])) != expected["images"]):
         raise ValueError("SCENE_METADATA_MISMATCH")
@@ -160,9 +181,12 @@ def load_glb(path: Path, expected: dict):
         raise ValueError("SCENE_INDEX_INVALID")
     nodes = doc.get("nodes", [])
     all_vertices, all_faces = [], []
-    vertex_count = 0
+    vertex_count = triangle_count = visits = 0
     def walk(node_idx, parent, active, depth=0):
-        nonlocal vertex_count
+        nonlocal vertex_count, triangle_count, visits
+        visits += 1
+        if visits > 1024:
+            raise ValueError("SCENE_EXPANSION_LIMIT")
         if depth > 8 or type(node_idx) is not int or not 0 <= node_idx < len(nodes) or node_idx in active:
             raise ValueError("SCENE_GRAPH_INVALID")
         node = nodes[node_idx]
@@ -189,6 +213,9 @@ def load_glb(path: Path, expected: dict):
                     raise ValueError("VERTEX_TRANSFORM_INVALID")
                 pos = (world[:,:3] / world[:,3,None]).astype(np.float32)
                 faces = indices.reshape(-1,3).astype(np.int32)
+                triangle_count += len(faces)
+                if vertex_count + len(pos) > MAX_VERTICES or triangle_count > MAX_TRIANGLES:
+                    raise ValueError("MESH_TOO_LARGE")
                 all_vertices.append(pos)
                 all_faces.append(faces + vertex_count)
                 vertex_count += len(pos)
@@ -203,7 +230,7 @@ def load_glb(path: Path, expected: dict):
     faces = np.concatenate(all_faces)
     if len(vertices) > MAX_VERTICES or len(faces) > MAX_TRIANGLES:
         raise ValueError("MESH_TOO_LARGE")
-    if len(vertices) != expected["vertices"] or len(faces) != expected["triangles"]:
+    if not worldforge and (len(vertices) != expected["vertices"] or len(faces) != expected["triangles"]):
         raise ValueError("LOD_GEOMETRY_COUNT_MISMATCH")
     return vertices, faces, digest
 
