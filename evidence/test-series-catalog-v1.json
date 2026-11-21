@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "visual-asset-lab-native-pbr",
+      "introduced": "2026-11-21",
+      "title": "Visual Asset Lab Phase 2: echter AREMDL03-PBR/Depth + drei Ansichten",
+      "module": "software_gpu/tests/test_visual_asset_lab_native.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "gltf21-glb3-independent-assets",
       "introduced": "2026-11-20",
       "title": "glTF 2.1/GLB v3 Entwurf: unabhaengige Khronos-Assets, SHA-Replay",
