@@ -5,6 +5,7 @@ weight edits below are behavioral controls only, NOT production timing evidence.
 """
 import ast
 import hashlib
+import importlib.util
 from fractions import Fraction
 import subprocess
 import inspect
@@ -124,6 +125,13 @@ class LearningRoutingCoverage(unittest.TestCase):
                          "New render backend requires explicit learning coverage")
         for backend in PUBLIC_RASTER_BACKENDS:
             with self.subTest(backend=backend):
+                if backend == "tiles-jit" and importlib.util.find_spec("numba") is None:
+                    # The default wheel intentionally omits optional Numba.
+                    # This path must fail closed. The dedicated native CI job
+                    # installs [jit] and exercises real learned raster output.
+                    with self.assertRaisesRegex(RuntimeError, "tiles-jit requires optional Numba"):
+                        self.render(backend, learning=False)
+                    continue
                 baseline = self.render(backend, learning=False)
                 self.assertIsNone(baseline[2])
                 learned = self.render(backend)
