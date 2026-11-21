@@ -41,6 +41,14 @@ Das Werkzeug erstellt `wireframe.svg`, bei vorhandenen UVs `uv.svg` und `visual-
 
 **Neue Regressionen:** `python -m unittest software_gpu.tests.test_visual_asset_lab software_gpu.tests.test_test_series_catalog -v`. Diese Tests sind noch **keine Performance-Messwerte**; ihren CI-Status zeigt der jeweilige GitHub-PR.
 
+## Visual Asset Lab Phase 2: nativer PBR-Renderer, drei Diagnosen (21. November 2026)
+
+**Opt-in, lokale CLI, keine zweite Renderer-Authority:** `python -m tools.visual_asset_lab_native privates-manifest.json --output-dir /privat/leer/are-pbr --pixels 64`. Der vorhandene C++17-`AREMDL03`-Worker erzeugt die echte Beauty-Ausgabe, die auf der nativen `resolved`-RGBA8-Ausgabe basiert, sowie den originalen Float32-Depthpuffer. JSON-Receipt enthält Quell-/Material-/Bild-/Build-SHAs, getrennte PNG-/BMP- und Framebuffer-Digests, gleiche Kamera und Bufferparität zwischen 1 und 2 Workern. Wireframe/UV-Naht sind ausdrücklich **nicht okklusionsgeprüfte, quellenbasierte Diagnosen**, keine neuen nativen Renderpasses. Native Schatten sind **nicht implementiert**. Unterschiedliche automatische LOD-Fits werden sichtbar als **nicht gleichwertig für visuellen LOD-Vergleich** markiert.
+
+Nur SHA-gebundene lokale Original-GLBs, eingebettete Materialien/Bilder und unterstützte statische Einzel-Primitives; fremde Textur-URIs, Symlinks, überschreibbare Ausgaben und unsupported Eingaben werden abgelehnt. Kein HTTP/UI, keine Original-Asset-Veröffentlichung, keine Android-/Gameplay-FPS- oder Leistungsrang-Aussage. Owner-LOD-30k/12k/4k-Abnahme aus [Issue #103](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/issues/103) bleibt separat, bis echte private Quellen geprüft sind.
+
+[CLI-Vertrag, Manifest, Einschränkungen](docs/VISUAL_ASSET_LAB_NATIVE_20261121.md) · [Neue lokale Native-Regression](software_gpu/tests/test_visual_asset_lab_native.py) · [Neueste Testreihe in der CPU-Rangliste](docs/CPU_WAVE_RANGLISTEN.md).
+
 ## Verifizierter Stand – 9. November 2026
 
 **Netzwerk-Rendering:** [PR #255](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/255) ist mit Merge `01f2e00f7066d1d03428fa67fa81f329d0c5e4df` integriert. Der RPC-Dispatcher serialisiert das BMP jetzt mit `Framebuffer.to_bmp_bytes()` direkt im Speicher statt über temporäre Dateien; `save_bmp()` bleibt als kompatibler Datei-Export bestehen. Die Regressionen prüfen Bytegleichheit einschließlich nicht vierfach ausgerichteter Zeilenbreite. Auf dem geprüften PR-Head `c00b4e92887a51eedcdc71e66842384b16d402b7` waren **16/16 fachliche CI-Checks erfolgreich** (Linux/Windows, Python 3.11/3.12, Mesa, LLVM, NumPy-1.26, Renderparität und Netzwerk-Smoketests). [Exakte CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879587) · [Mesa-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879572). Externe Code-Review-Dienste sind von dieser technischen CI-Aussage getrennt.
