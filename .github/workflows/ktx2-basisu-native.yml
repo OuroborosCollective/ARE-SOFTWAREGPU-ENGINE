@@ -57,6 +57,15 @@ jobs:
         run: python -m pip install '.[model-pbr,jit]'
       - name: Real BasisU native PBR and negative admission tests
         run: python -m unittest software_gpu.tests.test_ktx2_texture_admission -v
+      - name: Install real FFmpeg and ffprobe for required video learning proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          command -v ffmpeg
+          command -v ffprobe
+          ffmpeg -version | head -n 1
       - name: All registered raster backends plus FFmpeg/export learning routes
         run: python -m unittest software_gpu.tests.test_learning_route_coverage -v
       - name: Existing native PBR and material regression
