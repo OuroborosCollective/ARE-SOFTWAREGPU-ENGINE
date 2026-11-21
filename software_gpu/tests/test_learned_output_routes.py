@@ -169,3 +169,32 @@ class NativeModelAutoLearning(unittest.TestCase):
                 self.assertEqual(changed["learning"]["served"], "reference")
                 self.assertEqual(changed["learning"]["outcome"], "matched")
                 self.assertNotEqual(changed["learning"]["scope"], winner["learning"]["scope"])
+
+    def test_animated_pose_auto_weights_prove_actual_vertex_parity(self):
+        from software_gpu.research.model_probe import load_asset, write_scene, run_model
+        from software_gpu.tests.fixtures.model_fixture import make_glb
+        with tempfile.TemporaryDirectory(prefix="are-native-pose-db-") as folder:
+            db = Path(folder) / "weights.sqlite3"
+            src = Path(folder) / "animated.glb"
+            metadata = make_glb(src)
+            asset = load_asset(src, metadata)
+            request = Path(folder) / "pose.aremdl"
+            write_scene(request, [dict(asset=asset, clip=0)], [0.0, 1.0],
+                        pixels=32, tile=16)
+            with patch.dict(os.environ, {"ARE_LEARNING_DB": str(db)}):
+                expected = run_model(self.binary, request, workers=1,
+                                     repeats=2, mode="pose")
+                candidate = run_model(self.binary, request, workers=2,
+                                      repeats=2, mode="pose")
+                for a, b in zip(expected["poses"], candidate["poses"]):
+                    for x, y in zip(a, b):
+                        np.testing.assert_array_equal(x, y)
+                for _ in range(4):
+                    out = run_model(self.binary, request, workers="auto",
+                                    repeats=2, mode="pose")
+                    self.assertEqual(out["learning"]["outcome"], "matched")
+                    self.assertEqual(out["learning"]["served"], "reference")
+                profile, = [p for p in LocalLearner(db).status()
+                            if p["scope"].get("stage") == "native-model"
+                            and p["scope"].get("mode") == "pose"]
+                self.assertEqual(profile["pairs"], 4)
