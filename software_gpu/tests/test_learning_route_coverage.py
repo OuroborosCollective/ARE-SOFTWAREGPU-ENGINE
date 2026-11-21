@@ -38,26 +38,27 @@ ROUTE_INVENTORY = {
         "encode_frames": "weights-active-video",
     },
     "software_gpu/graphics/framebuffer.py": {
-        "Framebuffer.save_ppm": "inherits-rendered-pixels",
-        "Framebuffer.save_bmp": "inherits-rendered-pixels",
-        "Framebuffer.to_bmp_bytes": "inherits-rendered-pixels",
+        "Framebuffer.save_ppm": "inherits-weighted-byte-export",
+        "Framebuffer.save_bmp": "inherits-weighted-byte-export",
+        "Framebuffer.to_ppm_bytes": "weights-active-byte-export",
+        "Framebuffer.to_bmp_bytes": "weights-active-byte-export",
     },
     "software_gpu/research/model_probe.py": {
-        "run_model": "unweighted-native-cpp",
+        "run_model": "weights-active-native-auto",
         "write_scene": "unweighted-input-serializer",
     },
     "tools/visual_asset_lab_native.py": {
-        "render_native_asset_lab": "unweighted-native-cpp",
+        "render_native_asset_lab": "delegates-verified-native-auto",
     },
     "software_gpu/integrations/blender/blender_render_engine.py": {
-        "StandaloneBlenderBridge.render_scene": "unweighted-external-blender",
+        "StandaloneBlenderBridge.render_scene": "delegates-weighted-raster",
     },
     "software_gpu/integrations/aurion/offline_render_worker.py": {
-        "run_job": "delegated-not-independently-verified",
-        "compare_backends": "delegated-not-independently-verified",
+        "run_job": "delegates-weighted-aurion-child",
+        "compare_backends": "delegates-weighted-raster",
     },
     "tools/ktx2_texture_admission.py": {
-        "convert_ktx2_glb": "unweighted-offline-converter",
+        "convert_ktx2_glb": "weights-active-ktx",
     },
 }
 
@@ -182,15 +183,31 @@ class LearningRoutingCoverage(unittest.TestCase):
                 elif status == "weights-active-video":
                     self.assertIn("configured_learner", src)
                     self.assertIn("learner.execute", src)
+                elif status == "weights-active-byte-export":
+                    self.assertIn("measured_bytes", src)
+                elif status == "weights-active-native-auto":
+                    self.assertIn("learner.execute", src)
+                    self.assertIn("workers == 'auto'", src)
+                elif status == "weights-active-ktx":
+                    self.assertIn("learner.execute", src)
+                elif status == "delegates-verified-native-auto":
+                    self.assertIn("workers='auto'", src)
+                    self.assertIn("NATIVE_WORKER_BUFFER_MISMATCH", src)
+                elif status == "delegates-weighted-raster":
+                    self.assertTrue(any(token in src for token in (
+                        "SoftwareRasterizer", "_render_mesh")))
+                elif status == "delegates-weighted-aurion-child":
+                    self.assertIn("_CHILD_BOOTSTRAP", src)
+                elif status == "inherits-weighted-byte-export":
+                    self.assertTrue(any(token in src for token in (
+                        "to_bmp_bytes", "to_ppm_bytes")))
                 elif status.startswith("unweighted"):
                     self.assertNotIn("learner.execute", src)
-                elif status == "inherits-rendered-pixels":
-                    self.assertNotIn("learner.execute", src)
-        self.assertGreaterEqual(len(declared), 12)
-        self.assertEqual(sum(v.startswith("weights-active") for v in declared.values()), 2)
-        # This does not claim that all output surfaces are trained.
-        # It protects classification of known distinct authority boundaries,
-        # while the raster/video tests above assert real persisted route use.
+        self.assertGreaterEqual(len(declared), 13)
+        self.assertEqual(sum(v.startswith("weights-active") for v in declared.values()), 6)
+        # Active means the route *offers* measured alternatives when the
+        # learner is enabled. Pinned worker paths and pure input serializers
+        # are deliberately not claimed as adaptively selectable.
 
     def test_mp4_and_ffv1_export_use_saved_weights_on_actual_ffmpeg(self):
         from software_gpu.integrations.render_video import encode_frames, media_binaries

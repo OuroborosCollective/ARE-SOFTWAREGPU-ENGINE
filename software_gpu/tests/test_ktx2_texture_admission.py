@@ -168,6 +168,75 @@ class TestKtx2Admission(unittest.TestCase):
             self.assertEqual(receipt['float32_depth_diff'],
                              'not_measured_without_reference_render')
 
+    def test_real_khronos_transcoder_learning_selects_verified_raw_route(self):
+        binary = os.getenv('ARE_KHRONOS_KTX_BINARY')
+        if not binary:
+            self.skipTest('Dedicated Khronos CI provides the hash-pinned executable')
+        from contextlib import closing
+        from unittest.mock import patch
+        import math
+        import sqlite3
+        from software_gpu.learning import LocalLearner
+        from software_gpu.tests.fixtures.model_fixture import make_glb
+
+        with tempfile.TemporaryDirectory(prefix='are-ktx2-learn-real-') as tmp:
+            root = Path(tmp)
+            def add_ktx(doc, buf):
+                while len(buf) % 4:
+                    buf.append(0)
+                start = len(buf)
+                buf.extend(REAL_KHRONOS_KTX2)
+                doc['bufferViews'].append(dict(buffer=0, byteOffset=start,
+                                               byteLength=len(REAL_KHRONOS_KTX2)))
+                idx = len(doc['images'])
+                doc['images'].append(dict(bufferView=len(doc['bufferViews']) - 1,
+                                          mimeType='image/ktx2'))
+                doc['textures'][0] = dict(sampler=0,
+                    extensions={'KHR_texture_basisu': {'source': idx}})
+                doc['extensionsUsed'] = ['KHR_texture_basisu']
+                doc['extensionsRequired'] = ['KHR_texture_basisu']
+                doc['buffers'][0]['byteLength'] = len(buf)
+            source = root / 'source.glb'
+            identity = make_glb(source, mutate=add_ktx, static=True, surface=True)
+            license_file = root / 'license.txt'
+            license_file.write_text('Original test pixels / CC0-1.0.\n', encoding='utf-8')
+            manifest = dict(
+                source_glb=str(source), source_sha256=identity['sha256'],
+                source_bytes=identity['bytes'], lod='lod0',
+                images=[dict(image_index=3, sha256=REAL_KTX_SHA256, license='CC0-1.0',
+                             license_path=str(license_file),
+                             license_sha256=hashlib.sha256(license_file.read_bytes()).hexdigest())],
+                transcoder=dict(path=str(Path(binary).resolve()),
+                                sha256=REAL_KTX_BINARY_SHA256, version='4.4.2'),
+                budget=budget())
+            db = root / 'weights.sqlite3'
+            with patch.dict(os.environ, {'ARE_LEARNING_DB': str(db)}):
+                expected_hash = None
+                for i in range(4):
+                    result = convert_ktx2_glb(manifest, root / f'real-{i}')
+                    rec = result['images'][0]['learning']
+                    self.assertEqual(rec['outcome'], 'matched')
+                    self.assertEqual(rec['served'], 'reference')
+                    if expected_hash is None:
+                        expected_hash = result['images'][0]['rgba8_sha256']
+                    self.assertEqual(result['images'][0]['rgba8_sha256'], expected_hash)
+                profile, = [x for x in LocalLearner(db).status()
+                            if x['scope']['stage'] == 'ktx2-transcode']
+                self.assertEqual(profile['pairs'], 4)
+                self.assertEqual(profile['scope']['source_sha256'], REAL_KTX_SHA256)
+                key = json.dumps(profile['scope'], sort_keys=True, separators=(',', ':'))
+                # Routing control only; not measured CPU performance evidence.
+                with closing(sqlite3.connect(db)) as con, con:
+                    con.execute('UPDATE models SET runs=5,pairs=4,reference_ns=10000,'
+                                'candidate_ns=1000,log_gain=?,recent_wins=15,blocked=0 '
+                                'WHERE scope=?', (math.log(10), key))
+                winner = convert_ktx2_glb(manifest, root / 'real-selected')
+                self.assertEqual(winner['images'][0]['learning']['served'], 'candidate')
+                self.assertEqual(winner['images'][0]['rgba8_sha256'], expected_hash)
+                converted = root / 'real-selected' / 'converted.glb'
+                self.assertEqual(hashlib.sha256(converted.read_bytes()).hexdigest(),
+                                 winner['converted_glb_sha256'])
+
     def test_srgb_etc1s_metadata_and_only_base_mip_resident(self):
         item = inspect_ktx2(ktx2(w=8, h=8, levels=3), budget(), 'srgb')
         self.assertEqual(item['dimensions'], [8, 8])

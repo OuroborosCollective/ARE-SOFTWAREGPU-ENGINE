@@ -10,6 +10,14 @@
       "status": "registered"
     },
     {
+      "id": "learning-all-authoring-routes",
+      "introduced": "2026-11-21",
+      "title": "Learn-Weight authoring: native auto, KTX2, BMP/PPM, Blender und Aurion",
+      "module": "software_gpu/tests/test_learned_output_routes.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "learning-route-weight-coverage",
       "introduced": "2026-11-21",
       "title": "Learn-Weight: 6 Raster-Backends, SQLite-Route, FFmpeg und 12 Output-Flaechen",

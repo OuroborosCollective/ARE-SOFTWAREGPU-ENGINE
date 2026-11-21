@@ -57,6 +57,10 @@ Nur SHA-gebundene lokale Original-GLBs, eingebettete Materialien/Bilder und unte
 
 [Vertrag & Grenzen](docs/KTX2_BASISU_ADMISSION_20261121.md) · [Khronos-Regression](software_gpu/tests/test_ktx2_texture_admission.py) · [Learn-Weight-Audit](software_gpu/tests/test_learning_route_coverage.py) · [Testkatalog und Rangliste](docs/CPU_WAVE_RANGLISTEN.md).
 
+## Weight-aware native and authoring outputs (21 November 2026)
+
+Lokale, opt-in SQLite-Kalibrierung umfasst jetzt native AREMDL03-Modelle mit `workers='auto'`, Khronos KTX2/BasisU Extraktion, BMP/PPM-Byte-Exporte und delegierte Blender-/Aurion-/Asset-Lab-Receipts. Explizite Workerzahlen und Simulationstruth bleiben unveraendert. Tests pruefen echte Farb-/Float32-Tiefen- oder Ausgabebytes; bei Paritaetsfehlern wird der Kandidat gesperrt. [Tests](software_gpu/tests/test_learned_output_routes.py) · [Lernvertrag](docs/LOCAL_RENDER_LEARNING.md). Neue Testserie steht neueste zuerst im Katalog; keine unbelegten Leistungsränge.
+
 ## Verifizierter Stand – 9. November 2026
 
 **Netzwerk-Rendering:** [PR #255](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/pull/255) ist mit Merge `01f2e00f7066d1d03428fa67fa81f329d0c5e4df` integriert. Der RPC-Dispatcher serialisiert das BMP jetzt mit `Framebuffer.to_bmp_bytes()` direkt im Speicher statt über temporäre Dateien; `save_bmp()` bleibt als kompatibler Datei-Export bestehen. Die Regressionen prüfen Bytegleichheit einschließlich nicht vierfach ausgerichteter Zeilenbreite. Auf dem geprüften PR-Head `c00b4e92887a51eedcdc71e66842384b16d402b7` waren **16/16 fachliche CI-Checks erfolgreich** (Linux/Windows, Python 3.11/3.12, Mesa, LLVM, NumPy-1.26, Renderparität und Netzwerk-Smoketests). [Exakte CPU-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879587) · [Mesa-CI](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/actions/runs/42569879572). Externe Code-Review-Dienste sind von dieser technischen CI-Aussage getrennt.

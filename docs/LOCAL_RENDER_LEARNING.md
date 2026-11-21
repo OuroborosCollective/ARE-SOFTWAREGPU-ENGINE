@@ -34,3 +34,11 @@ python -m software_gpu.benchmarks.compare_local_learning --output holdout.json
 ```
 
 Der Test trainiert mit einem Rechteck. Zwei überlappende Dreiecke mit anderen Tiefen und Farben bleiben für die Prüfung zurück. Für jeden Messdurchgang werden die Gewichte desselben Trainingsstands wiederhergestellt. Die Reihenfolge mit/ohne Lernen wechselt. Der Bericht enthält Rohzeiten einschließlich Lernverwaltung im Draw, die tatsächlich verwendete Variante und beide vollständigen Puffer-Hashes. Er liefert eine Aussage über diesen Shader, diese Geometrie und diesen Rechner.
+
+## Weitere gewichtete Autorenpfade (opt-in, 21. November 2026)
+
+Die bestehenden Raster- und Video-Pfade behalten ihre vorhandene Lernlogik. Bei aktiviertem lokalen SQLite-Lerner koennen jetzt auch BMP- und PPM-Byte-Exporte zwei vollstaendig verglichene Encodings messen; `last_export_learning_receipt` belegt die Wahl. Der Blender-CPU-Bridge und der Aurion-Offline-Worker reichen Raster- und Export-Receipts weiter, ohne Gameplay-Authority oder die Bilddaten zu veraendern.
+
+`run_model(..., workers='auto')` vergleicht native C++17-Ausgaben mit einem und zwei Workern, inklusive aller RGBA8-Frames, resolved Beauty und Float32-Depth. **Explizite Workerzahlen bleiben fest**. Das Visual Asset Lab behaelt seine obligatorische 1/2-Worker-Abnahme und nutzt den gesondert gepaarten Auto-Pfad nur bei aktiviertem Lernen. `convert_ktx2_glb` vergleicht bei vorhandenem signaturgeprueften Khronos-CLI dessen PNG-Extraktion mit offizieller RGBA8-Extraktion und unabhaengiger PNG-Kodierung; massgeblich ist identische dekomprimierte Pixelinformation, nicht die verlustbehaftete Ursprungs-PNG. Bei Paritaetsverlust oder Kandidatenfehler wird die Alternative pro Profil dauerhaft blockiert.
+
+**Grenzen:** Auto-Auswahl wird nie fuer fest vorgegebene Benchmark-Worker erzwungen; Writer lernen nur ihre Byte-Kodierung (nicht Shader/Pixel). Keine Gewichte in World-Seeds, Spielregeln, Replay- oder Source-SHA-Identitaet; keine Geschwindigkeitsgewinne ohne reale gepaarte Messwerte. KTX2-Authoring bleibt offline und SHA-/Lizenz-geprueft.

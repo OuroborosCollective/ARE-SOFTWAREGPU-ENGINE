@@ -1,29 +1,26 @@
-"""
-Framebuffer and Image Output Subsystem for SoftwareGPU.
-Supports 32-bit RGBA color buffers, 32-bit float Z-buffers,
-and zero-dependency export to standard image formats (BMP / PPM).
-"""
+"""RGBA8 framebuffer, Float32 depth, exact BMP/PPM exports.
 
+Independent local export candidates are calibrated only when explicitly enabled
+by an existing ARE learning database. Rendering/depth are not modified.
+"""
 import struct
 from typing import Tuple, Optional
 import numpy as np
 
+from ..learning_routes import measured_bytes
+
 
 class Framebuffer:
-    """Represents the GPU display framebuffer (Color + Depth/Stencil buffers)."""
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        # RGBA 8-bit per channel
         self.color_buffer = np.zeros((height, width, 4), dtype=np.uint8)
-        # 32-bit floating point depth buffer (Z-buffer, initialized to +inf or 1.0)
         self.depth_buffer = np.full((height, width), 1.0, dtype=np.float32)
+        self.last_export_learning_receipt = None
 
-    def clear(self, r: int = 20, g: int = 25, b: int = 35, a: int = 255, depth: float = 1.0) -> None:
-        """Clears color and depth buffers (glClear equivalent)."""
+    def clear(self, r: int = 20, g: int = 25, b: int = 35, a: int = 255,
+              depth: float = 1.0) -> None:
         import sys
-        # Optimization: Casting the NumPy array view to np.uint32 and using a single fill()
-        # operation improves framebuffer clear performance by ~4x-10x.
         if sys.byteorder == 'little':
             color_val = int(r) | (int(g) << 8) | (int(b) << 16) | (int(a) << 24)
         else:
@@ -31,8 +28,8 @@ class Framebuffer:
         self.color_buffer.view(np.uint32).fill(color_val)
         self.depth_buffer.fill(depth)
 
-    def set_pixel(self, x: int, y: int, r: int, g: int, b: int, a: int = 255, z: float = 0.0) -> bool:
-        """Sets a pixel if passing depth test."""
+    def set_pixel(self, x: int, y: int, r: int, g: int, b: int,
+                  a: int = 255, z: float = 0.0) -> bool:
         if 0 <= x < self.width and 0 <= y < self.height:
             if z < self.depth_buffer[y, x]:
                 self.depth_buffer[y, x] = z
@@ -43,62 +40,62 @@ class Framebuffer:
                 return True
         return False
 
-    def save_ppm(self, file_path: str) -> None:
-        """Exports the framebuffer as a standard ASCII/Binary PPM image file."""
+    def to_ppm_bytes(self) -> bytes:
+        """PPM P6 with exactly original RGB ordering and zero file effects."""
+        header = f"P6\n{self.width} {self.height}\n255\n".encode('ascii')
         rgb = self.color_buffer[..., :3]
-        header = f"P6\n{self.width} {self.height}\n255\n".encode("ascii")
-        with open(file_path, "wb") as f:
-            f.write(header)
-            f.write(rgb.tobytes())
+        def reference():
+            return header + rgb.tobytes()
+        def candidate():
+            # A distinct, contiguous NumPy packing path; no channel changes.
+            return header + np.ascontiguousarray(rgb).tobytes(order='C')
+        result, receipt = measured_bytes('ppm-byte-export', self.width,
+                                        self.height, rgb.size, reference, candidate, __file__)
+        self.last_export_learning_receipt = receipt
+        return result
+
+    def save_ppm(self, file_path: str) -> None:
+        with open(file_path, 'wb') as out:
+            out.write(self.to_ppm_bytes())
 
     def to_bmp_bytes(self) -> bytes:
-        """Exports the framebuffer as an uncompressed 24-bit BMP image byte string."""
+        """BMP BGR24 with exact header, row padding and bottom-up order."""
         w, h = self.width, self.height
         row_stride = (w * 3 + 3) & ~3
         img_size = row_stride * h
         file_size = 54 + img_size
-
-        # BMP Header (14 bytes) + DIB Header (40 bytes)
-        bmp_header = struct.pack(
-            "<2sIHHI",
-            b"BM",
-            file_size,
-            0,
-            0,
-            54
-        )
-        dib_header = struct.pack(
-            "<IIIHHIIIIII",
-            40,
-            w,
-            h,  # bottom-to-top order
-            1,  # planes
-            24, # bpp
-            0,  # uncompressed BI_RGB
-            img_size,
-            2835, # 72 DPI
-            2835,
-            0,
-            0
-        )
-
-        # Convert RGB to BGR and flip vertically for standard BMP
-        bgr = self.color_buffer[::-1, :, :3][..., [2, 1, 0]]
-        
-        # Add padding if row width is not aligned to 4 bytes
+        bmp_header = struct.pack('<2sIHHI', b'BM', file_size, 0, 0, 54)
+        dib_header = struct.pack('<IIIHHIIIIII', 40, w, h, 1, 24, 0,
+                                 img_size, 2835, 2835, 0, 0)
+        prefix = bmp_header + dib_header
+        rgb = self.color_buffer
         padding = row_stride - (w * 3)
-        if padding > 0:
-            padded_rows = []
-            pad_bytes = bytes(padding)
-            for row in bgr:
-                padded_rows.append(row.tobytes() + pad_bytes)
-            pixel_data = b"".join(padded_rows)
-        else:
-            pixel_data = bgr.tobytes()
 
-        return bmp_header + dib_header + pixel_data
+        def reference():
+            bgr = rgb[::-1, :, :3][..., [2, 1, 0]]
+            if padding > 0:
+                zero = bytes(padding)
+                pixel_data = b''.join(row.tobytes() + zero for row in bgr)
+            else:
+                pixel_data = bgr.tobytes()
+            return prefix + pixel_data
+
+        def candidate():
+            # Alternate row-independent byte packing, keeping exact BMP bytes.
+            channels = (rgb[::-1, :, 2], rgb[::-1, :, 1], rgb[::-1, :, 0])
+            bgr = np.stack(channels, axis=2)
+            if padding:
+                # Preallocated contiguous output avoids per-row Python joins.
+                pixels = np.zeros((h, row_stride), dtype=np.uint8)
+                pixels[:, :w * 3] = bgr.reshape(h, w * 3)
+                return prefix + pixels.tobytes()
+            return prefix + bgr.tobytes()
+
+        result, receipt = measured_bytes('bmp-byte-export', w, h,
+                                        rgb.nbytes, reference, candidate, __file__)
+        self.last_export_learning_receipt = receipt
+        return result
 
     def save_bmp(self, file_path: str) -> None:
-        """Exports the framebuffer as an uncompressed 24-bit BMP image file."""
-        with open(file_path, "wb") as f:
-            f.write(self.to_bmp_bytes())
+        with open(file_path, 'wb') as out:
+            out.write(self.to_bmp_bytes())

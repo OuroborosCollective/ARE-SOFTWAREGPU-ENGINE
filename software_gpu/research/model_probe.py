@@ -376,15 +376,70 @@ def build_model_probe(directory):
 
 def run_model(executable, request, workers=4, repeats=15, policy='combined', mode='render', timeout=600,
               render_profile='diagnostic'):
+    """Run native AREMDL03. Only workers='auto' may change worker count.
+
+    Explicit worker settings preserve exact benchmark and replay contracts.
+    Adaptive mode compares workers 1 and 2 on the *same* input and accepts
+    a candidate only after byte-identical color, frames and Float32 depth.
+    """
     from .bio_workrooms import POLICIES
-    _uint(workers, 8, 1); _uint(repeats, 30, 1); _uint(timeout, 1800, 1)
+    from ..learning import bucket, configured_learner, implementation_id, scope_key
+    auto = workers == 'auto'
+    if not auto:
+        _uint(workers, 8, 1)
+    _uint(repeats, 30, 1); _uint(timeout, 1800, 1)
     require(policy in POLICIES and mode in ('pose', 'render')
             and render_profile in ('diagnostic','pbr'), 'MODEL_RUN_POLICY')
-    result = subprocess.run([str(executable), str(request), str(workers), str(repeats), policy, mode],
-                            capture_output=True, timeout=timeout)
-    if result.returncode:
-        raise RuntimeError(result.stderr.decode('utf-8', errors='replace')[-2000:])
-    return decode_output(result.stdout, workers, repeats, policy, mode, render_profile)
+
+    def actual(count):
+        result = subprocess.run(
+            [str(executable), str(request), str(count), str(repeats), policy, mode],
+            capture_output=True, timeout=timeout)
+        if result.returncode:
+            raise RuntimeError(result.stderr.decode('utf-8', errors='replace')[-2000:])
+        return decode_output(result.stdout, count, repeats, policy, mode, render_profile)
+
+    if not auto:
+        out = actual(workers)
+        out['learning'] = dict(outcome='explicit-worker-count',
+                               served='reference', weight_used=False)
+        return out
+
+    learner = configured_learner()
+    if learner is None:
+        out = actual(1)
+        out['learning'] = dict(outcome='disabled', served='reference',
+                               weight_used=False)
+        return out
+
+    # A model pair is a proof about an exact native request, not merely the
+    # request's size bucket. Do not reuse weights across distinct geometry,
+    # materials, animation or camera input with coincidentally equal size.
+    with open(request, 'rb') as source:
+        request_sha256 = hashlib.file_digest(source, 'sha256').hexdigest()
+    key = scope_key(
+        stage='native-model', implementation=implementation_id(__file__, executable),
+        variant='workers-1-vs-2', mode=mode, policy=policy,
+        profile=render_profile, repeats=bucket(repeats),
+        request_sha256=request_sha256,
+        input_bytes=bucket(Path(request).stat().st_size))
+    def fingerprint(out):
+        digest = hashlib.sha256()
+        if mode == 'pose':
+            for pose_frame in out['poses']:
+                for model_vertices in pose_frame:
+                    digest.update(np.ascontiguousarray(model_vertices).tobytes())
+        else:
+            for key in ('frames', 'resolved', 'depth'):
+                digest.update(out[key].tobytes())
+        return digest.hexdigest()
+
+    # Neither variant owns user files. Candidate errors are rejected by the
+    # existing learner; the reference remains authoritative for this job.
+    out, receipt = learner.execute(key, lambda alternative: actual(2 if alternative else 1),
+                                   fingerprint)
+    out['learning'] = receipt
+    return out
 
 
 def decode_output(raw, workers, repeats, policy, mode='render', render_profile='diagnostic'):

@@ -268,6 +268,8 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
         image_path = out_dir / (image_stem + "_ARE.bmp")
         fb.save_bmp(str(image_path))
         image_sha = _sha256(image_path.read_bytes())
+        export_learning = fb.last_export_learning_receipt
+        raster_learning = render.last_learning_receipt
     finally:
         render.executor.shutdown(wait=True)
     peak_rss_bytes = None
@@ -283,6 +285,9 @@ def _render_mesh(vertices, faces, camera, backend, pixels, repeats,
         "cpu_seconds_total": round(time.process_time(), 3),
         "pipeline": "ARE %s CPU / flat color / geometry only" % backend,
         "texture_pbr_equivalence": False,
+        # Measured CPU render and byte-export stages, not gameplay state.
+        "raster_learning": raster_learning,
+        "export_learning": export_learning,
     }
     if render.last_plan_receipt is not None:
         result["surface_plan"] = render.last_plan_receipt
