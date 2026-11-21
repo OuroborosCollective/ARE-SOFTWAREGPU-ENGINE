@@ -120,11 +120,16 @@ def inspect_ktx2(raw: bytes, budget: dict, expected_color_space: str) -> dict:
           and 24 <= struct.unpack_from('<H', raw, dfd_at + 10)[0] <= dfd_len - 4,
           'KTX2_DFD')
     color_model = raw[dfd_at + 12]
+    primaries = raw[dfd_at + 13]
     transfer = raw[dfd_at + 14]
     flags = raw[dfd_at + 15]
     _need((scheme == 1 and color_model == 163) or
           (scheme in (0, 2) and color_model == 166), 'KTX2_COLOR_MODEL')
     _need(flags == 0 and transfer in (1, 2), 'KTX2_DFD_TRANSFER')
+    # KHR_texture_basisu admits BT709 primaries with sRGB transfer, or
+    # UNSPECIFIED primaries with LINEAR transfer. A transfer flag alone
+    # is insufficient to prove valid glTF color semantics.
+    _need((primaries, transfer) in ((1, 2), (0, 1)), 'KTX2_COLOR_PRIMARIES')
     color_space = 'srgb' if transfer == 2 else 'linear'
     _need(expected_color_space in ('srgb', 'linear') and
           color_space == expected_color_space, 'KTX2_COLOR_SPACE')
@@ -175,7 +180,8 @@ def inspect_ktx2(raw: bytes, budget: dict, expected_color_space: str) -> dict:
                 compression='basis_lz_etc1s' if scheme == 1 else
                             'uastc_ldr_zstd' if scheme == 2 else 'uastc_ldr',
                 color_space=color_space, source_sha256=_sha(raw),
-                color_model=color_model, supercompression=scheme)
+                color_model=color_model, color_primaries=primaries,
+                supercompression=scheme)
 
 
 def _local_file(name, *, max_bytes, code):

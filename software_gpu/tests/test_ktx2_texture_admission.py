@@ -26,7 +26,7 @@ def ktx2(w=8, h=8, levels=1, space='srgb', model=163, data_size=4):
     dfd = bytearray(28)
     struct.pack_into('<I', dfd, 0, len(dfd))
     struct.pack_into('<H', dfd, 10, 24)
-    dfd[12], dfd[13], dfd[14] = model, 1, 2 if space == 'srgb' else 1
+    dfd[12], dfd[13], dfd[14] = model, 1 if space == 'srgb' else 0, 2 if space == 'srgb' else 1
     index_end = 80 + 24 * levels
     scheme = 1 if model == 163 else 0
     sgd_offset = (index_end + len(dfd) + 7) & ~7 if scheme else 0
@@ -57,6 +57,46 @@ class TestKtx2Admission(unittest.TestCase):
         self.assertEqual(entry['resident_decoded_bytes'], 1024)
         self.assertEqual(entry['mip_chain_decoded_bytes'], 1364)
         self.assertEqual(entry['supercompression'], 1)
+
+    def test_bad_primaries_fail_even_when_transfer_matches_material(self):
+        raw = bytearray(ktx2(space='linear', model=166))
+        dfd_at = struct.unpack_from('<I', raw, 48)[0]
+        raw[dfd_at + 13] = 1
+        with self.assertRaisesRegex(ValueError, 'KTX2_COLOR_PRIMARIES'):
+            inspect_ktx2(bytes(raw), budget(), 'linear')
+
+    def test_real_khronos_uastc_linear_mipchain(self):
+        binary = os.getenv('ARE_KHRONOS_KTX_BINARY')
+        if not binary:
+            self.skipTest('Real Khronos KTX binary required; dedicated KTX workflow runs this test')
+        from PIL import Image
+        import numpy as np
+        import subprocess
+        with tempfile.TemporaryDirectory(prefix='are-uastc-linear-') as folder:
+            root = Path(folder)
+            png = root / 'linear.png'
+            data = np.zeros((16, 16, 4), dtype=np.uint8)
+            data[:] = (20, 130, 210, 255)
+            Image.fromarray(data, 'RGBA').save(png)
+            ktx = root / 'linear-uastc.ktx2'
+            out = root / 'decoded.png'
+            subprocess.run([binary, 'create', '--format', 'R8G8B8A8_UNORM',
+                            '--encode', 'uastc', '--assign-tf', 'linear',
+                            '--assign-primaries', 'none', '--generate-mipmap',
+                            str(png), str(ktx)], check=True, capture_output=True, timeout=50)
+            subprocess.run([binary, 'validate', '--gltf-basisu', str(ktx)],
+                           check=True, capture_output=True, timeout=50)
+            item = inspect_ktx2(ktx.read_bytes(), budget(), 'linear')
+            self.assertEqual(item['compression'], 'uastc_ldr')
+            self.assertEqual(item['color_primaries'], 0)
+            self.assertEqual(item['dimensions'], [16,16])
+            self.assertGreaterEqual(item['mip_levels'], 1)
+            subprocess.run([binary, 'extract', '--transcode', 'rgba8',
+                            '--level', '0', str(ktx), str(out)],
+                           check=True, capture_output=True, timeout=50)
+            with Image.open(out) as decoded:
+                self.assertEqual(decoded.size, (16,16))
+                self.assertEqual(decoded.convert('RGBA').getpixel((0,0))[3], 255)
 
     def test_real_khronos_cli_transcodes_and_native_pbr_depth_is_preserved(self):
         binary = os.getenv('ARE_KHRONOS_KTX_BINARY')

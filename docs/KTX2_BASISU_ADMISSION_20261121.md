@@ -70,7 +70,7 @@ private converted payload; do **not** commit owner GLBs or private manifests.
 
 - Only embedded 2D ETC1S BasisLZ and LDR UASTC with supported supercompression,
   an opaque material subset, matching sRGB/linear usage, and base mip level 0.
-- Reject malformed headers/DFD/KVD, indexes/ranges, overlapping mips, unsupported
+- Reject malformed headers/DFD/KVD, nonconformant DFD primaries/transfer, indexes/ranges, overlapping mips, unsupported
   compression/URI types, color-space ambiguity, non-finite material metadata,
   oversized decoded surfaces and combined LOD residency.
 - Per-texture max dimensions, pixels, base decoded bytes, each mip, entire
@@ -98,7 +98,10 @@ the reference while hashes remain equal. Synthetic test weight values establish
 paired renders as covered in `test_local_learning.py`.
 
 Both `.mp4` H.264 and `.mkv` FFV1 exports use the existing `encode_frames`
-learner with decoded-frame parity. BMP/PPM only serialize previously rendered
+learner with decoded-frame parity. The same test module inventories 12 distinct
+render, raster, and output entrypoints, distinguishing active learning,
+delegated weight usage, byte serialization and unweighted external/native paths.
+New entrypoints must be reviewed instead of silently claiming universal coverage. BMP/PPM only serialize previously rendered
 pixels: they are **not separately optimized**, and it would be false to claim
 these byte writers or the external Blender engine select learned kernels.
 Native C++17 PBR model probe and KTX conversion are still unweighted offline

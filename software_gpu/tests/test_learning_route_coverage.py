@@ -26,6 +26,53 @@ from software_gpu.learning import LocalLearner
 
 PUBLIC_RASTER_BACKENDS = ("tiles", "tiles-jit", "tiles-plan", "tiles-deferred", "bands", "native-cpp")
 
+# Scope inventory: "active" is not claimed for native probes, external
+# Blender, or byte-only serializers. A new route requires explicit review.
+ROUTE_INVENTORY = {
+    "software_gpu/graphics/rasterizer.py": {
+        "SoftwareRasterizer.draw_mesh": "weights-active-raster",
+    },
+    "software_gpu/integrations/render_video.py": {
+        "encode_frames": "weights-active-video",
+    },
+    "software_gpu/graphics/framebuffer.py": {
+        "Framebuffer.save_ppm": "inherits-rendered-pixels",
+        "Framebuffer.save_bmp": "inherits-rendered-pixels",
+        "Framebuffer.to_bmp_bytes": "inherits-rendered-pixels",
+    },
+    "software_gpu/research/model_probe.py": {
+        "run_model": "unweighted-native-cpp",
+        "write_scene": "unweighted-input-serializer",
+    },
+    "tools/visual_asset_lab_native.py": {
+        "render_native_asset_lab": "unweighted-native-cpp",
+    },
+    "software_gpu/integrations/blender/blender_render_engine.py": {
+        "StandaloneBlenderBridge.render_scene": "unweighted-external-blender",
+    },
+    "software_gpu/integrations/aurion/offline_render_worker.py": {
+        "run_job": "delegated-not-independently-verified",
+        "compare_backends": "delegated-not-independently-verified",
+    },
+    "tools/ktx2_texture_admission.py": {
+        "convert_ktx2_glb": "unweighted-offline-converter",
+    },
+}
+
+
+def route_method_source(file_path, qualname):
+    root = ast.parse(file_path.read_text(encoding="utf-8"))
+    target = root.body
+    for index, part in enumerate(qualname.split('.')):
+        matches = [n for n in target if isinstance(n, (ast.FunctionDef, ast.ClassDef))
+                   and n.name == part]
+        if len(matches) != 1:
+            raise AssertionError("Missing/duplicate route: " + str(file_path) + "::" + qualname)
+        node = matches[0]
+        target = getattr(node, "body", [])
+    return ast.get_source_segment(file_path.read_text(encoding="utf-8"), node)
+
+
 
 def declared_backends():
     source = inspect.getsource(SoftwareRasterizer.__init__)
@@ -114,6 +161,28 @@ class LearningRoutingCoverage(unittest.TestCase):
         self.assertEqual(reference[:2], baseline[:2])
         self.assertGreaterEqual(len(LocalLearner(self.db).samples()), 3)
 
+    def test_all_explicit_render_and_output_surfaces_have_truthful_weight_classification(self):
+        project = Path(__file__).resolve().parents[2]
+        declared = {}
+        for file, methods in ROUTE_INVENTORY.items():
+            for method, status in methods.items():
+                src = route_method_source(project / file, method)
+                declared[file + "::" + method] = status
+                if status == "weights-active-raster":
+                    self.assertIn("self.local_learner", src)
+                elif status == "weights-active-video":
+                    self.assertIn("configured_learner", src)
+                    self.assertIn("learner.execute", src)
+                elif status.startswith("unweighted"):
+                    self.assertNotIn("learner.execute", src)
+                elif status == "inherits-rendered-pixels":
+                    self.assertNotIn("learner.execute", src)
+        self.assertGreaterEqual(len(declared), 12)
+        self.assertEqual(sum(v.startswith("weights-active") for v in declared.values()), 2)
+        # This does not claim that all output surfaces are trained.
+        # It protects classification of known distinct authority boundaries,
+        # while the raster/video tests above assert real persisted route use.
+
     def test_mp4_and_ffv1_export_use_saved_weights_on_actual_ffmpeg(self):
         from software_gpu.integrations.render_video import encode_frames, media_binaries
         try:
@@ -136,7 +205,11 @@ class LearningRoutingCoverage(unittest.TestCase):
                 self.assertEqual(json.loads(receipt["learning"]["scope"])["stage"], "ffmpeg")
                 self.assertEqual(receipt["learning"]["outcome"], "matched")
                 self.assertGreater(len(out.read_bytes()), 0)
-                self.assertGreater(LocalLearner(self.db).status()[-1]["runs"], 0)
+                profiles = [p for p in LocalLearner(self.db).status()
+                            if p['scope']['stage'] == 'ffmpeg'
+                            and p['scope']['codec'] == codec]
+                self.assertEqual(len(profiles), 1)
+                self.assertGreater(profiles[0]['runs'], 0)
 
     def test_export_entrypoints_preserve_upstream_weighted_pixels(self):
         color, depth, receipt = self.render("tiles")
