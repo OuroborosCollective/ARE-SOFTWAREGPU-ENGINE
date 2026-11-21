@@ -140,6 +140,8 @@ class NativeModelAutoLearning(unittest.TestCase):
                 prof = next(p for p in LocalLearner(db).status()
                             if p["scope"].get("stage") == "native-model")
                 self.assertEqual(prof["pairs"], 4)
+                original_request_hash = hashlib.sha256(request.read_bytes()).hexdigest()
+                self.assertEqual(prof["scope"]["request_sha256"], original_request_hash)
                 key = json.dumps(prof["scope"], separators=(",", ":"), sort_keys=True)
                 with closing(sqlite3.connect(db)) as conn, conn:
                     conn.execute("UPDATE models SET runs=5,pairs=4,reference_ns=10000,"
@@ -154,3 +156,16 @@ class NativeModelAutoLearning(unittest.TestCase):
                 explicit = run_model(self.binary, request, workers=1, repeats=2)
                 self.assertEqual(explicit["receipt"]["workers"], 1)
                 self.assertEqual(explicit["learning"]["served"], "reference")
+                # A second source of the same byte length must never inherit the
+                # candidate proof from an earlier request. The native worker must
+                # validate output parity independently on the new request.
+                initial_size = request.stat().st_size
+                write_scene(request, [dict(asset=asset, clip=None)], [1.0],
+                            pixels=32, tile=16)
+                self.assertEqual(request.stat().st_size, initial_size)
+                self.assertNotEqual(hashlib.sha256(request.read_bytes()).hexdigest(),
+                                    original_request_hash)
+                changed = run_model(self.binary, request, workers="auto", repeats=2)
+                self.assertEqual(changed["learning"]["served"], "reference")
+                self.assertEqual(changed["learning"]["outcome"], "matched")
+                self.assertNotEqual(changed["learning"]["scope"], winner["learning"]["scope"])
