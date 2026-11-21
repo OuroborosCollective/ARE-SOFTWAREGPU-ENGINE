@@ -21,6 +21,10 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## Offline cost calibration (Issue #286, experimental)
+
+The existing SurfacePlanner/PreparationCache now has a *separate* offline cost calibration candidate: four same-VertexColorShader scan/scalar/batch/no-scan A/B paths, 15 interleaved pairs per scene, disjoint holdout geometry, independent RGBA8/Float32-depth SHA and source/CPU provenance. Frozen SHA-bound policy replay is opt-in only; `tiles` remains the default and no unverified runtime or FPS benefit is claimed. See [cost calibration, tests and deployment boundaries](docs/ISSUE286_COST_CALIBRATION.md). The [new registered test series](docs/CPU_WAVE_RANGLISTEN.md) is not a performance rank. Use `python -m unittest software_gpu.tests.test_surface_cost_calibration -v` for negative contracts.
+
 ## glTF 2.1 / GLB v3: opt-in Inspektions-Sandbox (20. November 2026, Entwurf)
 
 **glTF 2.1 und der 64‑Bit-Container „GLB v3“ sind nicht ratifiziert.** Gelesen am 20.11.2026: Die [Khronos-Registry](https://registry.khronos.org/glTF/) nennt weiterhin 2.0 als aktuelle Version, der 2.1‑Text liegt nur auf dem Arbeitsbranch `draft-2.1`, das [Tracking-Issue](https://github.com/KhronosGroup/glTF/issues/2585) ist offen. Der [vollständige Readback](evidence/gltf21-glb3-khronos-status-20261120.json) hält Quellen und Hashes fest.

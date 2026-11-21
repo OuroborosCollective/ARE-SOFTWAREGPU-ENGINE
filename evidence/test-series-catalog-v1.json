@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "surface-cost-calibration-holdout",
+      "introduced": "2026-11-21",
+      "title": "Offline SurfacePlanner-Kostenmodell: 4 Ablationen und SHA-Holdout",
+      "module": "software_gpu/tests/test_surface_cost_calibration.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "ktx2-basisu-khronos-native",
       "introduced": "2026-11-21",
       "title": "KTX2/BasisU: Khronos 4.4.2 Echt-Transcode, PBR/Depth, negative Aufnahme-Gates",
