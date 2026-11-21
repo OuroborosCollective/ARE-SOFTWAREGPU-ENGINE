@@ -70,7 +70,7 @@ jobs:
               assert row['results']['semantic_results_identical']
               assert len(row['asset_sha256']) == 64
               for field in ('samples_ms', 'peak_traced_allocation_bytes'):
-                  for mode in ('historical_copy', 'zero_copy_view'):
+                  for mode in ('historical_bin_slice', 'memoryview_bin_slice'):
                       assert len(row['results'][field][mode]) == 15
               for s in row['results']['statistics_ms'].values():
                   assert s['n'] == 15 and all(k in s for k in ('median','p95','iqr','mad'))
