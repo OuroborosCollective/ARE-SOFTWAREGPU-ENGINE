@@ -19,19 +19,29 @@ from software_gpu.graphics.shader import Vertex
 
 
 class TestGLBImportResources(unittest.TestCase):
-    def test_preflight_does_not_copy_eight_mib_bin_buffer(self):
-        # RED on the historical implementation: data[pos:pos + size]
-        # allocates a second full BIN copy just to check its declared length.
-        raw = make_resource_glb(1, bin_bytes=8 << 20)
-        gc.collect()
-        tracemalloc.start()
-        try:
-            info = inspect_glb(raw)
-            _, peak = tracemalloc.get_traced_memory()
-        finally:
-            tracemalloc.stop()
-        self.assertEqual(info["meshes"], 1)
-        self.assertLess(peak, 4 << 20, "GLB_PREFLIGHT_DUPLICATED_BIN_BYTES")
+    def test_worldforge_import_does_not_duplicate_four_mib_bin(self):
+        # RED: the offline LOD loader copies the full raw BIN chunk after
+        # reading the file. The single-mesh WorldForge path must not do this.
+        from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "admitted.glb"
+            raw = make_resource_glb(1, bin_bytes=4 << 20)
+            path.write_bytes(raw)
+            file_record = {"size": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+            gc.collect()
+            tracemalloc.start()
+            try:
+                vertices, faces, source_digest = load_worldforge_glb(path, file_record)
+                _, peak = tracemalloc.get_traced_memory()
+            finally:
+                tracemalloc.stop()
+            self.assertEqual(source_digest, file_record["sha256"])
+            self.assertEqual((vertices.shape, faces.shape), ((3, 3), (1, 3)))
+            self.assertLess(peak, 7 << 20, "WORLD_FORGE_DUPLICATED_GLB_BIN")
+            # Arrays must own their decoded data after the input view is gone.
+            path.unlink()
+            np.testing.assert_array_equal(faces.reshape(-1), [0, 1, 2])
+            np.testing.assert_array_equal(vertices.shape, (3, 3))
 
     def test_real_glb_bytes_are_sha_pinned_and_native_subset_is_explicit(self):
         with tempfile.TemporaryDirectory() as folder:
