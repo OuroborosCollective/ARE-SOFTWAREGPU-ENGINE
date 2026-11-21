@@ -223,6 +223,7 @@ class TestKtx2Admission(unittest.TestCase):
                 profile, = [x for x in LocalLearner(db).status()
                             if x['scope']['stage'] == 'ktx2-transcode']
                 self.assertEqual(profile['pairs'], 4)
+                self.assertEqual(profile['scope']['source_sha256'], REAL_KTX_SHA256)
                 key = json.dumps(profile['scope'], sort_keys=True, separators=(',', ':'))
                 # Routing control only; not measured CPU performance evidence.
                 with closing(sqlite3.connect(db)) as con, con:
