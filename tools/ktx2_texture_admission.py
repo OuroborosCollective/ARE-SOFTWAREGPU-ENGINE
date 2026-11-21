@@ -365,6 +365,10 @@ def convert_ktx2_glb(manifest: dict, output_dir: Path) -> dict:
         _need(decoded_total <= budget['max_lod_bytes'], 'KTX2_LOD_BUDGET')
         metadata[ii] = dict(record=item, data=data)
     binary_exe, version = _native_binary(manifest['transcoder'])
+    # Offline transcode and byte-only writing are separate authorities.
+    # Adaptive decode is opt-in and uses the existing SQLite learner.
+    from software_gpu.learning import bucket, configured_learner, implementation_id, scope_key
+    learner = configured_learner()
     with tempfile.TemporaryDirectory(prefix='are-ktx2-', dir=target.parent) as scratch:
         temp = Path(scratch)
         receipts = []
@@ -374,11 +378,51 @@ def convert_ktx2_glb(manifest: dict, output_dir: Path) -> dict:
             out_path = temp / f'output-{ii}.png'
             in_path.write_bytes(item['data'])
             _run_ktx(binary_exe, 'validate', in_path)
-            _run_ktx(binary_exe, 'extract', in_path, out_path)
-            _need(out_path.is_file() and not out_path.is_symlink(), 'KTX2_OUTPUT_FILE')
-            png = out_path.read_bytes()
             width, height = item['record']['dimensions']
-            rgba_hash = _png_pixels(png, width, height, budget['max_texture_bytes'])
+
+            def transcode(raw_output):
+                if not raw_output:
+                    _run_ktx(binary_exe, 'extract', in_path, out_path)
+                    _need(out_path.is_file() and not out_path.is_symlink(), 'KTX2_OUTPUT_FILE')
+                    png = out_path.read_bytes()
+                    rgba_hash = _png_pixels(png, width, height, budget['max_texture_bytes'])
+                    return png, rgba_hash
+                # The official Khronos decoder also exposes uncompressed RGBA8.
+                # A separate PNG encoder gives an independently measurable path.
+                raw_path = temp / f'raw-{ii}.rgba8'
+                command = [str(binary_exe), 'extract', '--transcode', 'rgba8',
+                           '--raw', '--level', '0', str(in_path), str(raw_path)]
+                try:
+                    response = subprocess.run(command, capture_output=True,
+                                              timeout=45, check=False)
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    raise ValueError('KTX2_RAW_TRANSCODER_EXECUTION') from exc
+                _need(response.returncode == 0 and raw_path.is_file() and
+                      not raw_path.is_symlink(), 'KTX2_RAW_TRANSCODER')
+                rgba = raw_path.read_bytes()
+                _need(len(rgba) == width * height * 4 and
+                      len(rgba) <= budget['max_texture_bytes'], 'KTX2_RAW_BYTES')
+                from PIL import Image
+                output = io.BytesIO()
+                Image.frombytes('RGBA', (width, height), rgba).save(output, format='PNG')
+                png = output.getvalue()
+                decoded = _png_pixels(png, width, height, budget['max_texture_bytes'])
+                _need(decoded == _sha(rgba), 'KTX2_RAW_PNG_PARITY')
+                return png, decoded
+
+            if learner is None:
+                (png, rgba_hash), learning = transcode(False), None
+            else:
+                key = scope_key(stage='ktx2-transcode',
+                                implementation=implementation_id(__file__, binary_exe),
+                                variant='native-png-vs-native-rgba8-plus-pillow',
+                                compression=item['record']['compression'],
+                                color_space=item['record']['color_space'],
+                                width=bucket(width), height=bucket(height),
+                                mip_count=bucket(item['record']['mip_levels']),
+                                source_bytes=bucket(len(item['data'])))
+                (png, rgba_hash), learning = learner.execute(
+                    key, transcode, lambda output: output[1])
             while len(binary) % 4:
                 binary.append(0)
             offset = len(binary)
@@ -391,7 +435,7 @@ def convert_ktx2_glb(manifest: dict, output_dir: Path) -> dict:
                                  image_license=entries[ii]['license'],
                                  license_evidence_sha256=entries[ii]['license_sha256'],
                                  transcoded_png_sha256=_sha(png), rgba8_sha256=rgba_hash,
-                                 **item['record']))
+                                 learning=learning, **item['record']))
         for t in doc.get('textures', []):
             ext = t.get('extensions', {}).get('KHR_texture_basisu')
             if ext:

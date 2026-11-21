@@ -20,6 +20,7 @@ import tempfile
 import numpy as np
 from PIL import Image
 
+from software_gpu.learning import configured_learner
 from software_gpu.research.model_probe import (
     build_model_probe, load_asset, read_glb, run_model, write_scene,
 )
@@ -248,10 +249,22 @@ def render_native_asset_lab(samples: list[dict], output_dir: Path, *,
             _need(all(np.array_equal(ref[k], other[k])
                       for k in ('frames', 'resolved', 'depth')),
                   'NATIVE_WORKER_BUFFER_MISMATCH')
+            # Preserve explicit 1/2-worker proofs. For local learning-enabled
+            # authoring jobs, a third opt-in run may select a separately
+            # hash-verified native worker variant; it cannot replace parity.
+            selected = other
+            learning = None
+            if configured_learner() is not None:
+                selected = run_model(executable, item['request'], workers='auto',
+                                     repeats=repeats, render_profile='pbr')
+                _need(all(np.array_equal(ref[k], selected[k])
+                          for k in ('frames', 'resolved', 'depth')),
+                      'LEARNED_NATIVE_WORKER_BUFFER_MISMATCH')
+                learning = selected['learning']
             _need(other['receipt']['full_buffer_parity'] is True
                   and other['receipt']['serial_reference_first_frame'] is True,
                   'NATIVE_PARITY_RECEIPT')
-            actual = other['receipt']
+            actual = selected['receipt']
             _need(any(writes > 0 for writes in actual['sample_writes']),
                   'NATIVE_NO_FRAGMENTS')
             _need(actual['camera_eye'] == camera['eye'] and
@@ -262,9 +275,9 @@ def render_native_asset_lab(samples: list[dict], output_dir: Path, *,
                   actual['far_plane'] == camera['far'], 'NATIVE_CAMERA')
             where = stage / record['id']
             where.mkdir()
-            rgba = other['resolved'].tobytes()
-            depth = np.asarray(other['depth'], dtype='<f4').tobytes()
-            image = Image.fromarray(other['resolved'], mode='RGBA')
+            rgba = selected['resolved'].tobytes()
+            depth = np.asarray(selected['depth'], dtype='<f4').tobytes()
+            image = Image.fromarray(selected['resolved'], mode='RGBA')
             png, bmp = io.BytesIO(), io.BytesIO()
             image.save(png, format='PNG')
             image.save(bmp, format='BMP')
@@ -308,7 +321,8 @@ def render_native_asset_lab(samples: list[dict], output_dir: Path, *,
                                                 sample_writes=actual['sample_writes'],
                                                 compiler_build_sha256=build['binary_sha256'],
                                                 source_code_sha256=build['source_sha256'],
-                                                response_sha256=actual['response_sha256'])))
+                                                response_sha256=actual['response_sha256'],
+                                                learning=learning)))
         receipt = dict(protocol=PROTOCOL, authority='native_cpp17_aremdl03',
                        camera=planned[0]['request_receipt']['camera'],
                        pixels=pixels,

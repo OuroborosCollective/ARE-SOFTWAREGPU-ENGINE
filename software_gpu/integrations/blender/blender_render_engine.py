@@ -36,6 +36,8 @@ class StandaloneBlenderBridge:
         self.width = width
         self.height = height
         self.device = VirtualGPU.get_current_device()
+        self.last_learning_receipt = None
+        self.last_export_learning_receipt = None
 
     def render_scene(
         self,
@@ -73,10 +75,16 @@ class StandaloneBlenderBridge:
         )
 
         rasterizer = SoftwareRasterizer(fb)
-        rasterizer.draw_mesh(vertices, indices, shader)
+        try:
+            rasterizer.draw_mesh(vertices, indices, shader)
+            self.last_learning_receipt = rasterizer.last_learning_receipt
+        finally:
+            rasterizer.executor.shutdown(wait=True)
 
+        self.last_export_learning_receipt = None
         if output_filepath:
             fb.save_bmp(output_filepath)
+            self.last_export_learning_receipt = fb.last_export_learning_receipt
 
         return fb
 
