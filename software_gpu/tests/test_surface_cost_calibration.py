@@ -146,6 +146,49 @@ class TestOfflineCostCalibration(unittest.TestCase):
             select_replay_policy(broken, triangles=8, bbox_samples=8000,
                                  shader=VertexColorShader(), expected_source_revision=SHA)
 
+    def test_frozen_policy_replays_real_rgba_depth_with_preparation_cache(self):
+        # The model fixture is synthetic; this test instead renders actual
+        # geometry through the existing CPU rasterizer, no fake framebuffer.
+        import numpy as np
+        from software_gpu.benchmarks.compare_surface_plans import make_fixture
+        from software_gpu.graphics.batch_shader import VertexColorShader
+        from software_gpu.graphics.framebuffer import Framebuffer
+        from software_gpu.graphics.rasterizer import SoftwareRasterizer
+
+        model = calibrate(self.train, self.holdout, self.root, SHA)
+        policy = select_replay_policy(
+            model, triangles=8, bbox_samples=8000,
+            shader=VertexColorShader(), expected_source_revision=SHA)
+        mesh, faces = make_fixture(8, .8)
+
+        def execute(backend, selected, cache):
+            frame = Framebuffer(64, 64)
+            renderer = SoftwareRasterizer(
+                frame, backend=backend, num_threads=2, plan_policy=selected,
+                preparation_cache_bytes=(8 << 20) if cache else 0)
+            observed = []
+            try:
+                for _ in range(2):
+                    frame.clear(16, 25, 38, 255, depth=1.0)
+                    renderer.draw_mesh(mesh, faces, VertexColorShader())
+                    observed.append((frame.color_buffer.copy(),
+                                     frame.depth_buffer.copy(),
+                                     renderer.last_plan_receipt))
+            finally:
+                renderer.executor.shutdown(wait=True)
+            return observed
+
+        baseline = execute("tiles", None, False)
+        ordinary = execute("tiles-plan", policy, False)
+        cached = execute("tiles-plan", policy, True)
+        for reference, unbuffered, buffered in zip(baseline, ordinary, cached):
+            np.testing.assert_array_equal(reference[0], unbuffered[0])
+            np.testing.assert_array_equal(reference[1], unbuffered[1])
+            np.testing.assert_array_equal(reference[0], buffered[0])
+            np.testing.assert_array_equal(reference[1], buffered[1])
+            self.assertEqual(unbuffered[2], buffered[2])
+        self.assertEqual(ordinary[0][2], ordinary[1][2])
+
     def test_real_near_plane_clipping_may_split_a_source_face(self):
         # Pre-draw policy operates on prepared triangles, not original faces.
         # Clipping legitimately changes that count before any raster work.
