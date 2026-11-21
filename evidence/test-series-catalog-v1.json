@@ -2,6 +2,30 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "gltf21-glb3-independent-assets",
+      "introduced": "2026-11-20",
+      "title": "glTF 2.1/GLB v3 Entwurf: unabhaengige Khronos-Assets, SHA-Replay",
+      "module": "software_gpu/tests/test_gltf21_glb3_independent_assets.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "gltf21-glb3-native-fuzz",
+      "introduced": "2026-11-20",
+      "title": "glTF 2.1/GLB v3 Entwurf: Python/C++17-Fuzz-Negativtests",
+      "module": "software_gpu/tests/test_gltf21_glb3_fuzz.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "gltf21-glb3-sandbox-contract",
+      "introduced": "2026-11-20",
+      "title": "glTF 2.1/GLB v3 Entwurf (nicht ratifiziert): opt-in Sandbox-Vertrag",
+      "module": "software_gpu/tests/test_gltf21_glb3_sandbox.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "public-pypi-distribution",
       "introduced": "2026-11-20",
       "title": "PyPI: Linux-/Windows-Installation und Registry-Integritaet",

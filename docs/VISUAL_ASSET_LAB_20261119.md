@@ -26,7 +26,7 @@ The private ARE workbench and public leaderboard site are **not** automatically 
 
 1. **Native owner LOD admission** – issue #103: original-asset SHA, exact 30k/12k/4k variants, real AREMDL03 PBR frames, original vs LOD visual QA, 15 paired end-to-end timings, raw RGBA/depth and peak RSS. Do not pass an external Mesa ratio off as native.
 2. **KTX2/BasisU opt-in texture pipeline** – deterministic texture conversion and bounded transcode with material/UV parity, legal license and sRGB/linear handling.
-3. **glTF 2.1 compatibility** – extension-aware feature-gated parsing only after ratification; v2.0 remains the unaffected reference. No unsafe 64-bit GLB guessing.
+3. **glTF 2.1 compatibility** – extension-aware feature-gated parsing only after ratification; v2.0 remains the unaffected reference. No unsafe 64-bit GLB guessing. *Update 2026-11-20 (issue #284):* glTF 2.1 is still an unratified working draft, so renderer-side parsing stays not implemented. Only a separate, opt-in, inspection-only draft sandbox exists: [GLTF21_GLB3_SANDBOX_20261120.md](GLTF21_GLB3_SANDBOX_20261120.md).
 4. **Transparency/shadows** – explicit alpha-test, blend order/depth write, shadow-map numerical semantics and full-frame golden tests; default opaque path untouched.
 5. **Adaptive cost model** – offline training/selection from equivalent-color/depth paired CPU evidence. Selected policy read-only and reversible; no clock/random in the render decision or Aurion 100ms authority.
 6. **Pixel forensics** – opt-in trace of source primitive, depth winner, fragment calls and draw order with receipt digest; no hidden output/buffer mutation.

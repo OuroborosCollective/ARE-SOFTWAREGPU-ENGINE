@@ -1,0 +1,138 @@
+{
+  "assets": [
+    {
+      "alias": "khronos-box",
+      "bytes": 1664,
+      "expected": {
+        "draft_sandbox_on_glb2": "VERSION_2_OUT_OF_SCOPE",
+        "glb2_preflight": {
+          "animations": 0,
+          "bytes": 1664,
+          "meshes": 1,
+          "morph_targets": 0
+        },
+        "payload_sha256": [
+          "45fccffce8f97f9ea0bfa34cee1b8f09e4ac78a054d0863db5e2a805540dd96a",
+          "3266a8e39b9f425b3341cbe5eec7849f44310256bfa651e6b8b40c85ce0ccafb"
+        ],
+        "rewrapped_glb3_draft": {
+          "accessors_checked": 3,
+          "asset_version": "2.0",
+          "buffer_views_checked": 2,
+          "bytes": 1688,
+          "draft_features_observed": [
+            "glb_container_v3"
+          ],
+          "receipt_sha256": "4331f351027a410687f0efa2d62a72fec46c8e76fffe05ec82ca75a21c530a31",
+          "sha256": "56cf2113bf4144a688c2b5a62734cae344cc3f11f6c92baf23383488b2898c74"
+        }
+      },
+      "file": "Box.glb",
+      "license": "CC-BY-4.0 (per Models/Box/LICENSE.md at the pinned commit)",
+      "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/Box/glTF-Binary/Box.glb"
+    },
+    {
+      "alias": "khronos-box-interleaved",
+      "bytes": 1632,
+      "expected": {
+        "draft_sandbox_on_glb2": "VERSION_2_OUT_OF_SCOPE",
+        "glb2_preflight": {
+          "animations": 0,
+          "bytes": 1632,
+          "meshes": 1,
+          "morph_targets": 0
+        },
+        "payload_sha256": [
+          "0765b6b3d2fa7cdfab5e34415804317bb7b06a788cce9173ee796d8fdefba4e2",
+          "e4e58932bd0772677b557b9aa06ba84ce0b41efdd853645c140ea69f0aece9ed"
+        ],
+        "rewrapped_glb3_draft": {
+          "accessors_checked": 3,
+          "asset_version": "2.0",
+          "buffer_views_checked": 2,
+          "bytes": 1656,
+          "draft_features_observed": [
+            "glb_container_v3"
+          ],
+          "receipt_sha256": "f216321b516d8ba64fee042def8d27ed70ee7e9681d4b9c3e60129552e3e9c2c",
+          "sha256": "5f914704504694589628ec7cca505d3c877ae727a6239a06f3654c2cd9993336"
+        }
+      },
+      "file": "BoxInterleaved.glb",
+      "license": "CC-BY-4.0 (per Models/BoxInterleaved/LICENSE.md at the pinned commit)",
+      "sha256": "b2ae631f118f1d13f829cdf9d9dc0fe7cb582de20b8c51d17f81f77a1cbf290c",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/BoxInterleaved/glTF-Binary/BoxInterleaved.glb"
+    },
+    {
+      "alias": "khronos-box-textured",
+      "bytes": 5956,
+      "expected": {
+        "draft_sandbox_on_glb2": "VERSION_2_OUT_OF_SCOPE",
+        "glb2_preflight": {
+          "animations": 0,
+          "bytes": 5956,
+          "meshes": 1,
+          "morph_targets": 0
+        },
+        "payload_sha256": [
+          "d70ea7052a72b518094a86667233bd25b42b8b349667d905810c94f58e604810",
+          "63020f9126359bdecef03f990049a3781917670029bf9c0ea6bf4077dc473e8d"
+        ],
+        "rewrapped_glb3_draft": {
+          "accessors_checked": 4,
+          "asset_version": "2.0",
+          "buffer_views_checked": 4,
+          "bytes": 5976,
+          "draft_features_observed": [
+            "glb_container_v3"
+          ],
+          "receipt_sha256": "380c0b7e56b5a144358c46315763b9b92b795a6609e381d486805210e75a7f9d",
+          "sha256": "1a08758027eafc954c5dfeeae5815d287ae04ff4ea4acb73ecfb1decbaeaa0bf"
+        }
+      },
+      "file": "BoxTextured.glb",
+      "license": "CC-BY-4.0 (per Models/BoxTextured/LICENSE.md at the pinned commit)",
+      "sha256": "b510eca2e2ef33f62f9ed57d6e7ce2d10ebb2bdebc4a8e59d347719ba81abdf4",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/BoxTextured/glTF-Binary/BoxTextured.glb"
+    },
+    {
+      "alias": "khronos-box-vertex-colors",
+      "bytes": 1924,
+      "expected": {
+        "draft_sandbox_on_glb2": "VERSION_2_OUT_OF_SCOPE",
+        "glb2_preflight": {
+          "animations": 0,
+          "bytes": 1924,
+          "meshes": 1,
+          "morph_targets": 0
+        },
+        "payload_sha256": [
+          "37c5e8038568ccac3b9de86f58ccd9bd8db3120b9dcd08a63aaed57f12830d26",
+          "b508427bea091cc29cbe68d8b08e75db27e33559f72104a37343c7e808e72d26"
+        ],
+        "rewrapped_glb3_draft": {
+          "accessors_checked": 4,
+          "asset_version": "2.0",
+          "buffer_views_checked": 2,
+          "bytes": 1944,
+          "draft_features_observed": [
+            "glb_container_v3"
+          ],
+          "receipt_sha256": "e1f71ac70ae5c67663a54304b46539065d3fa887176010723b79e2c84eece5e4",
+          "sha256": "ca10f909577b02fa4a76b1a8b819b7aea5c87b03d3bd9fc9e8c3fd7deb98e857"
+        }
+      },
+      "file": "BoxVertexColors.glb",
+      "license": "CC-BY-4.0 (per Models/BoxVertexColors/LICENSE.md at the pinned commit)",
+      "sha256": "9c48227f33b0ba2fbcf23b98ebf60d1c8ae0c6e6c5281e0aa3cc58affee10382",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/BoxVertexColors/glTF-Binary/BoxVertexColors.glb"
+    }
+  ],
+  "contract": "are.gltf21-glb3-sandbox.v1",
+  "note": "Independent Khronos glTF 2.0 sample assets, pinned by commit, size and SHA-256. They are not redistributed in this repository. The expected values were produced by replaying the downloaded originals on 2026-11-20. The re-wrapped GLB v3 draft bytes are derived in memory only and are not Khronos conformance assets.",
+  "protocol": "are.gltf21-glb3-independent-assets.v1",
+  "read_on": "2026-11-20",
+  "source_commit": "e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea",
+  "source_repository": "KhronosGroup/glTF-Sample-Assets"
+}

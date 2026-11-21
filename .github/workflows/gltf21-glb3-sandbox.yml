@@ -1,0 +1,70 @@
+name: glTF 2.1 / GLB v3 draft sandbox (opt-in inspection only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/gltf21_glb3_sandbox.py'
+      - 'tools/gltf21_glb3_independent_assets.py'
+      - 'tools/glb_container_preflight.py'
+      - 'native/gltf/**'
+      - 'software_gpu/tests/test_gltf21_glb3_*.py'
+      - 'software_gpu/tests/fixtures/glb3_draft_vectors.py'
+      - 'evidence/gltf21-glb3-*.json'
+      - '.github/workflows/gltf21-glb3-sandbox.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Draft sandbox / ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install CPU-only test runtime
+        run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
+      - name: Download pinned Khronos GLB 2.0 samples, verify SHA-256 and replay both paths
+        run: python -m tools.gltf21_glb3_independent_assets --assets-dir "${{ runner.temp }}/khronos-glb2" --fetch --receipt "${{ runner.temp }}/glb3-independent-replay.json"
+      - name: Replay again without network
+        run: python -m tools.gltf21_glb3_independent_assets --assets-dir "${{ runner.temp }}/khronos-glb2"
+      - name: Contract, Python/C++17 differential fuzz and independent-asset tests
+        env:
+          ARE_GLTF_INDEPENDENT_ASSET_DIR: ${{ runner.temp }}/khronos-glb2
+        run: python -m unittest software_gpu.tests.test_gltf21_glb3_sandbox software_gpu.tests.test_gltf21_glb3_fuzz software_gpu.tests.test_gltf21_glb3_independent_assets software_gpu.tests.test_glb_container_preflight software_gpu.tests.test_test_series_catalog -v
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: glb3-draft-independent-replay-${{ matrix.os }}-py${{ matrix.python }}-${{ github.sha }}
+          path: ${{ runner.temp }}/glb3-independent-replay.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+  sanitizers:
+    name: Native probe / ASan + UBSan differential
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install CPU-only test runtime
+        run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3" "Pillow>=9.0"
+      - name: Sanitized C++17 probe against the pinned fuzz corpus
+        env:
+          ARE_GLB3_NATIVE_SANITIZE: '1'
+        run: python -m unittest software_gpu.tests.test_gltf21_glb3_fuzz -v

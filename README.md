@@ -21,6 +21,14 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## glTF 2.1 / GLB v3: opt-in Inspektions-Sandbox (20. November 2026, Entwurf)
+
+**glTF 2.1 und der 64‑Bit-Container „GLB v3“ sind nicht ratifiziert.** Gelesen am 20.11.2026: Die [Khronos-Registry](https://registry.khronos.org/glTF/) nennt weiterhin 2.0 als aktuelle Version, der 2.1‑Text liegt nur auf dem Arbeitsbranch `draft-2.1`, das [Tracking-Issue](https://github.com/KhronosGroup/glTF/issues/2585) ist offen. Der [vollständige Readback](evidence/gltf21-glb3-khronos-status-20261120.json) hält Quellen und Hashes fest.
+
+Deshalb gibt es nur eine **getrennte, read-only Diagnose** hinter der Vertragskennung `are.gltf21-glb3-sandbox.v1`: `python -m tools.gltf21_glb3_sandbox ENTWURF.glb --contract are.gltf21-glb3-sandbox.v1`. Sie prüft Framing, 64‑Bit-Längen, JSON, Buffer-Grenzen und Budgets fail-closed, entpackt und lädt nichts und lässt kein Asset für den Renderer zu. Der GLB‑2.0‑Standardpfad ist unverändert und lehnt v3-Dateien weiterhin ab. [Vertrag, Regeln und Grenzen](docs/GLTF21_GLB3_SANDBOX_20261120.md).
+
+**Neue Testreihen (neueste zuerst in der [Rangliste](docs/CPU_WAVE_RANGLISTEN.md)):** Sandbox-Vertrag, Python/C++17-Differenzial-Fuzzing und SHA-gepinnter Replay unabhängiger Khronos-Assets — `python -m unittest software_gpu.tests.test_gltf21_glb3_sandbox software_gpu.tests.test_gltf21_glb3_fuzz software_gpu.tests.test_gltf21_glb3_independent_assets -v`. Interoperabilität ist **nicht hergestellt**: Eine unabhängige Entwurfs-Implementierung richtet Chunks auf 4 statt 8 Byte aus. Keine Konformitäts-, Zeit- oder FPS-Aussage.
+
 ## Neue Testreihen zuerst · Visual Asset Lab (19. November 2026)
 
 **Neue Tests erscheinen ab jetzt vor den historischen Ranglisten.** Die [CPU-Rangliste](docs/CPU_WAVE_RANGLISTEN.md) enthält oben einen automatisch aus [dem Testreihen-Katalog](evidence/test-series-catalog-v1.json) aufgebauten, nach Datum absteigend sortierten Abschnitt. Gleiche Daten werden stabil nach Test-ID sortiert. **Registriert** heißt nicht bestanden oder schneller: Ein neuer Leistungseintrag darf nur mit echten, vollständigen, SHA-gebundenen CPU-Messungen sowie RGBA-/Depth-Parität veröffentlicht werden. Bestehende historische Ergebnisse und ihre Semantik bleiben unverändert.
