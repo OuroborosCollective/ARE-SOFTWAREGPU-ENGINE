@@ -44,6 +44,13 @@ SCENES = (("tiny", {"kind": "fixture", "seed": 1234, "triangles": 1, "size": .03
           ("large-surfaces", {"kind": "fixture", "seed": 1234, "triangles": 8, "size": .8}),
           ("procedural400", {"kind": "procedural", "seed": 991, "rings": 10, "segments": 20}),
           ("procedural5k", {"kind": "procedural", "seed": 991, "rings": 32, "segments": 80}))
+# Distinct, withheld geometry specs; not used to choose candidate cost weights.
+HOLDOUT_SCENES = (("holdout-large", {"kind": "fixture", "seed": 1234, "triangles": 6, "size": .66}),
+                  ("holdout-small", {"kind": "fixture", "seed": 1234, "triangles": 90, "size": .06}),
+                  ("holdout-procedural", {"kind": "procedural", "seed": 20261121,
+                                         "rings": 9, "segments": 14}),
+                  ("holdout-dense", {"kind": "procedural", "seed": 20261122,
+                                    "rings": 12, "segments": 24}))
 
 
 class ScalarColorShader(VertexColorShader):
@@ -68,8 +75,11 @@ def build_scene(spec):
     return procedural_scene(spec["rings"], spec["segments"], spec["seed"])
 
 
-def ablation_policy(scan, force):
+def ablation_policy(scan, force, batch=True):
+    # Same shader instance/class in all four factorial modes: only the
+    # existing planner thresholds disable or enable scan and batch.
     return SurfacePlanPolicy(scan_min_samples=64 if scan else sys.maxsize,
+                             batch_min_samples=8 if batch else sys.maxsize,
                              draw_min_bbox_samples_per_triangle=0 if force else 64,
                              name="ablation-scan-v1" if scan else "ablation-noscan-v1")
 
@@ -81,10 +91,13 @@ def check_overrides(label, plan, override):
             or plan.get("draw_min_bbox_samples_per_triangle") != expected.draw_min_bbox_samples_per_triangle
             or (override["force"] and plan.get("decision") != "planned")):
         raise AssertionError("SURFACE_PLAN_ABLATION_NOT_APPLIED:" + label)
+    counts = plan["counts"]
     if not override["scan"]:
-        counts = plan["counts"]
         if counts["corner_edge_evaluations"] != 0 or counts["scan_bypassed"] != plan["binned_pairs"]:
             raise AssertionError("SURFACE_PLAN_ABLATION_NOT_APPLIED:" + label)
+    if override.get("batch") is False and (
+            counts["batch_fragment_calls"] != 0 or counts["batch_fragment_samples"] != 0):
+        raise AssertionError("SURFACE_PLAN_ABLATION_NOT_APPLIED:" + label)
 
 
 def mode_table(ablation, adaptive=False):
@@ -95,8 +108,8 @@ def mode_table(ablation, adaptive=False):
         for scan in (False, True):
             for batch in (False, True):
                 label = "abl-%s-%s" % ("scan" if scan else "noscan", "batch" if batch else "scalar")
-                modes.append((label, "tiles-plan", VertexColorShader if batch else ScalarColorShader,
-                              {"scan": scan, "force": True}))
+                modes.append((label, "tiles-plan", VertexColorShader,
+                              {"scan": scan, "batch": batch, "force": True}))
         modes.append(("batch-first", "tiles-plan", VertexColorShader, BATCH_FIRST_POLICY))
     if adaptive:
         modes.append(("adaptive", "tiles-plan", VertexColorShader, ADAPTIVE_PLAN_POLICY))
@@ -146,7 +159,7 @@ def measure_scene(name, mesh, faces, size, workers, repeats, ablation=False,
     overrides = {label: override for label, _, _, override in modes if isinstance(override, dict)}
     plans = {}
     reference = None
-    digest = None
+    digest = color_digest = depth_digest = None
     try:
         for label, backend, shader, override in modes:
             fb = Framebuffer(size, size)
@@ -172,10 +185,14 @@ def measure_scene(name, mesh, faces, size, workers, repeats, ablation=False,
                     raise RuntimeError("SURFACE_PLAN_BENCHMARK_BUDGET_EXCEEDED:" + name)
                 if run:
                     times[label].append(elapsed)
-                image = fb.color_buffer.tobytes() + fb.depth_buffer.tobytes()
+                rgba = fb.color_buffer.tobytes()
+                depth = fb.depth_buffer.tobytes()
+                image = rgba + depth
                 if reference is None:
                     reference = image
                     digest = hashlib.sha256(image).hexdigest()
+                    color_digest = hashlib.sha256(rgba).hexdigest()
+                    depth_digest = hashlib.sha256(depth).hexdigest()
                 elif image != reference:
                     raise AssertionError("SURFACE_PLAN_COLOR_DEPTH_MISMATCH:" + label)
                 if override:
@@ -200,7 +217,8 @@ def measure_scene(name, mesh, faces, size, workers, repeats, ablation=False,
         medians = {label: statistics.median(values) for label, values in times.items()}
         result = {"scene": name, "triangles": len(faces), "pixels": size,
                   "workers": workers, "repeats": repeats, "byte_identical": True,
-                  "image_sha256": digest, "median_frame_ms": medians,
+                  "image_sha256": digest, "color_sha256": color_digest,
+                  "depth_sha256": depth_digest, "median_frame_ms": medians,
                   "samples_ms": times,
                   "stats_ms": {label: summarize(values) for label, values in times.items()},
                   "speedup_vs_tiles": {label: medians["tiles"] / value
@@ -270,6 +288,8 @@ def main(argv=None):
                         help="add forced-plan scan x batch factorial modes")
     parser.add_argument("--adaptive", action="store_true",
                         help="include opt-in deterministic geometry selector")
+    parser.add_argument("--scene-set", choices=("training", "holdout"), default="training",
+                        help="fixed training scenes or withheld independent geometry specs")
     parser.add_argument("--max-seconds", type=float, default=1800.,
                         help="subprocess wall-clock budget; 0 disables")
     parser.add_argument("--budget-child", action="store_true", help=argparse.SUPPRESS)
@@ -285,7 +305,8 @@ def main(argv=None):
               file=sys.stderr)
     deadline = time.monotonic() + args.max_seconds if args.max_seconds else None
     results = []
-    for name, spec in SCENES:
+    scenes = SCENES if args.scene_set == "training" else HOLDOUT_SCENES
+    for name, spec in scenes:
         mesh, faces = build_scene(spec)
         results.append(measure_scene(name, mesh, faces, args.pixels, args.workers, args.repeats,
                                      ablation=args.ablation, deadline=deadline, spec=spec,
@@ -311,7 +332,8 @@ def main(argv=None):
                    (Path(__file__).resolve().parents[1] / "graphics" / name).read_bytes()).hexdigest()
                    for name in ("rasterizer.py", "geometry.py", "tile_backend.py", "surface_plan.py",
                                 "batch_shader.py", "shader.py")},
-               "activation": "EXPLICIT_OPT_IN_ONLY", "results": results}
+               "activation": "EXPLICIT_OPT_IN_ONLY", "scene_set": args.scene_set,
+               "results": results}
     write_report(args.output_dir, receipt)
     print(json.dumps({"status": "SURFACE_PLAN_BENCHMARK_OK", "results": [
         {k: case[k] for k in ("scene", "byte_identical", "median_frame_ms", "speedup_vs_tiles")}
@@ -331,6 +353,7 @@ def _run_budgeted(args):
             command.append("--ablation")
         if args.adaptive:
             command.append("--adaptive")
+        command.extend(("--scene-set", args.scene_set))
         try:
             process = subprocess.run(command, cwd=root, timeout=args.max_seconds,
                                      capture_output=True, text=True)
