@@ -146,6 +146,14 @@ class TestOfflineCostCalibration(unittest.TestCase):
             select_replay_policy(broken, triangles=8, bbox_samples=8000,
                                  shader=VertexColorShader(), expected_source_revision=SHA)
 
+    def test_real_near_plane_clipping_may_split_a_source_face(self):
+        # Pre-draw policy operates on prepared triangles, not original faces.
+        # Clipping legitimately changes that count before any raster work.
+        self.train['results'][0]['triangles'] = 3
+        self.holdout['results'][0]['triangles'] = 5
+        model = calibrate(self.train, self.holdout, self.root, SHA)
+        self.assertIn('tiny:large', model['validated_routes'])
+
     def test_failed_holdout_keeps_every_bucket_disabled(self):
         bad = copy.deepcopy(self.holdout)
         for case in bad['results']:

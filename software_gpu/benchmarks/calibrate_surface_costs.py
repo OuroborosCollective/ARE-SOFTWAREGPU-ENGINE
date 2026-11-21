@@ -132,9 +132,13 @@ def _check_receipt(doc: dict, root: Path, revision: str):
             if not flags["scan"]:
                 _need(plan["counts"].get("corner_edge_evaluations") == 0,
                       "NOSCAN_NOT_APPLIED")
+            # Prepared triangles can differ from source faces after clipping.
+            # A split at the near plane must not be mistaken for a bad receipt.
             _need(type(plan.get("estimated_bbox_samples")) is int and
                   type(plan.get("triangle_count")) is int and
-                  plan["triangle_count"] == case.get("triangles"), "PRE_DRAW_FEATURES")
+                  plan["triangle_count"] > 0 and
+                  type(case.get("triangles")) is int and case["triangles"] > 0,
+                  "PRE_DRAW_FEATURES")
             _band(plan["triangle_count"], plan["estimated_bbox_samples"])
             if "stats_ms" in case:
                 stat = case["stats_ms"].get(mode)
