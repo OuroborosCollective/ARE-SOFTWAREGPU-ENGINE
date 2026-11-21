@@ -420,7 +420,8 @@ def convert_ktx2_glb(manifest: dict, output_dir: Path) -> dict:
                                 color_space=item['record']['color_space'],
                                 width=bucket(width), height=bucket(height),
                                 mip_count=bucket(item['record']['mip_levels']),
-                                source_bytes=bucket(len(item['data'])))
+                                source_bytes=bucket(len(item['data'])),
+                                source_sha256=_sha(item['data']))
                 (png, rgba_hash), learning = learner.execute(
                     key, transcode, lambda output: output[1])
             while len(binary) % 4:
