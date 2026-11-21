@@ -145,6 +145,8 @@ def _load_glb(path: Path, expected: dict, *, worldforge: bool):
         raise ValueError("GLB_HEADER_INVALID")
     offset = 12
     chunks = []
+    # LOD importer: retain source-owned BIN without duplicating its bytes.
+    view = memoryview(data)
     while offset < len(data):
         if offset+8 > len(data):
             raise ValueError("GLB_CHUNK_TRUNCATED")
@@ -152,13 +154,13 @@ def _load_glb(path: Path, expected: dict, *, worldforge: bool):
         offset += 8
         if length % 4 or length > MAX_GLB_BYTES or offset+length > len(data):
             raise ValueError("GLB_CHUNK_LENGTH_INVALID")
-        chunks.append((name, data[offset:offset+length]))
+        chunks.append((name, view[offset:offset+length]))
         offset += length
     if len(chunks) != 2 or chunks[0][0] != b"JSON" or chunks[1][0] != b"BIN\x00":
         raise ValueError("GLB_CHUNKS_UNSUPPORTED")
     if len(chunks[0][1]) > 131_072:
         raise ValueError("GLB_JSON_TOO_LARGE")
-    doc = json.loads(chunks[0][1].decode("utf-8"))
+    doc = json.loads(bytes(chunks[0][1]).decode("utf-8"))
     binary = chunks[1][1]
     if doc.get("asset", {}).get("version") != "2.0":
         raise ValueError("GLTF_VERSION_INVALID")

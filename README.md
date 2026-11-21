@@ -25,20 +25,23 @@ ohne erfundene Leistungswerte.
 
 The existing SurfacePlanner/PreparationCache now has a *separate* offline cost calibration candidate: four same-VertexColorShader scan/scalar/batch/no-scan A/B paths, 15 interleaved pairs per scene, disjoint holdout geometry, independent RGBA8/Float32-depth SHA and source/CPU provenance. Frozen SHA-bound policy replay is opt-in only; `tiles` remains the default and no unverified runtime or FPS benefit is claimed. See [cost calibration, tests and deployment boundaries](docs/ISSUE286_COST_CALIBRATION.md). The [new registered test series](docs/CPU_WAVE_RANGLISTEN.md) is not a performance rank. Use `python -m unittest software_gpu.tests.test_surface_cost_calibration -v` for negative contracts.
 
-## GLB2 import copies and resource lifetime (Issue #293; 21 November 2026)
+## GLB2 resource and native LOD import (Issue #293; 21 November 2026)
 
-The existing GLB container preflight now avoids an unnecessary full BIN copy
-using a read-only `memoryview`; native AREMDL03 still rejects multi-mesh assets.
-A separate real-code 15-pair A/B **microbenchmark** captures source SHA,
-CPU affinity, raw timings, allocation peaks and failed/accepted input boundaries.
-Synthetic GLB stress fixtures are labelled as such, not presented as Owner
-assets or end-to-end draw evidence. A real one-mesh CPU draw and 100 release
-cycles are separately covered; there is no universal speedup, FBX exporter,
-hardware GPU or FPS claim.
+The GLB2 container-preflight parser remains **byte-identical** to the
+Khronos GLB3-sandbox pin from #284. The **existing offline WorldForge/LOD
+importer** avoids one redundant full BIN byte-copy via a scoped `memoryview`.
+The native AREMDL03 importer still admits just one indexed mesh primitive;
+multi-mesh assets are structural/rejection fixtures, not successful imports.
 
-[Architecture, supported/unsupported boundaries and reproduction](docs/ISSUE293_GLB_IMPORT_RESOURCES.md)
-· [Test series registry](evidence/test-series-catalog-v1.json)
-· [CPU leaderboard (newest tests, no microbenchmark rank)](docs/CPU_WAVE_RANGLISTEN.md).
+A separate 15-pair isolated BIN-slicing microbenchmark and 15-repeat
+single-mesh stage profiler capture source/asset SHA, CPU/affinity,
+raw time distributions, traced allocations, process RSS, accessors,
+first/followup real CPU RGBA8/Float32-depth hashes and release.
+Synthetic GLB stress fixtures are labelled as such. Neither this microbenchmark
+nor the single-mesh draw supports a GPU, FBX-export or gameplay FPS claim.
+
+[Architecture, evidence boundaries and reproduction](docs/ISSUE293_GLB_IMPORT_RESOURCES.md)
+· [New tests in CPU leaderboard (not a new performance rank)](docs/CPU_WAVE_RANGLISTEN.md).
 
 ## glTF 2.1 / GLB v3: opt-in Inspektions-Sandbox (20. November 2026, Entwurf)
 
