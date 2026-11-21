@@ -59,7 +59,7 @@ jobs:
           for path, digest in doc['source_paths_sha256'].items():
               assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest
           for row in doc['rows']:
-              assert row['semantic_results_identical']
+              assert row['results']['semantic_results_identical']
               assert len(row['asset_sha256']) == 64
               for field in ('samples_ms', 'peak_traced_allocation_bytes'):
                   for mode in ('historical_copy', 'zero_copy_view'):
