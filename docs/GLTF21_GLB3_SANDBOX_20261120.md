@@ -16,7 +16,7 @@ glTF 2.1 und der 64‑Bit‑Container „GLB v3“ sind **angekündigt, aber nic
 
 Vollständiger Readback mit allen Hashes: [`evidence/gltf21-glb3-khronos-status-20261120.json`](../evidence/gltf21-glb3-khronos-status-20261120.json). Mindestens ein Drittbericht nennt glTF 2.1 „offiziell veröffentlicht“; die Khronos-Quellen widersprechen dem.
 
-**Interoperabilität: nicht hergestellt.** Die bereits gemergte Entwurfs-Implementierung in `visgl/loaders.gl` (Commit `a4faaba2…`) richtet Chunks auf **4 Byte** innerhalb von `chunkLength` aus. Der Khronos-Entwurf verlangt **8‑Byte**-Chunk-Starts mit Padding außerhalb von `chunkLength`. Beide Layouts stimmen nur überein, wenn jede aufgefüllte Chunk-Länge ein Vielfaches von 8 ist. Die Sandbox folgt dem gepinnten Khronos-Text und weist das abweichende Layout ab, ohne es zu erraten.
+**Interoperabilität: nicht hergestellt.** Die bereits gemergte Entwurfs-Implementierung in `visgl/loaders.gl` (Commit `a4faaba2…`) richtet Chunks auf **4 Byte** innerhalb von `chunkLength` aus. Der Khronos-Entwurf verlangt **8‑Byte**-Chunk-Starts mit Padding außerhalb von `chunkLength`. Beide Layouts stimmen nur überein, wenn die aufgefüllte Länge jedes Chunks, auf den ein weiterer folgt, ein Vielfaches von 8 ist (der letzte Chunk ist frei). Die Sandbox folgt dem gepinnten Khronos-Text und weist das abweichende Layout ab, ohne es zu erraten.
 
 ## Vertrag
 
@@ -49,10 +49,10 @@ Jedes Receipt enthält `specification.ratified: false`, `runtime_admission: "ref
 |:--|:--|
 | Byte-Reihenfolge | nur Little-Endian; Big-Endian-Dateien → `BIG_ENDIAN_REFUSED`, kein Erraten |
 | 64‑Bit-Längen | höchstwertiges Bit gesetzt → `LENGTH_MSB` / `CHUNK_LENGTH_MSB`; Längen werden nie addiert, sondern gegen den Rest verglichen → `CHUNK_LENGTH_OVERFLOW`; deklarierte Länge ≠ Dateigröße → `LENGTH_MISMATCH` |
-| Abschneiden | jedes Präfix jeder gültigen Datei wird abgewiesen; nach Längenkorrektur überlebt nur das Weglassen reinen End-Paddings |
+| Abschneiden | jedes echte Präfix einer gültigen Datei wird abgewiesen (deklarierte Länge ≠ Größe). Mit nachträglich korrigierter Länge bleibt nur gültig, was für sich eine gültige Datei ist – etwa ohne End-Padding oder ohne einen vom JSON nicht referenzierten letzten Chunk |
 | Chunk-Encoding | nur `0`; jeder andere Wert → `CHUNK_ENCODING_REFUSED`, das Payload wird nicht berührt |
 | Kompression | gzip/zstd/xz/bzip2/zip-Signaturen → `COMPRESSED_INPUT_REFUSED`; nichts wird entpackt, Bilder, Data-URIs und Extension-Payloads werden nicht dekodiert |
-| JSON | striktes UTF‑8 ohne BOM, keine doppelten Schlüssel, kein `NaN`/`Infinity`, keine einzelnen Surrogate, Tiefe ≤ 64, Werte ≤ 524 288, Ganzzahlen ≤ 19 Stellen; Ganzzahlen dürfen wie im Entwurf als `8.0` oder `1e2` geschrieben sein, ein Nachkommaanteil wird abgelehnt |
+| JSON | striktes UTF‑8 ohne BOM, keine doppelten Schlüssel, kein `NaN`/`Infinity`, keine einzelnen Surrogate, Tiefe ≤ 64, höchstens 524 288 Strukturzeichen (`[`, `{`, `,`) und 2 097 152 Anführungszeichen – eine vorsichtige Obergrenze für die Zahl der Werte, die auch Zeichen innerhalb von Strings mitzählt –, Ganzzahlen ≤ 20 Stellen; Ganzzahlen dürfen wie im Entwurf als `8.0` oder `1e2` geschrieben sein, ein Nachkommaanteil wird abgelehnt |
 | Schema | `asset.version` nur `2.0`/`2.1`, `minVersion` ≤ `version`; `buffers`/`chunk`-Bindung; BufferView- und Accessor-Grenzen exakt, Offsets und Stride als Vielfache der Komponentengröße, Stride ≤ BufferView-Länge, kein Accessor-Offset ohne BufferView; Bilder mit genau einer Quelle |
 | Externe Ressourcen | werden nur gezählt (≤ 256 Verweise, URI ≤ 2048 Zeichen, Data-URIs ≤ 1 MiB), **nie** geöffnet oder geladen: `external_resolution.policy = "never"`. Gezählt wird, was ein Loader auflösen würde: Rand-Leerzeichen und Steuerzeichen entfernt, `%2e`/`%2f`/`%5c` dekodiert |
 | Budgets | Quelle ≤ 64 MiB, ≤ 64 Chunks, JSON-Chunk ≤ 4 MiB, ≤ 256 Erweiterungsnamen zu je ≤ 128 Zeichen, Medientyp ≤ 255 Zeichen, Ganzzahlwerte ≤ 2^53. Jedes Budget steht in `limits` jedes Receipts |
@@ -62,6 +62,8 @@ Strenger als der Entwurf (bewusst):
 - Ein Nicht-Null-Encoding auf *irgendeinem* Chunk verweigert die ganze Datei (Entwurf: nur der betroffene Chunk bzw. der Haupt-JSON-Chunk).
 - Unbekannte `asset`-Versionen werden nicht „vorwärtskompatibel“ akzeptiert.
 - Doppelte JSON-Schlüssel werden abgelehnt (Entwurf: sollen eindeutig sein, sonst gilt der letzte Wert).
+- Zahlen, die einen Double überlaufen (`1e400`), `NaN`/`Infinity` und einzelne Surrogat-Escapes werden abgelehnt; Ganzzahlen mit mehr als 20 Stellen ebenfalls.
+- Unbekannte `componentType`- und `type`-Werte von Accessoren werden abgelehnt (der Entwurf überlässt weitere Werte Erweiterungen).
 - `chunk` und `uri` zugleich an einem Buffer ist ein Fehler; ein `files`-Eintrag braucht genau eine Quelle.
 - Größen über 2^53 werden abgelehnt (Entwurf: sollen vermieden werden).
 - Nach dem letzten Chunk sind nur Füllbytes bis zur nächsten 8‑Byte-Grenze erlaubt.

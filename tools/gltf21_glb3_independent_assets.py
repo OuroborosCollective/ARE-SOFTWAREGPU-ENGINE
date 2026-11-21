@@ -214,6 +214,8 @@ def main(argv=None) -> int:
     text = json.dumps(report, sort_keys=True, indent=2) + "\n"
     if args.receipt:
         try:
+            if args.receipt.is_symlink() or args.receipt.exists():
+                raise FileExistsError(str(args.receipt))
             args.receipt.parent.mkdir(parents=True, exist_ok=True)
             # Exclusive creation: never replace an existing file, e.g. a pinned asset.
             with args.receipt.open("x", encoding="utf-8", newline="\n") as target:

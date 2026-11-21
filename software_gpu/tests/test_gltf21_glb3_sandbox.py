@@ -537,6 +537,24 @@ class TruncationTests(unittest.TestCase):
                     [(c["type"], c["length"], c["sha256"]) for c in original["chunks"]])
         self.assertEqual(survivors, [("trailing-padding-after-last-chunk", 59)])
 
+    def test_a_cut_at_a_chunk_boundary_that_leaves_a_valid_file_is_a_valid_file(self):
+        # Not a general "truncation is always refused" property: dropping a
+        # trailing chunk that the JSON does not reference leaves a draft-valid
+        # smaller file, and that is accepted as what it is.
+        whole = vectors.encode_glb3([(vectors.JSON_CHUNK, MINIMAL),
+                                     (vectors.CUSTOM_CHUNK, b"12345678")])
+        self.assertEqual(len(whole), 88)
+        self.assertEqual(code_of(whole), "ACCEPTED")
+        self.assertEqual(code_of(whole[:59]), "LENGTH_MISMATCH")
+        smaller = inspect_glb3_sandbox(vectors.repair_length(whole[:59]),
+                                       contract=CONTRACT)
+        self.assertEqual(len(smaller["container"]["chunks"]), 1)
+        # Only three lengths are files of their own: the JSON chunk alone (59),
+        # the same with its alignment padding (64) and the whole file (88).
+        valid = [cut for cut in range(16, 89)
+                 if code_of(vectors.repair_length(whole[:cut])) == "ACCEPTED"]
+        self.assertEqual(valid, [59, 64, 88])
+
 
 class JsonAndBoundsTests(unittest.TestCase):
     def test_every_named_negative_vector_is_refused_with_its_stated_reason(self):
@@ -589,6 +607,14 @@ class JsonAndBoundsTests(unittest.TestCase):
                          "JSON_LONE_SURROGATE")
         self.assertEqual(code(b'{"asset":{"version":"2.1"},"x":"\\ud83d\\ude00"}'),
                          "ACCEPTED")
+        # Bounds of the draft's 64-bit accessor types need up to twenty digits.
+        self.assertEqual(sandbox.MAX_INTEGER_DIGITS, len(str(2 ** 64 - 1)))
+        wide = {"asset": {"version": "2.1"},
+                "accessors": [{"componentType": 5135, "count": 1, "type": "SCALAR",
+                               "min": [0], "max": [2 ** 64 - 1]},
+                              {"componentType": 5134, "count": 1, "type": "SCALAR",
+                               "min": [-2 ** 63], "max": [2 ** 63 - 1]}]}
+        self.assertEqual(code(vectors.compact(wide)), "ACCEPTED")
 
     def test_asset_version_syntax_and_minimum_version(self):
         def code(asset):
@@ -921,8 +947,13 @@ class DecompressionBombTests(unittest.TestCase):
                          "JSON_DEPTH")
         self.assertEqual(code(b"[" + b"[]," * 600_000 + b"[]]"), "JSON_VALUE_BUDGET")
         self.assertEqual(code(b"[" + b"0," * 600_000 + b"0]"), "JSON_VALUE_BUDGET")
-        self.assertEqual(code(b'"' * (4 * sandbox.MAX_JSON_VALUES + 1)),
+        self.assertEqual(code(b'"' * (sandbox.MAX_JSON_QUOTES + 1)),
                          "JSON_VALUE_BUDGET")
+        # The budget counts structural characters, also inside one string.
+        self.assertEqual(code(b'"' + b"," * sandbox.MAX_JSON_VALUES + b'"'),
+                         "JSON_VALUE_BUDGET")
+        self.assertEqual(code(b'"' + b"," * (sandbox.MAX_JSON_VALUES - 4) + b'"'),
+                         "ACCEPTED")
         # A hostile unterminated string is scanned once (linear), then refused.
         self.assertEqual(code(b'"' + b'\\"' * 1_000_000), "JSON_SYNTAX")
 
@@ -1063,9 +1094,11 @@ class ReceiptEvidenceTests(unittest.TestCase):
         json.dumps(receipt, allow_nan=False)
         self.assertEqual(receipt["limits"], sandbox.LIMITS)
         self.assertEqual({key: receipt["limits"][key] for key in (
-            "extension_name_chars", "media_type_chars", "integer_value")},
+            "extension_name_chars", "media_type_chars", "integer_value",
+            "json_structural_characters", "json_quote_characters", "integer_digits")},
             {"extension_name_chars": 128, "media_type_chars": 255,
-             "integer_value": 2 ** 53})
+             "integer_value": 2 ** 53, "json_structural_characters": 524288,
+             "json_quote_characters": 2097152, "integer_digits": 20})
 
     def test_declared_limits_are_the_enforced_ones(self):
         def code(**document):
@@ -1106,6 +1139,16 @@ class ReceiptEvidenceTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from("<I", divergent, 32 + json_length)[0],
                          vectors.BIN_CHUNK)
         self.assertEqual(code_of(divergent), "CHUNK_LENGTH_OVERFLOW")
+        # The layouts differ only where another chunk follows: the same writer's
+        # files whose LAST chunk has a length of 4 mod 8 are byte-valid in both.
+        for binary in (bytes(4), bytes(12), bytes(20)):
+            last = vectors.loaders_gl_style_glb3(vectors._loaders_document(0), [binary])
+            self.assertEqual(struct.unpack_from("<Q", last, 24)[0] % 8, 0)
+            self.assertEqual(len(binary) % 8, 4)
+            self.assertEqual(frame_verdict(last, contract=CONTRACT)[:2], "A ")
+        only_json = vectors.loaders_gl_style_glb3(vectors._loaders_document(4))
+        self.assertEqual(struct.unpack_from("<Q", only_json, 24)[0] % 8, 4)
+        self.assertEqual(frame_verdict(only_json, contract=CONTRACT)[:2], "A ")
 
 
 if __name__ == "__main__":

@@ -72,7 +72,8 @@ def loaders_gl_style_glb3(document, binaries=(), prefix=()) -> bytes:
 
     That independent implementation pads every payload to FOUR bytes inside
     ``chunkLength`` and writes the next chunk header immediately. It agrees with
-    the Khronos draft only while every padded length is a multiple of eight.
+    the Khronos draft only while the padded length of every chunk that is
+    followed by another chunk is a multiple of eight.
     """
     chunks = list(prefix) + [(JSON_CHUNK, compact(document))]
     chunks += [(BIN_CHUNK, binary) for binary in binaries]

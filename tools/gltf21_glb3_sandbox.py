@@ -54,8 +54,12 @@ MAX_SOURCE_BYTES = 64 * 1024 * 1024
 MAX_CHUNKS = 64
 MAX_JSON_BYTES = 4 * 1024 * 1024
 MAX_JSON_DEPTH = 64
+# Upper bounds on the characters '[', '{' and ',' and on '"' in the JSON chunk.
+# They bound the number of values and strings conservatively: characters inside
+# string literals are counted as well.
 MAX_JSON_VALUES = 524_288
-MAX_INTEGER_DIGITS = 19
+MAX_JSON_QUOTES = 4 * MAX_JSON_VALUES
+MAX_INTEGER_DIGITS = 20  # 2**64 - 1, the largest uint64 accessor bound
 MAX_SAFE_INTEGER = 2 ** 53
 MAX_URI_CHARS = 2048
 MAX_EXTERNAL_REFERENCES = 256
@@ -67,7 +71,8 @@ MAX_MEDIA_TYPE_CHARS = 255
 LIMITS = {
     "source_bytes": MAX_SOURCE_BYTES, "chunks": MAX_CHUNKS,
     "json_bytes": MAX_JSON_BYTES, "json_depth": MAX_JSON_DEPTH,
-    "json_values": MAX_JSON_VALUES, "integer_digits": MAX_INTEGER_DIGITS,
+    "json_structural_characters": MAX_JSON_VALUES,
+    "json_quote_characters": MAX_JSON_QUOTES, "integer_digits": MAX_INTEGER_DIGITS,
     "uri_chars": MAX_URI_CHARS, "external_references": MAX_EXTERNAL_REFERENCES,
     "data_uri_chars": MAX_DATA_URI_CHARS, "extension_names": MAX_EXTENSION_NAMES,
     "extension_name_chars": MAX_EXTENSION_NAME_CHARS,
@@ -232,7 +237,7 @@ def _json_budget(raw) -> None:
     # Conservative upper bounds (characters inside strings count as well); they
     # also cap the number of tokens the depth scan below has to visit.
     structural = data.count(b"[") + data.count(b"{") + data.count(b",") + 1
-    _need(structural <= MAX_JSON_VALUES and data.count(b'"') <= 4 * MAX_JSON_VALUES,
+    _need(structural <= MAX_JSON_VALUES and data.count(b'"') <= MAX_JSON_QUOTES,
           "JSON_VALUE_BUDGET")
     depth = 0
     for match in _JSON_TOKEN.finditer(data):
@@ -655,10 +660,15 @@ def main(argv=None) -> int:
     if args.output == "-":
         print(output, end="")
         return 0
+    destination = Path(args.output)
     try:
-        # Exclusive creation: an existing path is never truncated or replaced --
-        # not the inspected source, not a hard link or symlink to it, nothing.
-        with Path(args.output).open("x", encoding="utf-8", newline="\n") as target:
+        # Any existing name is refused, also a directory or a dangling symlink
+        # (Windows reports those differently, or would write through the link).
+        if destination.is_symlink() or destination.exists():
+            raise FileExistsError(args.output)
+        # Exclusive creation is the guarantee: an existing path is never truncated
+        # or replaced -- not the inspected source, not a hard link to it, nothing.
+        with destination.open("x", encoding="utf-8", newline="\n") as target:
             target.write(output)
     except FileExistsError:
         parser.exit(2, "GLB3_SANDBOX_REJECTED:OUTPUT_EXISTS\n")

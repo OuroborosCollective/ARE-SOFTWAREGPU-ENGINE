@@ -36,7 +36,9 @@
       "A buffer that defines both chunk and uri is refused; a files entry needs exactly one of uri and bufferView.",
       "Integer values above 2^53 are refused (the draft says such buffers should not be used).",
       "Trailing bytes after the last chunk are accepted only as padding up to the next 8-byte boundary.",
-      "Every resource budget reported under limits in a receipt is a refusal reason; the draft defines no such upper bounds."
+      "Every resource budget reported under limits in a receipt is a refusal reason; the draft defines no such upper bounds.",
+      "JSON numbers that overflow a double (such as 1e400), NaN and Infinity literals, lone surrogate escapes and integer literals with more than 20 digits are refused.",
+      "Accessor componentType and type values outside the tables of the pinned draft are refused (the draft leaves further values to extensions)."
     ]
   },
   "extension_registry": {
@@ -91,7 +93,7 @@
             "sha256": "9426e8cc77a223558d4bc43e948adba53cc02663ea3e91dfe2f74d4cc9b33850"
           }
         ],
-        "finding": "The merged draft GLB v3 reader and its fixture writer pad and advance chunks to 4-byte boundaries inside chunkLength. The Khronos draft text at the pinned commit requires 8-byte aligned chunk starts with padding outside chunkLength. Files from both layouts agree only when every padded chunk length is a multiple of eight.",
+        "finding": "The merged draft GLB v3 reader and its fixture writer pad and advance chunks to 4-byte boundaries inside chunkLength. The Khronos draft text at the pinned commit requires 8-byte aligned chunk starts with padding outside chunkLength. Files from both layouts agree only when the padded length of every chunk that is followed by another chunk is a multiple of eight; the last chunk is unconstrained.",
         "implementation": "visgl/loaders.gl"
       },
       {
@@ -109,7 +111,7 @@
   "method": "Primary Khronos sources were read on the stated date. Git refs were resolved with git ls-remote and files were fetched at the resolved commit and hashed. Statements about issue and pull-request pages are recorded as read from the rendered page and are not API records.",
   "protocol": "are.khronos-spec-status-readback.v1",
   "read_on": "2026-11-20",
-  "sha256": "2e2c57c806296768bb6f893dff7da9fe59331971aa22b46602250985a39a6057",
+  "sha256": "978821fe3eb9bac7ea9a853919affc617655fd650b8456406b54b8ed53a66fe7",
   "sources": [
     {
       "id": "khronos-registry",

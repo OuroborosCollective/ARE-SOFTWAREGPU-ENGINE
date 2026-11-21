@@ -78,11 +78,11 @@
       "corpus_sha256": "781f1d17bc32dedd6fd9910f9f4d13e3970c873940ca9a4c467d84daafe265d8",
       "rejected": 1257,
       "seed": 2765958938657,
-      "verdicts_sha256": "53bd3f6e93e5967fab7436ea5199925a566e04c880dc0bca5f55552c3374ab0b"
+      "verdicts_sha256": "6d9c5ce32bfe547843696bebe2a86ee105d0a2e6cfd8194315af07057d2ec4d5"
     }
   },
   "protocol": "are.gltf21-glb3-sandbox-evidence.v1",
-  "sha256": "fbc911f9d9e94e4b00d98df4014de627bf34103b607e201132cb0ed52b7bcff0",
+  "sha256": "4854ec94adc9344cabd50272fb77f027ba4746d249a158c33fdeee411161bb7b",
   "specification": {
     "draft_branch": "draft-2.1",
     "draft_commit": "c330f9e5a324c9858145be183d2a1e63718fd3e8",
@@ -107,7 +107,7 @@
       "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:27",
       "name": "minimal-json-only",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "8fc4f253ce8beb8e247d86f48fd155f8f7bad20a0e303eed2cb321db9571d8e0",
+      "receipt_sha256": "09b17a7bcc4b78c81364e81476a55b64791b11aa3e61dc780e253bd1d0799d37",
       "sha256": "0ef8ee501d20f3f546bcec1ec3df7782adefebc9c2886b24c8fe013f6ddc0c24",
       "verdict": "accepted"
     },
@@ -119,7 +119,7 @@
       "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:455;004e4942:0:504:42",
       "name": "implicit-bin-triangle-gltf20",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "f2eb90d39856dc09f2767cccaf8164758b9cb03e2167ead0bbce7facbbe937e0",
+      "receipt_sha256": "9d873eb1f28c9d4cd3742d6893df96d2511a6c13277db44e3298dae4c2a2e4ec",
       "sha256": "33ac173d928a8fbe72f72d6da40bd8709c6680f81146254d0ec54363b55a99cf",
       "verdict": "accepted"
     },
@@ -135,7 +135,7 @@
       "framing": "A glb3;chunks=3;main_json=1;pad_nonzero=7;trailing_pad=0;0000007b:0:32:16;4e4f534a:0:64:465;004e4942:0:552:42",
       "name": "custom-chunk-before-json-explicit-bin",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "fa588b4b243f47620abb3c0d7bf5eec27fdde44e1ef1c1130e78b6a92127dc5b",
+      "receipt_sha256": "4f8ddffeabc6334264cdec9c86d7ec097f39d42d84e0eafc4efb27ecacbd8065",
       "sha256": "bade6605d306086135a651c172e1563111432c5555596b3bc6436eeabbf82c76",
       "verdict": "accepted"
     },
@@ -156,7 +156,7 @@
       "framing": "A glb3;chunks=4;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:1101;004e4942:0:1152:42;004e4942:0:1216:24;4e4f534a:0:1256:27",
       "name": "multi-chunk-files-external-assets",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "ff6ec5038b0121e6f9baa3f9d5c7f505e61baffd92220d1d6427f31255a073d4",
+      "receipt_sha256": "2551fb3a7e9d755bf1ffeb89a6d5f50c41921bd25b392a05a80eb9c8df50fead",
       "sha256": "f6495f1fde1ce972baa7eccc593640f8408fd8ed9f5a05b7c3e83ebc01643178",
       "verdict": "accepted"
     },
@@ -169,7 +169,7 @@
       "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=5;4e4f534a:0:32:27",
       "name": "trailing-padding-after-last-chunk",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "ae50e084548eb0e3e337037972523c87257b23e046ee5907bdc57c18f53b7f75",
+      "receipt_sha256": "e94f2226abaf394832edf08d61c4ebee3dcb363411ba88285875b965e66a0ff7",
       "sha256": "55287392ebdf52b2de7a917ffb3e46a5b1cde29a129b94e5806ab2d977e63ae6",
       "verdict": "accepted"
     },
@@ -184,7 +184,7 @@
       "framing": "A glb3;chunks=2;main_json=1;pad_nonzero=0;trailing_pad=0;0000007b:0:32:16;4e4f534a:0:64:32",
       "name": "khronos-issue-2594-custom-before-json-layout",
       "origin": "layout table by a Khronos contributor, issue #2594, 2026-10-10",
-      "receipt_sha256": "d61fb3ba84f04ae7c27b63bf41c1ca12a3a9b294bf24e8f7a9448c180df41959",
+      "receipt_sha256": "b7630b6dfe9293777afba955fd6b9e73694ca041d07d72bbc4bb0ac92f4d2aab",
       "sha256": "7b7c4f0ad707b18a0c754d6af0d25c0517e7d3ccf1f3bdb7f66d6e278f739d52",
       "verdict": "accepted"
     },
@@ -196,7 +196,7 @@
       "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:88;004e4942:0:136:8",
       "name": "loaders-gl-a4faaba-lengths-multiple-of-8",
       "origin": "port of visgl/loaders.gl createGLBV3 (independent implementation)",
-      "receipt_sha256": "f5ac2da8715cf5251393610ed6b337e86d154f5d2589f5bc7d5dab97340b116a",
+      "receipt_sha256": "49c87797670f3e197efd03ef7754640cc9fa3218d892fa014fb55c5d8e164fd9",
       "sha256": "50331efdf713751846f465fb063d0048f9828b3b75e1b7a921cd02cc4207860d",
       "verdict": "accepted"
     },
@@ -209,7 +209,7 @@
       "framing": "A glb3;chunks=1;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:114",
       "name": "data-uri-with-gzip-signature-not-decoded",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "137b8e5541fe6153ae8a8809e6dfb8bdf2fd02f94c51e8662d1cce30e5252d05",
+      "receipt_sha256": "c3f2bde5c51880c2048394f9c00068b0b29792f5e7eab275232acf33b93e85c3",
       "sha256": "410518bcf90fc7767248983733211793dfd0d01fde8382454a0af521f9493a78",
       "verdict": "accepted"
     },
@@ -223,7 +223,7 @@
       "framing": "A glb3;chunks=2;main_json=0;pad_nonzero=0;trailing_pad=0;4e4f534a:0:32:67;004e4942:0:120:26",
       "name": "bin-chunk-with-gzip-signature-stays-opaque",
       "origin": "in-process draft encoder",
-      "receipt_sha256": "5a9ecfcd8d558f390ab431493f26d046e097ba128cc164ce9f25f9fd3b4495e1",
+      "receipt_sha256": "28e1d4fd79a9313657c762fcce6057b51ba8a09aaedbc6bae9fd91634166afbd",
       "sha256": "d63191092f7e999cb47b8ec0450a2b9d38be6ae1f89f501089cf20d6f103982f",
       "verdict": "accepted"
     },
