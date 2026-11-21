@@ -422,8 +422,7 @@ def run_model(executable, request, workers=4, repeats=15, policy='combined', mod
         variant='workers-1-vs-2', mode=mode, policy=policy,
         profile=render_profile, repeats=bucket(repeats),
         request_sha256=request_sha256,
-        input_bytes=bucket(Path(request).stat().st_size),
-        request_sha256=hashlib.sha256(Path(request).read_bytes()).hexdigest())
+        input_bytes=bucket(Path(request).stat().st_size))
     def fingerprint(out):
         digest = hashlib.sha256()
         if mode == 'pose':
