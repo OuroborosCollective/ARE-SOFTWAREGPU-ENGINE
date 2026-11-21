@@ -4,6 +4,7 @@ A persisted paired draw controls the real pixel/depth buffers. Deterministic
 weight edits below are behavioral controls only, NOT production timing evidence.
 """
 import ast
+from contextlib import closing
 import hashlib
 import importlib.util
 from fractions import Fraction
@@ -154,7 +155,7 @@ class LearningRoutingCoverage(unittest.TestCase):
         key = first[2]["scope"]
         # Controlled SQLite weight snapshot tests *routing*, not performance.
         # Real A/B work and buffer fingerprints were validated above.
-        with sqlite3.connect(self.db) as con:
+        with closing(sqlite3.connect(self.db)) as con, con:
             con.execute("UPDATE models SET runs=5,pairs=4,reference_ns=10000,"
                         "candidate_ns=1000,log_gain=?,recent_wins=15,blocked=0 WHERE scope=?",
                         (math.log(10), key))
@@ -162,7 +163,7 @@ class LearningRoutingCoverage(unittest.TestCase):
         self.assertEqual(candidate[2]["served"], "candidate")
         self.assertEqual(candidate[2]["outcome"], "single")
         self.assertEqual(candidate[:2], baseline[:2])
-        with sqlite3.connect(self.db) as con:
+        with closing(sqlite3.connect(self.db)) as con, con:
             con.execute("UPDATE models SET blocked=1 WHERE scope=?", (key,))
         reference = self.render("tiles")
         self.assertEqual(reference[2]["served"], "reference")
