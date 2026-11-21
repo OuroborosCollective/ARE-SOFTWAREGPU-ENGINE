@@ -8,7 +8,7 @@ import hashlib
 from .learning import bucket, configured_learner, implementation_id, scope_key
 
 
-def measured_bytes(stage, width, height, source, reference, candidate):
+def measured_bytes(stage, width, height, source, reference, candidate, source_path):
     """Return complete encoded bytes and an optional persisted learning receipt.
 
     Both encoders see identical, immutable source data. The learner compares
@@ -18,7 +18,7 @@ def measured_bytes(stage, width, height, source, reference, candidate):
     learner = configured_learner()
     if learner is None:
         return reference(), None
-    key = scope_key(stage=stage, implementation=implementation_id(__file__),
+    key = scope_key(stage=stage, implementation=implementation_id(__file__, source_path),
                     width=bucket(width), height=bucket(height),
                     source_bytes=bucket(source), variant='whole-output-bytes-v1')
     result, receipt = learner.execute(key,

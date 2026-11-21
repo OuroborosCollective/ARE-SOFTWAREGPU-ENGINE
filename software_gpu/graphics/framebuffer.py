@@ -50,7 +50,7 @@ class Framebuffer:
             # A distinct, contiguous NumPy packing path; no channel changes.
             return header + np.ascontiguousarray(rgb).tobytes(order='C')
         result, receipt = measured_bytes('ppm-byte-export', self.width,
-                                        self.height, rgb.size, reference, candidate)
+                                        self.height, rgb.size, reference, candidate, __file__)
         self.last_export_learning_receipt = receipt
         return result
 
@@ -92,7 +92,7 @@ class Framebuffer:
             return prefix + bgr.tobytes()
 
         result, receipt = measured_bytes('bmp-byte-export', w, h,
-                                        rgb.nbytes, reference, candidate)
+                                        rgb.nbytes, reference, candidate, __file__)
         self.last_export_learning_receipt = receipt
         return result
 
