@@ -109,14 +109,18 @@ class SoftwareRasterizer:
         if (self.backend != "tiles" or self.local_learner is not None
                 or self.preparation_cache is not None or self.plan_policy is not None):
             raise ValueError("PIXEL_TRACE_BACKEND_UNSUPPORTED")
-        faces = list(indices)
-        if len(faces) > trace.max_events or len(vertices) > 3 * trace.max_events:
-            raise ValueError("PIXEL_TRACE_QUOTA_EXCEEDED")
-        source_faces = []
-        triangles = prepare_triangles(vertices, faces, shader, self.fb.width,
-                                      self.fb.height, source_faces=source_faces)
-        # Must happen before device counters or framebuffer writes.
-        trace.start_draw(vertices, faces, shader, triangles, source_faces)
+        try:
+            faces = list(indices)
+            if len(faces) > trace.max_events or len(vertices) > 3 * trace.max_events:
+                raise ValueError("PIXEL_TRACE_QUOTA_EXCEEDED")
+            source_faces = []
+            triangles = prepare_triangles(vertices, faces, shader, self.fb.width,
+                                          self.fb.height, source_faces=source_faces)
+            # Must happen before device counters or framebuffer writes.
+            trace.start_draw(vertices, faces, shader, triangles, source_faces)
+        except BaseException:
+            trace.invalidate()
+            raise
         device = VirtualGPU.get_current_device()
         device.total_draw_calls += 1
         self.last_learning_receipt = None
