@@ -13,7 +13,7 @@ from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.graphics.shader import Vertex
-from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb
+from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb, MAX_GLB_BYTES
 
 
 def receipt(job):
@@ -92,6 +92,10 @@ def compare(points, faces, output):
 
 def _verified_cached_review(final, job, digest, model):
     """A cached report is never authority without current source and output hashes."""
+    # Cached reviews are an admission surface too. Never hash or bless a
+    # source beyond the same 8 MiB GLB2 limit required by a fresh import.
+    if type(model.get("size")) is not int or not 32 <= model["size"] <= MAX_GLB_BYTES:
+        raise ValueError("GLB_REVIEW_SIZE_LIMIT")
     source = job / "model.glb"
     if source.is_symlink() or not source.is_file():
         raise ValueError("SOURCE_FILE_MISSING_OR_LINK")
