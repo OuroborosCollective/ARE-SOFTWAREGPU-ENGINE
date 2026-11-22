@@ -72,6 +72,7 @@ class PixelForensicTrace:
         self.events = []
         self.draws = []
         self.discarded_primitives = []
+        self._discarded_count = 0
         self._active = None
         self._invalid = False
         self._sealed = False
@@ -88,7 +89,7 @@ class PixelForensicTrace:
             raise ValueError("PIXEL_TRACE_SOURCE_MAP_MISMATCH")
         seen = set(source_ids)
         discarded = [i for i in range(len(faces)) if i not in seen]
-        if len(self.events) + len(triangles) + len(discarded) > self.max_events:
+        if (len(self.events) + self._discarded_count + len(triangles) + len(discarded) > self.max_events):
             raise ValueError("PIXEL_TRACE_QUOTA_EXCEEDED")
         draw_id = len(self.draws)
         if draw_id >= 32:
@@ -100,6 +101,7 @@ class PixelForensicTrace:
             "scene_sha256": _hash_scene(vertices, faces, shader),
         })
         self.discarded_primitives.append(discarded)
+        self._discarded_count += len(discarded)
         indexed = {}
         per_source_piece = {}
         for j, (tri, primitive_id) in enumerate(zip(triangles, source_ids)):
@@ -194,7 +196,13 @@ def inspect_trace_receipt(receipt):
     if (type(receipt.get("max_events")) is not int
             or not 1 <= receipt["max_events"] <= MAX_EVENTS
             or not isinstance(receipt.get("events"), list)
-            or len(receipt["events"]) > receipt["max_events"]):
+            or not isinstance(receipt.get("draws"), list)
+            or len(receipt["draws"]) > 32
+            or not isinstance(receipt.get("discarded_primitives"), list)
+            or len(receipt["discarded_primitives"]) != len(receipt["draws"])
+            or any(not isinstance(group, list) for group in receipt["discarded_primitives"])
+            or (len(receipt["events"]) + sum(len(group) for group in receipt["discarded_primitives"])
+                > receipt["max_events"])):
         raise ValueError("PIXEL_TRACE_BUDGET_INVALID")
     digest = receipt.get("receipt_sha256")
     if not isinstance(digest, str) or not hmac.compare_digest(

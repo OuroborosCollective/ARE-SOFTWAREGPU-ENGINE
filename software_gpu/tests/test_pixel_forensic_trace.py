@@ -233,6 +233,37 @@ class PixelForensicTests(unittest.TestCase):
         self.assertEqual(fb.color_buffer.tobytes(), empty_color)
         self.assertEqual(fb.depth_buffer.tobytes(), empty_depth)
 
+    def test_discarded_primitive_quota_accumulates_across_draws(self):
+        bad = triangle()
+        bad[0].position[0] = np.nan
+        fb = Framebuffer(64, 64)
+        shader = CountingAlphaShader()
+        raster = SoftwareRasterizer(fb, num_threads=1)
+        trace = PixelForensicTrace(fb, 32, 32, REVISION, max_events=1)
+        before = (fb.color_buffer.tobytes(), fb.depth_buffer.tobytes())
+        try:
+            raster.draw_mesh_traced(bad, [(0, 1, 2)], shader, trace)
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_QUOTA"):
+                raster.draw_mesh_traced(bad, [(0, 1, 2)], shader, trace)
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_INCOMPLETE"):
+                trace.finish()
+        finally:
+            raster.executor.shutdown(wait=True)
+        self.assertEqual(shader.calls, 0)
+        self.assertEqual((fb.color_buffer.tobytes(), fb.depth_buffer.tobytes()), before)
+
+    def test_receipt_inspector_rejects_rehashed_discard_quota_violation(self):
+        from software_gpu.graphics.pixel_trace import _digest
+        receipt = self.assert_identical([(triangle(), [(0, 1, 2)])])
+        forged = copy.deepcopy(receipt)
+        forged["max_events"] = 1
+        forged["discarded_primitives"] = [[0]]
+        forged["receipt_sha256"] = _digest(
+            {k: v for k, v in forged.items() if k != "receipt_sha256"}
+        )
+        with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_BUDGET"):
+            inspect_trace_receipt(forged)
+
     def test_default_draw_has_no_instrumentation_or_extra_shader_calls(self):
         fb, calls, receipt = execute([(triangle(), [(0, 1, 2)])], False)
         self.assertIsNone(receipt)

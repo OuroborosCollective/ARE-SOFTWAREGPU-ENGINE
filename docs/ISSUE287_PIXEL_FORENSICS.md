@@ -50,7 +50,7 @@ den Checkout abgleichen, bevor eine Git-SHA-Identität bestätigt ist.
 - Kein Alpha-Blending: Auch ein Fragment mit Alpha 0 speichert Farbe und
   Tiefe. Bei Equal-Depth gewinnt der frühere Draw. Ungültige NaN-Varyings
   und -Positionen werden vom gemeinsamen Geometry-Stage verworfen.
-- Maximal **256** Events, maximal **32** Draws, begrenzte Face-/Vertex-Anzahl.
+- Maximal **256** kumulative Primitive-Evidenzeintraege (gerasterte Dreiecks-Events plus verworfene Ursprungsprimitive ueber alle Draws), maximal **32** Draws, begrenzte Face-/Vertex-Anzahl.
   Nach Shader-Ausnahme ist das Receipt unvollständig und `finish()`
   verboten. Nach `finish()` sind weitere Draws unzulässig.
   Keine fremden URI-Zugriffe, kein Netz, kein Upload, keine Roh-Texturpersistenz.
