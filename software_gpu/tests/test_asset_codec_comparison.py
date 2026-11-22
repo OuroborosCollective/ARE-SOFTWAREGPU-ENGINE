@@ -39,7 +39,7 @@ def mutate_fixture(change):
     encoded = json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")
     encoded += b" " * (-len(encoded) % 4)
     chunks = struct.pack("<I4s", len(encoded), b"JSON") + encoded
-    chunks += struct.pack("<I4s", len(binary), b"BIN\\x00") + binary
+    chunks += struct.pack("<I4s", len(binary), b"BIN\x00") + binary
     return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
 
 
