@@ -1,0 +1,74 @@
+{
+  "protocol": "are.asset-codec-inputs.v1",
+  "source_repository": "KhronosGroup/glTF-Sample-Assets",
+  "source_revision": "e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea",
+  "license_note": "See each Models/<name>/README.md; assets fetched only at pinned commit, never redistributed by this repository.",
+  "assets": [
+    {
+      "id": "box",
+      "class": "static",
+      "file": "Box.glb",
+      "bytes": 1664,
+      "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+      "license": "CC-BY-4.0",
+      "attribution": "Cesium (2017)",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/Box/glTF-Binary/Box.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/Box/README.md"
+    },
+    {
+      "id": "riggedsimple",
+      "class": "rig",
+      "file": "RiggedSimple.glb",
+      "bytes": 15104,
+      "sha256": "3a79dabb67bb0cd598a18d08b954d9d357c27c30672f82ef5d3f4e7fe6ca3401",
+      "license": "CC-BY-4.0",
+      "attribution": "Cesium (2017)",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/RiggedSimple/glTF-Binary/RiggedSimple.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/RiggedSimple/README.md"
+    },
+    {
+      "id": "riggedfigure",
+      "class": "rig",
+      "file": "RiggedFigure.glb",
+      "bytes": 50116,
+      "sha256": "d6be85417d3e256861ee733eea6916093a7af7c79c16366181fd8abcaeb38cf5",
+      "license": "CC-BY-4.0",
+      "attribution": "Cesium (2017)",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/RiggedFigure/glTF-Binary/RiggedFigure.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/RiggedFigure/README.md"
+    },
+    {
+      "id": "cesiumman",
+      "class": "rig",
+      "file": "CesiumMan.glb",
+      "bytes": 438044,
+      "sha256": "b7001eaeea8254bd44773bcd247e78696d94169388fbb2a1800fc69434e777d9",
+      "license": "CC-BY-4.0",
+      "attribution": "Cesium (2017); includes Cesium trademark logo — excluded from redistribution",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/CesiumMan/glTF-Binary/CesiumMan.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/CesiumMan/README.md"
+    },
+    {
+      "id": "animatedmorphcube",
+      "class": "morph",
+      "file": "AnimatedMorphCube.glb",
+      "bytes": 6752,
+      "sha256": "214ee56160a50dbf22543a1d66dbf860986e87f0efac3d89feac1359d0e6aeab",
+      "license": "CC-0-1.0",
+      "attribution": "Public (2017)",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/AnimatedMorphCube/glTF-Binary/AnimatedMorphCube.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/AnimatedMorphCube/README.md"
+    },
+    {
+      "id": "morphstresstest",
+      "class": "morph",
+      "file": "MorphStressTest.glb",
+      "bytes": 575900,
+      "sha256": "005f1d9dd938c553a506d6bf3d21830fc3f2ec3a199d9332e9a625baf7342bef",
+      "license": "CC-BY-4.0",
+      "attribution": "Analytical Graphics, Inc. (2021)",
+      "source_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/MorphStressTest/glTF-Binary/MorphStressTest.glb",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/e124e8d8d7330a5372bc2b4d00d39a4a9d7997ea/Models/MorphStressTest/README.md"
+    }
+  ]
+}
