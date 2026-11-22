@@ -252,8 +252,14 @@ class GLBAdmissionSecurityTests(unittest.TestCase):
             image = cached / "front-lod0.bmp"
             with image.open("r+b") as stream:
                 stream.truncate(8 << 20)  # sparse negative input, not a real asset
-            with patch.object(Path, "read_bytes",
-                              side_effect=AssertionError("CACHE_UNBOUNDED_BMP_READ")):
+            original_read_bytes = Path.read_bytes
+            def observe_bounded_access(path):
+                # Keep real receipt/model IO; only guard unbounded cached BMP
+                # reads. All geometry/receipt inputs remain genuine bytes.
+                if path.suffix.lower() == ".bmp":
+                    raise AssertionError("CACHE_UNBOUNDED_BMP_READ")
+                return original_read_bytes(path)
+            with patch.object(Path, "read_bytes", observe_bounded_access):
                 with self.assertRaisesRegex(ValueError, "WORLD_FORGE_CACHE_INVALID"):
                     review(job, output)
 
