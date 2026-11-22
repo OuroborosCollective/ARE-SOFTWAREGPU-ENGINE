@@ -132,8 +132,16 @@ def _verified_cached_review(final, job, digest, model):
                 if not isinstance(view, dict) or view.get("image") != expected_name or view.get("name") != kind:
                     raise ValueError("WORLD_FORGE_CACHE_INVALID")
                 image = final / expected_name
+                # The producer renders only 96x96 BMPs. A tampered cache must
+                # not allocate unbounded memory during integrity readback.
                 if (image.is_symlink() or not image.is_file() or
-                        hashlib.sha256(image.read_bytes()).hexdigest() != view.get("sha256")):
+                        not 0 < image.stat().st_size <= 128 * 1024):
+                    raise ValueError("WORLD_FORGE_CACHE_INVALID")
+                image_sha = hashlib.sha256()
+                with image.open("rb") as stream:
+                    for part in iter(lambda: stream.read(64 * 1024), b""):
+                        image_sha.update(part)
+                if image_sha.hexdigest() != view.get("sha256"):
                     raise ValueError("WORLD_FORGE_CACHE_INVALID")
     elif report.get("status") != "manual-review" or not isinstance(report.get("reason"), str):
         raise ValueError("WORLD_FORGE_CACHE_INVALID")
