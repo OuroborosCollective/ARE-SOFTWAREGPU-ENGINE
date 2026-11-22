@@ -12,6 +12,7 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
+| 2026-11-22 | GLB2-Importer: JSON-/BIN-Budgets, Cache-SHA und Negativtests (`software_gpu/tests/test_glb_admission_security.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-21 | GLB2-Import: BIN-Kopien, 100 Freigaben, echte CPU-Depth-Regression (`software_gpu/tests/test_glb_import_resource.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-21 | KTX2/BasisU: Khronos 4.4.2 Echt-Transcode, PBR/Depth, negative Aufnahme-Gates (`software_gpu/tests/test_ktx2_texture_admission.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-21 | Learn-Weight authoring: native auto, KTX2, BMP/PPM, Blender und Aurion (`software_gpu/tests/test_learned_output_routes.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
