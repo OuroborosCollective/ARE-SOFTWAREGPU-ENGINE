@@ -19,6 +19,10 @@ on:
       - 'software_gpu/tests/test_glb_import_resource.py'
   workflow_dispatch:
 
+concurrency:
+  group: issue295-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
