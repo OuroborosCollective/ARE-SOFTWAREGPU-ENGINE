@@ -12,6 +12,7 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
+| 2026-11-22 | GLB2-Codecs: Draco/Meshopt, Rig/Morph und 15-Paar-CPU-Frames (`software_gpu/tests/test_asset_codec_comparison.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-22 | GLB2-Importer: JSON-/BIN-Budgets, Cache-SHA und Negativtests (`software_gpu/tests/test_glb_admission_security.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-22 | #287 Pixel-Forensik: Edge, Depth-Owner und echte Shader-Calls (`software_gpu/tests/test_pixel_forensic_trace.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-21 | GLB2-Import: BIN-Kopien, 100 Freigaben, echte CPU-Depth-Regression (`software_gpu/tests/test_glb_import_resource.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |

@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "asset-codec-comparison",
+      "introduced": "2026-11-22",
+      "title": "GLB2-Codecs: Draco/Meshopt, Rig/Morph und 15-Paar-CPU-Frames",
+      "module": "software_gpu/tests/test_asset_codec_comparison.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "pixel-forensic-trace-287",
       "introduced": "2026-11-22",
       "title": "#287 Pixel-Forensik: Edge, Depth-Owner und echte Shader-Calls",
