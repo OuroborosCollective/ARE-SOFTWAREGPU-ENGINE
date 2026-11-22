@@ -189,6 +189,8 @@ class PixelForensicTests(unittest.TestCase):
         try:
             raster.draw_mesh_traced(triangle(), [(0, 1, 2)], shader, trace)
             receipt = trace.finish()
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_ALREADY_FINISHED"):
+                trace.finish()
             with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_CLOSED"):
                 raster.draw_mesh_traced(triangle(), [(0, 1, 2)], shader, trace)
             self.assertEqual(receipt["final_owner"]["primitive_id"], 0)
