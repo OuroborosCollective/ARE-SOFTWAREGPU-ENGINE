@@ -184,8 +184,12 @@ def scan(results, output, limit):
         if not re.fullmatch("[a-f0-9]{64}", job.name) or not (job / "receipt.json").is_file():
             continue
         try:
-            digest, _ = receipt(job)
-            if (output / job.name / __version__ / digest / "report.json").is_file():
+            digest, model = receipt(job)
+            cached = output / job.name / __version__ / digest
+            if (cached / "report.json").is_file():
+                # Cache skips may not silently hide a changed source or
+                # tampered six-view preview from the incremental scanner.
+                _verified_cached_review(cached, job, digest, model)
                 continue
             print(review(job, output), flush=True)
             processed += 1
