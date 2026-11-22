@@ -14,8 +14,8 @@ import unittest
 
 import numpy as np
 
-from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb
-from software_gpu.integrations.worldforge import review, scan
+from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb, MAX_GLB_BYTES
+from software_gpu.integrations.worldforge import review, scan, _verified_cached_review
 from software_gpu.tests.test_aurion_offline_lod import synthetic_glb
 
 
@@ -262,6 +262,33 @@ class GLBAdmissionSecurityTests(unittest.TestCase):
             with patch.object(Path, "read_bytes", observe_bounded_access):
                 with self.assertRaisesRegex(ValueError, "WORLD_FORGE_CACHE_INVALID"):
                     review(job, output)
+
+
+    def test_cached_review_rejects_overbudget_source_before_hashing(self):
+        # Real file, sparse tail, calculated SHA. A preexisting report must
+        # never bypass the same 8 MiB admission cap as a fresh GLB import.
+        raw = synthetic_glb()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            job = root / ("f" * 64)
+            job.mkdir()
+            model_path = job / "model.glb"
+            model_path.write_bytes(raw)
+            receipt = {"schema": "worldforge.blender-export.v1", "jobId": job.name,
+                       "files": [{"path": "model.glb", "size": len(raw),
+                                  "sha256": hashlib.sha256(raw).hexdigest()}]}
+            (job / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+            cached = review(job, root / "reports")
+            with model_path.open("r+b") as source:
+                source.truncate(MAX_GLB_BYTES + 1)
+            digest = hashlib.sha256()
+            with model_path.open("rb") as source:
+                for chunk in iter(lambda: source.read(64 * 1024), b""):
+                    digest.update(chunk)
+            oversized_record = {"size": MAX_GLB_BYTES + 1, "sha256": digest.hexdigest()}
+            receipt_sha = hashlib.sha256((job / "receipt.json").read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "GLB_REVIEW_SIZE_LIMIT"):
+                _verified_cached_review(cached, job, receipt_sha, oversized_record)
 
 
 if __name__ == "__main__":
