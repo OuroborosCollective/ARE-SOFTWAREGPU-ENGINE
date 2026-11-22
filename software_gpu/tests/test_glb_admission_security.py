@@ -231,5 +231,32 @@ class GLBAdmissionSecurityTests(unittest.TestCase):
                 scan(jobs, output, limit=1)
 
 
+    def test_sparse_oversized_cached_bmp_rejected_before_read_bytes(self):
+        # Use real SHA-pinned GLB/WorldForge output. Instrument Path.read_bytes
+        # strictly inside this test to catch unbounded transient BMP allocation.
+        # This does NOT replace domain geometry, runtime, or persistence.
+        from unittest.mock import patch
+
+        raw = synthetic_glb()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            job = root / ("e" * 64)
+            job.mkdir()
+            (job / "model.glb").write_bytes(raw)
+            receipt = {"schema": "worldforge.blender-export.v1", "jobId": job.name,
+                       "files": [{"path": "model.glb", "size": len(raw),
+                                  "sha256": hashlib.sha256(raw).hexdigest()}]}
+            (job / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+            output = root / "reports"
+            cached = review(job, output)
+            image = cached / "front-lod0.bmp"
+            with image.open("r+b") as stream:
+                stream.truncate(8 << 20)  # sparse negative input, not a real asset
+            with patch.object(Path, "read_bytes",
+                              side_effect=AssertionError("CACHE_UNBOUNDED_BMP_READ")):
+                with self.assertRaisesRegex(ValueError, "WORLD_FORGE_CACHE_INVALID"):
+                    review(job, output)
+
+
 if __name__ == "__main__":
     unittest.main()
