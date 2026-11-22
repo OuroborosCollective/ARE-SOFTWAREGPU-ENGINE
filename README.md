@@ -43,6 +43,8 @@ nor the single-mesh draw supports a GPU, FBX-export or gameplay FPS claim.
 [Architecture, evidence boundaries and reproduction](docs/ISSUE293_GLB_IMPORT_RESOURCES.md)
 · [New tests in CPU leaderboard (not a new performance rank)](docs/CPU_WAVE_RANGLISTEN.md).
 
+**GLB2-Import-Sicherheit (#295):** SHA-gepinnte WorldForge-Eingänge prüfen JSON-/BIN-Tiefen und Ressourcenbudgets, unzulässige externe Verweise sowie zwischenzeitlich veränderte Quell- und Preview-Dateien. Reale RED-Fälle und Linux-/Windows-Regressionen sind in [Import-Sicherheitsgrenzen und Evidence](docs/ISSUE295_GLB_IMPORT_SECURITY.md) beschrieben. **Kein nativer FBX-/Assimp-/fastgltf-Importer oder allgemeiner glTF-Konformitätsnachweis**, kein neuer CPU-Leistungsrang.
+
 ## glTF 2.1 / GLB v3: opt-in Inspektions-Sandbox (20. November 2026, Entwurf)
 
 **glTF 2.1 und der 64‑Bit-Container „GLB v3“ sind nicht ratifiziert.** Gelesen am 20.11.2026: Die [Khronos-Registry](https://registry.khronos.org/glTF/) nennt weiterhin 2.0 als aktuelle Version, der 2.1‑Text liegt nur auf dem Arbeitsbranch `draft-2.1`, das [Tracking-Issue](https://github.com/KhronosGroup/glTF/issues/2585) ist offen. Der [vollständige Readback](evidence/gltf21-glb3-khronos-status-20261120.json) hält Quellen und Hashes fest.

@@ -28,6 +28,34 @@ MAX_GLB_BYTES = 8_388_608
 MAX_VERTICES = 25_000
 MAX_TRIANGLES = 25_000
 
+
+def _glb_unique_keys(pairs):
+    """Reject ambiguous metadata, including duplicate keys in nested objects."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("GLB_JSON_DUPLICATE_KEY")
+        result[key] = value
+    return result
+
+
+def _glb_nonfinite(_):
+    raise ValueError("GLB_JSON_NONFINITE")
+
+
+def _glb_depth_check(document, limit=64):
+    """Bound JSON nesting without recursion or a native parser allocation."""
+    pending = [(document, 0)]
+    while pending:
+        item, depth = pending.pop()
+        if depth > limit:
+            raise ValueError("GLB_JSON_DEPTH_LIMIT")
+        if isinstance(item, dict):
+            pending.extend((value, depth + 1) for value in item.values())
+        elif isinstance(item, list):
+            pending.extend((value, depth + 1) for value in item)
+
+
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -160,16 +188,39 @@ def _load_glb(path: Path, expected: dict, *, worldforge: bool):
         raise ValueError("GLB_CHUNKS_UNSUPPORTED")
     if len(chunks[0][1]) > 131_072:
         raise ValueError("GLB_JSON_TOO_LARGE")
-    doc = json.loads(bytes(chunks[0][1]).decode("utf-8"))
+    try:
+        doc = json.loads(bytes(chunks[0][1]).decode("utf-8"),
+                         object_pairs_hook=_glb_unique_keys,
+                         parse_constant=_glb_nonfinite)
+    except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise ValueError("GLB_JSON_INVALID") from exc
+    _glb_depth_check(doc)
     binary = chunks[1][1]
-    if doc.get("asset", {}).get("version") != "2.0":
+    if not isinstance(doc, dict) or not isinstance(doc.get("asset"), dict) or doc["asset"].get("version") != "2.0":
         raise ValueError("GLTF_VERSION_INVALID")
-    buffers = doc.get("buffers", [])
-    if len(buffers) != 1 or buffers[0].get("uri") is not None or buffers[0].get("byteLength", 0) > len(binary):
+    # GLB2 admits only its single owned BIN chunk; metadata must never request
+    # an external fetch, even when a resource is currently unused by this subset.
+    buffers = doc.get("buffers")
+    if not isinstance(buffers, list) or len(buffers) != 1 or not isinstance(buffers[0], dict) or "uri" in buffers[0]:
         raise ValueError("EXTERNAL_BUFFER_UNSUPPORTED")
-    if (len(doc.get("nodes", [])) > 128 or len(doc.get("meshes", [])) > 32 or
-        len(doc.get("accessors", [])) > 128 or len(doc.get("bufferViews", [])) > 128):
-        raise ValueError("SCENE_COMPLEXITY_LIMIT")
+    declared = buffers[0].get("byteLength")
+    if type(declared) is not int or not 0 <= declared <= len(binary) <= declared + 3:
+        raise ValueError("GLB_BUFFER_LENGTH_INVALID")
+    limits = (("nodes", 128), ("meshes", 32), ("accessors", 128),
+              ("bufferViews", 128), ("materials", 512), ("images", 128),
+              ("scenes", 32), ("skins", 256), ("animations", 128))
+    for name, maximum in limits:
+        items = doc.get(name, [])
+        if not isinstance(items, list) or len(items) > maximum or any(not isinstance(item, dict) for item in items):
+            raise ValueError("SCENE_COMPLEXITY_LIMIT")
+    if any("uri" in image for image in doc.get("images", [])):
+        raise ValueError("GLB_EXTERNAL_URI_UNSUPPORTED")
+    for view in doc.get("bufferViews", []):
+        offset, length = view.get("byteOffset", 0), view.get("byteLength")
+        if (type(view.get("buffer", 0)) is not int or view.get("buffer", 0) != 0
+                or type(offset) is not int or type(length) is not int
+                or offset < 0 or length < 0 or offset + length > declared):
+            raise ValueError("GLB_BUFFER_VIEW_BOUNDS")
     if worldforge and (doc.get("animations") or doc.get("skins") or doc.get("extensionsRequired")
                        or any(p.get("targets") for m in doc.get("meshes", []) for p in m["primitives"])):
         raise ValueError("STATIC_GEOMETRY_REVIEW_REQUIRED")

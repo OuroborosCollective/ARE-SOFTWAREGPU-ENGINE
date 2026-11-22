@@ -13,7 +13,7 @@ from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.graphics.shader import Vertex
-from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb
+from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb, MAX_GLB_BYTES
 
 
 def receipt(job):
@@ -90,6 +90,68 @@ def compare(points, faces, output):
             if candidates else 0, "method": "Static vertex clustering, two 96px orthographic silhouettes, IoU >= 0.98"}
 
 
+def _verified_cached_review(final, job, digest, model):
+    """A cached report is never authority without current source and output hashes."""
+    # Cached reviews are an admission surface too. Never hash or bless a
+    # source beyond the same 8 MiB GLB2 limit required by a fresh import.
+    if type(model.get("size")) is not int or not 32 <= model["size"] <= MAX_GLB_BYTES:
+        raise ValueError("GLB_REVIEW_SIZE_LIMIT")
+    source = job / "model.glb"
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("SOURCE_FILE_MISSING_OR_LINK")
+    if source.stat().st_size != model["size"]:
+        raise ValueError("SOURCE_SIZE_MISMATCH")
+    state = hashlib.sha256()
+    with source.open("rb") as stream:
+        for part in iter(lambda: stream.read(1024 * 1024), b""):
+            state.update(part)
+    if state.hexdigest() != model["sha256"]:
+        raise ValueError("SOURCE_SHA256_MISMATCH")
+    report_path = final / "report.json"
+    if report_path.is_symlink() or not report_path.is_file() or report_path.stat().st_size > (1 << 18):
+        raise ValueError("WORLD_FORGE_CACHE_INVALID")
+    try:
+        report = json.loads(report_path.read_text("utf-8"))
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError("WORLD_FORGE_CACHE_INVALID") from exc
+    if (not isinstance(report, dict) or
+            report.get("schema") != "are.worldforge.geometry-review.v1" or
+            report.get("engineVersion") != __version__ or
+            report.get("jobId") != job.name or
+            report.get("receiptSha256") != digest or
+            report.get("modelSha256") != model["sha256"]):
+        raise ValueError("WORLD_FORGE_CACHE_INVALID")
+    if report.get("status") == "reviewed":
+        levels = report.get("levels")
+        if not isinstance(levels, list) or len(levels) != 3:
+            raise ValueError("WORLD_FORGE_CACHE_INVALID")
+        for i, level in enumerate(levels):
+            if not isinstance(level, dict) or level.get("level") != i:
+                raise ValueError("WORLD_FORGE_CACHE_INVALID")
+            views = level.get("views")
+            if not isinstance(views, list) or len(views) != 2:
+                raise ValueError("WORLD_FORGE_CACHE_INVALID")
+            for kind, view in zip(("front", "side"), views):
+                expected_name = f"{kind}-lod{i}.bmp"
+                if not isinstance(view, dict) or view.get("image") != expected_name or view.get("name") != kind:
+                    raise ValueError("WORLD_FORGE_CACHE_INVALID")
+                image = final / expected_name
+                # The producer renders only 96x96 BMPs. A tampered cache must
+                # not allocate unbounded memory during integrity readback.
+                if (image.is_symlink() or not image.is_file() or
+                        not 0 < image.stat().st_size <= 128 * 1024):
+                    raise ValueError("WORLD_FORGE_CACHE_INVALID")
+                image_sha = hashlib.sha256()
+                with image.open("rb") as stream:
+                    for part in iter(lambda: stream.read(64 * 1024), b""):
+                        image_sha.update(part)
+                if image_sha.hexdigest() != view.get("sha256"):
+                    raise ValueError("WORLD_FORGE_CACHE_INVALID")
+    elif report.get("status") != "manual-review" or not isinstance(report.get("reason"), str):
+        raise ValueError("WORLD_FORGE_CACHE_INVALID")
+    return final
+
+
 def review(job, destination):
     digest, model = receipt(job)
     # Version and receipt address each independent report. The producer keeps sole ownership of results/.
@@ -97,7 +159,7 @@ def review(job, destination):
     destination.mkdir(parents=True, exist_ok=True)
     final = destination / digest
     if (final / "report.json").is_file():
-        return final
+        return _verified_cached_review(final, job, digest, model)
     with TemporaryDirectory(dir=destination) as temp:
         out = Path(temp) / "review"
         out.mkdir()
@@ -107,8 +169,13 @@ def review(job, destination):
             points, faces, _ = load_worldforge_glb(job / "model.glb", model)
             report.update(compare(points, faces, out), status="reviewed")
         except ValueError as exc:
-            # A source mismatch cannot count as an asset review.
-            if str(exc) in {"SOURCE_SHA256_MISMATCH", "SOURCE_FILE_MISSING_OR_LINK", "SOURCE_SIZE_MISMATCH"}:
+            # Only structurally valid but unsupported/over-budget static
+            # geometry may be marked manual-review. Corrupt or ambiguous
+            # containers, source hashes, accessors and external URIs fail closed.
+            manual_reasons = {"STATIC_GEOMETRY_REVIEW_REQUIRED", "MESH_TOO_LARGE",
+                              "SCENE_COMPLEXITY_LIMIT", "GLB_REVIEW_SIZE_LIMIT",
+                              "NO_SUPPORTED_TRIANGLE_GEOMETRY"}
+            if str(exc) not in manual_reasons:
                 raise
             report.update(status="manual-review", reason=str(exc))
         (out / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
@@ -117,6 +184,8 @@ def review(job, destination):
         except OSError:
             if not (final / "report.json").is_file():
                 raise
+            # Concurrent producers must never promote an unverified cache.
+            return _verified_cached_review(final, job, digest, model)
     return final
 
 
@@ -127,8 +196,12 @@ def scan(results, output, limit):
         if not re.fullmatch("[a-f0-9]{64}", job.name) or not (job / "receipt.json").is_file():
             continue
         try:
-            digest, _ = receipt(job)
-            if (output / job.name / __version__ / digest / "report.json").is_file():
+            digest, model = receipt(job)
+            cached = output / job.name / __version__ / digest
+            if (cached / "report.json").is_file():
+                # Cache skips may not silently hide a changed source or
+                # tampered six-view preview from the incremental scanner.
+                _verified_cached_review(cached, job, digest, model)
                 continue
             print(review(job, output), flush=True)
             processed += 1
