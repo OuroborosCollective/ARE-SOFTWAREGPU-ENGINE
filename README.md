@@ -21,6 +21,20 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## Pixel Forensic Trace (Issue #287; opt-in CPU diagnostics)
+
+`PixelForensicTrace` captures one bounded real CPU pixel across ordered `tiles`
+draws, including source triangle IDs, clipping pieces, actual edge/strict-depth
+decisions, fragment shader invocation, and byte-exact final RGBA8/Float32-depth receipts.
+The ordinary `draw_mesh()` path stays uninstrumented; `draw_mesh_traced()`
+rejects JIT, plan/batch, deferred, native, caching and active learning rather than
+claiming unsupported shader provenance. No transparency blending or Aurion
+gameplay authority is introduced. See
+[pixel trace contract and read-only analysis](docs/ISSUE287_PIXEL_FORENSICS.md),
+[registered test chronology](docs/CPU_WAVE_RANGLISTEN.md), and
+`python -m unittest software_gpu.tests.test_pixel_forensic_trace -v`.
+Test registration is **not** a CPU timing rank, FPS or release proof.
+
 ## Offline cost calibration (Issue #286, experimental)
 
 The existing SurfacePlanner/PreparationCache now has a *separate* offline cost calibration candidate: four same-VertexColorShader scan/scalar/batch/no-scan A/B paths, 15 interleaved pairs per scene, disjoint holdout geometry, independent RGBA8/Float32-depth SHA and source/CPU provenance. Frozen SHA-bound policy replay is opt-in only; `tiles` remains the default and no unverified runtime or FPS benefit is claimed. See [cost calibration, tests and deployment boundaries](docs/ISSUE286_COST_CALIBRATION.md). The [new registered test series](docs/CPU_WAVE_RANGLISTEN.md) is not a performance rank. Use `python -m unittest software_gpu.tests.test_surface_cost_calibration -v` for negative contracts.

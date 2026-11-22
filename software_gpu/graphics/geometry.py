@@ -100,7 +100,7 @@ def clip_triangle(vertices: list[tuple[np.ndarray, dict]]):
             for i in range(1, len(polygon) - 1)]
 
 
-def prepare_triangles(vertices, indices, shader, width: int, height: int):
+def prepare_triangles(vertices, indices, shader, width: int, height: int, source_faces=None):
     """Build front-facing, clipped, finite screen-space triangles for CPU renderers.
 
     Invalid positions/varying numbers fail closed by discarding that primitive.
@@ -241,4 +241,7 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int):
                 clipped[0][1], clipped[1][1], clipped[2][1], area_v,
             ))
         slots[fi] = out
+    if source_faces is not None:
+        # Opt-in sidecar; the default fast path produces no trace records.
+        source_faces.extend(i for i, slot in enumerate(slots) if slot for _ in slot)
     return [tri for slot in slots if slot for tri in slot]

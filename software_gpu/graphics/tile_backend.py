@@ -85,7 +85,7 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
 
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     executor: Executor, workers: int, compiled: bool = False,
-                    planned: bool = False, plan_policy=None, prepared_bins=None):
+                    planned: bool = False, plan_policy=None, prepared_bins=None, pixel_trace=None):
     """Bin triangles by 2-D tiles, then shade each independent tile in order.
 
     This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
@@ -204,11 +204,20 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 else:
                     covered = edge_covered(w0, s1, s2) & edge_covered(w1, s2, s0) & edge_covered(w2, s0, s1)
                     if not covered.any():
+                        if pixel_trace is not None and left <= pixel_trace.x <= right and top <= pixel_trace.y <= bottom:
+                            ry, rx = pixel_trace.y - top, pixel_trace.x - left
+                            pixel_trace.record_edge(tri, (w0[ry, rx], w1[ry, rx], w2[ry, rx]),
+                                                    False, depth_tile[ry, rx])
                         continue
                 alpha = w0 * inv_area
                 beta = w1 * inv_area
                 gamma = w2 * inv_area
                 depth = alpha * s0[2] + beta * s1[2] + gamma * s2[2]
+                if pixel_trace is not None and left <= pixel_trace.x <= right and top <= pixel_trace.y <= bottom:
+                    ry, rx = pixel_trace.y - top, pixel_trace.x - left
+                    pixel_trace.record_edge(tri, (w0[ry, rx], w1[ry, rx], w2[ry, rx]),
+                                            bool(covered[ry, rx]), depth_tile[ry, rx],
+                                            depth[ry, rx] if covered[ry, rx] else None)
                 visible = covered & (depth < depth_tile)
                 rows, cols = np.nonzero(visible)  # row-major pixel order
                 aa, bb, cc, zz = alpha[rows, cols], beta[rows, cols], gamma[rows, cols], depth[rows, cols]
@@ -260,14 +269,27 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                 continue
             if planned:
                 counts["scalar_fragment_calls"] += len(rows)
-            for i in range(len(rows)):
-                varyings = dict(flat_varyings)
-                for key, values in array_varyings.items():
-                    varyings[key] = values[i]
-                iy, ix = int(rows[i]) + top, int(cols[i]) + left
-                rgba = shader.fragment_shader(varyings)
-                fb.depth_buffer[iy, ix] = zz[i]
-                fb.color_buffer[iy, ix, :] = rgba
+            if pixel_trace is None:
+                # No per-fragment diagnostic branch or allocation in default.
+                for i in range(len(rows)):
+                    varyings = dict(flat_varyings)
+                    for key, values in array_varyings.items():
+                        varyings[key] = values[i]
+                    iy, ix = int(rows[i]) + top, int(cols[i]) + left
+                    rgba = shader.fragment_shader(varyings)
+                    fb.depth_buffer[iy, ix] = zz[i]
+                    fb.color_buffer[iy, ix, :] = rgba
+            else:
+                for i in range(len(rows)):
+                    varyings = dict(flat_varyings)
+                    for key, values in array_varyings.items():
+                        varyings[key] = values[i]
+                    iy, ix = int(rows[i]) + top, int(cols[i]) + left
+                    rgba = shader.fragment_shader(varyings)
+                    if ix == pixel_trace.x and iy == pixel_trace.y:
+                        pixel_trace.record_fragment(tri, rgba, zz[i])
+                    fb.depth_buffer[iy, ix] = zz[i]
+                    fb.color_buffer[iy, ix, :] = rgba
         if trace is not None and planned:
             trace.record((ty, tx), counts)
 

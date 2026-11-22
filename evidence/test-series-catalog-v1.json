@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "pixel-forensic-trace-287",
+      "introduced": "2026-11-22",
+      "title": "#287 Pixel-Forensik: Edge, Depth-Owner und echte Shader-Calls",
+      "module": "software_gpu/tests/test_pixel_forensic_trace.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "glb-admission-security-295",
       "introduced": "2026-11-22",
       "title": "GLB2-Importer: JSON-/BIN-Budgets, Cache-SHA und Negativtests",

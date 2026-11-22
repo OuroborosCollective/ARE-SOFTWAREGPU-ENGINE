@@ -97,6 +97,43 @@ class SoftwareRasterizer:
             return
         self._draw_prepared(triangles, shader, prepared_bins)
 
+    def draw_mesh_traced(self, vertices, indices, shader, trace):
+        """Explicit opt-in real-tile draw with bounded per-pixel provenance.
+
+        Does not activate tracing on any normal draw_mesh call. Unsupported
+        backends/learning/cache combinations fail before touching the frame.
+        """
+        from .pixel_trace import PixelForensicTrace
+        if type(trace) is not PixelForensicTrace or trace.fb is not self.fb:
+            raise ValueError("PIXEL_TRACE_SESSION_INVALID")
+        if (self.backend != "tiles" or self.local_learner is not None
+                or self.preparation_cache is not None or self.plan_policy is not None):
+            raise ValueError("PIXEL_TRACE_BACKEND_UNSUPPORTED")
+        faces = list(indices)
+        if len(faces) > trace.max_events or len(vertices) > 3 * trace.max_events:
+            raise ValueError("PIXEL_TRACE_QUOTA_EXCEEDED")
+        source_faces = []
+        triangles = prepare_triangles(vertices, faces, shader, self.fb.width,
+                                      self.fb.height, source_faces=source_faces)
+        # Must happen before device counters or framebuffer writes.
+        trace.start_draw(vertices, faces, shader, triangles, source_faces)
+        device = VirtualGPU.get_current_device()
+        device.total_draw_calls += 1
+        self.last_learning_receipt = None
+        self.last_plan_receipt = None
+        self.last_deferred_receipt = None
+        self.last_native_receipt = None
+        self.last_preparation_receipt = None
+        try:
+            rasterize_tiles(self.fb, triangles, shader, self.tile_size, self.executor,
+                            self.num_threads, pixel_trace=trace)
+        except BaseException:
+            # CPU shaders may fail mid-frame; never seal partial results as evidence.
+            trace.invalidate()
+            raise
+        else:
+            trace.end_draw()
+
     def _draw_prepared(self, triangles, shader, prepared_bins):
         if self.native_kernel is not None:
             self.last_native_receipt = self.native_kernel.draw(self.fb, triangles, shader)
