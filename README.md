@@ -363,3 +363,7 @@ Die Android-Begleitapp erhält einen klaren Einstieg statt einer unbeschrifteten
 ## Lokale Render- und Videokalibrierung
 
 Mit `are-learning enable` lernen Rasterizer und ARE-Videoexport aus lokalen Laufzeiten. [Einrichtung, Datensatz und Vergleich auf zurückgehaltener Geometrie](docs/LOCAL_RENDER_LEARNING.md)
+
+## Issue #294: GLB-Codec-Vergleich (22. November 2026)
+
+[Opt-in Draco/Meshopt/GLB2-Pipeline mit 15-Paar-Runs, negativen Tests, CI und Source-Receipt](docs/ISSUE294_GLB_CODEC_COMPARISON.md) · [Testserie neueste zuerst (keine Geschwindigkeitsrangliste)](docs/CPU_WAVE_RANGLISTEN.md). SHA-gepinnte Khronos-Originale, Morph/native Codec-Dekodierung explizit unsupported, kein automatisches Codec-Upgrade.

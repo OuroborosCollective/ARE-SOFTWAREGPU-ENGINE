@@ -1,0 +1,61 @@
+{
+  "protocol": "are.asset-codec-sources.v1",
+  "source_repository": "https://github.com/KhronosGroup/glTF-Sample-Models",
+  "source_commit": "d7a3cc8e51d7c573771ae77a57f16b0662a905c6",
+  "toolchain": {
+    "cli": "@gltf-transform/cli@4.5.1",
+    "package_lock_sha256": "b1fb5aca78bf327ec7c0f42783a38ab40903569a7d1a273db3c08dad1d74c8ba"
+  },
+  "assets": [
+    {
+      "name": "Box",
+      "sha256": "ed52f7192b8311d700ac0ce80644e3852cd01537e4d62241b9acba023da3d54e",
+      "bytes": 1664,
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/Box/glTF-Binary/Box.glb",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Models/blob/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/Box/README.md",
+      "expected_kind": "static",
+      "lod": "LOD0-original"
+    },
+    {
+      "name": "CesiumMan",
+      "sha256": "659349b0a374b73d5362a61070039bc8601401bbdeacbece4f3680fb4bfd41b0",
+      "bytes": 490956,
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/CesiumMan/glTF-Binary/CesiumMan.glb",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Models/blob/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/CesiumMan/README.md",
+      "expected_kind": "rig",
+      "lod": "LOD0-original"
+    },
+    {
+      "name": "DamagedHelmet",
+      "sha256": "a1e3b04de97b11de564ce6e53b95f02954a297f0008183ac63a4f5974f6b32d8",
+      "bytes": 3773916,
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb",
+      "license": "CC-BY-NC",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Models/blob/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/DamagedHelmet/README.md",
+      "expected_kind": "static",
+      "lod": "LOD0-original"
+    },
+    {
+      "name": "Fox",
+      "sha256": "d97044e701822bac5a62696459b27d7b375aada5de8574ed4362edbba94771f7",
+      "bytes": 162852,
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/Fox/glTF-Binary/Fox.glb",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Models/blob/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/Fox/README.md",
+      "expected_kind": "rig",
+      "lod": "LOD0-original"
+    },
+    {
+      "name": "MorphPrimitivesTest",
+      "sha256": "2a5ed6470aca41edc813ef5b7eecf2af53264d8e0ab9e6f32156d54245ca18cf",
+      "bytes": 53656,
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/MorphPrimitivesTest/glTF-Binary/MorphPrimitivesTest.glb",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/KhronosGroup/glTF-Sample-Models/blob/d7a3cc8e51d7c573771ae77a57f16b0662a905c6/2.0/MorphPrimitivesTest/README.md",
+      "expected_kind": "morph",
+      "lod": "LOD0-original"
+    }
+  ]
+}
