@@ -207,6 +207,30 @@ class PixelForensicTests(unittest.TestCase):
         self.assertEqual(first["depth_rule"], "strict_less")
         self.assertTrue(all(len(value) == 8 for value in first["edge_f32_bits"]))
 
+    def test_preparation_and_provenance_errors_cannot_be_sealed(self):
+        fb = Framebuffer(64, 64)
+        shader = CountingAlphaShader()
+        raster = SoftwareRasterizer(fb, num_threads=1)
+        first = PixelForensicTrace(fb, 32, 32, REVISION)
+        empty_color, empty_depth = fb.color_buffer.tobytes(), fb.depth_buffer.tobytes()
+        try:
+            with self.assertRaisesRegex(IndexError, "triangle index outside"):
+                raster.draw_mesh_traced(triangle(), [(0, 1, 99)], shader, first)
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_INCOMPLETE"):
+                first.finish()
+            second = PixelForensicTrace(fb, 32, 32, REVISION)
+            vertices = triangle()
+            vertices[0].normal = np.asarray([object()], dtype=object)
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_UNHASHABLE_INPUT"):
+                raster.draw_mesh_traced(vertices, [(0, 1, 2)], shader, second)
+            with self.assertRaisesRegex(ValueError, "PIXEL_TRACE_INCOMPLETE"):
+                second.finish()
+        finally:
+            raster.executor.shutdown(wait=True)
+        self.assertEqual(shader.calls, 0)
+        self.assertEqual(fb.color_buffer.tobytes(), empty_color)
+        self.assertEqual(fb.depth_buffer.tobytes(), empty_depth)
+
     def test_default_draw_has_no_instrumentation_or_extra_shader_calls(self):
         fb, calls, receipt = execute([(triangle(), [(0, 1, 2)])], False)
         self.assertIsNone(receipt)
