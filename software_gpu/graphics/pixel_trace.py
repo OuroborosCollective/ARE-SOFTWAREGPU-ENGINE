@@ -154,6 +154,8 @@ class PixelForensicTrace:
     def finish(self):
         if self._invalid:
             raise ValueError("PIXEL_TRACE_INCOMPLETE")
+        if self._sealed:
+            raise ValueError("PIXEL_TRACE_ALREADY_FINISHED")
         if self._active is not None:
             raise ValueError("PIXEL_TRACE_DRAW_ACTIVE")
         self._sealed = True
