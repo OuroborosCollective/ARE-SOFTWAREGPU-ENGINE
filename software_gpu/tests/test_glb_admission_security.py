@@ -15,7 +15,7 @@ import unittest
 import numpy as np
 
 from software_gpu.integrations.aurion.offline_lod_worker import load_worldforge_glb
-from software_gpu.integrations.worldforge import review
+from software_gpu.integrations.worldforge import review, scan
 from software_gpu.tests.test_aurion_offline_lod import synthetic_glb
 
 
@@ -207,6 +207,28 @@ class GLBAdmissionSecurityTests(unittest.TestCase):
             image.write_bytes(b"tampered")
             with self.assertRaisesRegex(ValueError, "WORLD_FORGE_CACHE_INVALID"):
                 review(job, root / "reports")
+
+
+    def test_incremental_scan_rechecks_cached_source_integrity(self):
+        raw = synthetic_glb()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            jobs = root / "jobs"
+            jobs.mkdir()
+            job = jobs / ("d" * 64)
+            job.mkdir()
+            model = job / "model.glb"
+            model.write_bytes(raw)
+            receipt = {"schema": "worldforge.blender-export.v1", "jobId": job.name,
+                       "files": [{"path": "model.glb", "size": len(raw),
+                                  "sha256": hashlib.sha256(raw).hexdigest()}]}
+            (job / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+            output = root / "reports"
+            review(job, output)
+            scan(jobs, output, limit=1)
+            model.write_bytes(raw[:-1] + b"X")
+            with self.assertRaisesRegex(ValueError, "SOURCE_SHA256_MISMATCH"):
+                scan(jobs, output, limit=1)
 
 
 if __name__ == "__main__":
