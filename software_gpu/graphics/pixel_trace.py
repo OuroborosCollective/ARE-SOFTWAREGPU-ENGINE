@@ -41,6 +41,9 @@ def _hash_scene(vertices, faces, shader):
                 h.update(b"none\0")
                 continue
             arr = np.asarray(value)
+            # Object arrays encode process-dependent pointer bytes, not canonical geometry.
+            if arr.dtype.hasobject:
+                raise ValueError("PIXEL_TRACE_UNHASHABLE_INPUT")
             h.update(str(arr.dtype).encode("ascii") + b"\0")
             h.update(str(arr.shape).encode("ascii") + b"\0")
             h.update(arr.tobytes(order="C"))

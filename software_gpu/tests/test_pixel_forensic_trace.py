@@ -105,6 +105,17 @@ class PixelForensicTests(unittest.TestCase):
         self.assertIn(0, receipt["discarded_primitives"][0])
         self.assertEqual(receipt["final_owner"]["primitive_id"], 2)
 
+    def test_inside_candidate_bounds_but_outside_edge_rejected(self):
+        # Triangle bounding rectangle contains (32,32), actual edge test does not.
+        points = [(-0.625, -0.78125, 0.3), (0.78125, -0.78125, 0.3),
+                  (0.8125, 0.8125, 0.3)]
+        vertices = triangle(points=points, color=(0, 0, 1)) + triangle()
+        receipt = self.assert_identical([(vertices, [(0, 1, 2), (3, 4, 5)])], workers=2)
+        self.assertEqual(receipt["events"][0]["decision"], "edge_reject")
+        self.assertFalse(receipt["events"][0]["edge_pass"])
+        self.assertEqual(len(receipt["events"][0]["edge_f32_bits"]), 3)
+        self.assertEqual(receipt["final_owner"]["primitive_id"], 1)
+
     def test_near_clipped_source_provenance_and_draw_sequence(self):
         near = triangle(points=[(-0.8, -0.8, -1.5), (0.8, -0.8, 0.3),
                                 (0.0, 0.8, 0.3)], color=(0, 1, 0))
