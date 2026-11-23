@@ -12,6 +12,7 @@ import ctypes
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -95,15 +96,25 @@ def verify(expected_revision: str) -> dict:
         env["ARE_ICD_TRACE"] = "1"  # Actual ICD entries invoked by system loader only
         observed = subprocess.run([str(executable)], env=env,
                                   capture_output=True, text=True, timeout=30)
-        if (observed.returncode != 0 or
-                "ARE_REAL_LOADER_ENUMERATION_RESULT=0 COUNT=0" not in observed.stdout):
+        observed_line = re.search(
+            r"ARE_REAL_LOADER_ENUMERATION_RESULT=(-?\\d+) COUNT=(\\d+)",
+            observed.stdout,
+        )
+        if observed.returncode != 0 or observed_line is None:
             raise RuntimeError("ARE_ICD_REAL_LOADER_REJECTED:" +
-                               observed.stdout[-1000:] + observed.stderr[-2000:])
-        if library.name not in observed.stderr:
-            raise RuntimeError("ARE_ICD_REAL_LOADER_LIBRARY_BINDING_UNPROVEN")
+                               observed.stdout[-1000:] + observed.stderr[-2500:])
+        loader_result, loader_count = map(int, observed_line.groups())
+        if ((loader_result, loader_count) not in ((0, 0), (-3, 777)) or
+                library.name not in observed.stderr or
+                "ARE_ICD_ACTUAL_ENTRY:negotiate-loader-interface" not in observed.stderr or
+                "ARE_ICD_ACTUAL_ENTRY:create-instance" not in observed.stderr or
+                "ARE_ICD_ACTUAL_ENTRY:enumerate-zero-devices" not in observed.stderr or
+                "ARE_ICD_ACTUAL_ENTRY:icd-return-zero-devices-vk-success" not in observed.stderr):
+            raise RuntimeError("ARE_ICD_REAL_LOADER_BINDING_OR_ZERO_DEVICE_UNPROVEN:" +
+                               observed.stdout[-1000:] + observed.stderr[-2500:])
         return {
             "protocol": "are.vulkan-loader-zero-device-admission.v1",
-            "status": "PASS_REAL_LOADER_ZERO_PHYSICAL_DEVICES",
+            "status": "PASS_REAL_LOADER_ZERO_DEVICE_NEGATIVE_ADMISSION",
             "source_revision": source_revision,
             "source_sha256": source_hashes,
             "driver_binary_sha256": hashfile(library),
@@ -111,7 +122,10 @@ def verify(expected_revision: str) -> dict:
             "manifest_sha256": hashfile(manifest),
             "actual_vk_create_instance": True,
             "actual_vk_enumerate_physical_devices": True,
-            "enumerated_devices": 0,
+            "icd_successfully_enumerated_zero_devices": True,
+            "loader_vk_enumerate_result": loader_result,
+            "loader_observed_device_count": loader_count if loader_result == 0 else None,
+            "are_reported_physical_devices": 0,
             "are_cpp_driver_abi": 1,
             "negotiated_loader_interface": version.value,
             "loader_stdout_sha256": hashlib.sha256(observed.stdout.encode()).hexdigest(),
