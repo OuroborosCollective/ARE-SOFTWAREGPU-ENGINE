@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+extern "C" int are_driver_draw_v1(const are::driver::DrawV1*, std::size_t);
+
 namespace are::vulkan::predevice {
 
 using ResourceHandle = std::uint64_t;
