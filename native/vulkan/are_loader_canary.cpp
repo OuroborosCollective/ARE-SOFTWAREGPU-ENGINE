@@ -61,6 +61,7 @@ VKAPI_ATTR VkResult VKAPI_CALL create_instance(
     set_loader_magic_value(value);
     value->protocol_version = kInstanceProtocol;
     *instance = value;
+    if (std::getenv("ARE_ICD_TRACE")) std::fprintf(stderr, "ARE_ICD_INSTANCE_ALLOCATED:%p proto=%08x\\n", static_cast<void*>(value), value->protocol_version);
     return VK_SUCCESS;
 }
 
@@ -74,6 +75,7 @@ VKAPI_ATTR void VKAPI_CALL destroy_instance(
 VKAPI_ATTR VkResult VKAPI_CALL enumerate_physical_devices(
     VkInstance instance, std::uint32_t* count, VkPhysicalDevice* devices) {
     trace("enumerate-zero-devices");
+    if (std::getenv("ARE_ICD_TRACE")) std::fprintf(stderr, "ARE_ICD_ENUM_INSTANCE:%p proto=%08x countptr=%p\\n", static_cast<void*>(instance), instance ? instance->protocol_version : 0u, static_cast<void*>(count));
     if (!valid_instance(instance) || !count) return VK_ERROR_INITIALIZATION_FAILED;
     // No fake CPU GPU or dummy queues may reach Vulkan clients.
     *count = 0;
@@ -183,7 +185,10 @@ vk_icdNegotiateLoaderICDInterfaceVersion(std::uint32_t* version) {
 
 ARE_VK_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetInstanceProcAddr(VkInstance, const char* name) {
-    trace(name ? name : "get-instance-procaddr:null");
+    if (name && (std::strcmp(name, "vkCreateInstance") == 0 ||
+                 std::strcmp(name, "vkEnumeratePhysicalDevices") == 0 ||
+                 std::strcmp(name, "vkDestroyInstance") == 0 ||
+                 std::strcmp(name, "vkGetPhysicalDeviceFeatures") == 0)) trace(name);
     return resolve(name);
 }
 
