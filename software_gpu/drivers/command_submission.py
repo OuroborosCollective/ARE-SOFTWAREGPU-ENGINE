@@ -11,11 +11,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from pathlib import Path
 
 import numpy as np
 
 from software_gpu.drivers.native_bridge import AREDriverBridge
 from software_gpu.graphics.framebuffer import Framebuffer
+from software_gpu.learning import bucket, configured_learner, implementation_id, scope_key
 
 _STRIDE = 23
 _MAX_COMMANDS = 256
@@ -123,27 +125,102 @@ def submit_native_draws(bridge: AREDriverBridge, framebuffer: Framebuffer,
     if total * framebuffer.width * framebuffer.height > _MAX_SAMPLES:
         raise ValueError("ARE_COMMAND_BUDGET")
 
-    # Keep original output unchanged even if the *last* real native draw fails.
-    staging = Framebuffer(framebuffer.width, framebuffer.height)
-    staging.color_buffer[:] = framebuffer.color_buffer
-    staging.depth_buffer[:] = framebuffer.depth_buffer
-    counts = {"candidate_samples": 0, "covered_samples": 0, "shaded_samples": 0}
-    for command in packet.commands:
-        data = np.frombuffer(command.payload, dtype="<f8").copy().reshape((command.count, _STRIDE))
-        try:
-            actual = bridge.draw_packed(staging, data)
-        except ValueError as exc:
-            raise ValueError("ARE_COMMAND_SUBMISSION_REJECTED:" + str(exc)) from exc
-        for key in counts:
-            counts[key] += actual[key]
-    framebuffer.color_buffer[:] = staging.color_buffer
-    framebuffer.depth_buffer[:] = staging.depth_buffer
+    # Both paths below start from EXACTLY the same color/depth snapshot.
+    # Never learn from a failed reference. Never mutate the caller's image
+    # before every native C++ draw has completed on its private framebuffer.
+    def execute(alternative):
+        stage = Framebuffer(framebuffer.width, framebuffer.height)
+        stage.color_buffer[:] = framebuffer.color_buffer
+        stage.depth_buffer[:] = framebuffer.depth_buffer
+        counts = {"candidate_samples": 0, "covered_samples": 0, "shaded_samples": 0}
+        native_calls = 0
+        if alternative and len(packet.commands) > 1:
+            # Candidate is real C++ raster over precisely the same ordered
+            # triangles; collapse only the draw-call boundary, not geometry
+            # order, blending, depth, clipping or the shader implementation.
+            data = np.concatenate([
+                np.frombuffer(c.payload, dtype="<f8").reshape((c.count, _STRIDE))
+                for c in packet.commands
+            ], axis=0)
+            try:
+                result = bridge.draw_packed(stage, data)
+            except ValueError as exc:
+                raise ValueError("ARE_COMMAND_SUBMISSION_REJECTED:" + str(exc)) from exc
+            native_calls = 1
+            for name in counts:
+                counts[name] = result[name]
+        else:
+            for command in packet.commands:
+                data = np.frombuffer(command.payload, dtype="<f8").copy().reshape(
+                    (command.count, _STRIDE)
+                )
+                try:
+                    result = bridge.draw_packed(stage, data)
+                except ValueError as exc:
+                    raise ValueError("ARE_COMMAND_SUBMISSION_REJECTED:" + str(exc)) from exc
+                native_calls += 1
+                for name in counts:
+                    counts[name] += result[name]
+        return stage, counts, native_calls
+
+    def fingerprint(result):
+        stage, counts, _calls = result
+        digest = hashlib.sha256()
+        digest.update(stage.color_buffer.tobytes())
+        digest.update(stage.depth_buffer.tobytes())
+        for name in ("candidate_samples", "covered_samples", "shaded_samples"):
+            digest.update(int(counts[name]).to_bytes(8, byteorder="little", signed=False))
+        return digest.hexdigest()
+
+    def publish(result):
+        stage, _counts, _calls = result
+        # Preserve references to pre-existing caller arrays.
+        np.copyto(framebuffer.color_buffer, stage.color_buffer)
+        np.copyto(framebuffer.depth_buffer, stage.depth_buffer)
+
+    learner = configured_learner()
+    learning_receipt = None
+    if learner is None:
+        result = execute(False)
+        publish(result)
+    else:
+        root = Path(__file__).resolve().parents[2]
+        implementation = implementation_id(
+            __file__, Path(__file__).with_name("native_bridge.py"),
+            root / "native/raster/core.hpp",
+            root / "native/raster/driver_adapter.hpp",
+            root / "native/raster/driver_adapter.cpp",
+        )
+        state_hash = hashlib.sha256()
+        state_hash.update(framebuffer.color_buffer.tobytes())
+        state_hash.update(framebuffer.depth_buffer.tobytes())
+        key = scope_key(
+            stage="native-command-cpp17",
+            variant="collapsed-native-draw-v1" if len(packet.commands) > 1 else None,
+            implementation=implementation,
+            native_binary_sha256=bridge.binary_sha256,
+            numpy=np.__version__,
+            width=bucket(framebuffer.width),
+            height=bucket(framebuffer.height),
+            triangle_total=bucket(total),
+            packet_sha256=packet.command_sha256,
+            initial_frame_sha256=state_hash.hexdigest(),
+        )
+        # Single-draw packets have no meaningful different C++ strategy.
+        # They still contribute *observational* timing weights in the same DB.
+        result, learning_receipt = learner.execute(
+            key, execute, fingerprint if len(packet.commands) > 1 else None, publish
+        )
+
+    _stage, counts, calls = result
     return {
         "protocol": "are.native-command-submission.v1",
         "renderer": "real native ARE CPU C++17",
         "native_binary_sha256": bridge.binary_sha256,
         "packet_sha256": packet.command_sha256,
         "submitted_draws": len(packet.commands),
+        "native_cpp_calls": calls,
+        "learning": learning_receipt,
         **counts,
         "rgba_sha256": hashlib.sha256(framebuffer.color_buffer.tobytes()).hexdigest(),
         "depth_sha256": hashlib.sha256(framebuffer.depth_buffer.tobytes()).hexdigest(),
