@@ -34,7 +34,7 @@ def edge_covered(value, a: np.ndarray, b: np.ndarray):
     return (value >= 0) if is_top_left(a, b) else (value > 0)
 
 
-def _distance(position: np.ndarray, plane: int) -> float:
+def _distance(position: np.ndarray, plane: int, zero_to_one: bool = False) -> float:
     # Indexing avoids temporary tuple unpacking in this clipping hot path.
     # No quantitative speedup is claimed without a source-bound CPU receipt.
     if plane == 0:
@@ -46,7 +46,7 @@ def _distance(position: np.ndarray, plane: int) -> float:
     if plane == 3:
         return position[3] - position[1]
     if plane == 4:
-        return position[3] + position[2]
+        return position[2] if zero_to_one else position[3] + position[2]
     if plane == 5:
         return position[3] - position[2]
     return position[3] - _MIN_W
@@ -65,9 +65,10 @@ def _interpolate(first, second, fraction: float):
     return pos, attrs
 
 
-def clip_triangle(vertices: list[tuple[np.ndarray, dict]]):
+def clip_triangle(vertices: list[tuple[np.ndarray, dict]], *, zero_to_one=False):
     """Sutherland-Hodgman clip against all six homogeneous frustum planes.
 
+    With zero_to_one, clip near Z at zero as required by Vulkan.
     A final w>=epsilon plane ensures projective division stays well-defined.
     Returns zero or more triangles with interpolated *clip-space* varyings.
     """
@@ -77,10 +78,10 @@ def clip_triangle(vertices: list[tuple[np.ndarray, dict]]):
             break
         output = []
         previous = polygon[-1]
-        previous_distance = _distance(previous[0], plane)
+        previous_distance = _distance(previous[0], plane, zero_to_one)
         previous_inside = previous_distance >= 0.0
         for current in polygon:
-            current_distance = _distance(current[0], plane)
+            current_distance = _distance(current[0], plane, zero_to_one)
             current_inside = current_distance >= 0.0
             if previous_inside != current_inside:
                 fraction = previous_distance / (previous_distance - current_distance)
