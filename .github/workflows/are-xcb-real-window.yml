@@ -1,0 +1,66 @@
+name: ARE real XCB window pixel readback (pre-Vulkan WSI)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/vulkan/xcb_present.hpp'
+      - 'native/vulkan/xcb_present_probe.cpp'
+      - 'software_gpu/drivers/verify_xcb_window.py'
+      - '.github/workflows/are-xcb-real-window.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/vulkan/xcb_present.hpp'
+      - 'native/vulkan/xcb_present_probe.cpp'
+      - 'software_gpu/drivers/verify_xcb_window.py'
+      - '.github/workflows/are-xcb-real-window.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-xcb:
+    name: Real ARE CPU framebuffer -> actual Xvfb XCB readback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install true XCB development, Xvfb and ARE Python dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y libxcb1-dev xvfb x11-utils
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Real window and X server readback, independent DISPLAY negative contract
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          Xvfb :93 -screen 0 800x600x24 -nolisten tcp -noreset > xcb-xvfb.log 2>&1 &
+          xvfb_pid=$!
+          trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
+          export DISPLAY=:93
+          for i in {1..20}; do
+            if xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then break; fi
+            sleep 0.2
+          done
+          xdpyinfo -display "$DISPLAY" | head -15
+          python -m software_gpu.drivers.verify_xcb_window \
+            --expected-revision "$EXPECTED_REVISION" \
+            --output evidence-local/xcb-real-window
+      - name: Preserve actual X server captured bytes and exact-SHA receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: are-real-xcb-window-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            evidence-local/xcb-real-window/receipt.json
+            evidence-local/xcb-real-window/*.bin
+            xcb-xvfb.log
+          if-no-files-found: ignore
+          retention-days: 30
