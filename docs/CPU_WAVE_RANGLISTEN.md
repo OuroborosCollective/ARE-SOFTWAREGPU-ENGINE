@@ -13,6 +13,7 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
 | 2026-11-23 | ARE Driver Adapter P0: echte native CPU-Frames, ABI- und Negativtests (`software_gpu/tests/test_driver_adapter.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
+| 2026-11-23 | ARE Native CPU Commands: echte geordnete Draws und atomarer Rollback (`software_gpu/tests/test_native_command_submission.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-23 | #285 Opt-in Alpha, sRGB-Blending, CPU-Shadowmap und 4x Resolve (`software_gpu/tests/test_optin_cpu_materials.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-23 | SPIR-V: echte glslang/spirv-val Vertex+Fragment-Inputs (kein ARE-Backend) (`software_gpu/tests/test_spirv_preflight.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-23 | SPIR-V SSA: echte Vertex-/Fragment-Ausführung auf ARE-CPU-Tiles (`software_gpu/tests/test_spirv_opcode_execution.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |

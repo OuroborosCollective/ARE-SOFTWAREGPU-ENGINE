@@ -60,6 +60,23 @@ ROUTE_INVENTORY = {
     "tools/ktx2_texture_admission.py": {
         "convert_ktx2_glb": "weights-active-ktx",
     },
+    "software_gpu/drivers/command_submission.py": {
+        "submit_native_draws": "weights-active-native-command",
+        "record_native_draws": "unweighted-immutable-input-recorder",
+    },
+    "software_gpu/drivers/native_bridge.py": {
+        "AREDriverBridge.draw_packed": "unweighted-lowlevel-native-abi",
+    },
+    "software_gpu/drivers/spirv_execution_smoke.py": {
+        "execute": "delegates-weighted-raster",
+    },
+    "software_gpu/drivers/spirv_opcode_executor.py": {
+        "RestrictedSpirvColorShader.vertex_shader": "unweighted-shader-callback",
+        "RestrictedSpirvColorShader.fragment_shader": "unweighted-shader-callback",
+    },
+    "software_gpu/drivers/vulkan_reference.py": {
+        "run_reference_probe": "unweighted-external-mesa-preflight",
+    },
 }
 
 
@@ -190,6 +207,12 @@ class LearningRoutingCoverage(unittest.TestCase):
                     self.assertIn("workers == 'auto'", src)
                 elif status == "weights-active-ktx":
                     self.assertIn("learner.execute", src)
+                elif status == "weights-active-native-command":
+                    self.assertIn("configured_learner", src)
+                    self.assertIn("learner.execute", src)
+                    self.assertIn("fingerprint", src)
+                    self.assertIn("np.copyto", src)
+                    self.assertIn("bridge.draw_packed", src)
                 elif status == "delegates-verified-native-auto":
                     self.assertIn("workers='auto'", src)
                     self.assertIn("NATIVE_WORKER_BUFFER_MISMATCH", src)
@@ -204,7 +227,7 @@ class LearningRoutingCoverage(unittest.TestCase):
                 elif status.startswith("unweighted"):
                     self.assertNotIn("learner.execute", src)
         self.assertGreaterEqual(len(declared), 13)
-        self.assertEqual(sum(v.startswith("weights-active") for v in declared.values()), 6)
+        self.assertEqual(sum(v.startswith("weights-active") for v in declared.values()), 7)
         # Active means the route *offers* measured alternatives when the
         # learner is enabled. Pinned worker paths and pure input serializers
         # are deliberately not claimed as adaptively selectable.
