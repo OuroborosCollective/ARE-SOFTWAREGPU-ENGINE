@@ -29,6 +29,21 @@ class XcbFramePresenter final {
         return width > 0 && height > 0 && width <= 4096 && height <= 4096
             && std::uint64_t(width) * height <= 4194304;
     }
+    static bool supports_root_visual(const xcb_screen_t* screen) {
+        auto depths = xcb_screen_allowed_depths_iterator(screen);
+        for (; depths.rem; xcb_depth_next(&depths)) {
+            if (depths.data->depth != screen->root_depth) continue;
+            auto visuals = xcb_depth_visuals_iterator(depths.data);
+            for (; visuals.rem; xcb_visualtype_next(&visuals)) {
+                const auto& visual = *visuals.data;
+                if (visual.visual_id == screen->root_visual)
+                    return visual._class == XCB_VISUAL_CLASS_TRUE_COLOR
+                        && visual.red_mask == 0xff0000 && visual.green_mask == 0x00ff00
+                        && visual.blue_mask == 0x0000ff;
+            }
+        }
+        return false;
+    }
     bool checked(xcb_void_cookie_t cookie) {
         auto* error = xcb_request_check(conn_, cookie);
         if (!error) return true;
@@ -77,7 +92,7 @@ public:
                 format_found = true; break;
             }
         }
-        if (!format_found || depth_ != 24) {
+        if (!format_found || depth_ != 24 || !supports_root_visual(screen)) {
             close(); return XcbStatus::unsupported_visual;
         }
         window_ = xcb_generate_id(conn_);
@@ -122,11 +137,21 @@ public:
             bgra[i+2] = rgba[i];
             bgra[i+3] = 0;
         }
-        if (!checked(xcb_put_image_checked(
-                conn_,XCB_IMAGE_FORMAT_Z_PIXMAP,window_,gc_,
-                static_cast<std::uint16_t>(width),static_cast<std::uint16_t>(height),
-                0,0,0,depth_,static_cast<std::uint32_t>(expected),bgra.data())))
-            return XcbStatus::rejected_request;
+        // At 32 bpp each pixel is one protocol word. BIG-REQUESTS adds a length word.
+        const auto limit = xcb_get_maximum_request_length(conn_);
+        const auto header = sizeof(xcb_put_image_request_t) / 4 + (limit > UINT16_MAX);
+        if (limit < header + width) return XcbStatus::rejected_request;
+        const std::uint32_t max_rows = (limit - header) / width;
+        const auto stride = width * 4;
+        for (std::uint32_t y = 0; y < height;) {
+            const auto rows = std::min(max_rows, height - y);
+            if (!checked(xcb_put_image_checked(
+                    conn_, XCB_IMAGE_FORMAT_Z_PIXMAP, window_, gc_,
+                    static_cast<std::uint16_t>(width), static_cast<std::uint16_t>(rows),
+                    0, static_cast<std::int16_t>(y), 0, depth_, rows * stride,
+                    bgra.data() + y * stride))) return XcbStatus::rejected_request;
+            y += rows;
+        }
         if (xcb_flush(conn_) <= 0) return XcbStatus::unavailable;
         return XcbStatus::ok;
     }

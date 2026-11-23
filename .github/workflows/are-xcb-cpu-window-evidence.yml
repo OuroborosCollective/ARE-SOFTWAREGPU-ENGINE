@@ -5,6 +5,11 @@ on:
     paths:
       - 'native/vulkan/xcb_frame_presenter.hpp'
       - 'native/vulkan/xcb_frame_presenter_test.cpp'
+      - 'native/raster/driver_adapter.cpp'
+      - 'native/raster/driver_adapter.hpp'
+      - 'native/raster/core.hpp'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/research/native_symbolic.py'
       - 'software_gpu/drivers/verify_xcb_frame_presenter.py'
       - '.github/workflows/are-xcb-cpu-window-evidence.yml'
   push:
@@ -12,6 +17,11 @@ on:
     paths:
       - 'native/vulkan/xcb_frame_presenter.hpp'
       - 'native/vulkan/xcb_frame_presenter_test.cpp'
+      - 'native/raster/driver_adapter.cpp'
+      - 'native/raster/driver_adapter.hpp'
+      - 'native/raster/core.hpp'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/research/native_symbolic.py'
       - 'software_gpu/drivers/verify_xcb_frame_presenter.py'
       - '.github/workflows/are-xcb-cpu-window-evidence.yml'
   workflow_dispatch:
