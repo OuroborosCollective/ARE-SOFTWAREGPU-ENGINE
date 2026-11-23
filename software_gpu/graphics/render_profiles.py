@@ -167,7 +167,9 @@ class ShadowedShader:
         if (not isinstance(ambient, (int, float)) or isinstance(ambient, bool)
                 or not math.isfinite(ambient) or not 0 <= ambient <= 1):
             raise ValueError("OPTIN_SHADOW_AMBIENT_INVALID")
-        shadow_map.visible((0.0, 0.0, 0.0), bias=bias)  # bias validation only
+        if (not isinstance(bias, (float, int)) or isinstance(bias, bool)
+                or not math.isfinite(bias) or not 0 <= bias <= 0.1):
+            raise ValueError("OPTIN_SHADOW_BIAS_INVALID")
         self.base = base_shader
         self.shadow = shadow_map
         self.ambient = float(ambient)
