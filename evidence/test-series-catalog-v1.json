@@ -192,6 +192,14 @@
       "module": "software_gpu/tests/test_spirv_opcode_execution.py",
       "surface": "test",
       "status": "registered"
+    },
+    {
+      "id": "are-native-command-submission-313",
+      "introduced": "2026-11-23",
+      "title": "ARE Native CPU Commands: echte geordnete Draws und atomarer Rollback",
+      "module": "software_gpu/tests/test_native_command_submission.py",
+      "surface": "test",
+      "status": "registered"
     }
   ]
 }
