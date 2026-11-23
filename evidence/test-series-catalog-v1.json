@@ -184,6 +184,14 @@
       "module": "software_gpu/tests/test_vulkan_loader_reference.py",
       "surface": "test",
       "status": "registered"
+    },
+    {
+      "id": "spirv-real-ssa-execution-313",
+      "introduced": "2026-11-23",
+      "title": "SPIR-V SSA: echte Vertex-/Fragment-Ausführung auf ARE-CPU-Tiles",
+      "module": "software_gpu/tests/test_spirv_opcode_execution.py",
+      "surface": "test",
+      "status": "registered"
     }
   ]
 }
