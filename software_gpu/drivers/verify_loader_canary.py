@@ -97,7 +97,7 @@ def verify(expected_revision: str) -> dict:
         observed = subprocess.run([str(executable)], env=env,
                                   capture_output=True, text=True, timeout=30)
         observed_line = re.search(
-            r"ARE_REAL_LOADER_ENUMERATION_RESULT=(-?\\d+) COUNT=(\\d+)",
+            r"ARE_REAL_LOADER_ENUMERATION_RESULT=(-?\d+) COUNT=(\d+)",
             observed.stdout,
         )
         if observed.returncode != 0 or observed_line is None:
