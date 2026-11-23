@@ -58,7 +58,7 @@ def verify(revision: str) -> dict:
             raise RuntimeError("ARE_PREDEVICE_COUNTER_FORMAT")
         candidate, covered, shaded = (int(x) for x in counts[1:])
         if not (candidate >= covered >= shaded > 0):
-            raise RuntimeError("ARE_PREDEVICE_COUNTER_CONTRACT")
+            raise RuntimeError(f"ARE_PREDEVICE_COUNTER_CONTRACT:{candidate}:{covered}:{shaded}")
         if color.stat().st_size != 32 * 24 * 4 or depth.stat().st_size != 32 * 24 * 4:
             raise RuntimeError("ARE_PREDEVICE_FRAME_SIZE")
         return {
