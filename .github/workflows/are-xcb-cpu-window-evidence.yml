@@ -1,0 +1,54 @@
+name: ARE real XCB CPU framebuffer window bridge (pre-Vulkan WSI)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/vulkan/xcb_frame_presenter.hpp'
+      - 'native/vulkan/xcb_frame_presenter_test.cpp'
+      - 'software_gpu/drivers/verify_xcb_frame_presenter.py'
+      - '.github/workflows/are-xcb-cpu-window-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/vulkan/xcb_frame_presenter.hpp'
+      - 'native/vulkan/xcb_frame_presenter_test.cpp'
+      - 'software_gpu/drivers/verify_xcb_frame_presenter.py'
+      - '.github/workflows/are-xcb-cpu-window-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  xcb-real-frame:
+    name: Actual Xvfb/XCB window readback of ARE C++ raster
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install actual X11 XCB and disposable Xvfb dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y xvfb xauth libxcb1-dev
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Real native ARE -> XCB PutImage -> X Server GetImage; negative display tests
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python -m software_gpu.drivers.verify_xcb_frame_presenter \
+            --expected-revision "$EXPECTED_REVISION" \
+            --output evidence-local/xcb-real-window/receipt.json
+      - name: Archive actual XCB server readback receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: are-xcb-real-window-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/xcb-real-window/receipt.json
+          if-no-files-found: ignore
+          retention-days: 30
