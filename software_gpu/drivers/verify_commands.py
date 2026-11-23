@@ -27,6 +27,7 @@ def _check_revision(revision: str) -> None:
 def _verify_in_native_worker(revision: str, directory: Path) -> dict:
     """Render genuine ARE frames in the child, which owns the loaded DLL."""
     _check_revision(revision)
+    source = revision  # independently matched to git HEAD before native execution
     binary, build = build_driver_bridge(directory / "driver")
     bridge = AREDriverBridge(binary, build["binary_sha256"])
     mesh, faces = make_fixture(4, 0.8)
