@@ -196,5 +196,24 @@ class MaterialTests(unittest.TestCase):
         self.assertEqual(receipt["no_gpu_or_fps_claim"], True)
 
 
+    def test_fifteen_real_full_frame_pairs_cost_gate(self):
+        from software_gpu.benchmarks.benchmark_optin_materials import measure
+        receipt = measure(32, 15)
+        self.assertEqual(receipt["pairs"], 15)
+        self.assertTrue(receipt["no_fps_or_gpu_claim"])
+        self.assertTrue(receipt["semantics_comparable"]["legacy_vs_alpha_test"])
+        self.assertFalse(receipt["semantics_comparable"]["legacy_vs_blend"])
+        self.assertFalse(receipt["semantics_comparable"]["legacy_vs_shadow"])
+        for row in receipt["timings_ms"].values():
+            self.assertEqual(len(row["raw"]), 15)
+            self.assertTrue(all(math.isfinite(x) and x > 0 for x in row["raw"]))
+        for row in receipt["full_frame_fingerprints"].values():
+            self.assertEqual(len(row["rgba_sha256"]), 64)
+            self.assertEqual(len(row["depth_sha256"]), 64)
+        self.assertEqual(receipt["full_frame_fingerprints"]["legacy"]["rgba_sha256"],
+                         receipt["full_frame_fingerprints"]["alpha-test"]["rgba_sha256"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
