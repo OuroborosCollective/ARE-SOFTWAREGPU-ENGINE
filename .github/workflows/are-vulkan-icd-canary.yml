@@ -1,0 +1,50 @@
+name: ARE actual Vulkan loader zero-device admission
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/vulkan/**'
+      - 'software_gpu/drivers/verify_loader_canary.py'
+      - '.github/workflows/are-vulkan-icd-canary.yml'
+  push:
+    branches: [main, 'feat/are-vulkan-loader-*']
+    paths:
+      - 'native/vulkan/**'
+      - 'software_gpu/drivers/verify_loader_canary.py'
+      - '.github/workflows/are-vulkan-icd-canary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  loader-real:
+    name: Genuine Khronos Loader and ARE C++ zero-device admission
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install real Khronos loader and Vulkan header dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libvulkan-dev vulkan-tools
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Compile real ARE native raster in ICD canary and call real Khronos Vulkan loader
+        env:
+          EXACT_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -m software_gpu.drivers.verify_loader_canary \
+            --expected-revision "$EXACT_REVISION" \
+            --output evidence-local/vulkan-loader/receipt.json
+      - name: Preserve exact source-bound genuine loader evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: are-vulkan-zero-device-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/vulkan-loader/receipt.json
+          if-no-files-found: ignore
+          retention-days: 30
