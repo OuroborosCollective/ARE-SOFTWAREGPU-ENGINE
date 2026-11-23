@@ -36,7 +36,7 @@ jobs:
           python-version: '3.12'
       - name: Install Python array dependency for repository package imports
         run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
-      - name: Install existing package dependency for verifier import\n        run: python -m pip install --disable-pip-version-check 'numpy>=1.20,<3'\n      - name: Install canonical Python array dependency for software_gpu package import
+      - name: Install canonical Python array dependency for software_gpu package import
         run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
       - name: Real C++17 ARE raster parity, owned buffers, replay and rollback
         shell: bash
