@@ -41,6 +41,7 @@ def verify(out, registry, include):
     if sys.prefix == sys.base_prefix:
         env.setdefault("PYTHONHOME", sys.base_prefix)
     env["PYTHONPATH"] = os.pathsep.join([str(root), *[p for p in sys.path if p]])
+    env["ARE_VK_DIAGNOSTICS"] = "1"  # genuine ICD-bound rejected VkDevice diagnostics
     def client(command, label, *, expect_success=True):
         r = subprocess.run(command, env=env, capture_output=True, timeout=60)
         (out / (label+".stdout")).write_bytes(r.stdout)
@@ -53,6 +54,18 @@ def verify(out, registry, include):
             b"PHYSICAL_DEVICE_TYPE_CPU" not in summary.stdout or library.name.encode() not in summary.stderr):
         raise RuntimeError("ARE device identity or isolated loader binding missing")
     client(["vulkaninfo"], "device")
+    negative_probe = out / "device-negative-probe"
+    subprocess.run([compiler(), "-std=c++17", "-I" + str(include),
+                    str(root / "native/vulkan/weighted/device_contract_probe.cpp"),
+                    "-lvulkan", "-o", str(negative_probe)], check=True)
+    accepted_and_rejected = client([str(negative_probe)], "device-flags")
+    if (b"ARE_REAL_VK_DEVICE_FLAGS_REJECTED=" not in accepted_and_rejected.stdout
+            or b"ARE_REAL_VK_QUEUE_FLAGS_REJECTED=" not in accepted_and_rejected.stdout
+            or b"ARE_REAL_VK_DEVICE_NEGATIVE_AND_VALID_PASS" not in accepted_and_rejected.stdout
+            or b"vkCreateDevice" not in accepted_and_rejected.stderr):
+        raise RuntimeError("REAL_ARE_VK_DEVICE_NEGATIVE_GATE_UNVERIFIED")
+    if (out/"weights.sqlite3").exists():
+        raise RuntimeError("VULKAN_CONTROL_PLANE_MUST_NOT_TRAIN_WEIGHTS")
     # Feed a genuinely different, validated fragment module to the same application.
     negative_dir = out / "unsupported"
     negative_dir.mkdir()
