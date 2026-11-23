@@ -52,6 +52,12 @@ def _distance(position: np.ndarray, plane: int, zero_to_one: bool = False) -> fl
     return position[3] - _MIN_W
 
 
+def _array_varying_shapes(attrs):
+    # Only arrays participate in interpolation; legacy flat values need no shape.
+    return {key: value.shape for key, value in attrs.items()
+            if isinstance(value, np.ndarray)}
+
+
 def _interpolate(first, second, fraction: float):
     p0, attrs0 = first
     p1, attrs1 = second
@@ -71,8 +77,13 @@ def clip_triangle(vertices: list[tuple[np.ndarray, dict]], *, zero_to_one=False)
     With zero_to_one, clip near Z at zero as required by Vulkan.
     A final w>=epsilon plane ensures projective division stays well-defined.
     Returns zero or more triangles with interpolated *clip-space* varyings.
+    Array varying keys and shapes must match across all corners.
     """
     polygon = list(vertices)
+    if polygon:
+        shapes = _array_varying_shapes(polygon[0][1])
+        if any(_array_varying_shapes(attrs) != shapes for _, attrs in polygon[1:]):
+            return []
     for plane in range(7):
         if not polygon:
             break
@@ -104,7 +115,8 @@ def clip_triangle(vertices: list[tuple[np.ndarray, dict]], *, zero_to_one=False)
 def prepare_triangles(vertices, indices, shader, width: int, height: int, source_faces=None):
     """Build front-facing, clipped, finite screen-space triangles for CPU renderers.
 
-    Invalid positions/varying numbers fail closed by discarding that primitive.
+    Invalid positions, nonfinite array varyings, and mismatched array varying
+    layouts fail closed by discarding that primitive.
     Invalid mesh *indices* are programming errors and raise IndexError.
 
     Implementation: batch setup (AeroRaster/GLimpSW style). Plane distances,
@@ -196,13 +208,20 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int, source
             - (screen[:, 2, 1] - screen[:, 0, 1]) * (screen[:, 1, 0] - screen[:, 0, 0]))
     emit_fast = fully_inside & finite & np.isfinite(area) & (area > np.float32(1e-9))
 
+    # Capture layouts after all vertex shader calls, which can share output arrays.
+    varying_shapes = [_array_varying_shapes(t[1]) if t is not None else None
+                      for t in transformed]
     slots = [None] * len(idx)
     for fi in range(len(idx)):
         if not face_ok[fi]:
             continue  # discarded vertex -> primitive fails closed
         if emit_fast[fi]:
-            s = screen[fi]
             i0, i1, i2 = idx[fi]
+            # Fully inside faces skip clipping, but rasterization still
+            # combines the corner arrays.
+            if not (varying_shapes[i0] == varying_shapes[i1] == varying_shapes[i2]):
+                continue
+            s = screen[fi]
             slots[fi] = [(
                 s[0], s[1], s[2],
                 float(inv_w[fi, 0]), float(inv_w[fi, 1]), float(inv_w[fi, 2]),
@@ -210,7 +229,7 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int, source
                 float(area[fi]),
             )]
             continue
-        # Clipping slow path: unchanged Sutherland–Hodgman semantics.
+        # Clipping slow path also checks array layouts before interpolation.
         triangle = [transformed[i] for i in idx[fi]]
         out = []
         for clipped in clip_triangle(triangle):
