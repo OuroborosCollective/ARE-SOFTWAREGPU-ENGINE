@@ -36,3 +36,17 @@ jobs:
         run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
       - name: Build genuine C++ raster and verify negative-first command tests
         run: python -m unittest software_gpu.tests.test_native_command_submission software_gpu.tests.test_driver_adapter -v
+      - name: Execute real native replay and store exact-source CPU receipt
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -m software_gpu.drivers.verify_commands --expected-revision "$EXPECTED_REVISION" --output evidence-local/native-commands/receipt.json
+      - name: Preserve original observed native command evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: real-native-commands-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/native-commands/receipt.json
+          if-no-files-found: ignore
+          retention-days: 30
