@@ -1,0 +1,73 @@
+name: ARE SPIR-V source admission (not shader execution)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'software_gpu/drivers/spirv_admission.py'
+      - 'software_gpu/tests/test_spirv_admission.py'
+      - '.github/workflows/spirv-source-admission.yml'
+  push:
+    branches: [main, 'feat/spirv-*']
+    paths:
+      - 'software_gpu/drivers/spirv_admission.py'
+      - 'software_gpu/tests/test_spirv_admission.py'
+      - '.github/workflows/spirv-source-admission.yml'
+      - 'Memory.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-spirv-tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install real shader compiler, validator, and existing Python runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y glslang-tools spirv-tools
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Reject invalid SPIR-V, false identities and absent validator
+        run: python -m unittest software_gpu.tests.test_spirv_admission -v
+      - name: Compile real GLSL vertex and fragment to SPIR-V then validate
+        shell: bash
+        env:
+          SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -eu
+          mkdir -p evidence-local/spirv
+          cat > evidence-local/spirv/triangle.vert <<'SHADER'
+          #version 450
+          layout(location=0) out vec3 color;
+          void main() {
+            vec2 pos[3] = vec2[](vec2(-0.7,-0.7),vec2(0.7,-0.7),vec2(0.0,0.7));
+            color = vec3(1.0,0.25,0.0);
+            gl_Position = vec4(pos[gl_VertexIndex],0.0,1.0);
+          }
+          SHADER
+          cat > evidence-local/spirv/triangle.frag <<'SHADER'
+          #version 450
+          layout(location=0) in vec3 color;
+          layout(location=0) out vec4 outColor;
+          void main() {
+            outColor = vec4(color,1.0);
+          }
+          SHADER
+          glslangValidator -V --target-env vulkan1.1 -S vert -o evidence-local/spirv/triangle.vert.spv evidence-local/spirv/triangle.vert
+          glslangValidator -V --target-env vulkan1.1 -S frag -o evidence-local/spirv/triangle.frag.spv evidence-local/spirv/triangle.frag
+          python -m software_gpu.drivers.spirv_admission --module evidence-local/spirv/triangle.vert.spv --expected-stage vertex --source-revision "$SOURCE_REVISION" --output evidence-local/spirv/vertex.receipt.json
+          python -m software_gpu.drivers.spirv_admission --module evidence-local/spirv/triangle.frag.spv --expected-stage fragment --source-revision "$SOURCE_REVISION" --output evidence-local/spirv/fragment.receipt.json
+      - name: Save actual compiled shader bytes, source and receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: are-spirv-real-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/spirv
+          if-no-files-found: ignore
+          retention-days: 30
