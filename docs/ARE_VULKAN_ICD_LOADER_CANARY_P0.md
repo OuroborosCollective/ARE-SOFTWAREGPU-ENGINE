@@ -12,10 +12,17 @@ final ARE software Vulkan GPU. No host driver installation occurs.
 - A real application linked to the Khronos loader uses a **temporary isolated**
   `VK_DRIVER_FILES` manifest. It calls `vkCreateInstance`, then
   `vkEnumeratePhysicalDevices` and destroys its instance. Loader debug must
-  show the ARE-owned library, not a Mesa alias.
+  show real calls to the ARE-owned library, not a Mesa alias. Our ICD returns
+  `VK_SUCCESS` with count 0. The Ubuntu Khronos loader was observed translating
+  that **negative no-device** case to `VK_ERROR_INITIALIZATION_FAILED` (-3)
+  without returning a device count. The verifier accepts that result *only*
+  if native ICD call tracing independently proves the real zero-device return.
+  It must not call this a usable Vulkan device or claim `vulkaninfo` sees ARE.
 - Until true VkDevice/queue/resources, executable shaders and native
-  render commands are implemented, `vkEnumeratePhysicalDevices` returns
-  **zero**. It is forbidden to advertise a fictional `VkPhysicalDevice`.
+  render commands are implemented, our ICD reports **zero** physical devices,
+  all physical-device queries expose zero capabilities on unsupported handles,
+  and `vkCreateDevice` fails closed. It is forbidden to advertise a fictional
+  `VkPhysicalDevice` or convert a no-device loader rejection into a device pass.
 - The same library's `are_driver_abi()` must return 1, its CPU-only
   capabilities must still deny Vulkan/WSI/SPIR-V. Existing ARE native
   raster/float32/depth and 100-ms gameplay tick remain untouched.
