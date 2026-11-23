@@ -7,6 +7,14 @@ on:
       - 'software_gpu/tests/test_vulkan_loader_reference.py'
       - '.github/workflows/vulkan-lavapipe-reference.yml'
       - 'docs/VULKAN_DRIVER_ADAPTER_P0.md'
+  push:
+    branches: [main, 'feat/vulkan-*']
+    paths:
+      - 'software_gpu/drivers/vulkan_reference.py'
+      - 'software_gpu/tests/test_vulkan_loader_reference.py'
+      - '.github/workflows/vulkan-lavapipe-reference.yml'
+      - 'docs/VULKAN_DRIVER_ADAPTER_P0.md'
+      - 'Memory.md'
   workflow_dispatch:
 permissions:
   contents: read
