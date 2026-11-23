@@ -88,6 +88,49 @@ def _actual_loader_calls(library_path: Path) -> dict:
         vulkan.vkDestroyInstance(instance, None)
 
 
+
+def _direct_icd_zero_devices(lib) -> dict:
+    """Secondary genuine ARE ICD call, never mistaken for Loader evidence."""
+    get_proc = lib.vk_icdGetInstanceProcAddr
+    get_proc.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    get_proc.restype = ctypes.c_void_p
+    create_ptr = get_proc(None, b"vkCreateInstance")
+    if not create_ptr:
+        raise RuntimeError("ARE_ICD_MISSING_DIRECT_CREATE")
+    create = ctypes.CFUNCTYPE(
+        ctypes.c_int32, ctypes.POINTER(VkInstanceCreateInfo),
+        ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)
+    )(create_ptr)
+    app = VkApplicationInfo(0, None, b"ARE-real-native-ICD-control", 1,
+                            b"ARE", 1, (1 << 22))
+    info = VkInstanceCreateInfo(1, None, 0, ctypes.pointer(app), 0, None, 0, None)
+    instance = ctypes.c_void_p()
+    status = create(ctypes.byref(info), None, ctypes.byref(instance))
+    if status != 0 or not instance.value:
+        raise RuntimeError(f"ARE_ICD_DIRECT_INSTANCE_REJECTED:{status}")
+    try:
+        enum_ptr = get_proc(instance, b"vkEnumeratePhysicalDevices")
+        destroy_ptr = get_proc(instance, b"vkDestroyInstance")
+        if not enum_ptr or not destroy_ptr:
+            raise RuntimeError("ARE_ICD_REQUIRED_DIRECT_DISPATCH")
+        enumerate_direct = ctypes.CFUNCTYPE(
+            ctypes.c_int32, ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_uint32), ctypes.c_void_p
+        )(enum_ptr)
+        count = ctypes.c_uint32(100)
+        returned = enumerate_direct(instance, ctypes.byref(count), None)
+        if returned != 0 or count.value != 0:
+            raise RuntimeError(f"ARE_ICD_DIRECT_DEVICE_INVARIANT:{returned}:{count.value}")
+        return {"create_instance_result": status,
+                "enumerate_device_result": returned,
+                "enumerated_device_count": count.value}
+    finally:
+        if "destroy_ptr" in locals() and destroy_ptr:
+            ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_void_p)(
+                destroy_ptr
+            )(instance, None)
+
+
 def verify_loader(binary: Path, manifest: Path, revision: str) -> dict:
     if not re.fullmatch("[a-f0-9]{40}", revision):
         raise ValueError("ARE_LOADER_SOURCE_REVISION")
@@ -116,6 +159,7 @@ def verify_loader(binary: Path, manifest: Path, revision: str) -> dict:
     version = ctypes.c_uint32(2)
     if lib.vk_icdNegotiateLoaderICDInterfaceVersion(ctypes.byref(version)) != 0 or version.value != 2:
         raise RuntimeError("ARE_LOADER_INTERFACE_NEGOTIATION_FAILED")
+    direct_icd = _direct_icd_zero_devices(lib)
     rec = {
         "protocol": "are.vulkan-loader-canary.v1",
         "source_revision": revision,
@@ -125,6 +169,7 @@ def verify_loader(binary: Path, manifest: Path, revision: str) -> dict:
         "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
         "icd_negotiated_version_direct": version.value,
         "actual_vulkan_loader_calls": observed,
+        "direct_are_icd_control": direct_icd,
         "device_vendor": "NONE",
         "vulkan_enumeration_was_successful": observed["enumeration_completed_successfully"],
         "vulkan_enumeration_error_code": observed["vkEnumeratePhysicalDevices"] if not observed["enumeration_completed_successfully"] else None,
