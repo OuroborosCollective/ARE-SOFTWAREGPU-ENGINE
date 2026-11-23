@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "are-driver-adapter-p0",
+      "introduced": "2026-11-23",
+      "title": "ARE Driver Adapter P0: echte native CPU-Frames, ABI- und Negativtests",
+      "module": "software_gpu/tests/test_driver_adapter.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "optin-cpu-materials-285",
       "introduced": "2026-11-23",
       "title": "#285 Opt-in Alpha, sRGB-Blending, CPU-Shadowmap und 4x Resolve",
