@@ -7,12 +7,15 @@ on:
       - 'software_gpu/drivers/verify_loader_canary.py'
       - '.github/workflows/are-vulkan-icd-canary.yml'
   push:
-    branches: [main, 'feat/are-vulkan-loader-*']
+    branches: [main]
     paths:
       - 'native/vulkan/**'
       - 'software_gpu/drivers/verify_loader_canary.py'
       - '.github/workflows/are-vulkan-icd-canary.yml'
   workflow_dispatch:
+concurrency:
+  group: are-icd-canary-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
