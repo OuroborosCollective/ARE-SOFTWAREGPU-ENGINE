@@ -49,12 +49,12 @@ jobs:
         shell: bash
         env:
           EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
-          VK_LOADER_DEBUG: driver
+          VK_LOADER_DEBUG: all
         run: |
           set -euo pipefail
           export VK_DRIVER_FILES="$PWD/build/are_icd.json"
           unset VK_ICD_FILENAMES VK_ADD_DRIVER_FILES
-          python -m software_gpu.drivers.vulkan_loader_canary \
+          nm -D build/libare_vulkan_canary.so | grep -E 'vk_icd(GetInstanceProcAddr|NegotiateLoaderICDInterfaceVersion|GetPhysicalDeviceProcAddr)'\n          ldd build/libare_vulkan_canary.so\n          python -m software_gpu.drivers.vulkan_loader_canary \
             --library "$PWD/build/libare_vulkan_canary.so" \
             --manifest "$VK_DRIVER_FILES" \
             --expected-revision "$EXPECTED_REVISION" \
