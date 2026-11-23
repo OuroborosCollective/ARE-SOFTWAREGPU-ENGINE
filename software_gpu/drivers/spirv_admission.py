@@ -42,7 +42,7 @@ def parse_spirv_module(binary: bytes) -> dict:
     magic, version, generator, bound, schema = words[:5]
     if magic != _MAGIC or schema != 0 or not (0 < bound <= _MAX_BOUND):
         raise ValueError("ARE_SPIRV_HEADER")
-    if (version >> 16) != 1 or (version & 0xFFFF) != 0 or ((version >> 8) & 0xFF) > 6:
+    if (version >> 16) != 1 or (version & 0xFF) != 0 or ((version >> 8) & 0xFF) > 6:
         raise ValueError("ARE_SPIRV_VERSION")
     offset = 5
     capabilities: list[int] = []
