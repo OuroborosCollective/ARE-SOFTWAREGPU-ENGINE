@@ -1,5 +1,12 @@
 # Issue #313: Real SPIR-V straight-line shader execution on ARE CPU tiles
 
+**Dependency state (2026-11-23):** Genuine SPIR-V input preflight PR #316
+was merged to `main` as commit
+`021aa90ffb1ddcedba65a980374e0dd0163484af`. This follow-up
+PR #317 now targets `main` and must independently pass its full exact-head
+CI, reviews and output parity before any merge. A focused green shader test
+does not authorize promotion.
+
 **Experimental opt-in only.** The genuinely compiled/validated
 `shader_probe.vert` / `shader_probe.frag` SPIR-V modules now run through
 `RestrictedSpirvProgram` on the existing ARE Python `SoftwareRasterizer`
