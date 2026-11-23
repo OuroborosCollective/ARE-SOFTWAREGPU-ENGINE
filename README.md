@@ -21,6 +21,19 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## SPIR-V source intake for the future ARE Vulkan ICD (Issue #313)
+
+The opt-in `software_gpu.drivers.spirv_admission` reads genuine SPIR-V
+vertex/fragment binaries compiled by the Khronos-compatible `glslangValidator`
+tool and requires a **real** SPIRV-Tools `spirv-val` subprocess before
+emitting source SHA-256 receipts. Dedicated Ubuntu CI saves original GLSL,
+SPIR-V modules, validator and SHA evidence. Invalid stages, capabilities,
+binary instruction bounds and missing validator fail closed.
+
+**This is not shader execution or a Vulkan ICD.** ARE cannot yet consume
+SPIR-V instructions, expose a VkPhysicalDevice, issue a Vulkan draw or render
+Unity frames. See [SPIR-V source admission and missing Vulkan contracts](docs/SPIRV_SOURCE_ADMISSION.md).
+
 ## P0: ARE native CPU Driver Adaptation Layer (Vulkan research; opt-in)
 
 A source-checkout C++17/ctypes **driver adaptation bridge** connects
