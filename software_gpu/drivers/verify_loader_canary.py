@@ -92,6 +92,7 @@ def verify(expected_revision: str) -> dict:
             env.pop(key, None)
         env["VK_DRIVER_FILES"] = str(manifest)
         env["VK_LOADER_DEBUG"] = "driver"
+        env["ARE_ICD_TRACE"] = "1"  # Actual ICD entries invoked by system loader only
         observed = subprocess.run([str(executable)], env=env,
                                   capture_output=True, text=True, timeout=30)
         if (observed.returncode != 0 or
