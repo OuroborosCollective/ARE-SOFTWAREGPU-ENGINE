@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include <new>
 
 namespace {
@@ -73,6 +74,48 @@ VkResult VKAPI_CALL enumerate_version(std::uint32_t* version) {
 PFN_vkVoidFunction VKAPI_CALL device_proc_addr(VkDevice, const char*) {
     return nullptr; // No VkDevice is constructible from this canary.
 }
+// The Khronos Loader requires the *pointers* for all core 1.0 instance
+// dispatch entries before accepting any ICD VkInstance, even a zero-device
+// one. No physical-device handle can ever be enumerated from this canary.
+// Never return invented Vulkan capabilities for an impossible physical device.
+[[noreturn]] void unconstructible_physical_device() {
+    std::fputs("ARE_LOADER_CANARY_PHYSICAL_DEVICE_NOT_CONSTRUCTIBLE\\n", stderr);
+    std::abort();
+}
+void VKAPI_CALL unavailable_features(VkPhysicalDevice, VkPhysicalDeviceFeatures*) {
+    unconstructible_physical_device();
+}
+void VKAPI_CALL unavailable_format(VkPhysicalDevice, VkFormat, VkFormatProperties*) {
+    unconstructible_physical_device();
+}
+VkResult VKAPI_CALL unavailable_image_format(VkPhysicalDevice, VkFormat,
+                   VkImageType, VkImageTiling, VkImageUsageFlags,
+                   VkImageCreateFlags, VkImageFormatProperties*) {
+    return VK_ERROR_INITIALIZATION_FAILED;
+}
+void VKAPI_CALL unavailable_properties(VkPhysicalDevice, VkPhysicalDeviceProperties*) {
+    unconstructible_physical_device();
+}
+void VKAPI_CALL unavailable_queue_families(VkPhysicalDevice, std::uint32_t*,
+                                           VkQueueFamilyProperties*) {
+    unconstructible_physical_device();
+}
+void VKAPI_CALL unavailable_memory(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties*) {
+    unconstructible_physical_device();
+}
+VkResult VKAPI_CALL unavailable_create_device(VkPhysicalDevice,
+               const VkDeviceCreateInfo*, const VkAllocationCallbacks*, VkDevice*) {
+    return VK_ERROR_INITIALIZATION_FAILED;
+}
+VkResult VKAPI_CALL unavailable_device_extensions(VkPhysicalDevice, const char*,
+                                                   std::uint32_t*, VkExtensionProperties*) {
+    return VK_ERROR_INITIALIZATION_FAILED;
+}
+void VKAPI_CALL unavailable_sparse_image(VkPhysicalDevice, VkFormat, VkImageType,
+        VkSampleCountFlagBits, VkImageUsageFlags, VkImageTiling, std::uint32_t*,
+        VkSparseImageFormatProperties*) {
+    unconstructible_physical_device();
+}
 PFN_vkVoidFunction VKAPI_CALL get_instance_proc_addr(VkInstance, const char* name);
 template <typename Fn>
 PFN_vkVoidFunction pfn(Fn fn) { return reinterpret_cast<PFN_vkVoidFunction>(fn); }
@@ -114,6 +157,24 @@ PFN_vkVoidFunction VKAPI_CALL get_instance_proc_addr(VkInstance instance, const 
         return pfn(&enumerate_extensions);
     if (!std::strcmp(name, "vkEnumerateInstanceVersion")) return pfn(&enumerate_version);
     if (!instance) return nullptr;
+    if (!std::strcmp(name, "vkGetPhysicalDeviceFeatures"))
+        return pfn(&unavailable_features);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceFormatProperties"))
+        return pfn(&unavailable_format);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceImageFormatProperties"))
+        return pfn(&unavailable_image_format);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceProperties"))
+        return pfn(&unavailable_properties);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceQueueFamilyProperties"))
+        return pfn(&unavailable_queue_families);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceMemoryProperties"))
+        return pfn(&unavailable_memory);
+    if (!std::strcmp(name, "vkCreateDevice"))
+        return pfn(&unavailable_create_device);
+    if (!std::strcmp(name, "vkEnumerateDeviceExtensionProperties"))
+        return pfn(&unavailable_device_extensions);
+    if (!std::strcmp(name, "vkGetPhysicalDeviceSparseImageFormatProperties"))
+        return pfn(&unavailable_sparse_image);
     if (!std::strcmp(name, "vkDestroyInstance")) return pfn(&destroy_instance);
     if (!std::strcmp(name, "vkEnumeratePhysicalDevices")) return pfn(&enumerate_devices);
     if (!std::strcmp(name, "vkEnumeratePhysicalDeviceGroups"))
