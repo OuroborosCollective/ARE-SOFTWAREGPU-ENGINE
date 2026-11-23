@@ -57,14 +57,33 @@ def _actual_loader_calls(library_path: Path) -> dict:
     if created != 0 or not instance.value:
         raise RuntimeError(f"ARE_LOADER_VK_CREATE_INSTANCE_FAILED:{created}")
     try:
+        # Prove the system Vulkan Loader actually mapped the selected ARE
+        # library before ctypes loads the ICD directly. An on-disk manifest
+        # and direct symbol lookup do not prove Khronos Loader integration.
+        mapped = Path("/proc/self/maps").read_text(encoding="utf-8", errors="replace")
+        if str(library_path) not in mapped:
+            raise RuntimeError("ARE_LOADER_DID_NOT_MAP_SELECTED_ICD")
         count = ctypes.c_uint32(0xFFFFFFFF)
-        enumerated = vulkan.vkEnumeratePhysicalDevices(instance, ctypes.byref(count), None)
-        if enumerated != 0:
-            raise RuntimeError(f"ARE_LOADER_VK_ENUMERATE_FAILED:{enumerated}")
-        if count.value != 0:
+        enumerated = vulkan.vkEnumeratePhysicalDevices(
+            instance, ctypes.byref(count), None
+        )
+        # On this real Loader a zero-device ICD returns -3
+        # (VK_ERROR_INITIALIZATION_FAILED), preserving the input count.
+        # Never misreport that result as successful enumeration.
+        if enumerated not in (0, -3):
+            raise RuntimeError(f"ARE_LOADER_VK_ENUMERATE_UNEXPECTED:{enumerated}")
+        if enumerated == 0 and count.value != 0:
             raise RuntimeError(f"ARE_ZERO_DEVICE_CONTRACT_VIOLATED:{count.value}")
-        return {"vkCreateInstance": int(created), "vkEnumeratePhysicalDevices": int(enumerated),
-                "physical_device_count": count.value}
+        if enumerated == -3 and count.value != 0xFFFFFFFF:
+            raise RuntimeError("ARE_ZERO_DEVICE_ERROR_COUNT_CHANGED")
+        return {
+            "vkCreateInstance": int(created),
+            "are_icd_library_mapped_by_real_loader": True,
+            "vkEnumeratePhysicalDevices": int(enumerated),
+            "physical_device_count": int(count.value) if enumerated == 0 else None,
+            "enumeration_completed_successfully": enumerated == 0,
+            "no_device_error_observed": enumerated == -3,
+        }
     finally:
         vulkan.vkDestroyInstance(instance, None)
 
@@ -89,25 +108,26 @@ def verify_loader(binary: Path, manifest: Path, revision: str) -> dict:
             os.environ.get("VK_ICD_FILENAMES") or
             os.environ.get("VK_ADD_DRIVER_FILES")):
         raise RuntimeError("ARE_LOADER_DRIVER_ISOLATION_REQUIRED")
+    observed = _actual_loader_calls(binary)
+    # Separate direct ABI check after actual Loader/ELF mapping proof.
     lib = ctypes.CDLL(str(binary))
     lib.vk_icdNegotiateLoaderICDInterfaceVersion.argtypes = [ctypes.POINTER(ctypes.c_uint32)]
     lib.vk_icdNegotiateLoaderICDInterfaceVersion.restype = ctypes.c_int32
     version = ctypes.c_uint32(2)
     if lib.vk_icdNegotiateLoaderICDInterfaceVersion(ctypes.byref(version)) != 0 or version.value != 2:
         raise RuntimeError("ARE_LOADER_INTERFACE_NEGOTIATION_FAILED")
-    # This direct check ONLY verifies the library's C symbol. The call below
-    # MUST pass through the real libvulkan.so.1 loader.
-    observed = _actual_loader_calls(binary)
     rec = {
         "protocol": "are.vulkan-loader-canary.v1",
         "source_revision": revision,
-        "status": "REAL_LOADER_ZERO_DEVICE_ONLY",
+        "status": "REAL_LOADER_INSTANCE_ACCEPTED_NO_DEVICE_ADVERTISED",
         "driver_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "driver_cpp_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
         "icd_negotiated_version_direct": version.value,
         "actual_vulkan_loader_calls": observed,
         "device_vendor": "NONE",
+        "vulkan_enumeration_was_successful": observed["enumeration_completed_successfully"],
+        "vulkan_enumeration_error_code": observed["vkEnumeratePhysicalDevices"] if not observed["enumeration_completed_successfully"] else None,
         "are_vkphysicaldevice_exposed": False,
         "are_vulkan_graphics_functional": False,
         "are_weighted_graphics_execution": False,
