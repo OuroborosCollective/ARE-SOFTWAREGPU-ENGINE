@@ -41,6 +41,10 @@ def write_dispatch(registry, output):
 
 
 def build(out, registry, include):
+    if not (3, 11) <= sys.version_info[:2] <= (3, 12) or sys.platform != "linux":
+        raise RuntimeError("Developer ICD requires 64-bit Linux and project CPython 3.11 or 3.12")
+    if sys.maxsize < 2**63 - 1:
+        raise RuntimeError("Developer ICD requires a 64-bit Vulkan ABI")
     root = Path(__file__).resolve().parents[2]
     out = out.resolve()
     out.mkdir(parents=True, exist_ok=True)

@@ -63,7 +63,9 @@ extern "C" VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetPhysicalDeviceProcAddr(VkInstance, const char*) { return nullptr; }
 
 static PFN_vkVoidFunction VKAPI_CALL deviceProc(VkDevice, const char* name) {
-    return name ? lookupDevice(name) : nullptr;
+    if (!name) return nullptr;
+    if (!std::strcmp(name, "vkGetDeviceProcAddr")) return reinterpret_cast<PFN_vkVoidFunction>(deviceProc);
+    return lookupDevice(name);
 }
 extern "C" VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetInstanceProcAddr(VkInstance, const char* name) {
