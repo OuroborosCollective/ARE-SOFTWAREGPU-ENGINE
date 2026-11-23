@@ -86,9 +86,15 @@ class TestNativeCommandSubmission(unittest.TestCase):
     def test_original_packet_digest_must_match_and_reject_unknown_abi(self):
         packet = record_native_draws([self.packed])
         frame = self.framebuffer()
-        packet.commands[0].payload = b"\x00" * len(packet.commands[0].payload)
-        with self.assertRaises((ValueError, AttributeError, TypeError)):
-            submit_native_draws(self.bridge, frame, packet)
+        from dataclasses import replace
+        with self.assertRaises(AttributeError):
+            packet.commands[0].payload = b"\\x00" * len(packet.commands[0].payload)
+        forged_command = replace(packet.commands[0], payload=b"\\x00" * len(packet.commands[0].payload))
+        forged_packet = replace(packet, commands=(forged_command,))
+        before = (frame.color_buffer.tobytes(), frame.depth_buffer.tobytes())
+        with self.assertRaisesRegex(ValueError, "ARE_COMMAND_PAYLOAD_DIGEST"):
+            submit_native_draws(self.bridge, frame, forged_packet)
+        self.assertEqual((frame.color_buffer.tobytes(), frame.depth_buffer.tobytes()), before)
         with self.assertRaisesRegex(ValueError, "ARE_COMMAND_PROFILE"):
             record_native_draws([self.packed], profile="spirv-vulkan")
 
