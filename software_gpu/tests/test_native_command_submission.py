@@ -119,5 +119,30 @@ class TestNativeCommandSubmission(unittest.TestCase):
         self.assertEqual((frame.color_buffer.tobytes(), frame.depth_buffer.tobytes()), before)
 
 
+    def test_real_receipt_worker_releases_native_dll(self):
+        """Windows regression: loaded DLL cannot be removed before worker exit."""
+        import json
+        import subprocess
+        from software_gpu.drivers.verify_commands import verify
+
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        receipt = verify(revision)
+        self.assertEqual(receipt["source_revision"], revision)
+        self.assertEqual(receipt["status"], "PASS_REAL_NATIVE_CPU_ONLY")
+        self.assertEqual(receipt["submitted_draws"], 2)
+        self.assertGreater(receipt["shaded_samples"], 0)
+        self.assertTrue(receipt["direct_parity"])
+        self.assertTrue(receipt["native_replay"])
+        self.assertFalse(receipt["vulkan_icd"])
+        self.assertFalse(receipt["vulkan_command_buffer"])
+        checksum = receipt["receipt_sha256"]
+        actual = dict(receipt)
+        del actual["receipt_sha256"]
+        canonical = json.dumps(actual, sort_keys=True, separators=(",", ":")).encode()
+        self.assertEqual(hashlib.sha256(canonical).hexdigest(), checksum)
+        with self.assertRaisesRegex(RuntimeError, "ARE_COMMAND_REVISION_MISMATCH"):
+            verify("0" * 40)
+
+
 if __name__ == "__main__":
     unittest.main()
