@@ -128,7 +128,7 @@ vk_icdNegotiateLoaderICDInterfaceVersion(std::uint32_t* version) {
 
 ARE_VK_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetInstanceProcAddr(VkInstance, const char* name) {
-    trace("get-instance-procaddr");
+    trace(name ? name : "get-instance-procaddr:null");
     return resolve(name);
 }
 
