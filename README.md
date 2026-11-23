@@ -21,6 +21,33 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## CPU Material Profiles: Alpha, Blending and Shadows (Issue #285; opt-in)
+
+The default opaque `SoftwareRasterizer.draw_mesh()`, including alpha-byte storage
+and strictly-less first-wins depth ownership, remains unchanged. A separate
+`OptInCpuRenderer` enables `draw_alpha_test()` (threshold discard, depth
+write on pass), `blend_sorted()` (stable far-to-near NDC draw order,
+straight-alpha source-over in **linearized sRGB**, no depth write, existing
+opaque early-Z) and `make_shadow_map()` (true light-space depth raster).
+`ShadowedShader` explicitly consumes a frozen depth map; these experimental
+CPU-tile passes are **not** native PBR, generalized order-independent
+transparency, or an automatic replacement for other ARE render backends.
+
+`resolve_4x()` resolves an explicitly rendered 2x-by-2x sample framebuffer
+using alpha-weighted linear colors, averaged alpha and closest depth.
+The sample grid, depth-resolution semantics and lack of implicit shadow
+projection are explicit; this does **not** assert equivalence to existing
+native/4x-MSAA routes. The full RGBA/Float32 depth fingerprints are tracked
+by `frame_receipt()`. Failed draws do not publish partial pixel buffers.
+
+Regression: `python -m unittest software_gpu.tests.test_optin_cpu_materials -v`.
+Full-frame CPU cost (15 alternating A/B pairs, measured separately):
+`python -m software_gpu.benchmarks.benchmark_optin_materials --pixels 64 --pairs 15 --output /tmp/are-material-cost.json`.
+Such measurements are not GPU comparisons or gameplay FPS; semantically
+different alpha/shadow frames may not be ranked as equivalent optimizations.
+[CPU test-series registration](docs/CPU_WAVE_RANGLISTEN.md).
+No performance values are claimed without actual executed receipts.
+
 ## Pixel Forensic Trace (Issue #287; opt-in CPU diagnostics)
 
 `PixelForensicTrace` captures one bounded real CPU pixel across ordered `tiles`
