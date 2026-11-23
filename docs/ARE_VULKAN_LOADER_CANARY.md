@@ -13,7 +13,14 @@ not Mesa Lavapipe, not an alias to any other Vulkan device and not a fake
 `vk_icdGetPhysicalDeviceProcAddr` hooks. The real system
 `libvulkan.so.1` Loader can invoke `vkCreateInstance`, a loader-magic-tagged
 `VkInstance`, `vkEnumeratePhysicalDevices` and `vkDestroyInstance`.
-Zero devices are returned until full ARE-owned VkDevice/queue/memory/resource
+The ICD callback itself advertises zero devices. On the independently
+observed Ubuntu 22.04 Khronos Loader 1.3.204, the public
+`vkEnumeratePhysicalDevices` call returned **-3
+(VK_ERROR_INITIALIZATION_FAILED)** on that zero-device ICD rather than a
+successfully returned zero count. This is stored explicitly as an error,
+not a passed enumeration. The accepted real `VkInstance` and `/proc/self/maps`
+proof that the Loader mapped the exact ARE library are separate gates.
+Zero devices are returned by the private ICD callback until full ARE-owned VkDevice/queue/memory/resource
 and executable pipeline contracts exist. Unknown functions return null.
 
 ## Run and validate (unprivileged, isolated)
@@ -29,7 +36,8 @@ GitHub-runner dependencies, compiles `native/vulkan/loader_canary.cpp` to
 
 The manifest is **not** written to system ICD search paths. The test isolates
 selection through `VK_DRIVER_FILES`, calls `libvulkan.so.1` via the real
-Khronos API, expects a successful **instance** and **zero** devices, and
+Khronos API, expects a successful **instance** and a correctly recorded no-device
+result (whether successful zero-count enumeration or observed -3), and
 records exact Git source revision, ARE C++ and binary SHA-256, manifest SHA,
 API return values and immutable canonical receipt digest. Direct inspection of
 ICD negotiation alone is **not accepted** as Loader integration proof.
