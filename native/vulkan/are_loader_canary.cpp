@@ -16,6 +16,11 @@
 #define ARE_VK_EXPORT extern "C" __attribute__((visibility("default")))
 #endif
 
+ARE_VK_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
+vk_icdGetInstanceProcAddr(VkInstance, const char*);
+ARE_VK_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
+vk_icdGetDeviceProcAddr(VkDevice, const char*);
+
 struct VkInstance_T {
     VK_LOADER_DATA loader_data;
     std::uint32_t protocol_version;
