@@ -11,6 +11,9 @@ import (
 	"net"
 )
 
+// Payload ceiling from network/protocol.py.
+const maxResponseBytes = 1_048_576
+
 type Client struct {
 	conn net.Conn
 }
@@ -56,8 +59,16 @@ func (c *Client) CallRpc(method string, params map[string]interface{}) (map[stri
 		return nil, err
 	}
 
+	respType := binary.BigEndian.Uint32(respHeader[4:8])
+	if string(respHeader[:4]) != "SGPU" || (respType != 2 && respType != 4) ||
+		binary.BigEndian.Uint32(respHeader[8:12]) != 0 {
+		return nil, fmt.Errorf("invalid SGPU response header")
+	}
 	respLen := binary.BigEndian.Uint64(respHeader[12:20])
-	respBody := make([]byte, respLen)
+	if respLen == 0 || respLen > maxResponseBytes {
+		return nil, fmt.Errorf("invalid SGPU response length: %d", respLen)
+	}
+	respBody := make([]byte, int(respLen))
 	if _, err := io.ReadFull(c.conn, respBody); err != nil {
 		return nil, err
 	}
