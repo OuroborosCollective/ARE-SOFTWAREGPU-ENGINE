@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "spirv-source-admission-313",
+      "introduced": "2026-11-23",
+      "title": "SPIR-V original GLSL→glslangValidator→spirv-val admission (kein ARE shader execution)",
+      "module": "software_gpu/tests/test_spirv_admission.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "are-driver-adapter-p0",
       "introduced": "2026-11-23",
       "title": "ARE Driver Adapter P0: echte native CPU-Frames, ABI- und Negativtests",
