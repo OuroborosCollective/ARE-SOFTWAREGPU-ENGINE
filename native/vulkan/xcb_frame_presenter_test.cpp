@@ -26,7 +26,11 @@ static std::array<double,23> triangle(bool green) {
 static bool raster_frame(std::uint32_t width,std::uint32_t height,
                          bool green,std::vector<std::uint8_t>& color,
                          std::uint64_t& shaded) {
-    const auto tris=triangle(green);
+    auto tris=triangle(green);
+    // Exercise the final row of the resized upload with actual shaded pixels.
+    if (height == 1025) {
+        for (auto index : {1, 4, 7}) tris[index] += height - 17;
+    }
     color.assign(std::size_t(width)*height*4,0);
     for (std::size_t i=3; i<color.size(); i+=4) color[i]=255;
     std::vector<float> depth(std::size_t(width)*height,1.0f);
@@ -59,6 +63,11 @@ int main(int argc,char** argv) {
         REQUIRE(missing.open(32,24)==XcbStatus::unavailable);
         return 0;
     }
+    if (argc==2 && std::string(argv[1])=="--negative-direct-color") {
+        XcbFramePresenter window;
+        REQUIRE(window.open(32,24)==XcbStatus::unsupported_visual);
+        return 0;
+    }
     if (argc != 2) return 64;
     const std::string root=argv[1];
     XcbFramePresenter window;
@@ -87,17 +96,18 @@ int main(int argc,char** argv) {
     REQUIRE(save(root+"-second-cpu.rgba",second) && save(root+"-second-window.rgba",returned));
 
     REQUIRE(window.resize(0,48)==XcbStatus::invalid_extent);
-    REQUIRE(window.resize(64,48)==XcbStatus::ok);
+    REQUIRE(window.resize(1023,1025)==XcbStatus::ok);
     REQUIRE(window.present_rgba(second.data(),second.size(),32,24)==XcbStatus::out_of_date);
-    REQUIRE(raster_frame(64,48,true,large,shaded2));
-    REQUIRE(window.present_rgba(large.data(),large.size(),64,48)==XcbStatus::ok);
+    REQUIRE(raster_frame(1023,1025,true,large,shaded2));
+    REQUIRE(large[(1024 * 1023 + 2) * 4 + 1] == 255);
+    REQUIRE(window.present_rgba(large.data(),large.size(),1023,1025)==XcbStatus::ok);
     REQUIRE(window.readback_rgba(&returned)==XcbStatus::ok);
     REQUIRE(returned==large);
     REQUIRE(save(root+"-resize-cpu.rgba",large) && save(root+"-resize-window.rgba",returned));
     REQUIRE(shaded0==shaded2);
     window.close();
     REQUIRE(window.readback_rgba(&returned)==XcbStatus::not_open);
-    REQUIRE(window.present_rgba(large.data(),large.size(),64,48)==XcbStatus::not_open);
+    REQUIRE(window.present_rgba(large.data(),large.size(),1023,1025)==XcbStatus::not_open);
     std::cout << "ARE_XCB_REAL_NATIVE_FRAME_PASS first_shaded=" << shaded0
               << " second_shaded=" << shaded1 << " resized_shaded=" << shaded2
               << " visual=" << window.visual() << '\n';

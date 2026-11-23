@@ -53,16 +53,18 @@ def verify(expected_revision: str) -> dict:
                                   env=no_display,capture_output=True,text=True,timeout=20)
         if negative.returncode:
             raise RuntimeError("ARE_XCB_NO_DISPLAY_NEGATIVE_FAILED:"+negative.stderr[-2000:])
+        subprocess.run(["xvfb-run", "-a", "-s", "-screen 0 32x24x24 -cc 5",
+                        str(binary), "--negative-direct-color"], check=True, timeout=20)
         output_base = work/"captured"
         actual = subprocess.run([
-            "xvfb-run","-a","-s","-screen 0 640x480x24",
+            "xvfb-run","-a","-s","-screen 0 1023x1025x24 -maxbigreqsize 1",
             str(binary),str(output_base),
         ],capture_output=True,text=True,timeout=70)
         if actual.returncode or not actual.stdout.startswith("ARE_XCB_REAL_NATIVE_FRAME_PASS "):
             raise RuntimeError("ARE_XCB_REAL_WINDOW_FAILED:"+actual.stdout[-900:]+actual.stderr[-2400:])
 
         names = ["first","second","resize"]
-        dimensions = {"first":(32,24),"second":(32,24),"resize":(64,48)}
+        dimensions = {"first":(32,24),"second":(32,24),"resize":(1023,1025)}
         results = {}
         for label in names:
             cpu = Path(str(output_base)+f"-{label}-cpu.rgba")
