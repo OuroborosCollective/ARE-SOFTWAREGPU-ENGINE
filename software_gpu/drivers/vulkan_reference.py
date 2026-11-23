@@ -42,7 +42,7 @@ def validate_reference_manifest(path: Path) -> dict:
     if (not {"library_path", "api_version"}.issubset(icd) or
             not set(icd).issubset({"library_path", "api_version", "is_portability_driver"}) or
             type(icd["library_path"]) is not str or
-            not _LIB.fullmatch(Path(icd["library_path"]).name) or
+            not _LIBRARY.fullmatch(Path(icd["library_path"]).name) or
             ("/" in icd["library_path"] and not
              (icd["library_path"].startswith("/usr/lib/") or
               icd["library_path"].startswith("/lib/"))) or
