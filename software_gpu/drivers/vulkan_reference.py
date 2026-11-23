@@ -24,7 +24,7 @@ _DEVICE_NAME = re.compile(r"^\s*deviceName\s*=\s*(.*?)\s*$", re.MULTILINE)
 def validate_reference_manifest(path: Path) -> dict:
     """Validate narrow Mesa software ICD reference, not arbitrary user libraries."""
     path = Path(path).resolve(strict=True)
-    if not path.is_file() or "lvp_icd" not in path.name:
+    if not path.is_file() or not path.name.startswith("lvp_icd") or path.suffix != ".json":
         raise ValueError("VULKAN_REFERENCE_LVP_MANIFEST_REQUIRED")
     raw = path.read_bytes()
     if len(raw) > 65536:
@@ -42,13 +42,17 @@ def validate_reference_manifest(path: Path) -> dict:
     if (not {"library_path", "api_version"}.issubset(icd) or
             not set(icd).issubset({"library_path", "api_version", "is_portability_driver"}) or
             type(icd["library_path"]) is not str or
-            not _LIB.fullmatch(icd["library_path"]) or
+            not _LIB.fullmatch(Path(icd["library_path"]).name) or
+            ("/" in icd["library_path"] and not
+             (icd["library_path"].startswith("/usr/lib/") or
+              icd["library_path"].startswith("/lib/"))) or
             type(icd["api_version"]) is not str or not _API.fullmatch(icd["api_version"]) or
             icd.get("is_portability_driver", False) not in (False,)):
         raise ValueError("VULKAN_REFERENCE_LVP_ONLY")
     return {
         "path": str(path), "manifest_sha256": hashlib.sha256(raw).hexdigest(),
-        "library_name": icd["library_path"], "api_version_declared": icd["api_version"],
+        "library_name": Path(icd["library_path"]).name, "library_path_declared": icd["library_path"],
+        "api_version_declared": icd["api_version"],
     }
 
 
@@ -83,7 +87,7 @@ def run_reference_probe(manifest: Path, *, vulkaninfo: str = "vulkaninfo",
     if result.returncode:
         raise RuntimeError("VULKAN_REFERENCE_LOADER_FAILED:" + str(result.returncode) +
                            ":" + result.stderr[-800:])
-    observed = verify_reference_summary(result.stdout)
+    if len(result.stdout) > 131072 or len(result.stderr) > 131072:\n        raise ValueError("VULKAN_REFERENCE_OUTPUT_BUDGET")\n    observed = verify_reference_summary(result.stdout)
     if "lvp" not in result.stderr.lower() and "lavapipe" not in result.stderr.lower():
         raise RuntimeError("VULKAN_REFERENCE_LOADER_BINDING_NOT_PROVEN")
     receipt = {
@@ -99,7 +103,9 @@ def run_reference_probe(manifest: Path, *, vulkaninfo: str = "vulkaninfo",
         "manifest": verified_manifest,
         "observed_device": observed,
         "vulkaninfo_stdout_sha256": hashlib.sha256(result.stdout.encode()).hexdigest(),
+        "vulkaninfo_stdout": result.stdout,
         "loader_stderr_sha256": hashlib.sha256(result.stderr.encode()).hexdigest(),
+        "loader_stderr": result.stderr,
     }
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
     receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
