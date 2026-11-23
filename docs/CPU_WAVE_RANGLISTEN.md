@@ -12,6 +12,7 @@ Nur reale CPU-Rohzeiten mit mindestens 15 Wiederholungen und verifizierter Bild-
 
 | Hinzugefügt | Testreihe | Projektfläche | Prüfstand | CPU-Zeit / FPS |
 |:--|:--|:--|:--|:--|
+| 2026-11-23 | ARE Driver Adapter P0: echte native CPU-Frames, ABI- und Negativtests (`software_gpu/tests/test_driver_adapter.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-23 | #285 Opt-in Alpha, sRGB-Blending, CPU-Shadowmap und 4x Resolve (`software_gpu/tests/test_optin_cpu_materials.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-22 | GLB2-Codecs: Draco/Meshopt, Rig/Morph und 15-Paar-CPU-Frames (`software_gpu/tests/test_asset_codec_comparison.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
 | 2026-11-22 | GLB2-Importer: JSON-/BIN-Budgets, Cache-SHA und Negativtests (`software_gpu/tests/test_glb_admission_security.py`) | test | **registriert; CI separat prüfen** | **nicht gemessen** |
