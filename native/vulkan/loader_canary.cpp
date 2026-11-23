@@ -20,7 +20,7 @@ VkResult VKAPI_CALL create_instance(const VkInstanceCreateInfo* info,
                                   VkInstance* instance) {
     if (!info || !instance || info->sType != VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO ||
         info->flags != 0 || info->enabledExtensionCount != 0 ||
-        info->enabledLayerCount != 0 || info->pNext != nullptr ||
+        info->enabledLayerCount != 0 ||
         (info->pApplicationInfo &&
          info->pApplicationInfo->apiVersion > supported_api)) {
         return VK_ERROR_INCOMPATIBLE_DRIVER;
@@ -66,7 +66,8 @@ PFN_vkVoidFunction VKAPI_CALL device_proc_addr(VkDevice, const char*) {
     return nullptr; // No VkDevice is constructible from this canary.
 }
 PFN_vkVoidFunction VKAPI_CALL get_instance_proc_addr(VkInstance, const char* name);
-PFN_vkVoidFunction pfn(auto* fn) { return reinterpret_cast<PFN_vkVoidFunction>(fn); }
+template <typename Fn>
+PFN_vkVoidFunction pfn(Fn fn) { return reinterpret_cast<PFN_vkVoidFunction>(fn); }
 } // namespace
 
 // Export ONLY the loader-specific entry points. Do not interpose libvulkan.so.
