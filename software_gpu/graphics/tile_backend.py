@@ -85,12 +85,19 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
 
 def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     executor: Executor, workers: int, compiled: bool = False,
-                    planned: bool = False, plan_policy=None, prepared_bins=None, pixel_trace=None):
+                    planned: bool = False, plan_policy=None, prepared_bins=None, pixel_trace=None,
+                    fragment_policy=None):
     """Bin triangles by 2-D tiles, then shade each independent tile in order.
 
     This is a CPU vectorized coverage/depth backend, *not* compiled SIMD shader
     execution. Workers can safely write separate tiles of the same framebuffer.
     """
+    if fragment_policy is not None:
+        # The opt-in interface is not supported by the legacy fast paths.
+        from .render_profiles import FragmentPolicy
+        if (type(fragment_policy) is not FragmentPolicy or compiled or planned
+                or prepared_bins is not None or pixel_trace is not None):
+            raise ValueError("OPTIN_BACKEND_UNSUPPORTED")
     if planned and compiled:
         raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
     requested_plan = planned
@@ -276,9 +283,14 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
                     for key, values in array_varyings.items():
                         varyings[key] = values[i]
                     iy, ix = int(rows[i]) + top, int(cols[i]) + left
-                    rgba = shader.fragment_shader(varyings)
-                    fb.depth_buffer[iy, ix] = zz[i]
-                    fb.color_buffer[iy, ix, :] = rgba
+                    if fragment_policy is None:
+                        rgba = shader.fragment_shader(varyings)
+                        fb.depth_buffer[iy, ix] = zz[i]
+                        fb.color_buffer[iy, ix, :] = rgba
+                    else:
+                        rgba = ((0, 0, 0, 255) if fragment_policy.mode == "shadow-depth"
+                                else shader.fragment_shader(varyings))
+                        fragment_policy.apply(fb, iy, ix, zz[i], rgba)
             else:
                 for i in range(len(rows)):
                     varyings = dict(flat_varyings)
