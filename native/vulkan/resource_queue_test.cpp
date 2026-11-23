@@ -129,6 +129,6 @@ int main(int argc, char** argv) {
     std::cout << "ARE_PREDEVICE_REAL_CPP_RASTER_PASS "
               << counters.candidate_samples << ' '
               << counters.covered_samples << ' '
-              << counters.shaded_samples << '\\n';
+              << counters.shaded_samples << std::endl;
     return 0;
 }
