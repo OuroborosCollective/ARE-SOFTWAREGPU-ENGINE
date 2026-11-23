@@ -87,7 +87,9 @@ def run_reference_probe(manifest: Path, *, vulkaninfo: str = "vulkaninfo",
     if result.returncode:
         raise RuntimeError("VULKAN_REFERENCE_LOADER_FAILED:" + str(result.returncode) +
                            ":" + result.stderr[-800:])
-    if len(result.stdout) > 131072 or len(result.stderr) > 131072:\n        raise ValueError("VULKAN_REFERENCE_OUTPUT_BUDGET")\n    observed = verify_reference_summary(result.stdout)
+    if len(result.stdout) > 131072 or len(result.stderr) > 131072:
+        raise ValueError("VULKAN_REFERENCE_OUTPUT_BUDGET")
+    observed = verify_reference_summary(result.stdout)
     if "lvp" not in result.stderr.lower() and "lavapipe" not in result.stderr.lower():
         raise RuntimeError("VULKAN_REFERENCE_LOADER_BINDING_NOT_PROVEN")
     receipt = {
