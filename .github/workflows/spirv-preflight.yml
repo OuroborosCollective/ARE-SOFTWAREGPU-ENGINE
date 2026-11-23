@@ -1,0 +1,61 @@
+name: Genuine SPIR-V shader admission (no ARE shader execution)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'software_gpu/drivers/spirv_preflight.py'
+      - 'software_gpu/drivers/shader_probe.*'
+      - 'software_gpu/tests/test_spirv_preflight.py'
+      - '.github/workflows/spirv-preflight.yml'
+  push:
+    branches: [main, 'feat/spirv-*']
+    paths:
+      - 'software_gpu/drivers/spirv_preflight.py'
+      - 'software_gpu/drivers/shader_probe.*'
+      - 'software_gpu/tests/test_spirv_preflight.py'
+      - '.github/workflows/spirv-preflight.yml'
+      - 'Memory.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-spirv:
+    name: Genuine glslangValidator and SPIRV-Tools (input-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install genuine Khronos shader tools and existing Python dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y glslang-tools spirv-tools
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: RED/GREEN structural negative tests
+        run: python -m unittest software_gpu.tests.test_spirv_preflight -v
+      - name: Compile actual GLSL vertex and fragment shaders to SPIR-V
+        run: |
+          set -eu
+          mkdir -p evidence-local/spirv
+          glslangValidator -V --target-env vulkan1.2 -S vert software_gpu/drivers/shader_probe.vert -o evidence-local/spirv/triangle.vert.spv
+          glslangValidator -V --target-env vulkan1.2 -S frag software_gpu/drivers/shader_probe.frag -o evidence-local/spirv/triangle.frag.spv
+          spirv-val --target-env vulkan1.2 evidence-local/spirv/triangle.vert.spv
+          spirv-val --target-env vulkan1.2 evidence-local/spirv/triangle.frag.spv
+      - name: Provenance receipt for validated inputs, NOT an ARE renderer
+        env:
+          EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python -m software_gpu.drivers.spirv_preflight --vertex evidence-local/spirv/triangle.vert.spv --fragment evidence-local/spirv/triangle.frag.spv --source-revision "$EXACT_HEAD" --output evidence-local/spirv/receipt.json
+      - name: Preserve genuine compiled shader bytes and receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: real-spirv-inputs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/spirv/
+          if-no-files-found: ignore
+          retention-days: 30

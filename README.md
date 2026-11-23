@@ -21,18 +21,22 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
-## SPIR-V source intake for the future ARE Vulkan ICD (Issue #313)
+## P0: Ordered CPU commands to real native C++ draw execution (opt-in)
 
-The opt-in `software_gpu.drivers.spirv_admission` reads genuine SPIR-V
-vertex/fragment binaries compiled by the Khronos-compatible `glslangValidator`
-tool and requires a **real** SPIRV-Tools `spirv-val` subprocess before
-emitting source SHA-256 receipts. Dedicated Ubuntu CI saves original GLSL,
-SPIR-V modules, validator and SHA evidence. Invalid stages, capabilities,
-binary instruction bounds and missing validator fail closed.
-
-**This is not shader execution or a Vulkan ICD.** ARE cannot yet consume
-SPIR-V instructions, expose a VkPhysicalDevice, issue a Vulkan draw or render
-Unity frames. See [SPIR-V source admission and missing Vulkan contracts](docs/SPIRV_SOURCE_ADMISSION.md).
+The [native command-submission contract](docs/NATIVE_COMMAND_SUBMISSION_P0.md)
+records bounded ordered triangle payloads as immutable bytes with SHA-256,
+validates the entire command packet and submits it to the real C++17 ARE
+rasterizer. Draw output is staged and is only copied to the caller's RGBA8
+and Float32 depth buffers if **all** native draw commands complete. The
+Linux/Windows native tests check exact replay, input isolation and atomic
+late-error rejection. With the existing optional SQLite learner enabled, the
+new native-command scope compares the ordered reference against a single-call
+ordered-concatenation candidate using real timings and identical complete
+color/depth **and sample counters**. Saved host-/source-/packet-bound weights
+are retained separately from older raster/FFmpeg profiles; any parity failure
+blocks only the candidate. No performance improvement is claimed until the
+relevant real paired measurements pass. This API-neutral CPU-only envelope does **not** export
+Vulkan `VkCommandBuffer`, `VkQueueSubmit`, SPIR-V native C++ execution or Unity.
 
 ## P0: ARE native CPU Driver Adaptation Layer (Vulkan research; opt-in)
 
@@ -44,7 +48,7 @@ and buffer aliasing without partial raster output. Its native binary and
 source are SHA-256-bound; normal rendering and learning routes are untouched.
 
 **Important:** This is **not** a Vulkan ICD or a registered graphics card.
-There is no `VkPhysicalDevice`, SPIR-V execution, WSI/swapchain, Mesa/Zink,
+There is no `VkPhysicalDevice`, **native C++ SPIR-V execution**, WSI/swapchain, Mesa/Zink,
 Windows WDDM or Unity Editor integration. Do not install it as a system ICD.
 Use `python -m unittest software_gpu.tests.test_driver_adapter -v` for real
 headless CPU evidence. Roadmap, Vulkan Loader/CTS gates and Unity acceptance:

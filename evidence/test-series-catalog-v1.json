@@ -2,10 +2,10 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
-      "id": "spirv-source-admission-313",
+      "id": "spirv-real-compiler-validation-313",
       "introduced": "2026-11-23",
-      "title": "SPIR-V original GLSL→glslangValidator→spirv-val admission (kein ARE shader execution)",
-      "module": "software_gpu/tests/test_spirv_admission.py",
+      "title": "SPIR-V: echte glslang/spirv-val Vertex+Fragment-Inputs (kein ARE-Backend)",
+      "module": "software_gpu/tests/test_spirv_preflight.py",
       "surface": "test",
       "status": "registered"
     },
@@ -182,6 +182,22 @@
       "introduced": "2026-11-23",
       "title": "Vulkan Loader: echte Mesa-Lavapipe-CPU-Enumerierung, kein ARE-ICD",
       "module": "software_gpu/tests/test_vulkan_loader_reference.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "spirv-real-ssa-execution-313",
+      "introduced": "2026-11-23",
+      "title": "SPIR-V SSA: echte Vertex-/Fragment-Ausführung auf ARE-CPU-Tiles",
+      "module": "software_gpu/tests/test_spirv_opcode_execution.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
+      "id": "are-native-command-submission-313",
+      "introduced": "2026-11-23",
+      "title": "ARE Native CPU Commands: echte geordnete Draws und atomarer Rollback",
+      "module": "software_gpu/tests/test_native_command_submission.py",
       "surface": "test",
       "status": "registered"
     }
