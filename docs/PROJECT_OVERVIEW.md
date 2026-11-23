@@ -26,6 +26,7 @@
 | CPU Triangle- und Tile-Rasterisierung | Ja | Referenz-/Tile-Bildtests, Linux/Windows |
 | LLVM/Numba CPU-Coverage-JIT | Optional | Linux/Windows CI, nicht allgemeine CPU-Beschleunigung |
 | 4× MSAA und FXAA | Ja | Funktionstests, keine API-Konformität |
+| Nativer CPU Driver Adapter (P0) | Opt-in C++17-Bridge mit C-ABI und RGBA8/Float32-Depth; CI separat prüfen | **Kein Vulkan ICD**, kein SPIR-V, VkPhysicalDevice, WSI oder Unity; [Roadmap](VULKAN_DRIVER_ADAPTER_P0.md) |
 | Direct3D-11-/CUDA-artige Python-Adapter | Demo | Keine native API- oder Treiberkompatibilität |
 | Android-WebView und Node-Clients | HTTPS-Client und automatisierter Paketbau | Kein Emulator-/Gerätelauf, Serveradresse erforderlich |
 | LLM-Training ohne GPU | Kein vollständiger Stack | Kein PyTorch-Backend/Backprop-GPU-Ersatz |
