@@ -1,0 +1,48 @@
+name: ARE weighted Vulkan CPU device
+on:
+  pull_request:
+    paths:
+      - 'native/vulkan/weighted/**'
+      - 'native/raster/**'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/drivers/**'
+      - 'software_gpu/graphics/**'
+      - 'software_gpu/learning.py'
+      - '.github/workflows/are-weighted-vulkan.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/vulkan/weighted/**'
+      - 'native/raster/**'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/drivers/**'
+      - 'software_gpu/graphics/**'
+      - 'software_gpu/learning.py'
+      - '.github/workflows/are-weighted-vulkan.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  weighted-vulkan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install loader, tools and driver dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libvulkan-dev vulkan-tools glslang-tools spirv-tools
+          python -m pip install 'numpy>=1.26,<3' 'vulkan==1.3.275.1'
+      - name: Enumerate, draw, map both attachments and reopen learned profile
+        run: python -m software_gpu.drivers.verify_weighted_icd evidence-local/weighted-vulkan
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: are-weighted-vulkan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/weighted-vulkan/
+          if-no-files-found: error
