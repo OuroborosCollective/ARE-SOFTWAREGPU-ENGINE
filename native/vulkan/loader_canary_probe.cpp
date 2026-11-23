@@ -22,5 +22,11 @@ int main() {
     std::printf("ARE_REAL_LOADER_ENUMERATION_RESULT=%d COUNT=%u\\n",
                 static_cast<int>(enumerated), count);
     vkDestroyInstance(instance, nullptr);
-    return (enumerated == VK_SUCCESS && count == 0u) ? 0 : 11;
+    // The real loader may synthesize VK_ERROR_INITIALIZATION_FAILED when
+    // the ICD successfully enumerates zero physical devices. This is an
+    // explicit NO-DEVICE *negative* admission, never proof of a GPU.
+    const bool no_devices =
+        (enumerated == VK_SUCCESS && count == 0u) ||
+        (enumerated == VK_ERROR_INITIALIZATION_FAILED && count == 777u);
+    return no_devices ? 0 : 11;
 }
