@@ -52,6 +52,18 @@ class SPIRVAdmissionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 parse_spirv_module(header + payload)
 
+    def test_valid_spirv_13_header_is_parsed_without_claiming_execution(self):
+        header = self.words(0x07230203, 0x00010300, 0, 10, 0)
+        caps = self.words((2 << 16) | 17, 1)
+        memory = self.words((3 << 16) | 14, 0, 1)
+        entry = self.words((5 << 16) | 15, 4, 3, 0x6e69616d, 0)
+        # Fragment shader entry-point is still only structurally inspected.
+        actual = parse_spirv_module(header + caps + memory + entry)
+        self.assertEqual(actual["spirv_version"], "1.3")
+        self.assertEqual(actual["stages"], ["fragment"])
+        self.assertFalse(actual["spirv_validation_executed"])
+        self.assertFalse(actual["are_shader_executed"])
+
     def test_validator_absent_cannot_create_receipt(self):
         header = self.words(0x07230203, 0x00010000, 0, 10, 0)
         sample = header + self.words((2 << 16) | 17, 1) + (
