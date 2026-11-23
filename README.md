@@ -21,6 +21,17 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## P0: Ordered CPU commands to real native C++ draw execution (opt-in)
+
+The [native command-submission contract](docs/NATIVE_COMMAND_SUBMISSION_P0.md)
+records bounded ordered triangle payloads as immutable bytes with SHA-256,
+validates the entire command packet and submits it to the real C++17 ARE
+rasterizer. Draw output is staged and is only copied to the caller's RGBA8
+and Float32 depth buffers if **all** native draw commands complete. The
+Linux/Windows native tests check exact replay, input isolation and atomic
+late-error rejection. This API-neutral CPU-only envelope does **not** export
+Vulkan `VkCommandBuffer`, `VkQueueSubmit`, SPIR-V native C++ execution or Unity.
+
 ## P0: ARE native CPU Driver Adaptation Layer (Vulkan research; opt-in)
 
 A source-checkout C++17/ctypes **driver adaptation bridge** connects
@@ -31,7 +42,7 @@ and buffer aliasing without partial raster output. Its native binary and
 source are SHA-256-bound; normal rendering and learning routes are untouched.
 
 **Important:** This is **not** a Vulkan ICD or a registered graphics card.
-There is no `VkPhysicalDevice`, SPIR-V execution, WSI/swapchain, Mesa/Zink,
+There is no `VkPhysicalDevice`, **native C++ SPIR-V execution**, WSI/swapchain, Mesa/Zink,
 Windows WDDM or Unity Editor integration. Do not install it as a system ICD.
 Use `python -m unittest software_gpu.tests.test_driver_adapter -v` for real
 headless CPU evidence. Roadmap, Vulkan Loader/CTS gates and Unity acceptance:
