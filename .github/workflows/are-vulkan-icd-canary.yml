@@ -4,12 +4,24 @@ on:
     branches: [main]
     paths:
       - 'native/vulkan/**'
+      - 'native/raster/driver_adapter.cpp'
+      - 'native/raster/driver_adapter.hpp'
+      - 'native/raster/core.hpp'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/drivers/native_bridge.py'
+      - 'software_gpu/research/native_symbolic.py'
       - 'software_gpu/drivers/verify_loader_canary.py'
       - '.github/workflows/are-vulkan-icd-canary.yml'
   push:
     branches: [main]
     paths:
       - 'native/vulkan/**'
+      - 'native/raster/driver_adapter.cpp'
+      - 'native/raster/driver_adapter.hpp'
+      - 'native/raster/core.hpp'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/drivers/native_bridge.py'
+      - 'software_gpu/research/native_symbolic.py'
       - 'software_gpu/drivers/verify_loader_canary.py'
       - '.github/workflows/are-vulkan-icd-canary.yml'
   workflow_dispatch:
@@ -49,5 +61,5 @@ jobs:
         with:
           name: are-vulkan-zero-device-${{ github.run_id }}-${{ github.run_attempt }}
           path: evidence-local/vulkan-loader/receipt.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30

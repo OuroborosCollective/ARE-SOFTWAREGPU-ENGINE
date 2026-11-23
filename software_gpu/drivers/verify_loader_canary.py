@@ -14,7 +14,6 @@ import json
 import os
 import re
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 
@@ -27,11 +26,11 @@ def hashfile(path: Path) -> str:
 
 
 def verify(expected_revision: str) -> dict:
+    project = Path(__file__).resolve().parents[2]
     source_revision = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], text=True).strip()
+        ["git", "rev-parse", "HEAD"], cwd=project, text=True).strip()
     if not expected_revision or source_revision != expected_revision:
         raise RuntimeError("ARE_ICD_CANARY_REVISION_MISMATCH")
-    project = Path(__file__).resolve().parents[2]
     source_paths = (
         "native/vulkan/are_loader_canary.cpp",
         "native/vulkan/loader_canary_probe.cpp",
@@ -40,6 +39,9 @@ def verify(expected_revision: str) -> dict:
         "native/raster/core.hpp",
         "native/symbolic/core.hpp",
     )
+    if subprocess.run(["git", "diff", "--quiet", source_revision, "--", *source_paths],
+                      cwd=project, check=False).returncode:
+        raise RuntimeError("ARE_ICD_CANARY_NATIVE_SOURCES_DIFFER_FROM_REVISION")
     source_hashes = {name: hashfile(project / name) for name in source_paths}
     with tempfile.TemporaryDirectory(prefix="are-vulkan-icd-canary-") as rootname:
         root = Path(rootname)
@@ -104,12 +106,14 @@ def verify(expected_revision: str) -> dict:
             raise RuntimeError("ARE_ICD_REAL_LOADER_REJECTED:" +
                                observed.stdout[-1000:] + observed.stderr[-2500:])
         loader_result, loader_count = map(int, observed_line.groups())
+        trace_lines = set(observed.stderr.splitlines())
         if ((loader_result, loader_count) not in ((0, 0), (-3, 777)) or
                 library.name not in observed.stderr or
-                "ARE_ICD_ACTUAL_ENTRY:negotiate-loader-interface" not in observed.stderr or
-                "ARE_ICD_ACTUAL_ENTRY:create-instance" not in observed.stderr or
-                "ARE_ICD_ACTUAL_ENTRY:enumerate-zero-devices" not in observed.stderr or
-                "ARE_ICD_ACTUAL_ENTRY:icd-return-zero-devices-vk-success" not in observed.stderr):
+                "ARE_ICD_ACTUAL_ENTRY:negotiate-loader-interface" not in trace_lines or
+                "ARE_ICD_ACTUAL_ENTRY:create-instance" not in trace_lines or
+                "ARE_ICD_ACTUAL_ENTRY:enumerate-zero-devices" not in trace_lines or
+                "ARE_ICD_ACTUAL_ENTRY:icd-return-zero-devices-vk-success" not in trace_lines or
+                "ARE_ICD_ACTUAL_ENTRY:destroyed-instance" not in trace_lines):
             raise RuntimeError("ARE_ICD_REAL_LOADER_BINDING_OR_ZERO_DEVICE_UNPROVEN:" +
                                observed.stdout[-1000:] + observed.stderr[-2500:])
         return {
@@ -121,6 +125,7 @@ def verify(expected_revision: str) -> dict:
             "probe_binary_sha256": hashfile(executable),
             "manifest_sha256": hashfile(manifest),
             "actual_vk_create_instance": True,
+            "actual_vk_destroy_instance": True,
             "actual_vk_enumerate_physical_devices": True,
             "icd_successfully_enumerated_zero_devices": True,
             "loader_vk_enumerate_result": loader_result,
