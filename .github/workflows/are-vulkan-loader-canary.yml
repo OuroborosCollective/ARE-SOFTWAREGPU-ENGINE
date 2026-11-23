@@ -74,6 +74,9 @@ jobs:
           result = rec["actual_vulkan_loader_calls"]["vkEnumeratePhysicalDevices"]
           assert (result == 0 and rec["actual_vulkan_loader_calls"]["physical_device_count"] == 0) or (result == -3 and rec["actual_vulkan_loader_calls"]["physical_device_count"] is None)
           assert rec["vulkan_enumeration_was_successful"] is (result == 0)
+          assert rec["direct_are_icd_control"]["create_instance_result"] == 0
+          assert rec["direct_are_icd_control"]["enumerate_device_result"] == 0
+          assert rec["direct_are_icd_control"]["enumerated_device_count"] == 0
           assert rec["are_vkphysicaldevice_exposed"] is False
           assert rec["are_weighted_graphics_execution"] is False
           PY
