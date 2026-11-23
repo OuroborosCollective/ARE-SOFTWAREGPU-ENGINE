@@ -22,7 +22,12 @@ export async function checkEndpoint(raw, fetcher = fetch) {
     return {endpoint: base.origin, status: "authentication-required", http_status: response.status};
   if (response.status !== 200)
     throw new Error("ENDPOINT_UNAVAILABLE_HTTP_" + response.status);
-  const body = await response.json();
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error("ENDPOINT_CONFIG_UNREADABLE");
+  }
   if (!body || !Array.isArray(body.components) || !Array.isArray(body.dependencies))
     throw new Error("NOT_A_GRADIO_CONFIG");
   return {endpoint: base.origin, status: "gradio-ready", http_status: 200,
