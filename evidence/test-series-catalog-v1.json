@@ -4,7 +4,7 @@
     {
       "id": "spirv-real-compiler-validation-313",
       "introduced": "2026-11-23",
-      "title": "SPIR-V: echte glslang/spirv-val Vertex/Fragment-Inputs mit SHA-Receipt, keine ARE-Ausführung",
+      "title": "SPIR-V: echte glslang/spirv-val Vertex+Fragment-Inputs (kein ARE-Backend)",
       "module": "software_gpu/tests/test_spirv_preflight.py",
       "surface": "test",
       "status": "registered"
