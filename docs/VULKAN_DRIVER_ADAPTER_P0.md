@@ -7,6 +7,44 @@ is the integration record. The existing PolyForm Noncommercial license and
 required notice apply. Khronos/Mesa/SwiftShader are architectural references;
 no upstream third-party driver sources are copied or linked by this P0.
 
+## Genuine external Vulkan Loader reference probe (Issue #313)
+
+The opt-in `software_gpu.drivers.vulkan_reference` command launches the real
+`vulkaninfo --summary` executable against an **installed Mesa Lavapipe** ICD,
+using `VK_DRIVER_FILES` to isolate it. It requires actual `VkPhysicalDevice`
+CPU enumeration, a Mesa llvmpipe/Lavapipe device name and Vulkan Loader
+stderr that mentions the selected software driver. It archives the original
+summary and loader log with hashes, the manifest digest, full source revision
+and a canonical receipt digest. Errors or ambiguous device identity fail closed.
+
+The dedicated Linux CI installs the distribution's `vulkan-tools` and
+`mesa-vulkan-drivers` on an ephemeral runner; nothing is registered on the
+VPS or an owner's workstation. The verified CPU Vulkan device belongs to
+**Mesa**, *not to ARE*. `are_vulkan_icd=false` and
+`are_loader_device_verified=false` remain explicit fields even after the
+reference runs successfully. This is an external loader/platform preflight,
+**not** an ARE graphics API implementation and not an FPS benchmark.
+
+Example from a Linux host with its actual Mesa software driver installed:
+
+```sh
+python -m unittest software_gpu.tests.test_vulkan_loader_reference -v
+python -m software_gpu.drivers.vulkan_reference \
+  --manifest /usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+  --source-revision "$(git rev-parse HEAD)" \
+  --output evidence-local/vulkan-lavapipe/receipt.json
+```
+
+**Next actual source spike:** inspect the exact Mesa Lavapipe/NIR SPIR-V
+front-end and shader-to-raster handoff against `native/raster/core.hpp`,
+`native/raster/driver_adapter.hpp`, `software_gpu/graphics/shader.py`,
+`software_gpu/core/memory.py`. Produce a checked operation/feature matrix
+before choosing Mesa/NIR integration or a new ICD. No `vk_icd*` stubs or
+manual generated manifest may be promoted to a functioning ARE device.
+
+References: [official Vulkan Loader driver interface](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md)
+and [Mesa software driver runbook](https://docs.mesa3d.org/install.html).
+
 ## The verified architectural boundary
 
 ```text
