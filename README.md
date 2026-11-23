@@ -29,7 +29,13 @@ validates the entire command packet and submits it to the real C++17 ARE
 rasterizer. Draw output is staged and is only copied to the caller's RGBA8
 and Float32 depth buffers if **all** native draw commands complete. The
 Linux/Windows native tests check exact replay, input isolation and atomic
-late-error rejection. This API-neutral CPU-only envelope does **not** export
+late-error rejection. With the existing optional SQLite learner enabled, the
+new native-command scope compares the ordered reference against a single-call
+ordered-concatenation candidate using real timings and identical complete
+color/depth **and sample counters**. Saved host-/source-/packet-bound weights
+are retained separately from older raster/FFmpeg profiles; any parity failure
+blocks only the candidate. No performance improvement is claimed until the
+relevant real paired measurements pass. This API-neutral CPU-only envelope does **not** export
 Vulkan `VkCommandBuffer`, `VkQueueSubmit`, SPIR-V native C++ execution or Unity.
 
 ## P0: ARE native CPU Driver Adaptation Layer (Vulkan research; opt-in)
