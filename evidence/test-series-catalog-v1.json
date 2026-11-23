@@ -2,6 +2,14 @@
   "protocol": "are.test-series-catalog.v1",
   "tests": [
     {
+      "id": "spirv-real-compiler-validation-313",
+      "introduced": "2026-11-23",
+      "title": "SPIR-V: echte glslang/spirv-val Vertex/Fragment-Inputs mit SHA-Receipt, keine ARE-Ausführung",
+      "module": "software_gpu/tests/test_spirv_preflight.py",
+      "surface": "test",
+      "status": "registered"
+    },
+    {
       "id": "are-driver-adapter-p0",
       "introduced": "2026-11-23",
       "title": "ARE Driver Adapter P0: echte native CPU-Frames, ABI- und Negativtests",
