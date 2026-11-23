@@ -168,6 +168,14 @@
       "module": "software_gpu/tests/test_spherepop_rankings.py",
       "surface": "test",
       "status": "registered"
+    },
+    {
+      "id": "vulkan-lavapipe-loader-reference",
+      "introduced": "2026-11-23",
+      "title": "Vulkan Loader: echte Mesa-Lavapipe-CPU-Enumerierung, kein ARE-ICD",
+      "module": "software_gpu/tests/test_vulkan_loader_reference.py",
+      "surface": "test",
+      "status": "registered"
     }
   ]
 }
