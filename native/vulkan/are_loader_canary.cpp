@@ -80,6 +80,7 @@ VKAPI_ATTR VkResult VKAPI_CALL enumerate_physical_devices(
     // No fake CPU GPU or dummy queues may reach Vulkan clients.
     *count = 0;
     (void)devices;
+    trace("icd-return-zero-devices-vk-success");
     return VK_SUCCESS;
 }
 
