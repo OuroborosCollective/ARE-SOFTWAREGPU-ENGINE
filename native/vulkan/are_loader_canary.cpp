@@ -7,6 +7,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_icd.h>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <new>
 
@@ -30,6 +32,12 @@ namespace {
 constexpr std::uint32_t kLoaderInterface = 5;
 constexpr std::uint32_t kInstanceProtocol = 0x41524531; // "ARE1"
 
+void trace(const char* stage) {
+    const char* enabled = std::getenv("ARE_ICD_TRACE");
+    if (enabled && enabled[0] == '1' && enabled[1] == '\0')
+        std::fprintf(stderr, "ARE_ICD_ACTUAL_ENTRY:%s\\n", stage);
+}
+
 bool valid_instance(VkInstance instance) {
     // Caller is the Vulkan loader, which owns the opaque handle boundary.
     return instance && instance->protocol_version == kInstanceProtocol;
@@ -38,6 +46,7 @@ bool valid_instance(VkInstance instance) {
 VKAPI_ATTR VkResult VKAPI_CALL create_instance(
     const VkInstanceCreateInfo* info, const VkAllocationCallbacks*,
     VkInstance* instance) {
+    trace("create-instance");
     if (!info || !instance || info->sType != VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
         return VK_ERROR_INITIALIZATION_FAILED;
     *instance = VK_NULL_HANDLE;
@@ -64,6 +73,7 @@ VKAPI_ATTR void VKAPI_CALL destroy_instance(
 
 VKAPI_ATTR VkResult VKAPI_CALL enumerate_physical_devices(
     VkInstance instance, std::uint32_t* count, VkPhysicalDevice* devices) {
+    trace("enumerate-zero-devices");
     if (!valid_instance(instance) || !count) return VK_ERROR_INITIALIZATION_FAILED;
     // No fake CPU GPU or dummy queues may reach Vulkan clients.
     *count = 0;
@@ -110,6 +120,7 @@ PFN_vkVoidFunction resolve(const char* name) {
 
 ARE_VK_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
 vk_icdNegotiateLoaderICDInterfaceVersion(std::uint32_t* version) {
+    trace("negotiate-loader-interface");
     if (!version || *version < 2) return VK_ERROR_INCOMPATIBLE_DRIVER;
     if (*version > kLoaderInterface) *version = kLoaderInterface;
     return VK_SUCCESS;
@@ -117,6 +128,7 @@ vk_icdNegotiateLoaderICDInterfaceVersion(std::uint32_t* version) {
 
 ARE_VK_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetInstanceProcAddr(VkInstance, const char* name) {
+    trace("get-instance-procaddr");
     return resolve(name);
 }
 
