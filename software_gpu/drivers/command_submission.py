@@ -93,7 +93,7 @@ def _validate_frame(framebuffer: Framebuffer) -> None:
 
 
 def submit_native_draws(bridge: AREDriverBridge, framebuffer: Framebuffer,
-                        packet: NativeCommandPacket) -> dict:
+                        packet: NativeCommandPacket, *, _icd_pipeline=None) -> dict:
     """Run actual C++17 draws in order and commit all output or none.
 
     Caller exclusively owns the framebuffer and the bridge for this synchronous
@@ -195,7 +195,8 @@ def submit_native_draws(bridge: AREDriverBridge, framebuffer: Framebuffer,
         state_hash.update(framebuffer.color_buffer.tobytes())
         state_hash.update(framebuffer.depth_buffer.tobytes())
         key = scope_key(
-            stage="native-command-cpp17",
+            stage="native-command-cpp17" if _icd_pipeline is None else "vulkan-queue-cpp17",
+            **({"pipeline_sha256": _icd_pipeline} if _icd_pipeline is not None else {}),
             variant="collapsed-native-draw-v1" if len(packet.commands) > 1 else None,
             implementation=implementation,
             native_binary_sha256=bridge.binary_sha256,
