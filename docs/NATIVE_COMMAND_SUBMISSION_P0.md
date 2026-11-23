@@ -14,7 +14,9 @@ caller-provided prepared triangles (23 Float64 fields per triangle)
  -> frozen packet (ordered per-draw digests and combined digest)
  -> submit_native_draws() (validate full packet + frame + budgets)
  -> isolated staging RGBA8/Float32 depth buffers
- -> genuine AREDriverBridge.draw_packed, each command in exact recorded order
+ -> real AREDriverBridge.draw_packed: reference = separate ordered draws;
+    parity-gated candidate = concatenated ordered triangles in one C++ draw
+ -> compare full staged RGBA8 + Float32 depth + sample counters in paired probes
  -> commit staged buffers only if ALL real native draws succeeded
  -> observed final SHA-256(color), SHA-256(depth), counts, native binary SHA
 ```
@@ -38,6 +40,25 @@ caller-provided prepared triangles (23 Float64 fields per triangle)
 - The existing native raster's strict-less depth, first-submission tie owner,
   top-left rule and ordered Float32 contract are preserved, with real replay
   parity against direct native calls.
+- Every nonempty native command packet consults the existing opt-in
+  `software_gpu.learning.LocalLearner` SQLite store. Each native command
+  profile is host-/CPU-/binary-/source-/packet-/initial-frame-hash-bound;
+  per-command samples preserve the original reference/candidate timing,
+  complete output digests and match/block status in that *same* database.
+  Four successful real paired probes and the existing speed/recency gates
+  precede candidate routing; periodic rechecks apply unchanged. A single
+  command is observational only and creates no fake optimization variant.
+  On unset/off/unavailable learning the normal native reference runs.
+- The alternative collapses multiple **ordered** prepared triangles into
+  one genuine C++ draw call without modifying shader/raster logic. A/B
+  parity includes complete RGBA8, Float32 depth and coverage counts.
+  Candidate mismatch or error blocks that saved profile, and does not
+  publish candidate output. No speedup is asserted without source-bound
+  paired timings on the actual target workload.
+- Historical `ARE-Lerndaten.zip` source revision
+  `e898487ef655698513441d660d4cbe813699ea3f` contains separate
+  host-bound raster/FFmpeg profiles and **does not** certify performance
+  of this new profile; never migrate stored weights across source hashes.
 - The existing restricted SPIR-V subset in PR #317 still runs on Python
   CPU tiles. Native C++ shader execution is **not** silently enabled.
 
@@ -45,11 +66,17 @@ Run the original integration tests from the source checkout:
 
 ```bash
 python -m unittest software_gpu.tests.test_native_command_submission \
-  software_gpu.tests.test_driver_adapter -v
+  software_gpu.tests.test_native_command_weights \
+  software_gpu.tests.test_driver_adapter \
+  software_gpu.tests.test_learning_route_coverage -v
 ```
 
 CI matrix: `.github/workflows/are-native-command-submission.yml` on Linux
-and Windows. Exact-HEAD full regression/receipt and independent merge readback
+and Windows. The dedicated negative/positive weight test uses real native
+C++ output, a temporary SQLite file, and a controlled saved-weight edit as
+**selection-only evidence** (not as synthetic speed evidence). Original
+Linux and Windows full-frame parity receipts remain artifact-backed.
+Exact-HEAD full regression/receipt and independent merge readback
 are separate admission requirements; running the test file alone does not
 prove a Vulkan loader device, WSI or Unity Scene/Game viewport.
 
