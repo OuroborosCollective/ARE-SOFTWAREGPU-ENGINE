@@ -88,8 +88,8 @@ class TestNativeCommandSubmission(unittest.TestCase):
         frame = self.framebuffer()
         from dataclasses import replace
         with self.assertRaises(AttributeError):
-            packet.commands[0].payload = b"\\x00" * len(packet.commands[0].payload)
-        forged_command = replace(packet.commands[0], payload=b"\\x00" * len(packet.commands[0].payload))
+            packet.commands[0].payload = bytes(len(packet.commands[0].payload))
+        forged_command = replace(packet.commands[0], payload=bytes(len(packet.commands[0].payload)))
         forged_packet = replace(packet, commands=(forged_command,))
         before = (frame.color_buffer.tobytes(), frame.depth_buffer.tobytes())
         with self.assertRaisesRegex(ValueError, "ARE_COMMAND_PAYLOAD_DIGEST"):
