@@ -27,7 +27,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y vulkan-tools mesa-vulkan-drivers
-      - name: Unit validation without runtime substitution
+      - name: Install required ARE import dependency\n        run: python -m pip install --disable-pip-version-check "numpy>=1.20,<3"\n      - name: Unit validation without runtime substitution
         run: python -m unittest software_gpu.tests.test_vulkan_loader_reference -v
       - name: Execute official Vulkan Loader on Mesa CPU ICD only
         env:
