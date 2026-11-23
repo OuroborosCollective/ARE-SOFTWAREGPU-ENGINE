@@ -45,6 +45,32 @@ manual generated manifest may be promoted to a functioning ARE device.
 References: [official Vulkan Loader driver interface](https://github.com/KhronosGroup/Vulkan-Loader/blob/main/docs/LoaderDriverInterface.md)
 and [Mesa software driver runbook](https://docs.mesa3d.org/install.html).
 
+## Genuine SPIR-V vertex/fragment admission (Issue #313, P0 source spike)
+
+An opt-in preflight now compiles actual GLSL 450 vertex/fragment sources
+(`software_gpu/drivers/shader_probe.vert`, `.frag`) through real Khronos
+`glslangValidator -V --target-env vulkan1.2`, validates the produced .spv
+bytes with actual `spirv-val --target-env vulkan1.2`, and stores each byte
+digest, stage/entry point, ID bounds and instruction metadata with a
+full Git revision receipt. The workflow preserves original compiler outputs
+and does not accept fabricated validator success or a shader header alone.
+
+**This is SPIR-V input admissibility, not ARE shader execution.**
+The existing Python `Shader.vertex_shader` and `fragment_shader`,
+`VertexColorShader` and C++ `are::raster::draw` are untouched.
+In particular, accepted SPIR-V is **not** compiled through NIR into ARE,
+scheduled in an ARE queue, run through a Vulkan graphics pipeline, or
+presented by Unity. The compiled real shaders show which Vulkan shader
+stage/bytecode contracts must be wired into a future ARE backend.
+
+Execute the focused structural negatives with
+`python -m unittest software_gpu.tests.test_spirv_preflight -v`.
+The associated CI receipt is labeled `VALIDATED_INPUT_ONLY`;
+`are_shader_backend_executed` and `are_vulkan_icd_present` are always
+false. A future positive ARE execution gate requires actual SPIR-V
+translation, resources/descriptor ownership, shader execution and
+framebuffer/depth parity on the precise built backend revision.
+
 ## The verified architectural boundary
 
 ```text
