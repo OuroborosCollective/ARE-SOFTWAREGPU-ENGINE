@@ -1,0 +1,90 @@
+name: ARE genuine Vulkan Loader ICD canary (zero devices only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/vulkan/loader_canary.cpp'
+      - 'software_gpu/drivers/vulkan_loader_canary.py'
+      - '.github/workflows/are-vulkan-loader-canary.yml'
+  push:
+    branches: [main, 'feat/are-vulkan-loader-canary-*']
+    paths:
+      - 'native/vulkan/loader_canary.cpp'
+      - 'software_gpu/drivers/vulkan_loader_canary.py'
+      - '.github/workflows/are-vulkan-loader-canary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  loader:
+    name: Actual Khronos Loader / no ARE VkPhysicalDevice
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install real Linux Vulkan headers and loader
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y libvulkan-dev libvulkan1 vulkan-tools
+          python -m pip install --disable-pip-version-check "numpy>=1.20,<3"
+      - name: Compile real ARE ICD canary (not Mesa)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -fPIC -fvisibility=hidden \
+            -shared native/vulkan/loader_canary.cpp -o build/libare_vulkan_canary.so
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          lib = (Path.cwd() / "build/libare_vulkan_canary.so").resolve()
+          manifest = {"file_format_version": "1.0.0",
+                      "ICD": {"library_path": str(lib), "api_version": "1.0.0"}}
+          (lib.parent / "are_icd.json").write_text(json.dumps(manifest, sort_keys=True) + "\n")
+          PY
+      - name: Real Loader CreateInstance and PhysicalDevice negative-bound probe
+        shell: bash
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+          VK_LOADER_DEBUG: all
+        run: |
+          set -euo pipefail
+          export VK_DRIVER_FILES="$PWD/build/are_icd.json"
+          unset VK_ICD_FILENAMES VK_ADD_DRIVER_FILES
+          nm -D build/libare_vulkan_canary.so | grep -E 'vk_icd(GetInstanceProcAddr|NegotiateLoaderICDInterfaceVersion|GetPhysicalDeviceProcAddr)'
+          ldd build/libare_vulkan_canary.so
+          python -m software_gpu.drivers.vulkan_loader_canary \
+            --library "$PWD/build/libare_vulkan_canary.so" \
+            --manifest "$VK_DRIVER_FILES" \
+            --expected-revision "$EXPECTED_REVISION" \
+            --output evidence-local/vulkan-canary/receipt.json
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p = Path("evidence-local/vulkan-canary/receipt.json")
+          rec = json.loads(p.read_text())
+          digest = rec.pop("receipt_sha256")
+          assert hashlib.sha256(json.dumps(rec, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == digest
+          assert rec["status"] == "REAL_LOADER_INSTANCE_ACCEPTED_NO_DEVICE_ADVERTISED"
+          assert rec["actual_vulkan_loader_calls"]["are_icd_library_mapped_by_real_loader"] is True
+          assert rec["actual_vulkan_loader_calls"]["vkCreateInstance"] == 0
+          result = rec["actual_vulkan_loader_calls"]["vkEnumeratePhysicalDevices"]
+          assert (result == 0 and rec["actual_vulkan_loader_calls"]["physical_device_count"] == 0) or (result == -3 and rec["actual_vulkan_loader_calls"]["physical_device_count"] is None)
+          assert rec["vulkan_enumeration_was_successful"] is (result == 0)
+          assert rec["direct_are_icd_control"]["create_instance_result"] == 0
+          assert rec["direct_are_icd_control"]["enumerate_device_result"] == 0
+          assert rec["direct_are_icd_control"]["enumerated_device_count"] == 0
+          assert rec["are_vkphysicaldevice_exposed"] is False
+          assert rec["are_weighted_graphics_execution"] is False
+          PY
+      - name: Preserve original actual Loader evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: are-icd-loader-zero-device-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/vulkan-canary/receipt.json
+          if-no-files-found: ignore
+          retention-days: 30
