@@ -21,6 +21,23 @@ Die **PolyForm-Noncommercial-Lizenz** und `Required Notice` bleiben erhalten.
 Die neuen Tests sind [neueste zuerst registriert](docs/CPU_WAVE_RANGLISTEN.md),
 ohne erfundene Leistungswerte.
 
+## P0: ARE native CPU Driver Adaptation Layer (Vulkan research; opt-in)
+
+A source-checkout C++17/ctypes **driver adaptation bridge** connects
+the existing native `are::raster::draw` to an explicit, versioned C ABI.
+It performs real RGBA8 and Float32-depth drawing, exposes honest CPU-only
+capability flags, and rejects unimplemented profiles, malformed descriptions
+and buffer aliasing without partial raster output. Its native binary and
+source are SHA-256-bound; normal rendering and learning routes are untouched.
+
+**Important:** This is **not** a Vulkan ICD or a registered graphics card.
+There is no `VkPhysicalDevice`, SPIR-V execution, WSI/swapchain, Mesa/Zink,
+Windows WDDM or Unity Editor integration. Do not install it as a system ICD.
+Use `python -m unittest software_gpu.tests.test_driver_adapter -v` for real
+headless CPU evidence. Roadmap, Vulkan Loader/CTS gates and Unity acceptance:
+[Driver Adapter P0](docs/VULKAN_DRIVER_ADAPTER_P0.md). No benchmark ranking
+or Unity FPS is claimed by a registered test.
+
 ## CPU Material Profiles: Alpha, Blending and Shadows (Issue #285; opt-in)
 
 The default opaque `SoftwareRasterizer.draw_mesh()`, including alpha-byte storage
