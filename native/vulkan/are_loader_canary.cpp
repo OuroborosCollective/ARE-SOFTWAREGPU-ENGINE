@@ -102,6 +102,52 @@ VKAPI_ATTR VkResult VKAPI_CALL enumerate_instance_version(std::uint32_t* version
     return VK_SUCCESS;
 }
 
+/* Required Vulkan 1.0 physical-device dispatch pointers.
+ * No physical device is ever returned to an application, hence none of these
+ * report any capability. An invalid/unadvertised handle receives no features.
+ * They are not substitutes for a real future VkPhysicalDevice implementation.
+ */
+VKAPI_ATTR void VKAPI_CALL physical_features(VkPhysicalDevice, VkPhysicalDeviceFeatures* v) {
+    if (v) std::memset(v, 0, sizeof(*v));
+}
+VKAPI_ATTR void VKAPI_CALL physical_properties(VkPhysicalDevice, VkPhysicalDeviceProperties* v) {
+    if (v) std::memset(v, 0, sizeof(*v));
+}
+VKAPI_ATTR void VKAPI_CALL physical_memory(VkPhysicalDevice, VkPhysicalDeviceMemoryProperties* v) {
+    if (v) std::memset(v, 0, sizeof(*v));
+}
+VKAPI_ATTR void VKAPI_CALL physical_queue_families(
+    VkPhysicalDevice, std::uint32_t* count, VkQueueFamilyProperties*) {
+    if (count) *count = 0;
+}
+VKAPI_ATTR void VKAPI_CALL physical_format(
+    VkPhysicalDevice, VkFormat, VkFormatProperties* v) {
+    if (v) std::memset(v, 0, sizeof(*v));
+}
+VKAPI_ATTR VkResult VKAPI_CALL physical_image_format(
+    VkPhysicalDevice, VkFormat, VkImageType, VkImageTiling,
+    VkImageUsageFlags, VkImageCreateFlags, VkImageFormatProperties*) {
+    return VK_ERROR_FORMAT_NOT_SUPPORTED;
+}
+VKAPI_ATTR void VKAPI_CALL physical_sparse_format(
+    VkPhysicalDevice, VkFormat, VkImageType, VkSampleCountFlagBits,
+    VkImageUsageFlags, VkImageTiling, std::uint32_t* count,
+    VkSparseImageFormatProperties*) {
+    if (count) *count = 0;
+}
+VKAPI_ATTR VkResult VKAPI_CALL enumerate_device_extensions(
+    VkPhysicalDevice, const char* layer, std::uint32_t* count, VkExtensionProperties*) {
+    if (layer) return VK_ERROR_LAYER_NOT_PRESENT;
+    if (!count) return VK_ERROR_INITIALIZATION_FAILED;
+    *count = 0;
+    return VK_SUCCESS;
+}
+VKAPI_ATTR VkResult VKAPI_CALL reject_create_device(
+    VkPhysicalDevice, const VkDeviceCreateInfo*, const VkAllocationCallbacks*, VkDevice* device) {
+    if (device) *device = VK_NULL_HANDLE;
+    return VK_ERROR_INCOMPATIBLE_DRIVER;
+}
+
 PFN_vkVoidFunction resolve(const char* name) {
     if (!name) return nullptr;
 #define FN(s, ptr) if (std::strcmp(name, s) == 0) return reinterpret_cast<PFN_vkVoidFunction>(ptr)
@@ -111,6 +157,15 @@ PFN_vkVoidFunction resolve(const char* name) {
     FN("vkEnumerateInstanceExtensionProperties", enumerate_instance_extensions);
     FN("vkEnumerateInstanceLayerProperties", enumerate_instance_layers);
     FN("vkEnumerateInstanceVersion", enumerate_instance_version);
+    FN("vkGetPhysicalDeviceFeatures", physical_features);
+    FN("vkGetPhysicalDeviceProperties", physical_properties);
+    FN("vkGetPhysicalDeviceMemoryProperties", physical_memory);
+    FN("vkGetPhysicalDeviceQueueFamilyProperties", physical_queue_families);
+    FN("vkGetPhysicalDeviceFormatProperties", physical_format);
+    FN("vkGetPhysicalDeviceImageFormatProperties", physical_image_format);
+    FN("vkGetPhysicalDeviceSparseImageFormatProperties", physical_sparse_format);
+    FN("vkEnumerateDeviceExtensionProperties", enumerate_device_extensions);
+    FN("vkCreateDevice", reject_create_device);
     FN("vkGetInstanceProcAddr", vk_icdGetInstanceProcAddr);
     FN("vkGetDeviceProcAddr", vk_icdGetDeviceProcAddr);
 #undef FN
