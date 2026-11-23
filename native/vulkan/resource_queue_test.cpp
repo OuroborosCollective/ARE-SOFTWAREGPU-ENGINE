@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
           ==ResourceStatus::native_rejected);
     CHECK(arena.snapshot(replay,&after)==ResourceStatus::ok);
     CHECK(after.rgba==before.rgba && after.depth==before.depth);
-    CHECK(unchanged==RasterCounters{11,22,33});
+    CHECK((unchanged==RasterCounters{11,22,33}));
 
     CHECK(arena.write_buffer(a,sizeof(ground)-1,ground.data(),2)
           ==ResourceStatus::out_of_bounds);
