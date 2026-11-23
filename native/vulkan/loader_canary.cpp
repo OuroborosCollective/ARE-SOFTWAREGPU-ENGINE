@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <cstdio>
 #include <new>
 
 namespace {
@@ -18,6 +19,13 @@ constexpr std::uint32_t supported_api = VK_API_VERSION_1_0;
 VkResult VKAPI_CALL create_instance(const VkInstanceCreateInfo* info,
                                   const VkAllocationCallbacks* allocator,
                                   VkInstance* instance) {
+    std::fprintf(stderr, "ARE_ICD_CREATE_CALLED info=%d flags=%u layers=%u ext=%u pnext=%d app_api=%u alloc=%d\\n",
+        info != nullptr, info ? info->flags : 0u,
+        info ? info->enabledLayerCount : 0u,
+        info ? info->enabledExtensionCount : 0u,
+        info && info->pNext != nullptr,
+        info && info->pApplicationInfo ? info->pApplicationInfo->apiVersion : 0u,
+        allocator != nullptr);
     if (!info || !instance || info->sType != VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO ||
         info->flags != 0 || info->enabledExtensionCount != 0 ||
         info->enabledLayerCount != 0 ||
