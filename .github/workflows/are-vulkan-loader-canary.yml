@@ -68,8 +68,12 @@ jobs:
           rec = json.loads(p.read_text())
           digest = rec.pop("receipt_sha256")
           assert hashlib.sha256(json.dumps(rec, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == digest
-          assert rec["status"] == "REAL_LOADER_ZERO_DEVICE_ONLY"
-          assert rec["actual_vulkan_loader_calls"]["physical_device_count"] == 0
+          assert rec["status"] == "REAL_LOADER_INSTANCE_ACCEPTED_NO_DEVICE_ADVERTISED"
+          assert rec["actual_vulkan_loader_calls"]["are_icd_library_mapped_by_real_loader"] is True
+          assert rec["actual_vulkan_loader_calls"]["vkCreateInstance"] == 0
+          result = rec["actual_vulkan_loader_calls"]["vkEnumeratePhysicalDevices"]
+          assert (result == 0 and rec["actual_vulkan_loader_calls"]["physical_device_count"] == 0) or (result == -3 and rec["actual_vulkan_loader_calls"]["physical_device_count"] is None)
+          assert rec["vulkan_enumeration_was_successful"] is (result == 0)
           assert rec["are_vkphysicaldevice_exposed"] is False
           assert rec["are_weighted_graphics_execution"] is False
           PY
