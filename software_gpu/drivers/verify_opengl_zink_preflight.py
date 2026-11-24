@@ -49,6 +49,34 @@ def classify(returncode, record):
     raise ValueError("ARE_ZINK_PROBE_STATUS_CAPABILITIES_CONTRADICTION")
 
 
+def build_receipt(expected_revision, source, library, manifest, executable,
+                  stdout, stderr, native_probe_exit, status, observed):
+    """Bind original real-probe bytes and claimed identity to one canonical digest.
+
+    Pure receipt construction; the caller alone performs the real Vulkan run.
+    No test data produced here is executable Vulkan or OpenGL evidence.
+    """
+    report = {
+        "protocol": "are.zink-real-preflight-receipt.v1",
+        "source_revision": expected_revision,
+        "source_sha256": digest(source),
+        "driver_sha256": digest(library),
+        "manifest_sha256": digest(manifest),
+        "probe_executable_sha256": digest(executable),
+        "probe_stdout_sha256": digest(stdout),
+        "probe_stderr_sha256": digest(stderr),
+        "native_probe_exit": native_probe_exit,
+        "zink_vulkan_minimum_status": status,
+        "real_vulkan_device": observed,
+        "real_glx_context_verified": False,
+        "real_heaven_score_verified": False,
+        "hardware_device_claim": False,
+    }
+    report["receipt_sha256"] = hashlib.sha256(
+        json.dumps(report, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return report
+
+
 def verify(output, manifest, expected_revision, include):
     root = Path(__file__).resolve().parents[2]
     actual_revision = subprocess.check_output(
@@ -89,24 +117,10 @@ def verify(output, manifest, expected_revision, include):
     except (ValueError, UnicodeError) as e:
         raise ValueError("ARE_ZINK_NATIVE_JSON_INVALID") from e
     status = classify(run.returncode, observed)
-    report = {
-        "protocol": "are.zink-real-preflight-receipt.v1",
-        "source_revision": expected_revision,
-        "source_sha256": digest(source),
-        "driver_sha256": digest(library),
-        "manifest_sha256": digest(manifest),
-        "probe_executable_sha256": digest(executable),
-        "probe_stdout_sha256": digest(output / "stdout.json"),
-        "probe_stderr_sha256": digest(output / "stderr.txt"),
-        "native_probe_exit": run.returncode,
-        "zink_vulkan_minimum_status": status,
-        "real_vulkan_device": observed,
-        "real_glx_context_verified": False,
-        "real_heaven_score_verified": False,
-        "hardware_device_claim": False,
-    }
-    report["receipt_sha256"] = hashlib.sha256(
-        json.dumps(report, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    report = build_receipt(
+        expected_revision, source, library, manifest, executable,
+        output / "stdout.json", output / "stderr.txt",
+        run.returncode, status, observed)
     (output / "receipt.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report

@@ -4,7 +4,7 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from software_gpu.drivers.verify_opengl_zink_preflight import classify, verify, digest
+from software_gpu.drivers.verify_opengl_zink_preflight import classify, verify, digest, build_receipt
 
 
 class TestZinkAdmissionContract(unittest.TestCase):
@@ -220,3 +220,63 @@ class TestZinkAdmissionContract(unittest.TestCase):
         rec["missing_gl21_features"] = []
         rec["missing_gl21_extensions"] = []
         self.assertEqual(classify(0, rec), "minimum-vulkan-capabilities")
+
+    def test_canonical_receipt_binds_original_six_real_files_by_sha256(self):
+        # Pure byte provenance exercise, not a simulated Vulkan execution.
+        import hashlib
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            paths = [root / name for name in
+                     ("source.cpp", "libare_weighted.so", "are.json",
+                      "compiled-probe", "stdout.json", "stderr.txt")]
+            for i, path in enumerate(paths):
+                path.write_bytes(bytes([i, 255-i]) + b"original-file-bytes")
+            data = self._data_contract()
+            receipt = build_receipt(
+                "a"*40, *paths, 3, "incompatible", data)
+            for field, path in zip(
+                    ("source_sha256", "driver_sha256", "manifest_sha256",
+                     "probe_executable_sha256", "probe_stdout_sha256",
+                     "probe_stderr_sha256"), paths):
+                self.assertEqual(receipt[field], hashlib.sha256(path.read_bytes()).hexdigest())
+            before_digest = {k:v for k,v in receipt.items() if k != "receipt_sha256"}
+            self.assertEqual(receipt["receipt_sha256"], hashlib.sha256(
+                json.dumps(before_digest, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest())
+            self.assertEqual(receipt["native_probe_exit"], 3)
+            self.assertEqual(receipt["zink_vulkan_minimum_status"], "incompatible")
+            self.assertEqual(receipt["real_vulkan_device"], data)
+            self.assertIs(receipt["real_glx_context_verified"], False)
+            self.assertIs(receipt["real_heaven_score_verified"], False)
+            self.assertIs(receipt["hardware_device_claim"], False)
+
+    def test_receipt_detects_mutated_actual_binary_source_or_stdout_bytes(self):
+        # No mocks: digest exactly the changing filesystem bytes, no Vulkan claim.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            paths = [root / str(i) for i in range(6)]
+            for i, path in enumerate(paths):
+                path.write_bytes(("raw-original-data-" + str(i)).encode())
+            contract = self._data_contract()
+            initial = build_receipt("b"*40, *paths, 3, "incompatible", contract)
+            for index, field in ((0, "source_sha256"), (1, "driver_sha256"),
+                                 (4, "probe_stdout_sha256")):
+                before = build_receipt("b"*40, *paths, 3, "incompatible", contract)
+                paths[index].write_bytes(paths[index].read_bytes() + b"\x01")
+                after = build_receipt("b"*40, *paths, 3, "incompatible", contract)
+                self.assertNotEqual(before[field], after[field])
+                self.assertNotEqual(before["receipt_sha256"], after["receipt_sha256"])
+                self.assertEqual(after["source_revision"], initial["source_revision"])
+
+    def test_receipt_includes_new_capability_findings_without_relabeling_runtime(self):
+        with tempfile.TemporaryDirectory() as td:
+            paths = [Path(td) / ("input-" + str(i)) for i in range(6)]
+            for path in paths:
+                path.write_bytes(b"genuine-current-bytes")
+            observed = self._data_contract()
+            baseline = build_receipt("c"*40, *paths, 3, "incompatible", observed)
+            changed = dict(observed, missing_gl21_extensions=["VK_EXT_custom_border_color"])
+            other = build_receipt("c"*40, *paths, 3, "incompatible", changed)
+            self.assertNotEqual(baseline["receipt_sha256"], other["receipt_sha256"])
+            self.assertIs(other["real_glx_context_verified"], False)
+            self.assertIs(other["real_heaven_score_verified"], False)
