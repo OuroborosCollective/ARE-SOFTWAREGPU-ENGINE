@@ -1,9 +1,11 @@
 """Real CPU raster regressions against the historical band reference."""
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
 from software_gpu.graphics.framebuffer import Framebuffer
+from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
 from software_gpu.graphics.shader import Shader, Vertex
 from software_gpu.graphics.postprocess import MSAAFramebuffer
@@ -70,6 +72,32 @@ class TestTileRasterizer(unittest.TestCase):
             SoftwareRasterizer(Framebuffer(8, 8), num_threads=0)
         with self.assertRaises(ValueError):
             SoftwareRasterizer(Framebuffer(8, 8), backend="magic-gpu")
+
+    def test_tile_pair_budget_rejects_cumulative_overlaps_before_writes(self):
+        # The triangle's bounding box overlaps four tiles. Lower only the
+        # budget so the real setup, cache and raster stages can run cheaply.
+        vertices = verts([(-.9, -.9, .2), (.9, -.9, .2), (-.9, .9, .2)], (1, 0, 0))
+        shader = VertexColorShader()
+        face = (0, 1, 2)
+        with patch("software_gpu.graphics.tile_backend.MAX_TILE_CANDIDATE_PAIRS", 8):
+            for backend, cache_bytes in (("tiles", 0), ("tiles-plan", 1 << 20)):
+                with self.subTest(backend=backend):
+                    fb = Framebuffer(16, 16)
+                    renderer = SoftwareRasterizer(fb, tile_size=8, num_threads=1,
+                                                  backend=backend,
+                                                  preparation_cache_bytes=cache_bytes)
+                    self.addCleanup(renderer.executor.shutdown, wait=True)
+                    fb.clear(depth=1.0)
+                    color, depth = fb.color_buffer.copy(), fb.depth_buffer.copy()
+                    with self.assertRaisesRegex(ValueError, "^TILE_CANDIDATE_PAIR_LIMIT$"):
+                        renderer.draw_mesh(vertices, [face] * 3, shader)
+                    np.testing.assert_array_equal(fb.color_buffer, color)
+                    np.testing.assert_array_equal(fb.depth_buffer, depth)
+
+                    renderer.draw_mesh(vertices, [face] * 2, shader)
+                    self.assertTrue((fb.depth_buffer < depth).any())
+                    if cache_bytes:
+                        self.assertEqual(renderer.last_preparation_receipt["entries"], 1)
 
     def test_msaa_uint16_resolve_matches_float_reference(self):
         fb = MSAAFramebuffer(61, 17, samples=4)
