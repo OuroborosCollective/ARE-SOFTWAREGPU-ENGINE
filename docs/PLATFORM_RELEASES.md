@@ -32,6 +32,50 @@ installation. Compiler-dependent native research backends and external tools
 such as FFmpeg are separate capabilities and must not be inferred from an
 installer test. See the source-based [quick start](QUICKSTART.md) for those paths.
 
+## Install and run
+
+Download the package for the desired tag from
+[GitHub Releases](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases).
+Verify its SHA-256 against the release's `checksums.txt` before installing.
+
+### Windows x64
+
+Open `ARE-SoftwareGPU-X.Y.Z-windows-x64-setup.exe`. The default destination is
+`%LOCALAPPDATA%\Programs\ARE-SoftwareGPU`. The Start menu entry
+**ARE SoftwareGPU Console** opens a console with the installed command available:
+
+```console
+are-softwaregpu --version
+are-softwaregpu --info
+are-softwaregpu --blender
+```
+
+The last command executes the existing CPU rendering demo. The shortcut adjusts
+only its own console's PATH. The same application ID supports later installer
+versions. Uninstall through Windows Settings or the supplied Start menu entry.
+The setup EXE is not Authenticode-signed; no Windows signing certificate is
+configured by this change.
+
+### Linux x86_64
+
+Use the exact downloaded version in these filenames. The native CI build uses
+Ubuntu 22.04; older glibc distributions and other CPU architectures are not
+covered by that acceptance run.
+
+```sh
+chmod +x ARE-SoftwareGPU-X.Y.Z-linux-x86_64.run
+./ARE-SoftwareGPU-X.Y.Z-linux-x86_64.run
+"${XDG_DATA_HOME:-$HOME/.local/share}/ARE-SoftwareGPU/X.Y.Z/bin/are-softwaregpu" --version
+"${XDG_DATA_HOME:-$HOME/.local/share}/ARE-SoftwareGPU/X.Y.Z/bin/are-softwaregpu" --blender
+```
+
+An absolute custom destination is accepted with `--prefix /absolute/path`.
+Every version has its own default directory. Existing destinations are refused,
+so a new installation does not overwrite an old version or unrelated files.
+Remove a chosen installation with its `uninstall.sh`; files not listed in its
+installation inventory are retained. No separate Python, pip or network access
+is needed to install the downloaded package.
+
 ## Acceptance and publication
 
 1. Run the existing CPU regression and installed-wheel matrices for the exact

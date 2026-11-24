@@ -22,6 +22,8 @@ release:
     owner: OuroborosCollective
     name: ARE-SOFTWAREGPU-ENGINE
   prerelease: auto
+  # Slow older merges must not replace a newer SemVer release as latest.
+  make_latest: 'legacy'
   extra_files:
     - glob: ./release-assets/*
   header: |

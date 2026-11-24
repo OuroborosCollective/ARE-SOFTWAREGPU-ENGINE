@@ -86,6 +86,27 @@ class DesktopReleaseContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify["bmp_summary"](bytes(clear_only))
 
+    def test_desktop_entry_emits_utf8_even_when_parent_environment_requests_cp1252(self):
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(ROOT)
+        env["PYTHONIOENCODING"] = "cp1252"
+        result = subprocess.run([sys.executable, str(ROOT / "tools" / "desktop_entry.py"), "--info"],
+                                env=env, check=True, capture_output=True)
+        text = result.stdout.decode("utf-8", errors="strict")
+        self.assertIn("Device Name:", text)
+        self.assertIn("\u2022 mode", text)
+
+    def test_verifier_preserves_utf8_child_output_when_started_with_cp1252_stdout(self):
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(ROOT / "tools")
+        env["PYTHONIOENCODING"] = "cp1252"
+        code = ("import os,sys; from pathlib import Path; from verify_desktop_install import run; "
+                "env=dict(os.environ); env['PYTHONIOENCODING']='utf-8'; "
+                "run([sys.executable,'-c',\"print('\\u2022 original')\"],Path.cwd(),env)")
+        result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+        self.assertEqual(result.stdout.decode("utf-8", errors="strict").splitlines(), ["\u2022 original"])
+
     @unittest.skipUnless(sys.platform.startswith("linux"), "Linux self-extracting installer contract")
     def test_install_run_and_uninstall_preserves_untracked_user_file(self):
         with tempfile.TemporaryDirectory() as tmp:

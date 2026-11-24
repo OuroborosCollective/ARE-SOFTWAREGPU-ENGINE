@@ -1,6 +1,7 @@
 """Registry transport doubles are control-flow tests, not PyPI runtime evidence."""
 from contextlib import redirect_stderr, redirect_stdout
 import hashlib
+import importlib.util
 import io
 import json
 from pathlib import Path
@@ -11,7 +12,14 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 
 from tools import pypi_index_readback, release_gate
-from software_gpu.tests.test_public_package_release import make_wheel, make_sdist
+
+# Read the stdlib fixture module directly: importing software_gpu would load the
+# renderer and NumPy before the dependency-free release admission checks run.
+fixture_spec = importlib.util.spec_from_file_location(
+    "release_archive_fixtures", Path(__file__).with_name("test_public_package_release.py"))
+fixtures = importlib.util.module_from_spec(fixture_spec)
+fixture_spec.loader.exec_module(fixtures)
+make_wheel, make_sdist = fixtures.make_wheel, fixtures.make_sdist
 
 
 class RegistryResponse(io.BytesIO):

@@ -18,14 +18,16 @@ import tempfile
 import time
 
 from package_desktop import digest, platform_name, validate_version
+from desktop_entry import configure_output
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(args: list[str], cwd: Path, env: dict[str, str]) -> str:
+    configure_output()
     result = subprocess.run(args, cwd=cwd, env=env, check=False, timeout=240,
-                            text=True, encoding="utf-8", errors="replace", capture_output=True)
+                            text=True, encoding="utf-8", errors="strict", capture_output=True)
     if result.stdout:
         print(result.stdout, end="")
     if result.stderr:
