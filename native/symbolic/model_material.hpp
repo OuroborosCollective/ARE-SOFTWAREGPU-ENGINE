@@ -26,6 +26,21 @@ struct SurfaceTriangle {
     std::array<SurfaceV2,3> uv{};
     std::uint32_t material=0;
 };
+inline double surface_srgb_to_linear(double x) {
+    return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);
+}
+// Byte-addressed textures have exactly 256 possible sRGB inputs. Reuse the
+// original double-precision transfer function under the native FE_TONEAREST
+// contract; filtering still happens in linear space, in the same order.
+inline double surface_srgb_byte_to_linear(std::uint8_t value) {
+    static const auto table=[] {
+        std::array<double,256> values{};
+        for(unsigned i=0;i<values.size();++i)
+            values[i]=surface_srgb_to_linear(double(i)/255.0);
+        return values;
+    }();
+    return table[value];
+}
 struct SurfaceMip { std::uint32_t width=0,height=0; std::vector<std::uint8_t> rgba; };
 struct SurfaceTexture {
     std::vector<SurfaceMip> mips;
@@ -47,7 +62,6 @@ struct SurfaceTexture {
             if(bytes>768u*1024u*1024u || mip_bytes()>768u*1024u*1024u-bytes)
                 throw std::runtime_error("MODEL_TEXTURE_MIP_BUDGET");
             dst.rgba.resize(bytes);
-            auto srgb_decode=[](double x){return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);};
             auto srgb_encode=[](double x){x=std::clamp(x,0.0,1.0);return x<=0.0031308?12.92*x:1.055*std::pow(x,1.0/2.4)-0.055;};
             for(std::uint32_t y=0;y<dst.height;++y)for(std::uint32_t x=0;x<dst.width;++x) {
                 double sum[4]={0,0,0,0};unsigned count=0;
@@ -55,7 +69,7 @@ struct SurfaceTexture {
                     const auto sx=std::min(src.width-1,2*x+dx),sy=std::min(src.height-1,2*y+dy);
                     const auto at=(std::size_t(sy)*src.width+sx)*4;
                     for(unsigned c=0;c<4;++c){double q=double(src.rgba[at+c])/255.0;
-                        if(srgb&&c<3)q=srgb_decode(q);
+                        if(srgb&&c<3)q=surface_srgb_byte_to_linear(src.rgba[at+c]);
                         sum[c]+=q;}
                     ++count;
                 }
@@ -82,9 +96,6 @@ struct SurfaceLighting {
     float exposure=1.0f;
 };
 
-inline double surface_srgb_to_linear(double x) {
-    return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);
-}
 inline double surface_linear_to_srgb(double x) {
     x=std::max(0.0,x);return x<=0.0031308?12.92*x:1.055*std::pow(x,1.0/2.4)-0.055;
 }
@@ -126,7 +137,7 @@ inline std::array<double,4> surface_texel(const SurfaceTexture& t,unsigned level
     };
     x=index(x,int(m.width),t.wrap_s);y=index(y,int(m.height),t.wrap_t);
     const auto at=(std::size_t(y)*m.width+std::size_t(x))*4;std::array<double,4> c{};
-    for(unsigned k=0;k<4;++k){c[k]=double(m.rgba[at+k])/255.0;if(linear&&t.srgb&&k<3)c[k]=surface_srgb_to_linear(c[k]);}
+    for(unsigned k=0;k<4;++k){c[k]=double(m.rgba[at+k])/255.0;if(linear&&t.srgb&&k<3)c[k]=surface_srgb_byte_to_linear(m.rgba[at+k]);}
     return c;
 }
 inline std::array<double,4> surface_sample_level(const SurfaceTexture& t,unsigned level,double u,double v,bool linear) {
