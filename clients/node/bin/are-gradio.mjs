@@ -25,7 +25,11 @@ async function readConfig(response) {
   } finally {
     reader.releaseLock();
   }
-  return JSON.parse(new TextDecoder().decode(Buffer.concat(chunks, size)));
+  try {
+    return JSON.parse(new TextDecoder().decode(Buffer.concat(chunks, size)));
+  } catch {
+    throw new Error("ENDPOINT_CONFIG_UNREADABLE");
+  }
 }
 
 export function parseEndpoint(raw) {

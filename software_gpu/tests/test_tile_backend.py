@@ -62,8 +62,12 @@ class TestBuiltinVertexColorAdmission(unittest.TestCase):
 
     def test_prepared_geometry_cannot_bypass_builtin_color_admission(self):
         points = [(-0.9, -0.8, 0.0), (0.9, -0.8, 0.0), (0.0, 0.9, 0.0)]
-        triangles = prepare_triangles(verts(points, np.ones(128)), [(0, 1, 2)],
-                                      ColorShader(), 24, 24)
+        class WideVaryingShader(ColorShader):
+            def vertex_shader(self, vertex):
+                return vertex.position, {"color": np.ones(128, dtype=np.float32)}
+
+        triangles = prepare_triangles(verts(points, (1.0, 0.0, 0.0)), [(0, 1, 2)],
+                                      WideVaryingShader(), 24, 24)
         self.assertEqual(len(triangles), 1)
         fb = Framebuffer(24, 24)
         fb.clear(0, 0, 0, 0, depth=1.0)
