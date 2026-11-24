@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from .batch_shader import VertexColorShader
+from .shader import BlinnPhongShader
+
 
 _MIN_W = 1.0e-7
 
@@ -112,6 +115,22 @@ def clip_triangle(vertices: list[tuple[np.ndarray, dict]], *, zero_to_one=False)
             for i in range(1, len(polygon) - 1)]
 
 
+_BUILTIN_COLOR_VERTEX_STAGES = (
+    VertexColorShader.vertex_preparation_equivalent_to,
+    BlinnPhongShader.vertex_preparation_equivalent_to,
+)
+
+
+def uses_builtin_color(vertex_stage):
+    implementation = getattr(vertex_stage, "__func__", vertex_stage)
+    return any(implementation is stage for stage in _BUILTIN_COLOR_VERTEX_STAGES)
+
+
+def is_rgb_array(color):
+    return (isinstance(color, np.ndarray) and color.shape == (3,)
+            and color.dtype.kind in "biuf")
+
+
 def prepare_triangles(vertices, indices, shader, width: int, height: int, source_faces=None):
     """Build front-facing, clipped, finite screen-space triangles for CPU renderers.
 
@@ -129,13 +148,17 @@ def prepare_triangles(vertices, indices, shader, width: int, height: int, source
     """
     transformed = []
     for vertex in vertices:
-        position, attrs = shader.vertex_shader(vertex)
+        vertex_stage = shader.vertex_shader
+        position, attrs = vertex_stage(vertex)
         pos = np.asarray(position, dtype=np.float64)
         if pos.shape != (4,) or not np.isfinite(pos).all():
             transformed.append(None)
             continue
         if not isinstance(attrs, dict):
             raise TypeError("vertex shader varyings must be a dict")
+        if not is_rgb_array(attrs.get("color")) and uses_builtin_color(vertex_stage):
+            transformed.append(None)
+            continue
         if any(
             isinstance(value, np.ndarray) and not np.isfinite(value).all()
             for value in attrs.values()
