@@ -517,10 +517,14 @@ class Driver:
         self.objects[key(handle)].mapped = False
 
     def vkCreateBuffer(self, dev, p, alloc, out):
+        allowed = (vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                   vk.VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                   vk.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+        usage = int(p.usage)
         require(not alloc and not p.flags and 0 < p.size <= MAX_MEMORY and
-                p.usage == vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT and
+                usage != 0 and not usage & ~allowed and
                 p.sharingMode == vk.VK_SHARING_MODE_EXCLUSIVE)
-        out[0] = self.new("Buffer", dev, size=int(p.size), mem=None).handle
+        out[0] = self.new("Buffer", dev, size=int(p.size), usage=usage, mem=None).handle
 
     def vkCreateImage(self, dev, p, alloc, out):
         spec = image_spec(p)
@@ -660,11 +664,54 @@ class Driver:
         cmd.state, cmd.invalid, cmd.pass_open = "recording", False, False
         cmd.target = cmd.clear = cmd.pipe = cmd.binding = None
         cmd.draws = []
+        cmd.copies = []
+
+    def vkCmdCopyBuffer(self, handle, src, dst, count, regions):
+        """Record validated real byte transfers, ordered on the native queue.
+
+        Narrow Vulkan 1.0 subset: host-coherent bound buffers; no overlap,
+        zero-size, unaligned range, mixed draw/copy recording, or unknown usage.
+        The authoritative memory mutation occurs only in vkQueueSubmit.
+        """
+        cmd = self.objects[key(handle)]
+        require(cmd.kind == "CommandBuffer" and cmd.state == "recording"
+                and not cmd.invalid and cmd.target is None and not cmd.pass_open
+                and 0 < count <= 16 and regions and len(cmd.copies) + count <= 64)
+        pool = self.objects[cmd.parent]
+        device_key = pool.parent
+        source, target = self.objects[key(src)], self.objects[key(dst)]
+        require(source.kind == target.kind == "Buffer" and
+                source.parent == target.parent == device_key and
+                source.mem is not None and target.mem is not None and
+                source.usage & vk.VK_BUFFER_USAGE_TRANSFER_SRC_BIT and
+                target.usage & vk.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+        recorded = []
+        for i in range(count):
+            r = regions[i]
+            src_at, dst_at, length = int(r.srcOffset), int(r.dstOffset), int(r.size)
+            require(length > 0 and not (src_at | dst_at | length) & 3
+                    and src_at + length <= source.size
+                    and dst_at + length <= target.size)
+            recorded.append((key(src), key(dst), src_at, dst_at, length))
+        all_regions = cmd.copies + recorded
+        source_ranges, target_ranges = [], []
+        for src_key, dst_key, src_at, dst_at, length in all_regions:
+            s, d = self.objects[src_key], self.objects[dst_key]
+            source_ranges.append((s.mem, s.offset + src_at, s.offset + src_at + length))
+            target_ranges.append((d.mem, d.offset + dst_at, d.offset + dst_at + length))
+        for i, (dm, dstart, dend) in enumerate(target_ranges):
+            require(not any(dm == sm and dstart < send and sstart < dend
+                            for sm, sstart, send in source_ranges))
+            require(not any(dm == other_mem and dstart < other_end and
+                            other_start < dend
+                            for other_mem, other_start, other_end in target_ranges[:i]))
+        cmd.copies.extend(recorded)
 
     def vkCmdBeginRenderPass(self, handle, p, contents):
         cmd, fb = self.objects[key(handle)], self.objects[key(p.framebuffer)]
         rect = p.renderArea
-        require(cmd.state == "recording" and cmd.target is None and p.clearValueCount == 2
+        require(cmd.state == "recording" and cmd.target is None and not cmd.copies
+                and p.clearValueCount == 2
                 and key(p.renderPass) == fb.render_pass and contents == vk.VK_SUBPASS_CONTENTS_INLINE
                 and rect.offset.x == rect.offset.y == 0 and rect.extent.width == fb.width
                 and rect.extent.height == fb.height)
@@ -749,6 +796,10 @@ class Driver:
     def execute(self, cmd):
         require(cmd.state == "executable" and not cmd.invalid)
         if cmd.target is None:
+            for src_key, dst_key, src_at, dst_at, length in cmd.copies:
+                source = self.view(self.objects[src_key])
+                target = self.view(self.objects[dst_key])
+                target[dst_at:dst_at+length] = bytes(source[src_at:src_at+length])
             return
         fb = self.objects[cmd.target]
         destinations = [self.view(self.objects[i]) for i in fb.images]
