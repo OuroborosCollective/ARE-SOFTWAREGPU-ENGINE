@@ -77,6 +77,30 @@ class Driver:
         self.fences = Condition()
         self.objects = {}
         self.signatures = {}
+        # Functions live in the SHA-pinned native ARE ICD image; no second XCB
+        # connection or surrogate window is created by the Vulkan driver.
+        lib = self.bridge._lib
+        self.xcb_probe = lib.are_xcb_probe_surface
+        self.xcb_probe.argtypes = (ctypes.c_void_p, ctypes.c_uint32,
+                                  ctypes.POINTER(ctypes.c_uint32),
+                                  ctypes.POINTER(ctypes.c_uint32),
+                                  ctypes.POINTER(ctypes.c_uint32))
+        self.xcb_probe.restype = ctypes.c_int
+        self.xcb_visual = lib.are_xcb_visual_supported
+        self.xcb_visual.argtypes = (ctypes.c_void_p, ctypes.c_uint32)
+        self.xcb_visual.restype = ctypes.c_int
+        self.xcb_open_gc = lib.are_xcb_open_gc
+        self.xcb_open_gc.argtypes = (ctypes.c_void_p, ctypes.c_uint32)
+        self.xcb_open_gc.restype = ctypes.c_uint32
+        self.xcb_close_gc = lib.are_xcb_close_gc
+        self.xcb_close_gc.argtypes = (ctypes.c_void_p, ctypes.c_uint32)
+        self.xcb_close_gc.restype = None
+        self.xcb_present = lib.are_xcb_present_and_readback
+        self.xcb_present.argtypes = (ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32,
+                                    ctypes.c_void_p, ctypes.c_uint64,
+                                    ctypes.c_uint32, ctypes.c_uint32,
+                                    ctypes.c_void_p, ctypes.c_uint64)
+        self.xcb_present.restype = ctypes.c_int
 
     def dispatch(self, name, *args):
         try:
@@ -113,8 +137,15 @@ class Driver:
         self.objects.pop(addr, None)
 
     def vkCreateInstance(self, p, alloc, out):
-        require(not alloc and not p.enabledExtensionCount and not p.enabledLayerCount)
-        instance = self.new("Instance")
+        require(not alloc and not p.enabledLayerCount)
+        requested = {ffi.string(p.ppEnabledExtensionNames[i]).decode("ascii")
+                     for i in range(p.enabledExtensionCount)}
+        allowed = {vk.VK_KHR_SURFACE_EXTENSION_NAME, vk.VK_KHR_XCB_SURFACE_EXTENSION_NAME}
+        require(requested <= allowed and len(requested) == p.enabledExtensionCount
+                and (vk.VK_KHR_XCB_SURFACE_EXTENSION_NAME not in requested
+                     or vk.VK_KHR_SURFACE_EXTENSION_NAME in requested),
+                vk.VK_ERROR_EXTENSION_NOT_PRESENT)
+        instance = self.new("Instance", extensions=requested)
         instance.phys = self.new("PhysicalDevice", instance.handle)
         out[0] = instance.handle
 
@@ -123,10 +154,91 @@ class Driver:
 
     def vkEnumerateInstanceExtensionProperties(self, layer, count, props):
         require(not layer, vk.VK_ERROR_LAYER_NOT_PRESENT)
-        count[0] = 0
+        entries = ((vk.VK_KHR_SURFACE_EXTENSION_NAME, vk.VK_KHR_SURFACE_SPEC_VERSION),
+                   (vk.VK_KHR_XCB_SURFACE_EXTENSION_NAME, vk.VK_KHR_XCB_SURFACE_SPEC_VERSION))
+        if not props:
+            count[0] = len(entries)
+            return
+        limit = min(count[0], len(entries))
+        for i in range(limit):
+            props[i].extensionName = entries[i][0].encode("ascii")
+            props[i].specVersion = entries[i][1]
+        count[0] = limit
+        return vk.VK_INCOMPLETE if limit < len(entries) else vk.VK_SUCCESS
 
     def vkEnumeratePhysicalDevices(self, instance, count, out):
         return enumerate_one(count, out, self.objects[key(instance)].phys.handle)
+
+    # Native XCB surface operations. Never report WSI without a real client
+    # connection, actual depth-24 TrueColor window and a writable X11 GC.
+    def _surface(self, handle):
+        surface = self.objects[key(handle)]
+        require(surface.kind == "SurfaceKHR", vk.VK_ERROR_SURFACE_LOST_KHR)
+        w, h, visual = (ctypes.c_uint32(), ctypes.c_uint32(), ctypes.c_uint32())
+        require(self.xcb_probe(surface.connection, surface.window,
+                               ctypes.byref(w), ctypes.byref(h),
+                               ctypes.byref(visual)) == 0, vk.VK_ERROR_SURFACE_LOST_KHR)
+        return surface, w.value, h.value, visual.value
+
+    def vkGetPhysicalDeviceXcbPresentationSupportKHR(self, phys, family, connection, visual):
+        if family != 0 or key(phys) not in self.objects:
+            return 0
+        return int(self.xcb_visual(key(connection), int(visual)) == 1)
+
+    def vkCreateXcbSurfaceKHR(self, instance, p, alloc, out):
+        require(not alloc and p.sType == vk.VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR
+                and not p.flags and key(instance) in self.objects
+                and vk.VK_KHR_XCB_SURFACE_EXTENSION_NAME in self.objects[key(instance)].extensions,
+                vk.VK_ERROR_EXTENSION_NOT_PRESENT)
+        connection, window = key(p.connection), int(p.window)
+        w, h, visual = (ctypes.c_uint32(), ctypes.c_uint32(), ctypes.c_uint32())
+        require(self.xcb_probe(connection, window, ctypes.byref(w), ctypes.byref(h),
+                               ctypes.byref(visual)) == 0, vk.VK_ERROR_SURFACE_LOST_KHR)
+        gc = self.xcb_open_gc(connection, window)
+        require(gc != 0, vk.VK_ERROR_SURFACE_LOST_KHR)
+        out[0] = self.new("SurfaceKHR", instance, connection=connection,
+                          window=window, gc=gc, width=w.value, height=h.value,
+                          visual=visual.value).handle
+
+    def vkDestroySurfaceKHR(self, instance, handle, alloc):
+        if not handle:
+            return
+        surface = self.objects.get(key(handle))
+        if surface and surface.kind == "SurfaceKHR" and surface.parent == key(instance):
+            self.xcb_close_gc(surface.connection, surface.gc)
+            self.drop(handle)
+
+    def vkGetPhysicalDeviceSurfaceSupportKHR(self, phys, family, surface, out):
+        require(key(phys) in self.objects and family == 0)
+        self._surface(surface)
+        out[0] = vk.VK_TRUE
+
+    def vkGetPhysicalDeviceSurfaceCapabilitiesKHR(self, phys, surface, out):
+        require(key(phys) in self.objects)
+        _, w, h, _ = self._surface(surface)
+        zero(out)
+        out.minImageCount = out.maxImageCount = 2
+        out.currentExtent.width = out.minImageExtent.width = out.maxImageExtent.width = w
+        out.currentExtent.height = out.minImageExtent.height = out.maxImageExtent.height = h
+        out.maxImageArrayLayers = 1
+        out.supportedTransforms = out.currentTransform = vk.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+        out.supportedCompositeAlpha = vk.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+        out.supportedUsageFlags = vk.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+
+    def vkGetPhysicalDeviceSurfaceFormatsKHR(self, phys, surface, count, out):
+        require(key(phys) in self.objects)
+        self._surface(surface)
+        if out and count[0]:
+            out[0].format = RGBA
+            out[0].colorSpace = vk.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+        return enumerate_one(count, out, out[0] if out and count[0] else ffi.NULL)
+
+    def vkGetPhysicalDeviceSurfacePresentModesKHR(self, phys, surface, count, out):
+        require(key(phys) in self.objects)
+        self._surface(surface)
+        if out and count[0]:
+            out[0] = vk.VK_PRESENT_MODE_FIFO_KHR
+        return enumerate_one(count, out, vk.VK_PRESENT_MODE_FIFO_KHR)
 
     def vkGetPhysicalDeviceProperties(self, phys, out):
         zero(out)
@@ -194,15 +306,29 @@ class Driver:
         count[0] = 0
 
     def vkEnumerateDeviceExtensionProperties(self, phys, layer, count, props):
-        return self.vkEnumerateInstanceExtensionProperties(layer, count, props)
+        require(not layer and key(phys) in self.objects, vk.VK_ERROR_LAYER_NOT_PRESENT)
+        if not props:
+            count[0] = 1
+            return
+        if count[0]:
+            props[0].extensionName = vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME.encode("ascii")
+            props[0].specVersion = vk.VK_KHR_SWAPCHAIN_SPEC_VERSION
+            count[0] = 1
+            return
+        return vk.VK_INCOMPLETE
 
     def vkCreateDevice(self, phys, p, alloc, out):
-        require(not alloc and not p.enabledExtensionCount and p.queueCreateInfoCount == 1)
+        require(not alloc and p.queueCreateInfoCount == 1)
+        extensions = {ffi.string(p.ppEnabledExtensionNames[i]).decode("ascii")
+                      for i in range(p.enabledExtensionCount)}
+        require(len(extensions) == p.enabledExtensionCount and
+                extensions <= {vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME},
+                vk.VK_ERROR_EXTENSION_NOT_PRESENT)
         q = p.pQueueCreateInfos[0]
         require(q.queueFamilyIndex == 0 and q.queueCount == 1 and not q.flags)
         if p.pEnabledFeatures:
             require(not any(bytes(ffi.buffer(p.pEnabledFeatures))))
-        device = self.new("Device", phys, allocated=0, allocations=0)
+        device = self.new("Device", phys, allocated=0, allocations=0, extensions=extensions)
         device.queue = self.new("Queue", device.handle)
         out[0] = device.handle
 
@@ -212,6 +338,153 @@ class Driver:
     def vkGetDeviceQueue(self, dev, family, index, out):
         require(family == index == 0)
         out[0] = self.objects[key(dev)].queue.handle
+
+    def vkCreateSwapchainKHR(self, dev, p, alloc, out):
+        device = self.objects[key(dev)]
+        require(device.kind == "Device" and not alloc and not p.flags
+                and p.sType == vk.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
+                and vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME in device.extensions,
+                vk.VK_ERROR_EXTENSION_NOT_PRESENT)
+        surface, w, h, visual = self._surface(p.surface)
+        phys = self.objects[device.parent]
+        require(surface.parent == phys.parent and
+                getattr(surface, "active_swapchain", None) is None,
+                vk.VK_ERROR_NATIVE_WINDOW_IN_USE_KHR)
+        require(p.minImageCount == 2 and p.imageFormat == RGBA
+                and p.imageColorSpace == vk.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+                and (p.imageExtent.width,p.imageExtent.height) == (w,h)
+                and p.imageArrayLayers == 1
+                and p.imageUsage == vk.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+                and p.imageSharingMode == vk.VK_SHARING_MODE_EXCLUSIVE
+                and p.queueFamilyIndexCount == 0
+                and p.preTransform == vk.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+                and p.compositeAlpha == vk.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+                and p.presentMode == vk.VK_PRESENT_MODE_FIFO_KHR
+                and p.clipped == vk.VK_TRUE and not p.oldSwapchain,
+                vk.VK_ERROR_INITIALIZATION_FAILED)
+        size = int(w)*int(h)*4
+        require(2*size <= MAX_MEMORY-device.allocated, vk.VK_ERROR_OUT_OF_DEVICE_MEMORY)
+        spec=ImageSpec(w,h,RGBA,size)
+        swap=self.new("SwapchainKHR", dev, surface=key(p.surface), images=[], width=w,
+                      height=h, retired=False)
+        try:
+            for _ in range(2):
+                mem=self.new("DeviceMemory", swap.handle, data=bytearray(size), mapped=False)
+                img=self.new("Image", swap.handle, spec=spec, size=size,
+                             mem=key(mem.handle), offset=0, swapchain=key(swap.handle),
+                             acquired=False, rendered=False,
+                             layout=vk.VK_IMAGE_LAYOUT_UNDEFINED)
+                swap.images.append(key(img.handle))
+        except BaseException:
+            self.drop(swap.handle)
+            raise
+        device.allocated += 2*size
+        surface.active_swapchain = key(swap.handle)
+        out[0] = swap.handle
+
+    def vkDestroySwapchainKHR(self, dev, handle, alloc):
+        if not handle:
+            return
+        obj = self.objects.get(key(handle))
+        if obj and obj.kind == "SwapchainKHR" and obj.parent == key(dev):
+            surface = self.objects.get(obj.surface)
+            if surface and getattr(surface, "active_swapchain", 0) == key(handle):
+                surface.active_swapchain = None
+            self.objects[key(dev)].allocated -= 2*obj.width*obj.height*4
+            self.drop(handle)
+            with self.fences:
+                self.fences.notify_all()
+
+    def vkGetSwapchainImagesKHR(self, dev, handle, count, out):
+        swap = self.objects[key(handle)]
+        require(swap.kind == "SwapchainKHR" and swap.parent == key(dev))
+        if not out:
+            count[0] = len(swap.images)
+            return
+        limit = min(int(count[0]), len(swap.images))
+        for i in range(limit):
+            out[i] = self.objects[swap.images[i]].handle
+        count[0] = limit
+        return vk.VK_INCOMPLETE if limit < len(swap.images) else vk.VK_SUCCESS
+
+    def vkAcquireNextImageKHR(self, dev, handle, timeout, semaphore, fence, out):
+        swap = self.objects[key(handle)]
+        require(swap.kind == "SwapchainKHR" and swap.parent == key(dev) and (semaphore or fence))
+        _,w,h,_ = self._surface(self.objects[swap.surface].handle)
+        if (w,h) != (swap.width,swap.height):
+            return vk.VK_ERROR_OUT_OF_DATE_KHR
+        sem = self.objects[key(semaphore)] if semaphore else None
+        f = self.objects[key(fence)] if fence else None
+        require((sem is None or (sem.kind=="Semaphore" and sem.parent == key(dev) and not sem.signaled))
+                and (f is None or (f.kind=="Fence" and f.parent == key(dev) and not f.signaled)))
+        deadline = monotonic_ns() + timeout if timeout != 2**64-1 else None
+        with self.fences:
+            while True:
+                for i,ref in enumerate(swap.images):
+                    img = self.objects[ref]
+                    if not img.acquired:
+                        img.acquired, img.rendered = True, False
+                        img.layout = vk.VK_IMAGE_LAYOUT_UNDEFINED
+                        out[0] = i
+                        if sem: sem.signaled = True
+                        if f: f.signaled = True
+                        self.fences.notify_all()
+                        return vk.VK_SUCCESS
+                if timeout == 0:
+                    return vk.VK_NOT_READY
+                if deadline is not None:
+                    remaining = deadline-monotonic_ns()
+                    if remaining <= 0:
+                        return vk.VK_TIMEOUT
+                    self.fences.wait(remaining/1e9)
+                else:
+                    self.fences.wait()
+
+    def vkQueuePresentKHR(self, queue, p):
+        q=self.objects[key(queue)]
+        require(q.kind == "Queue" and p.swapchainCount == 1)
+        swap=self.objects[key(p.pSwapchains[0])]
+        require(swap.kind == "SwapchainKHR" and swap.parent == q.parent)
+        index=int(p.pImageIndices[0])
+        require(0<=index<len(swap.images))
+        img=self.objects[swap.images[index]]
+        require(img.acquired and img.rendered and img.layout == vk.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        waits=[self.objects[key(p.pWaitSemaphores[i])] for i in range(p.waitSemaphoreCount)]
+        require(all(sem.kind=="Semaphore" and sem.parent==q.parent and sem.signaled for sem in waits))
+        surface,w,h,_=self._surface(self.objects[swap.surface].handle)
+        if (w,h)!=(swap.width,swap.height):
+            return vk.VK_ERROR_OUT_OF_DATE_KHR
+        raw=bytes(self.view(img))
+        require(len(raw)==swap.width*swap.height*4)
+        require(all(raw[i]==255 for i in range(3,len(raw),4)))
+        input_buffer=ctypes.create_string_buffer(raw)
+        actual=ctypes.create_string_buffer(len(raw))
+        status=self.xcb_present(surface.connection,surface.window,surface.gc,
+                                input_buffer,len(raw),swap.width,swap.height,
+                                actual,len(raw))
+        if status==3:
+            return vk.VK_ERROR_OUT_OF_DATE_KHR
+        if status:
+            return vk.VK_ERROR_SURFACE_LOST_KHR
+        require(actual.raw == raw, vk.VK_ERROR_DEVICE_LOST)
+        img.acquired = img.rendered = False
+        for sem in waits:
+            sem.signaled = False
+        if p.pResults:
+            p.pResults[0] = vk.VK_SUCCESS
+        if os.getenv("ARE_VK_RECEIPTS"):
+            record={"event":"vkQueuePresentKHR/xcb-native", "driver_sha256":self.binary,
+                    "width":swap.width,"height":swap.height,
+                    "vk_image_sha256":hashlib.sha256(raw).hexdigest(),
+                    "xcb_get_image_sha256":hashlib.sha256(actual.raw).hexdigest()}
+            try:
+                with open(os.environ["ARE_VK_RECEIPTS"],"a",encoding="utf8") as fp:
+                    fp.write(json.dumps(record,sort_keys=True)+"\n")
+            except OSError:
+                pass
+        with self.fences:
+            self.fences.notify_all()
+        return vk.VK_SUCCESS
 
     def vkDeviceWaitIdle(self, dev):
         require(key(dev) in self.objects)
@@ -292,6 +565,7 @@ class Driver:
     vkDestroyPipeline = vkDestroyPipelineLayout = vkDestroyShaderModule = vkDestroyBuffer
     vkDestroyRenderPass = vkDestroyFramebuffer = vkDestroyCommandPool = vkDestroyBuffer
     vkDestroyFence = vkDestroyBuffer
+    vkDestroySemaphore = vkDestroyBuffer
 
     def vkCreateShaderModule(self, dev, p, alloc, out):
         require(not alloc and not p.flags and 0 < p.codeSize <= 1024 * 1024)
@@ -307,14 +581,17 @@ class Driver:
         require(not alloc and not p.flags and p.attachmentCount == 2 and p.subpassCount == 1 and not p.dependencyCount)
         for i, fmt in enumerate((RGBA, DEPTH)):
             a = p.pAttachments[i]
+            finals = ((vk.VK_IMAGE_LAYOUT_GENERAL, vk.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+                      if i == 0 else (vk.VK_IMAGE_LAYOUT_GENERAL,))
             require(a.format == fmt and a.samples == 1 and a.loadOp == vk.VK_ATTACHMENT_LOAD_OP_CLEAR
-                    and a.storeOp == vk.VK_ATTACHMENT_STORE_OP_STORE and a.finalLayout == vk.VK_IMAGE_LAYOUT_GENERAL)
+                    and a.storeOp == vk.VK_ATTACHMENT_STORE_OP_STORE and a.finalLayout in finals)
         s = p.pSubpasses[0]
         require(s.pipelineBindPoint == vk.VK_PIPELINE_BIND_POINT_GRAPHICS and not s.inputAttachmentCount
                 and s.colorAttachmentCount == 1 and s.pColorAttachments[0].attachment == 0
                 and s.pDepthStencilAttachment and s.pDepthStencilAttachment.attachment == 1
                 and not s.pResolveAttachments and not s.preserveAttachmentCount)
-        out[0] = self.new("RenderPass", dev).handle
+        out[0] = self.new("RenderPass", dev,
+                          color_final_layout=p.pAttachments[0].finalLayout).handle
 
     def vkCreateFramebuffer(self, dev, p, alloc, out):
         require(not alloc and not p.flags and p.attachmentCount == 2 and p.layers == 1)
@@ -427,6 +704,11 @@ class Driver:
         require(cmd.state == "recording" and not cmd.invalid and not cmd.pass_open)
         cmd.state = "executable"
 
+    def vkCreateSemaphore(self, dev, p, alloc, out):
+        require(not alloc and not p.flags and p.sType == vk.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+                and key(dev) in self.objects)
+        out[0] = self.new("Semaphore", dev, signaled=False).handle
+
     def vkCreateFence(self, dev, p, alloc, out):
         require(not alloc and not p.flags & ~vk.VK_FENCE_CREATE_SIGNALED_BIT)
         out[0] = self.new("Fence", dev, signaled=bool(p.flags)).handle
@@ -485,6 +767,11 @@ class Driver:
             result = submit_native_draws(self.bridge, frame, packet, _icd_pipeline=self.pipeline_scope)
         destinations[0][:] = frame.color_buffer.tobytes()
         destinations[1][:] = frame.depth_buffer.tobytes()
+        target_image = self.objects[fb.images[0]]
+        if getattr(target_image, "swapchain", 0):
+            require(target_image.acquired, vk.VK_ERROR_DEVICE_LOST)
+            target_image.rendered = True
+            target_image.layout = self.objects[fb.render_pass].color_final_layout
         if draws and os.getenv("ARE_VK_RECEIPTS"):
             evidence = {"event":"vkQueueSubmit/graphics", "driver_sha256":self.binary,
                         "pipeline_sha256":self.pipeline_scope, "native_submission":result}
@@ -495,18 +782,36 @@ class Driver:
                 pass  # Optional diagnostics cannot retroactively fail the draw.
 
     def vkQueueSubmit(self, queue, count, batches, fence):
-        require(key(queue) in self.objects)
-        commands = []
+        q = self.objects[key(queue)]
+        require(q.kind == "Queue")
+        commands, waits, signals = [], [], []
         for i in range(count):
             batch = batches[i]
-            require(not batch.waitSemaphoreCount and not batch.signalSemaphoreCount)
+            for j in range(batch.waitSemaphoreCount):
+                sem = self.objects[key(batch.pWaitSemaphores[j])]
+                require(sem.kind == "Semaphore" and sem.parent == q.parent and sem.signaled
+                        and batch.pWaitDstStageMask[j] in (
+                            vk.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                            vk.VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT))
+                waits.append(sem)
+            for j in range(batch.signalSemaphoreCount):
+                sem = self.objects[key(batch.pSignalSemaphores[j])]
+                require(sem.kind == "Semaphore" and sem.parent == q.parent and not sem.signaled)
+                signals.append(sem)
             commands.extend(self.objects[key(h)] for h in batch.pCommandBuffers[0:batch.commandBufferCount])
+        require(len({id(s) for s in waits}) == len(waits) and
+                len({id(s) for s in signals}) == len(signals) and
+                not any(a is b for a in waits for b in signals))
         for c in commands:
             self.execute(c)
-        if fence:
-            with self.fences:
+        with self.fences:
+            for sem in waits:
+                sem.signaled = False
+            for sem in signals:
+                sem.signaled = True
+            if fence:
                 self.objects[key(fence)].signaled = True
-                self.fences.notify_all()
+            self.fences.notify_all()
 
 
 def open_driver(path):

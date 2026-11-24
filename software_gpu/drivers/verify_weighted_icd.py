@@ -33,7 +33,7 @@ def verify(out, registry, include):
                     str(root / "native/vulkan/weighted/draw_probe.cpp"), "-lvulkan", "-o", str(probe)], check=True)
     env = os.environ.copy()
     # Older loaders understand only VK_ICD_FILENAMES. Both select the same ICD.
-    env.update(VK_DRIVER_FILES=str(manifest), VK_ICD_FILENAMES=str(manifest), VK_LOADER_DEBUG="driver",
+    env.update(VK_DRIVER_FILES=str(manifest), VK_ICD_FILENAMES=str(manifest), VK_LOADER_DEBUG="all",
                OPENBLAS_NUM_THREADS="1", ARE_LEARNING_DB=str(out / "weights.sqlite3"),
                ARE_VK_RECEIPTS=str(out / "submissions.jsonl"))
     for name in ("VK_ADD_DRIVER_FILES", "VK_LOADER_DRIVERS_SELECT", "VK_LOADER_DRIVERS_DISABLE"):

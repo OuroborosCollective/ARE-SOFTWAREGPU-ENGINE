@@ -64,9 +64,9 @@ test("probe redacts malformed config parser errors", () => {
   assert.ifError(run.error);
   assert.equal(run.status, 1);
   assert.equal(run.stdout, "");
-  assert.equal(run.stderr, "ENDPOINT_CONFIG_UNREADABLE\\n".replace("\\n", "\n"));
+  assert.equal(run.stderr, "ENDPOINT_CONFIG_UNREADABLE\n");
 });
-test("unreadable config never masks size-limit errors", async () => {
+test("malformed JSON from an in-limit response reports unreadable config", async () => {
   await assert.rejects(checkEndpoint("https://gradio.example.org/",
     async () => new Response("not json")), {message:"ENDPOINT_CONFIG_UNREADABLE"});
 });
