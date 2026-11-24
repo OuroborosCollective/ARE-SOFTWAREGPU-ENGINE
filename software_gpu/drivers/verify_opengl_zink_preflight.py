@@ -82,10 +82,16 @@ def build_receipt(expected_revision, source, library, manifest, executable,
 def checked_source_at_revision(root, expected_revision, relative_path):
     """Prevent a dirty probe source from being relabeled as committed code."""
     source = root / relative_path
-    expected_bytes = subprocess.check_output(
-        ["git", "show", expected_revision + ":" + relative_path],
-        cwd=root, timeout=15)
-    if hashlib.sha256(expected_bytes).hexdigest() != digest(source):
+    # Compare the committed Git blob against the working file AFTER Git's
+    # own clean/EOL filters. A genuine Windows CRLF checkout is identical
+    # to its committed LF blob; semantic changes still fail closed.
+    expected_blob = subprocess.check_output(
+        ["git", "rev-parse", expected_revision + ":" + relative_path],
+        cwd=root, text=True, timeout=15).strip()
+    working_blob = subprocess.check_output(
+        ["git", "hash-object", "--path=" + relative_path, str(source)],
+        cwd=root, text=True, timeout=15).strip()
+    if not expected_blob or working_blob != expected_blob:
         raise ValueError("ARE_ZINK_PROBE_SOURCE_TREE_DRIFT")
     return source
 

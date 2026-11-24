@@ -316,3 +316,25 @@ class TestZinkAdmissionContract(unittest.TestCase):
             # Git HEAD is still unchanged despite tampered source.
             self.assertEqual(subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), sha)
+
+    def test_checked_source_accepts_clean_git_eol_translation(self):
+        # Real Git repository, real working-tree CRLF as produced by Windows checkout.
+        from software_gpu.drivers.verify_opengl_zink_preflight import checked_source_at_revision
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            (root / ".gitattributes").write_text("*.cpp text\\n".replace("\\n","\n"))
+            rel = "native/vulkan/weighted/source.cpp"
+            src = root / rel
+            src.parent.mkdir(parents=True)
+            original = b"int main() {return 0;}\n"
+            src.write_bytes(original)
+            subprocess.run(["git", "add", ".gitattributes", rel], cwd=root, check=True)
+            subprocess.run(["git","-c","user.name=ARE Test","-c","user.email=are@example.invalid","commit","-qm","frozen source"],cwd=root,check=True)
+            head = subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip()
+            src.write_bytes(original.replace(b"\n", b"\r\n"))
+            self.assertEqual(subprocess.run(["git", "diff", "--exit-code", "--", rel],cwd=root,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode,0)
+            self.assertEqual(checked_source_at_revision(root,head,rel),src)
+            src.write_bytes(b"int main() {return 1;}\r\n")
+            with self.assertRaisesRegex(ValueError,"ARE_ZINK_PROBE_SOURCE_TREE_DRIFT"):
+                checked_source_at_revision(root,head,rel)
