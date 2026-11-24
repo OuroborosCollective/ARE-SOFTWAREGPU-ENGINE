@@ -18,11 +18,12 @@ that **specific** null-pointer path, not a promise of Unity support.
 ARE now validates a bounded VkSamplerCreateInfo, allocates distinct
 device-owned opaque VkSampler handles and stores immutable descriptor
 values. It frees the actual resource on vkDestroySampler. Unsupported
-anisotropy, non-null extension chains, unnormalized coordinates and
+anisotropy, non-null extension chains, invalid unnormalized coordinate modes and
 feature requests exceeding the current ICD profile fail closed with
 VK_ERROR_FEATURE_NOT_PRESENT. The native sampler_probe.cpp queries
 vkGetDeviceProcAddr from the real Khronos loader, performs actual
-create/destroy with two independent handles and checks negative results.
+create/destroy, fills the advertised 4,000-sampler device budget, and checks capacity reuse.
+Valid unnormalized modes and LOD bias up to ±2 are admitted.
 The Linux GitHub WSI workflow binds it to the same real ICD binary,
 with a SHA256 digest inventory and exact source SHA.
 

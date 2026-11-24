@@ -5,10 +5,12 @@ from unittest.mock import patch
 import numpy as np
 
 from software_gpu.graphics.framebuffer import Framebuffer
+from software_gpu.graphics.geometry import prepare_triangles
 from software_gpu.graphics.batch_shader import VertexColorShader
 from software_gpu.graphics.rasterizer import SoftwareRasterizer
-from software_gpu.graphics.shader import Shader, Vertex
+from software_gpu.graphics.shader import BlinnPhongShader, Matrix4, Shader, Vertex
 from software_gpu.graphics.postprocess import MSAAFramebuffer
+from software_gpu.graphics.tile_backend import rasterize_tiles
 
 
 class ColorShader(Shader):
@@ -22,6 +24,57 @@ class ColorShader(Shader):
 
 def verts(points, color):
     return [Vertex(np.array(p, dtype=np.float32), color=np.array(color, dtype=np.float32)) for p in points]
+
+
+class TestBuiltinVertexColorAdmission(unittest.TestCase):
+    def test_mesh_discards_malformed_builtin_colors_and_draws_valid_rgb(self):
+        points = [(-0.9, -0.8, 0.0), (0.9, -0.8, 0.0), (0.0, 0.9, 0.0)]
+        identity = Matrix4.identity()
+        routes = [
+            ("tiles", VertexColorShader(), 0),
+            ("tiles-plan", VertexColorShader(), 128 * 1024),
+            ("tiles-deferred", VertexColorShader(), 0),
+            ("tiles", BlinnPhongShader(identity, identity, identity), 0),
+        ]
+        invalid_colors = [
+            np.ones(128), [1.0, 0.0], [[1.0, 0.0, 0.0]],
+            [1.0, np.nan, 0.0], [1.0, np.inf, 0.0],
+        ]
+        for backend, shader, cache_bytes in routes:
+            fb = Framebuffer(24, 24)
+            renderer = SoftwareRasterizer(fb, backend=backend, num_threads=1,
+                                          preparation_cache_bytes=cache_bytes)
+            try:
+                for color in invalid_colors:
+                    with self.subTest(backend=backend, shader=type(shader), color_shape=np.shape(color)):
+                        fb.clear(0, 0, 0, 0, depth=1.0)
+                        # Mutating an already-constructed Vertex cannot evade admission.
+                        vertices = verts(points, (1.0, 0.0, 0.0))
+                        vertices[0].color = np.asarray(color, dtype=np.float32)
+                        renderer.draw_mesh(vertices, [(0, 1, 2)], shader)
+                        self.assertTrue((fb.depth_buffer == 1.0).all())
+                        self.assertFalse(fb.color_buffer.any())
+                renderer.draw_mesh(verts(points, (1.0, 0.0, 0.0)), [(0, 1, 2)], shader)
+                self.assertTrue((fb.depth_buffer < 1.0).any())
+                self.assertTrue(fb.color_buffer.any())
+            finally:
+                renderer.executor.shutdown(wait=True)
+
+    def test_prepared_geometry_cannot_bypass_builtin_color_admission(self):
+        points = [(-0.9, -0.8, 0.0), (0.9, -0.8, 0.0), (0.0, 0.9, 0.0)]
+        class WideVaryingShader(ColorShader):
+            def vertex_shader(self, vertex):
+                return vertex.position, {"color": np.ones(128, dtype=np.float32)}
+
+        triangles = prepare_triangles(verts(points, (1.0, 0.0, 0.0)), [(0, 1, 2)],
+                                      WideVaryingShader(), 24, 24)
+        self.assertEqual(len(triangles), 1)
+        fb = Framebuffer(24, 24)
+        fb.clear(0, 0, 0, 0, depth=1.0)
+        with self.assertRaisesRegex(ValueError, "TILE_COLOR_INPUT_INVALID"):
+            rasterize_tiles(fb, triangles, VertexColorShader(), 24, None, 1)
+        self.assertTrue((fb.depth_buffer == 1.0).all())
+        self.assertFalse(fb.color_buffer.any())
 
 
 class TestTileRasterizer(unittest.TestCase):
