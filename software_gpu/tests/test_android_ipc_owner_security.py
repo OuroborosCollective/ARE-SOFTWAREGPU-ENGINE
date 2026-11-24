@@ -5,6 +5,7 @@ import subprocess
 import sys
 import stat
 import tempfile
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -68,6 +69,8 @@ class AndroidOwnerBoundIpcTest(unittest.TestCase):
             path = Path(directory) / "ipc.sock"
             server = AndroidIPCServer(socket_path=str(path))
             clients = []
+            client_errors = []
+            request_lock = threading.Lock()
             request = pack_message(MsgType.JSON_REQUEST, {
                 "method": "device_info", "params": {}, "id": 17,
             })
@@ -90,18 +93,40 @@ class AndroidOwnerBoundIpcTest(unittest.TestCase):
                     result.extend(part)
                 return bytes(result)
 
+            def keep_active(client, ready, stop):
+                try:
+                    while not stop.is_set():
+                        # Exercise client quota independently of the separate
+                        # concurrent-job quota; this thread owns its socket IO.
+                        with request_lock:
+                            client.sendall(request)
+                            kind, _, size = unpack_header(receive_exact(client, HEADER_SIZE))
+                            self.assertEqual(kind, MsgType.JSON_RESPONSE)
+                            self.assertIn(b'"id": 17', receive_exact(client, size))
+                        ready.set()
+                        stop.wait(.1)
+                except Exception as exc:
+                    client_errors.append(exc)
+                finally:
+                    ready.set()
+
             try:
                 server.start()
                 self._wait_ready(server)
                 # A successful reply proves each real socket has acquired a
-                # listener slot; keep it open while the other clients arrive.
+                # listener slot; real requests keep it active as others arrive.
                 for _ in range(SecurityLimits().max_clients):
                     client = connect()
-                    clients.append(client)
-                    client.sendall(request)
-                    kind, _, size = unpack_header(receive_exact(client, HEADER_SIZE))
-                    self.assertEqual(kind, MsgType.JSON_RESPONSE)
-                    self.assertIn(b'"id": 17', receive_exact(client, size))
+                    ready, stop = threading.Event(), threading.Event()
+                    worker = threading.Thread(target=keep_active, args=(client, ready, stop), daemon=True)
+                    clients.append((client, stop, worker))
+                    worker.start()
+                    self.assertTrue(ready.wait(3), "client did not receive its admission reply")
+                    self.assertEqual(client_errors, [])
+                # Keep the quota occupied across a delay longer than the real
+                # idle timeout; an open but idle socket does not hold its slot.
+                time.sleep(SecurityLimits().io_timeout_seconds + .25)
+                self.assertEqual(client_errors, [])
                 with connect() as extra:
                     try:
                         extra.sendall(request)
@@ -109,7 +134,12 @@ class AndroidOwnerBoundIpcTest(unittest.TestCase):
                     except (ConnectionResetError, BrokenPipeError):
                         reply = b""
                     self.assertEqual(reply, b"", "excess real client received data")
-                clients.pop().close()
+                client, stop, worker = clients[-1]
+                stop.set()
+                worker.join(timeout=3)
+                self.assertFalse(worker.is_alive(), "client heartbeat did not stop")
+                client.close()
+                clients.pop()
                 # Do not rely on listener scheduling or fake semaphore counts.
                 deadline = time.monotonic() + 1
                 while True:
@@ -124,10 +154,15 @@ class AndroidOwnerBoundIpcTest(unittest.TestCase):
                     self.assertIn(b'"id": 17', payload)
                     break
             finally:
-                for client in clients:
+                for _, stop, _ in clients:
+                    stop.set()
+                for client, _, worker in clients:
+                    worker.join(timeout=3)
                     client.close()
                 server.stop()
                 server.join(timeout=2)
+                self.assertFalse(any(worker.is_alive() for _, _, worker in clients))
+                self.assertEqual(client_errors, [])
             self.assertFalse(path.exists())
 
     def test_world_writable_parent_fails_closed_without_removing_foreign_file(self):
