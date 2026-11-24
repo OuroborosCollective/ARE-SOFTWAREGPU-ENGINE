@@ -63,8 +63,32 @@ struct SurfaceTexture {
                 throw std::runtime_error("MODEL_TEXTURE_MIP_BUDGET");
             dst.rgba.resize(bytes);
             auto srgb_encode=[](double x){x=std::clamp(x,0.0,1.0);return x<=0.0031308?12.92*x:1.055*std::pow(x,1.0/2.4)-0.055;};
+            const bool odd=(src.width>1&&src.width%2)||(src.height>1&&src.height%2);
             for(std::uint32_t y=0;y<dst.height;++y)for(std::uint32_t x=0;x<dst.width;++x) {
                 double sum[4]={0,0,0,0};unsigned count=0;
+                if(odd) {
+                    // Cover the full source extent, including its last row/column.
+                    // Integer overlaps avoid fractional cell-boundary drift. A
+                    // halved odd dimension touches at most three source cells.
+                    const auto x0=std::uint64_t(x)*src.width,x1=std::uint64_t(x+1)*src.width;
+                    const auto y0=std::uint64_t(y)*src.height,y1=std::uint64_t(y+1)*src.height;
+                    for(auto sy=std::uint32_t(y0/dst.height);std::uint64_t(sy)*dst.height<y1;++sy)
+                        for(auto sx=std::uint32_t(x0/dst.width);std::uint64_t(sx)*dst.width<x1;++sx) {
+                            const auto wx=std::min(x1,std::uint64_t(sx+1)*dst.width)-std::max(x0,std::uint64_t(sx)*dst.width);
+                            const auto wy=std::min(y1,std::uint64_t(sy+1)*dst.height)-std::max(y0,std::uint64_t(sy)*dst.height);
+                            const double weight=double(wx*wy);
+                            const auto at=(std::size_t(sy)*src.width+sx)*4;
+                            for(unsigned c=0;c<4;++c){double q=src.rgba[at+c];
+                                if(srgb&&c<3)q=surface_srgb_byte_to_linear(src.rgba[at+c]);
+                                sum[c]+=q*weight;}
+                        }
+                    const auto to=(std::size_t(y)*dst.width+x)*4;
+                    for(unsigned c=0;c<4;++c){double q=sum[c]/double(std::uint64_t(src.width)*src.height);
+                        if(srgb&&c<3)q=srgb_encode(q)*255.0;
+                        dst.rgba[to+c]=std::uint8_t(std::clamp(std::floor(q+0.5),0.0,255.0));}
+                    continue;
+                }
+                // Keep the existing operation order and bytes for even/unit axes.
                 for(unsigned dy=0;dy<2;++dy)for(unsigned dx=0;dx<2;++dx) {
                     const auto sx=std::min(src.width-1,2*x+dx),sy=std::min(src.height-1,2*y+dy);
                     const auto at=(std::size_t(sy)*src.width+sx)*4;
