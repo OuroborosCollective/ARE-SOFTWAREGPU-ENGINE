@@ -78,6 +78,7 @@ jobs:
           export VK_DRIVER_FILES="$PWD/evidence-local/real-vulkan-xcb/icd/are.json"
           export VK_ICD_FILENAMES="$VK_DRIVER_FILES"
           export OPENBLAS_NUM_THREADS=1
+          export PYTHONPATH="$PWD:$(python -c 'import site; print(site.getsitepackages()[0])')"
           timeout 30 evidence-local/real-vulkan-xcb/sampler_probe | tee evidence-local/real-vulkan-xcb/sampler.stdout
           grep -q ARE_VK_SAMPLER_REAL_CREATE_DESTROY_PASS evidence-local/real-vulkan-xcb/sampler.stdout
           sha256sum native/vulkan/weighted/sampler_probe.cpp software_gpu/drivers/weighted_icd.py evidence-local/real-vulkan-xcb/icd/libare_weighted.so evidence-local/real-vulkan-xcb/sampler_probe evidence-local/real-vulkan-xcb/sampler.stdout > evidence-local/real-vulkan-xcb/sampler.sha256

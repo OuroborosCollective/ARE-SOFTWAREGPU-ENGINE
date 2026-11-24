@@ -5,13 +5,19 @@ The independent native sampler_probe.cpp uses the actual Khronos loader.
 import unittest
 import sys
 
+# Linux-only Vulkan ICD tests; generic CPU/Windows suites must import cleanly
+# without optional vulkan bindings. The dedicated native WSI job installs the
+# REAL Python Vulkan package and executes the entire suite (no substitute).
+vk = ffi = None
 if sys.platform == "linux":
-    import vulkan as vk
-    from software_gpu.drivers.weighted_icd import Rejected, sampler_spec
-    ffi = vk.ffi
-else:
-    # The ARE Vulkan ICD is built only for Linux, not the Windows CI runners.
-    vk = ffi = None
+    try:
+        import vulkan as vk
+    except ModuleNotFoundError as exc:
+        if exc.name != "vulkan":
+            raise
+    if vk is not None:
+        from software_gpu.drivers.weighted_icd import Rejected, sampler_spec
+        ffi = vk.ffi
 
 
 def info():
@@ -27,7 +33,7 @@ def info():
     return p
 
 
-@unittest.skipUnless(sys.platform == "linux", "Linux Vulkan ICD only")
+@unittest.skipUnless(vk is not None, "real Linux Vulkan bindings required")
 class SamplerCreateInfoTests(unittest.TestCase):
     def test_supported_properties_form_immutable_snapshot(self):
         p = info()
