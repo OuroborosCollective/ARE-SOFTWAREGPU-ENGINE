@@ -4,6 +4,13 @@ from software_gpu.drivers.verify_opengl_zink_preflight import classify
 
 
 class TestZinkAdmissionContract(unittest.TestCase):
+    def test_native_probe_includes_stdint_header_directly(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[2] / "native" / "vulkan" /
+                  "weighted" / "opengl_zink_capability_probe.cpp").read_text()
+        # Ubuntu 24.04 does not inherit std::uint32_t from Vulkan includes.
+        self.assertIn("#include <cstdint>", source)
+
     def test_reported_missing_caps_refuse_opengl(self):
         observed = {
             "protocol": "are.zink-capability-preflight.v1",
