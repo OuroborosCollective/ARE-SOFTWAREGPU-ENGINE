@@ -14,10 +14,19 @@ struct FrameTiming {
 };
 struct Timing{std::vector<double> total,geometry,render,cpu;std::vector<FrameTiming> frames;};
 int main(int argc,char**argv){try{
-    are::rooms::wire::binary_mode();are::require_environment();need(argc==6,"USAGE: model input workers repeats policy render|pose");
+    are::rooms::wire::binary_mode();are::require_environment();need(argc==6||argc==7,"USAGE: model input workers repeats policy render|pose [legacy|studio-v1]");
     const auto workers=are::rooms::wire::bounded(argv[2],1,8),repeats=are::rooms::wire::bounded(argv[3],1,30);
     const auto policy=are::rooms::bio_policy(argv[4]);const std::string mode=argv[5];need(mode=="render"||mode=="pose","MODEL_MODE");
+    const std::string lighting_profile=argc==7?argv[6]:"legacy";
+    need(lighting_profile=="legacy"||lighting_profile=="studio-v1","MODEL_LIGHTING_PROFILE");
     const auto start=Clock::now();Scene scene(argv[1],workers);
+    need(lighting_profile=="legacy"||(scene.pbr&&mode=="render"),"MODEL_LIGHTING_PROFILE");
+    if(lighting_profile=="studio-v1"){
+        const auto to_surface=[](const V3& v){return are::rooms::SurfaceV3{float(v[0]),float(v[1]),float(v[2])};};
+        const auto basis=projection::make_projector(scene.camera,double(scene.config.width)/scene.config.height);
+        scene.lighting=are::rooms::surface_studio_lighting(to_surface(basis.eye),to_surface(basis.right),
+            to_surface(basis.up),are::rooms::surface_mul(to_surface(basis.forward),-1.0f));
+    }
     if(mode=="pose"){
         need(scene.vertices*scene.times.size()<=16000000,"MODEL_POSE_OUTPUT_BUDGET");std::cout.write("AREPOSE1",8);
         are::rooms::wire::write32(unsigned(scene.times.size()));are::rooms::wire::write32(unsigned(scene.models.size()));
@@ -69,6 +78,7 @@ int main(int argc,char**argv){try{
     }
     std::ostringstream out;out<<std::setprecision(17)<<"{\"protocol\":\""<<(scene.pbr?"are.model-probe.receipt.v2":"are.model-probe.receipt.v1")
         <<"\",\"render_profile\":\""<<(scene.pbr?"pbr":"diagnostic")
+        <<"\",\"lighting_profile\":\""<<lighting_profile
         <<"\",\"python_in_runtime\":false,\"hardware_gpu_submitted\":false,\"full_buffer_parity\":true,\"serial_reference_first_frame\":true,\"warmups\":3,\"workers\":"<<workers
         <<",\"projection\":\""<<(scene.perspective?"perspective":"orthographic")<<"\",\"camera_eye\":["<<scene.camera.eye[0]<<','<<scene.camera.eye[1]<<','<<scene.camera.eye[2]
         <<"],\"camera_target\":["<<scene.camera.target[0]<<','<<scene.camera.target[1]<<','<<scene.camera.target[2]

@@ -3,7 +3,8 @@
 Admitted subset: one indexed triangle primitive/instance, opaque double-sided
 geometry for diagnostic rendering or glTF-sided opaque geometry for PBR,
 optional one skin with all 1..3 influence sets, TRS/matrix nodes and
-STEP/LINEAR TRS animation. Textures are not yet evaluated.
+STEP/LINEAR TRS animation. The PBR profile evaluates the admitted texture
+subset in native C++17; studio-v1 is an explicit inspection lighting rig.
 """
 from __future__ import annotations
 import hashlib
@@ -375,7 +376,7 @@ def build_model_probe(directory):
 
 
 def run_model(executable, request, workers=4, repeats=15, policy='combined', mode='render', timeout=600,
-              render_profile='diagnostic'):
+              render_profile='diagnostic', lighting_profile='legacy'):
     """Run native AREMDL03. Only workers='auto' may change worker count.
 
     Explicit worker settings preserve exact benchmark and replay contracts.
@@ -390,14 +391,18 @@ def run_model(executable, request, workers=4, repeats=15, policy='combined', mod
     _uint(repeats, 30, 1); _uint(timeout, 1800, 1)
     require(policy in POLICIES and mode in ('pose', 'render')
             and render_profile in ('diagnostic','pbr'), 'MODEL_RUN_POLICY')
+    require(lighting_profile in ('legacy','studio-v1')
+            and (lighting_profile=='legacy' or (mode=='render' and render_profile=='pbr')),
+            'MODEL_LIGHTING_PROFILE')
 
     def actual(count):
-        result = subprocess.run(
-            [str(executable), str(request), str(count), str(repeats), policy, mode],
-            capture_output=True, timeout=timeout)
+        command = [str(executable), str(request), str(count), str(repeats), policy, mode]
+        if lighting_profile != 'legacy':
+            command.append(lighting_profile)
+        result = subprocess.run(command, capture_output=True, timeout=timeout)
         if result.returncode:
             raise RuntimeError(result.stderr.decode('utf-8', errors='replace')[-2000:])
-        return decode_output(result.stdout, count, repeats, policy, mode, render_profile)
+        return decode_output(result.stdout, count, repeats, policy, mode, render_profile, lighting_profile)
 
     if not auto:
         out = actual(workers)
@@ -420,7 +425,7 @@ def run_model(executable, request, workers=4, repeats=15, policy='combined', mod
     key = scope_key(
         stage='native-model', implementation=implementation_id(__file__, executable),
         variant='workers-1-vs-2', mode=mode, policy=policy,
-        profile=render_profile, repeats=bucket(repeats),
+        profile=render_profile, lighting_profile=lighting_profile, repeats=bucket(repeats),
         request_sha256=request_sha256,
         input_bytes=bucket(Path(request).stat().st_size))
     def fingerprint(out):
@@ -442,8 +447,11 @@ def run_model(executable, request, workers=4, repeats=15, policy='combined', mod
     return out
 
 
-def decode_output(raw, workers, repeats, policy, mode='render', render_profile='diagnostic'):
+def decode_output(raw, workers, repeats, policy, mode='render', render_profile='diagnostic', lighting_profile='legacy'):
     """Validate the untrusted binary/JSON process boundary before exposing buffers."""
+    require(lighting_profile in ('legacy','studio-v1')
+            and (lighting_profile=='legacy' or (mode=='render' and render_profile=='pbr')),
+            'MODEL_LIGHTING_PROFILE')
     if mode == 'pose':
         require(raw[:8] == b'AREPOSE1' and len(raw) >= 16, 'MODEL_POSE_PROTOCOL')
         nf, nm = struct.unpack_from('<2I', raw, 8); offset, frames = 16, []
@@ -471,6 +479,7 @@ def decode_output(raw, workers, repeats, policy, mode='render', render_profile='
             and receipt.get('python_in_runtime') is False and receipt.get('warmups') == 3
             and receipt.get('hardware_gpu_submitted') is False
             and receipt.get('serial_reference_first_frame') is True, 'MODEL_OUTPUT_RECEIPT')
+    require(receipt.get('lighting_profile','legacy')==lighting_profile, 'MODEL_OUTPUT_LIGHTING_PROFILE')
     require(receipt.get('projection') in ('orthographic','perspective'), 'MODEL_OUTPUT_RECEIPT')
     for field in ('camera_eye','camera_target','camera_up'):
         value = np.asarray(receipt.get(field),dtype='<f8')
