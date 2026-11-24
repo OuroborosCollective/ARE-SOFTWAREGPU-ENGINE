@@ -67,6 +67,21 @@ jobs:
           assert data["real_vulkan_device"]["missing_gl21_extensions"]
           print("ARE_ZINK_MINIMUM_VULKAN_PROFILE_INCOMPATIBLE_NOT_GL_SUCCESS")
           PYZINK
+      - name: Real Vulkan VkSampler create/destroy, immutable state, and negative admission
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_REVISION"
+          python -m unittest software_gpu.tests.test_vulkan_sampler_contract -v
+          g++ -std=c++17 -Wall -Wextra -Werror -I/usr/include native/vulkan/weighted/sampler_probe.cpp -lvulkan -o evidence-local/real-vulkan-xcb/sampler_probe
+          export VK_DRIVER_FILES="$PWD/evidence-local/real-vulkan-xcb/icd/are.json"
+          export VK_ICD_FILENAMES="$VK_DRIVER_FILES"
+          export OPENBLAS_NUM_THREADS=1
+          export PYTHONPATH="$PWD:$(python -c 'import site; print(site.getsitepackages()[0])')"
+          timeout 30 evidence-local/real-vulkan-xcb/sampler_probe | tee evidence-local/real-vulkan-xcb/sampler.stdout
+          grep -q ARE_VK_SAMPLER_REAL_CREATE_DESTROY_PASS evidence-local/real-vulkan-xcb/sampler.stdout
+          sha256sum native/vulkan/weighted/sampler_probe.cpp software_gpu/drivers/weighted_icd.py evidence-local/real-vulkan-xcb/icd/libare_weighted.so evidence-local/real-vulkan-xcb/sampler_probe evidence-local/real-vulkan-xcb/sampler.stdout > evidence-local/real-vulkan-xcb/sampler.sha256
       - name: Archive original window, depth, driver and source SHA receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

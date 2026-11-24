@@ -7,8 +7,9 @@ from collections import namedtuple
 import ctypes
 import hashlib
 import json
+import math
 import os
-from threading import Condition
+from threading import Condition, Lock
 from time import monotonic_ns
 from pathlib import Path
 from types import SimpleNamespace
@@ -22,9 +23,15 @@ from software_gpu.drivers.native_bridge import AREDriverBridge
 from software_gpu.graphics.framebuffer import Framebuffer
 
 ffi = vk.ffi
+MAX_SAMPLERS = 4000
+MAX_SAMPLER_LOD_BIAS = 2.0
 MAX_MEMORY = 128 * 1024 * 1024
 RGBA, DEPTH = vk.VK_FORMAT_R8G8B8A8_UNORM, vk.VK_FORMAT_D32_SFLOAT
 ImageSpec = namedtuple("ImageSpec", "width height format size")
+SamplerSpec = namedtuple("SamplerSpec",
+    "mag_filter min_filter mipmap_mode address_u address_v address_w "
+    "lod_bias max_anisotropy compare_enable compare_op min_lod max_lod "
+    "border_color unnormalized")
 
 
 def require(condition, result=vk.VK_ERROR_FEATURE_NOT_PRESENT):
@@ -63,6 +70,45 @@ def image_spec(info):
             and info.mipLevels == info.arrayLayers == info.samples == 1,
             vk.VK_ERROR_FORMAT_NOT_SUPPORTED)
     return ImageSpec(e.width, e.height, info.format, e.width * e.height * 4)
+
+
+def sampler_spec(p):
+    """Validated immutable Vulkan sampler state; no sampled-image feature claim.
+
+    The currently advertised ICD does not permit sampled images or
+    samplerAnisotropy. Storing actual sampler create parameters is a genuine
+    object lifetime operation, not evidence of a texture shader path.
+    """
+    require(p and p.sType == vk.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO
+            and not p.pNext and not p.flags)
+    filters = (vk.VK_FILTER_NEAREST, vk.VK_FILTER_LINEAR)
+    mipmaps = (vk.VK_SAMPLER_MIPMAP_MODE_NEAREST, vk.VK_SAMPLER_MIPMAP_MODE_LINEAR)
+    addresses = (vk.VK_SAMPLER_ADDRESS_MODE_REPEAT, vk.VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+                 vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER)
+    colors = (vk.VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, vk.VK_BORDER_COLOR_INT_TRANSPARENT_BLACK,
+              vk.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK, vk.VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+              vk.VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE, vk.VK_BORDER_COLOR_INT_OPAQUE_WHITE)
+    require(p.magFilter in filters and p.minFilter in filters and p.mipmapMode in mipmaps)
+    require(p.addressModeU in addresses and p.addressModeV in addresses and p.addressModeW in addresses)
+    require(not p.anisotropyEnable)
+    if vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER in (p.addressModeU, p.addressModeV, p.addressModeW):
+        require(p.borderColor in colors)
+    if p.compareEnable:
+        require(vk.VK_COMPARE_OP_NEVER <= p.compareOp <= vk.VK_COMPARE_OP_ALWAYS)
+    require(abs(p.mipLodBias) <= MAX_SAMPLER_LOD_BIAS
+            and math.isfinite(float(p.minLod)) and math.isfinite(float(p.maxLod))
+            and p.minLod <= p.maxLod)
+    if p.unnormalizedCoordinates:
+        clamps = (vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER)
+        require(p.minFilter == p.magFilter and p.mipmapMode == vk.VK_SAMPLER_MIPMAP_MODE_NEAREST
+                and p.minLod == p.maxLod == 0 and p.addressModeU in clamps
+                and p.addressModeV in clamps and not p.compareEnable)
+    return SamplerSpec(int(p.magFilter), int(p.minFilter), int(p.mipmapMode),
+                       int(p.addressModeU), int(p.addressModeV), int(p.addressModeW),
+                       float(p.mipLodBias), float(p.maxAnisotropy),
+                       bool(p.compareEnable), int(p.compareOp),
+                       float(p.minLod), float(p.maxLod), int(p.borderColor),
+                       bool(p.unnormalizedCoordinates))
 
 
 class Driver:
@@ -249,6 +295,8 @@ class Driver:
         ffi.memmove(out.pipelineCacheUUID, bytes.fromhex(self.binary)[:16], 16)
         lim = out.limits
         lim.maxImageDimension2D = lim.maxFramebufferWidth = lim.maxFramebufferHeight = 4096
+        lim.maxSamplerAllocationCount = MAX_SAMPLERS
+        lim.maxSamplerLodBias = MAX_SAMPLER_LOD_BIAS
         lim.maxMemoryAllocationCount = 512
         lim.maxBoundDescriptorSets = 0
         lim.maxVertexInputAttributes = 2
@@ -328,7 +376,8 @@ class Driver:
         require(q.queueFamilyIndex == 0 and q.queueCount == 1 and not q.flags)
         if p.pEnabledFeatures:
             require(not any(bytes(ffi.buffer(p.pEnabledFeatures))))
-        device = self.new("Device", phys, allocated=0, allocations=0, extensions=extensions)
+        device = self.new("Device", phys, allocated=0, allocations=0, extensions=extensions,
+                          sampler_count=0, sampler_lock=Lock())
         device.queue = self.new("Queue", device.handle)
         out[0] = device.handle
 
@@ -515,6 +564,29 @@ class Driver:
 
     def vkUnmapMemory(self, dev, handle):
         self.objects[key(handle)].mapped = False
+
+    def vkCreateSampler(self, dev, p, alloc, out):
+        # VkSampler is an actual owned, immutable Vulkan resource. No
+        # descriptor/texture sampling is implied while those are unsupported.
+        out[0] = ffi.NULL
+        device = self.objects[key(dev)]
+        require(device.kind == "Device" and not alloc)
+        spec = sampler_spec(p)
+        with device.sampler_lock:
+            require(device.sampler_count < MAX_SAMPLERS, vk.VK_ERROR_TOO_MANY_OBJECTS)
+            out[0] = self.new("Sampler", dev, spec=spec).handle
+            device.sampler_count += 1
+
+    def vkDestroySampler(self, dev, handle, alloc):
+        require(key(dev) in self.objects and not alloc)
+        if not handle:
+            return
+        sampler = self.objects[key(handle)]
+        require(sampler.kind == "Sampler" and sampler.parent == key(dev))
+        device = self.objects[key(dev)]
+        with device.sampler_lock:
+            del self.objects[key(handle)]  # Samplers own no child objects.
+            device.sampler_count -= 1
 
     def vkCreateBuffer(self, dev, p, alloc, out):
         require(not alloc and not p.flags and 0 < p.size <= MAX_MEMORY and
