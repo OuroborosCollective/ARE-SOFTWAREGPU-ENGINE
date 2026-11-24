@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 static void require(bool state, const char* label) {
     if (!state) throw std::runtime_error(label);
@@ -34,6 +35,8 @@ static int run() {
     require(props.deviceType==VK_PHYSICAL_DEVICE_TYPE_CPU &&
             std::strstr(props.deviceName,"ARE SoftwareGPU")!=nullptr,
             "Non-ARE Vulkan device prohibited");
+    require(props.limits.maxSamplerAllocationCount >= 4000 && props.limits.maxSamplerLodBias >= 2,
+            "Sampler limits below Vulkan core minimum");
     float priority=1;
     VkDeviceQueueCreateInfo qi{};
     qi.sType=VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -82,11 +85,23 @@ static int run() {
             "Unimplemented anisotropy must not be advertised");
     ci.anisotropyEnable=VK_FALSE;
     ci.maxAnisotropy=1;
-    ci.pNext=&ci; // non-null unknown extension chain unsupported
+    VkBaseInStructure extension{};
+    extension.sType=VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    ci.pNext=&extension;
     VkResult ext=create(device,&ci,nullptr,&invalid);
     require(ext==VK_ERROR_FEATURE_NOT_PRESENT && invalid==VK_NULL_HANDLE,
             "Unimplemented sampler pNext chain must be rejected");
     ci.pNext=nullptr;
+    ci.unnormalizedCoordinates=VK_TRUE;
+    ci.addressModeU=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    ci.mipLodBias=props.limits.maxSamplerLodBias;
+    std::vector<VkSampler> owned(props.limits.maxSamplerAllocationCount-2);
+    for (auto& sampler : owned) check(create(device,&ci,nullptr,&sampler),"fill_sampler_budget");
+    require(create(device,&ci,nullptr,&invalid)==VK_ERROR_TOO_MANY_OBJECTS && invalid==VK_NULL_HANDLE,
+            "Sampler allocation limit must be enforced");
+    for (auto sampler : owned) destroy(device,sampler,nullptr);
+    check(create(device,&ci,nullptr,&invalid),"reuse_sampler_capacity");
+    destroy(device,invalid,nullptr);
     destroy(device,first,nullptr);
     destroy(device,second,nullptr);
     vkDestroyDevice(device,nullptr);

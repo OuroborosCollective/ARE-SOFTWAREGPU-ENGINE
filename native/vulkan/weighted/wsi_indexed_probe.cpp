@@ -135,7 +135,8 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     };
     // Spatially asymmetric triangle. Interpolate RGB at each sample.
     float vertices[][6] = {
-        {-1,-1,.5f, 1,0,0},{1,-1,.5f, 0,1,0},{-1,1,.5f, 0,0,1}};
+        {0,0,.5f, 0,0,0}, {-1,1,.5f, 0,0,1},
+        {-1,-1,.5f, 1,0,0}, {1,-1,.5f, 0,1,0}};
     if (alternate) {
         // Rotate RGB components without changing geometry, coverage or depth.
         for (auto& v : vertices) {
@@ -145,8 +146,8 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     }
     // The very same combined Index|Vertex usage requested by Unity 6.
     // This native probe genuinely binds and draws those indices on ARE.
-    const std::uint16_t indices16[] = {0, 1, 2};
-    const std::uint32_t indices32[] = {0, 1, 2};
+    const std::uint16_t indices16[] = {2, 3, 1};
+    const std::uint32_t indices32[] = {2, 3, 1};
     const VkDeviceSize indexBytes = alternate ? sizeof(indices32) : sizeof(indices16);
     VkBufferCreateInfo bi{}; bi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bi.size = sizeof(vertices) + indexBytes;
@@ -160,9 +161,7 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     void* mapped{};
     CHECK(vkMapMemory(device, vm, 0, sizeof(vertices) + indexBytes, 0, &mapped));
     std::memcpy(mapped, vertices, sizeof(vertices));
-    std::memcpy(static_cast<char*>(mapped) + sizeof(vertices),
-                alternate ? static_cast<const void*>(indices32) : static_cast<const void*>(indices16),
-                indexBytes);
+    std::memset(static_cast<char*>(mapped) + sizeof(vertices), 0, indexBytes);
     vkUnmapMemory(device, vm);
 
     VkFormat formats[] = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D32_SFLOAT};
@@ -282,6 +281,12 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     if (vkGetFenceStatus(device,fence) != VK_NOT_READY ||
         vkWaitForFences(device,1,&fence,VK_TRUE,0) != VK_TIMEOUT)
         throw std::runtime_error("Fence signaled before submit");
+    // Host-coherent index writes after recording must be observed at submission.
+    CHECK(vkMapMemory(device,vm,0,bi.size,0,&mapped));
+    std::memcpy(static_cast<char*>(mapped) + sizeof(vertices),
+                alternate ? static_cast<const void*>(indices32) : static_cast<const void*>(indices16),
+                indexBytes);
+    vkUnmapMemory(device,vm);
     CHECK(vkQueueSubmit(queue,1,&submit,fence));
     CHECK(vkWaitForFences(device,1,&fence,VK_TRUE,1000000000));
     vkDestroyFence(device,fence,nullptr);
@@ -346,6 +351,17 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     if (unsupported_index_type != VK_ERROR_FEATURE_NOT_PRESENT)
         throw std::runtime_error("Invalid VkIndexType must return VK_ERROR_FEATURE_NOT_PRESENT");
     vkFreeCommandBuffers(device,pool,1,&badCmd);
+    bi.usage=VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    VkBuffer onlyIndex{};
+    CHECK(vkCreateBuffer(device,&bi,nullptr,&onlyIndex));
+    CHECK(vkBindBufferMemory(device,onlyIndex,vm,0));
+    CHECK(vkAllocateCommandBuffers(device,&ai,&badCmd));
+    CHECK(vkBeginCommandBuffer(badCmd,&begin));
+    vkCmdBindVertexBuffers(badCmd,0,1,&onlyIndex,&offset);
+    if (vkEndCommandBuffer(badCmd)!=VK_ERROR_FEATURE_NOT_PRESENT)
+        throw std::runtime_error("Index-only buffer accepted for vertex fetch");
+    vkFreeCommandBuffers(device,pool,1,&badCmd);
+    vkDestroyBuffer(device,onlyIndex,nullptr);
     vkDestroyCommandPool(device,pool,nullptr);
     vkDestroyPipeline(device,pipeline,nullptr);
     vkDestroyPipelineLayout(device,layout,nullptr);

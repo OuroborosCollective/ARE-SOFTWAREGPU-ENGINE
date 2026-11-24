@@ -72,9 +72,11 @@ class SamplerCreateInfoTests(unittest.TestCase):
         with self.assertRaises(Rejected):
             sampler_spec(p)
 
-    def test_unimplemented_unnormalized_coordinates_rejected(self):
+    def test_unnormalized_coordinates_require_compatible_modes(self):
         p = info()
         p.unnormalizedCoordinates = 1
+        self.assertTrue(sampler_spec(p).unnormalized)
+        p.addressModeU = vk.VK_SAMPLER_ADDRESS_MODE_REPEAT
         with self.assertRaises(Rejected):
             sampler_spec(p)
 
@@ -85,8 +87,24 @@ class SamplerCreateInfoTests(unittest.TestCase):
         with self.assertRaises(Rejected):
             sampler_spec(p)
 
-    def test_nonzero_lod_bias_exceeding_current_device_limit_rejected(self):
+    def test_lod_bias_matches_device_limit(self):
         p = info()
-        p.mipLodBias = 0.5
+        for bias in (-2, 0.5, 2):
+            p.mipLodBias = bias
+            self.assertEqual(sampler_spec(p).lod_bias, bias)
+        p.mipLodBias = -2.5
+        with self.assertRaises(Rejected):
+            sampler_spec(p)
+
+    def test_inactive_fields_are_ignored(self):
+        p = info()
+        p.borderColor = p.compareOp = 12345
+        p.maxAnisotropy = float("nan")
+        sampler_spec(p)
+        p.compareEnable = 1
+        with self.assertRaises(Rejected):
+            sampler_spec(p)
+        p.compareEnable = 0
+        p.addressModeW = vk.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
         with self.assertRaises(Rejected):
             sampler_spec(p)

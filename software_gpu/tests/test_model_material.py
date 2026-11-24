@@ -65,6 +65,42 @@ class TestNativeModelMaterial(unittest.TestCase):
         for delta in self.result['repeat_delta']:
             self.assertAlmostEqual(delta,0,places=7)
 
+    def test_srgb_byte_table_matches_scalar_and_real_texels_exactly(self):
+        # All 256 values, including the sRGB transfer boundary, in actual
+        # native texture storage. Alpha and non-sRGB data must stay linear.
+        source = Path(self.temp.name) / 'byte_table.cpp'
+        exe = Path(self.temp.name) / 'byte_table'
+        source.write_text(r'''#include "model_material.hpp"
+#include <cmath>
+#include <iostream>
+using namespace are::rooms;
+int main() {
+    SurfaceTexture t;t.srgb=true;t.mag_filter=9728;t.min_filter=9728;
+    SurfaceMip m;m.width=256;m.height=1;
+    for(unsigned i=0;i<256;++i)
+        for(unsigned c=0;c<4;++c)m.rgba.push_back(std::uint8_t(i));
+    t.mips.push_back(std::move(m));t.build_mips();
+    for(unsigned i=0;i<256;++i){
+        const double x=double(i)/255.0;
+        const double expected=x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);
+        if(surface_srgb_byte_to_linear(std::uint8_t(i))!=expected)return 1;
+        const auto c=surface_texel(t,0,int(i),0,true);
+        const auto raw=surface_texel(t,0,int(i),0,false);
+        if(c[0]!=expected||c[1]!=expected||c[2]!=expected||c[3]!=x)return 2;
+        for(double q:raw)if(q!=x)return 3;
+        t.srgb=false;
+        const auto non_srgb=surface_texel(t,0,int(i),0,true);
+        for(double q:non_srgb)if(q!=x)return 4;
+        t.srgb=true;
+    }
+    std::cout<<"256 exact byte values and texture paths\n";
+}
+''')
+        result = subprocess.run([compiler(), *FLAGS, f'-I{NATIVE}', str(source), '-o', str(exe)],
+                                capture_output=True, text=True, timeout=120)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('256 exact byte values', subprocess.check_output([str(exe)], text=True))
+
     def test_cook_torrance_ggx_and_normal_map_match_independent_oracle(self):
         expected=cook_torrance([.8,.7,.6],.5,.7,[0,0,1],[1,0,0],[0,1,0],
                                normal_map=(1,128/255,1),normal_scale=.5)
