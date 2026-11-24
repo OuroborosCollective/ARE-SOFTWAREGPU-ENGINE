@@ -39,6 +39,18 @@ class IndexedBufferTests(unittest.TestCase):
         with self.assertRaises(Rejected):
             gather_indexed_vertices(self.vertices,0,inds,0,3,0,0,vk.VK_INDEX_TYPE_UINT16)
 
+    def test_valid_negative_base_vertex(self):
+        for dtype, index_type in ((np.uint16,vk.VK_INDEX_TYPE_UINT16),
+                                  (np.uint32,vk.VK_INDEX_TYPE_UINT32)):
+            inds=np.array([1,2,3],dtype=dtype).tobytes()
+            result=gather_indexed_vertices(self.vertices,0,inds,0,3,0,-1,index_type)
+            self.assertTrue(np.array_equal(result,np.frombuffer(self.vertices,np.float32).reshape(3,6)))
+
+    def test_index_above_advertised_limit_rejected_even_with_base_vertex(self):
+        inds=np.array([0x01000000,0x01000001,0x01000002],dtype=np.uint32).tobytes()
+        with self.assertRaises(Rejected):
+            gather_indexed_vertices(self.vertices,0,inds,0,3,0,-0x01000000,vk.VK_INDEX_TYPE_UINT32)
+
     def test_negative_vertex_offset_rejected(self):
         inds=np.array([0,1,2],dtype=np.uint16).tobytes()
         with self.assertRaises(Rejected):

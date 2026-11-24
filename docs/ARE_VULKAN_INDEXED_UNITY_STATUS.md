@@ -26,12 +26,15 @@ No Unity frame is yet rendered.
 - vkCmdDrawIndexed records real index and vertex bindings and converts actual
   little-endian bound host-coherent bytes into position/RGB vertex triangles
   at queue execution. Unsupported index types, invalid offsets, out-of-range
-  references and negative vertex offsets are rejected.
+  references and raw indices above the advertised core limit (0x00ffffff)
+  are rejected. Signed negative base vertices are admitted when every adjusted
+  vertex reference is valid; fullDrawIndexUint32 remains unsupported.
 - CPU native submission still uses the existing C++17 ARE raster pipeline and
   XCB surface + Acquire/Present + independent server GetImage.
 - The new independent C++ client wsi_indexed_probe.cpp runs two actual
   Vulkan windows: A uses UINT16 indices, B uses UINT32 indices with cycle
-  of RGB channels. Both render exactly the same triangle and colors as
+  of RGB channels. Both exercise a negative signed base vertex and render
+  exactly the same triangle and colors as
   the established direct VkCmdDraw path.
 - A deliberately invalid VkIndexType causes a genuine VkEndCommandBuffer
   rejection (VK_ERROR_FEATURE_NOT_PRESENT); this is checked as part of

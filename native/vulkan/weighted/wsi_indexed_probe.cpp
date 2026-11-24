@@ -74,6 +74,8 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     vkGetPhysicalDeviceProperties(physical, &props);
     if (std::strcmp(props.deviceName, "ARE SoftwareGPU (experimental headless CPU)") ||
         props.deviceType != VK_PHYSICAL_DEVICE_TYPE_CPU) throw std::runtime_error("Wrong device identity");
+    if (props.limits.maxDrawIndexedIndexValue != 0x00ffffffu)
+        throw std::runtime_error("Wrong advertised indexed-draw limit");
     float priority = 1;
     VkDeviceQueueCreateInfo qi{}; qi.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     qi.queueCount = 1; qi.pQueuePriorities = &priority;
@@ -146,8 +148,9 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     }
     // The very same combined Index|Vertex usage requested by Unity 6.
     // This native probe genuinely binds and draws those indices on ARE.
-    const std::uint16_t indices16[] = {2, 3, 1};
-    const std::uint32_t indices32[] = {2, 3, 1};
+    // Both unsigned index formats use a valid negative signed base vertex.
+    const std::uint16_t indices16[] = {3, 4, 2};
+    const std::uint32_t indices32[] = {3, 4, 2};
     const VkDeviceSize indexBytes = alternate ? sizeof(indices32) : sizeof(indices16);
     VkBufferCreateInfo bi{}; bi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bi.size = sizeof(vertices) + indexBytes;
@@ -261,7 +264,7 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     vkCmdBindVertexBuffers(cmd,0,1,&vb,&offset);
     vkCmdBindIndexBuffer(cmd, vb, sizeof(vertices),
                          alternate ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16);
-    for (int i=0;i<32;++i) vkCmdDrawIndexed(cmd,3,1,0,0,0);
+    for (int i=0;i<32;++i) vkCmdDrawIndexed(cmd,3,1,0,-1,0);
     vkCmdEndRenderPass(cmd);
     VkMemoryBarrier barrier{}; barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
     barrier.srcAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -384,7 +387,7 @@ static void run(const std::string& dir, const std::string& output, bool alternat
     vkDestroyInstance(instance,nullptr);
     xcb_destroy_window(xc,window); xcb_flush(xc); xcb_disconnect(xc);
     std::cout << "ARE_VK_REAL_INDEXED_DRAW_AND_NEGATIVE_PASS index_type="
-              << (alternate ? "UINT32" : "UINT16") << " two_framebuffer_receipts=1\n";
+              << (alternate ? "UINT32" : "UINT16") << " signed_base_vertex=-1 max_index=16777215 two_framebuffer_receipts=1\n";
 }
 int main(int argc, char** argv) {
     if (argc != 3 && argc != 4) return 2;

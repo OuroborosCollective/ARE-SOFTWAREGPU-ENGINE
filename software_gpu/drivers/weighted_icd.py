@@ -25,6 +25,8 @@ from software_gpu.graphics.framebuffer import Framebuffer
 ffi = vk.ffi
 MAX_SAMPLERS = 4000
 MAX_SAMPLER_LOD_BIAS = 2.0
+# fullDrawIndexUint32 is not advertised; admit the Vulkan core minimum.
+MAX_DRAW_INDEXED_INDEX_VALUE = 0x00FFFFFF
 MAX_MEMORY = 128 * 1024 * 1024
 RGBA, DEPTH = vk.VK_FORMAT_R8G8B8A8_UNORM, vk.VK_FORMAT_D32_SFLOAT
 ImageSpec = namedtuple("ImageSpec", "width height format size")
@@ -133,6 +135,7 @@ def gather_indexed_vertices(vertex_data, vertex_byte_offset, index_data,
     dtype = np.dtype("<u2") if stride == 2 else np.dtype("<u4")
     idx = np.frombuffer(index_data, dtype=dtype, count=count,
                         offset=index_byte_offset + first_index * stride).astype(np.int64)
+    require(np.all(idx <= MAX_DRAW_INDEXED_INDEX_VALUE))
     idx += vertex_offset
     vertex_count = (len(vertex_data) - vertex_byte_offset) // 24
     require(vertex_count > 0 and np.all(idx >= 0) and np.all(idx < vertex_count))
@@ -327,6 +330,7 @@ class Driver:
         lim.maxImageDimension2D = lim.maxFramebufferWidth = lim.maxFramebufferHeight = 4096
         lim.maxSamplerAllocationCount = MAX_SAMPLERS
         lim.maxSamplerLodBias = MAX_SAMPLER_LOD_BIAS
+        lim.maxDrawIndexedIndexValue = MAX_DRAW_INDEXED_INDEX_VALUE
         lim.maxMemoryAllocationCount = 512
         lim.maxBoundDescriptorSets = 0
         lim.maxVertexInputAttributes = 2
@@ -819,8 +823,11 @@ class Driver:
                 and self.objects[vertex].usage & vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
                 and self.objects[index].mem is not None
                 and index_at + (first + count) * size <= self.objects[index].size)
+        # The native dispatcher transports arguments as unsigned uintptr_t.
+        # Recover Vulkan's signed int32_t base vertex before queue execution.
+        signed_offset = ctypes.c_int32(int(vertex_offset)).value
         cmd.draws.append(("indexed", vertex, vertex_at, index, index_at,
-                          int(index_type), int(first), int(count), int(vertex_offset)))
+                          int(index_type), int(first), int(count), signed_offset))
 
     def vkCmdDraw(self, handle, count, instances, first, first_instance):
         cmd = self.objects[key(handle)]
