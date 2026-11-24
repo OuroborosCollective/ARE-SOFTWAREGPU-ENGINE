@@ -33,7 +33,7 @@ driver. It contains no second SoftwareGPU implementation.
 
 ## Install a temporary development copy
 
-Use desktop Firefox 140 or later. Open `about:debugging`, choose **This Firefox**,
+Use desktop Firefox 142 or later. Open `about:debugging`, choose **This Firefox**,
 select **Load Temporary Add-on**, and select the built `.xpi` or
 `clients/firefox-addon/manifest.json`. Open the extension from Firefox's
 extensions menu, run the checks, and save the report if needed. Temporary
@@ -95,7 +95,7 @@ the public source tree because they contain local installation paths.
 ## Recorded validation, 2026-11-24
 
 The exact unsigned XPI SHA-256
-`2a8c96cda67856d3e7e28d0856ee813e9d2f3671ce0f87e550565bb29f03b5f7`
+`4ae3faf9f0139f0c3492cdee21237c7d476e94f87229c691e513f297fa46a0e7`
 was installed temporarily in Firefox Nightly 163.0a1, build `20261123184640`,
 on Linux/Xvfb. The toolbar action opened the real `moz-extension` page; its run
 button completed and its downloaded JSON matched the displayed report. WebGL
@@ -104,12 +104,14 @@ returned 16,384 actual bytes, all 4,096 pixels verified, SHA-256
 Both WebGPU requests were unavailable and were not accepted as rendering passes.
 This establishes the extension workflow and WebGL test, not ARE native-driver
 rendering or WebGPU rendering. Runtime receipt SHA-256:
-`f1248224928b0ccda750ba86c53b254af8684574ead28405980d6db43be225c0`.
+`ed7240f5bb3b407fc80990d82f7d20e288ff4ca37901a6234667712ad428f1f4`.
 
 Two earlier harness failures are retained separately: an incorrect assumption
 about Marionette's window-list response, and the obsolete CLI method for
 enabling privileged test automation. Correcting the harness did not change the
-XPI. Unit verification comprises five Node readback tests and six Python
+XPI. The final package raises the desktop minimum to Firefox 142 for the strict
+Mozilla data-declaration compatibility check and was executed again in Nightly.
+Android availability is not declared. Unit verification comprises five Node readback tests and six Python
 package/source-rebuild tests. GitHub CI, signing and AMO review are independent
 gates and must be checked on the submitted source revision.
 

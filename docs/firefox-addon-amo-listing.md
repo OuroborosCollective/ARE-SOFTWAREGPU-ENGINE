@@ -50,7 +50,7 @@ Source and project information are linked in the extension:
 
 ## Reviewer instructions
 
-1. Install the submitted XPI in desktop Firefox 140 or later. No account,
+1. Install the submitted XPI in desktop Firefox 142 or later. No account,
    credentials, API key, backend, or optional permission is needed.
 2. Open Firefox's extensions menu and select **ARE SoftwareGPU Diagnostics**.
    Its toolbar action opens the packaged diagnostics page in a new tab.
