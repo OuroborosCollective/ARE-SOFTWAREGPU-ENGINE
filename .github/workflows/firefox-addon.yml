@@ -46,7 +46,7 @@ jobs:
         run: |
           node --version
           node --test tools/firefox-addon-tests/readback.test.mjs
-          python -m unittest software_gpu.tests.test_firefox_addon_package -v
+          python -m unittest discover -s software_gpu/tests -p test_firefox_addon_package.py -v
       - name: Validate original extension source with Mozilla web-ext
         run: npx --yes web-ext@10.8.0 lint --source-dir clients/firefox-addon --warnings-as-errors
       - name: Build unsigned package and original source archive

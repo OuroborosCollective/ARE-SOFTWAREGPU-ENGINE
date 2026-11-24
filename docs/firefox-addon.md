@@ -51,7 +51,7 @@ repository root, choose a new output directory:
 
 ```sh
 python tools/package_firefox_addon.py --output-dir build/firefox-addon
-python -m unittest software_gpu.tests.test_firefox_addon_package -v
+python -m unittest discover -s software_gpu/tests -p test_firefox_addon_package.py -v
 node --test tools/firefox-addon-tests/readback.test.mjs
 ```
 
