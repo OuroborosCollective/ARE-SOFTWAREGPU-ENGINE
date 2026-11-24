@@ -17,6 +17,11 @@ import numpy as np
 from .geometry import edge_covered, is_rgb_array, uses_builtin_color
 
 
+# Cap per-draw bin storage, including draws that skip planner statistics.
+# Each pair costs a Python record plus references in the list and frozen tuple.
+MAX_TILE_CANDIDATE_PAIRS = 1 << 20
+
+
 def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
     """Count bounded rectangles in O(1), without a second pass over every bin."""
     nx, ny = x1 // tile_size - x0 // tile_size + 1, y1 // tile_size - y0 // tile_size + 1
@@ -52,11 +57,12 @@ class TileBins:
 
 
 def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
-    """Pure setup shared by uncached draws and the explicit preparation cache."""
+    """Prepare ordered candidates, rejecting draws that exceed the pair budget."""
     bins = defaultdict(list)
     bbox_samples = 0
     binned_pairs = 0
     small_pairs = 0
+    candidate_pairs = 0
     frame_w, frame_h = width, height
     for tri in triangles:
         s0, s1, s2 = tri[:3]
@@ -66,18 +72,24 @@ def bin_triangles(triangles, width, height, tile_size, scan_min_samples=None):
         y1 = min(frame_h - 1, int(np.ceil(max(s0[1], s1[1], s2[1]))))
         if x0 > x1 or y0 > y1:
             continue
+        tx0, tx1 = x0 // tile_size, x1 // tile_size
+        ty0, ty1 = y0 // tile_size, y1 // tile_size
+        candidate_pairs += (tx1 - tx0 + 1) * (ty1 - ty0 + 1)
+        if candidate_pairs > MAX_TILE_CANDIDATE_PAIRS:
+            raise ValueError("TILE_CANDIDATE_PAIR_LIMIT")
         if scan_min_samples is not None:
             bbox_samples += (x1 - x0 + 1) * (y1 - y0 + 1)
             # Pre-execution gate features: pair count and pairs below the scan
             # threshold, using the same clipped bounds draw_tile derives.
-            pairs, small = _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples)
-            binned_pairs += pairs
+            _, small = _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples)
             small_pairs += small
         # Row-major deterministic tile iteration; no per-pixel bin storage.
-        for ty in range(y0 // tile_size, y1 // tile_size + 1):
-            for tx in range(x0 // tile_size, x1 // tile_size + 1):
+        for ty in range(ty0, ty1 + 1):
+            for tx in range(tx0, tx1 + 1):
                 bins[(ty, tx)].append((tri, x0, x1, y0, y1))
 
+    if scan_min_samples is not None:
+        binned_pairs = candidate_pairs
     tasks = tuple((coordinate, tuple(candidates)) for coordinate, candidates in sorted(bins.items()))
     return TileBins(triangles, width, height, tile_size, scan_min_samples,
                     tasks, bbox_samples, binned_pairs, small_pairs)
