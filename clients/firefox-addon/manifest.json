@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "ARE SoftwareGPU Diagnostics",
+  "version": "0.1.0",
+  "description": "Run local WebGL and WebGPU shader checks, verify the actual pixels, and export the results. No data is transmitted.",
+  "author": "Thomas Markgraf (pseudonym: OuroborosCollective)",
+  "homepage_url": "https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "are-softwaregpu-diagnostics@arelogic.space",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+  "action": { "default_title": "Open ARE graphics diagnostics", "default_icon": "icon.svg" },
+  "icons": { "48": "icon.svg", "96": "icon.svg" },
+  "background": { "scripts": ["background.js"] },
+  "content_security_policy": {
+    "extension_pages": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  }
+}

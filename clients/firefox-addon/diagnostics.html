@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ARE SoftwareGPU Diagnostics</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="ui.mjs"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icon.svg" width="48" height="48" alt="">
+      <div><p class="eyebrow">Local graphics check</p><h1>ARE SoftwareGPU Diagnostics</h1></div>
+    </header>
+    <p class="intro">Find out whether this browser can draw and read back a small test image through WebGL and WebGPU. Every pixel is checked; unavailable APIs are reported separately.</p>
+    <div class="actions"><button id="run" type="button">Run graphics checks</button><button id="download" type="button" disabled>Save results as JSON</button></div>
+    <p id="progress" role="status" aria-live="polite">Ready. Checks run only when you press the button.</p>
+    <section class="cases" aria-label="Graphics results">
+      <article><h2>WebGL</h2><span class="badge" id="webgl-status">Not tested</span><p id="webgl-detail">Shader compilation, triangle draw and pixel readback.</p><canvas id="webgl" width="64" height="64" aria-label="Actual WebGL test image"></canvas></article>
+      <article><h2>WebGPU</h2><span class="badge" id="default-status">Not tested</span><p id="default-detail">Default adapter, render pipeline and buffer readback.</p><canvas id="default" width="64" height="64" aria-label="Actual WebGPU test image"></canvas></article>
+      <article><h2>WebGPU fallback</h2><span class="badge" id="forceFallback-status">Not tested</span><p id="forceFallback-detail">Explicit fallback-adapter request and the same pixel check.</p><canvas id="forceFallback" width="64" height="64" aria-label="Actual WebGPU fallback test image"></canvas></article>
+    </section>
+    <section class="note"><h2>What these results mean</h2><p>A pass confirms this test image was rendered and read back correctly. Adapter names can be masked by the browser. A CPU or Mesa label does not identify the ARE engine. This add-on does not install a native graphics driver, change Firefox settings or add missing GPU features.</p><p>Everything stays in this tab. The add-on sends no diagnostic data, uses no analytics and reads no browsing history. The optional JSON file includes the returned graphics information and pixel buffers; review it before sharing.</p></section>
+    <details><summary>Detailed local report</summary><pre id="report">No checks have run.</pre></details>
+    <footer><a href="https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE" target="_blank" rel="noopener noreferrer">Source repository</a><a href="https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/issues" target="_blank" rel="noopener noreferrer">Report a problem</a><a href="https://arelogic.space/projects/are-softwaregpu-engine/" target="_blank" rel="noopener noreferrer">Project website</a><p>Thomas Markgraf · pseudonym: OuroborosCollective · <span id="version"></span></p></footer>
+  </main>
+</body>
+</html>

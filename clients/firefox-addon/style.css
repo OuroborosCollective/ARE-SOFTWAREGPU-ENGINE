@@ -1,0 +1,29 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.55; color: #dce6ee; background: #101923; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+header { display: flex; gap: 16px; align-items: center; }
+h1 { font-size: clamp(1.4rem, 4vw, 2rem); line-height: 1.2; margin: 2px 0 12px; }
+h2 { font-size: 1.05rem; margin: 0 0 12px; }
+.eyebrow { margin: 0; color: #9cbbca; font-size: .85rem; }
+.intro { max-width: 75ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+button { font: inherit; font-weight: 650; border: 1px solid #70dfbf; border-radius: 7px; padding: 11px 18px; background: #70dfbf; color: #10221e; cursor: pointer; }
+button:disabled { opacity: .48; cursor: default; }
+#download { color: #dce6ee; background: transparent; border-color: #647b8b; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #fff0a6; outline-offset: 4px; }
+#progress { min-height: 1.6em; color: #b6c9d6; }
+.cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+article, .note { border: 1px solid #354a5b; border-radius: 10px; padding: 20px; background: #172430; }
+article p { min-height: 4.8em; margin-bottom: 12px; overflow-wrap: anywhere; font-size: .9rem; }
+canvas { width: 128px; height: 128px; image-rendering: pixelated; border: 1px solid #526777; background: #0c141c; }
+.badge { display: inline-block; font-size: .85rem; border-radius: 4px; padding: 3px 9px; color: #cad7df; background: #344757; }
+.badge[data-state="pass"] { color: #113c2f; background: #8ce2bd; }
+.badge[data-state="fail"], .badge[data-state="error"], .badge[data-state="timeout"] { color: #481e22; background: #ffc0c6; }
+.note { margin-bottom: 24px; }
+.note p:last-child { margin-bottom: 0; }
+summary { cursor: pointer; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; max-height: 480px; overflow: auto; padding: 16px; background: #0b121a; }
+footer { margin-top: 32px; color: #96aebd; font-size: .85rem; }
+footer a { display: inline-block; margin: 0 20px 8px 0; color: #9edfea; }
+@media (max-width: 760px) { .cases { grid-template-columns: 1fr; } article p { min-height: 0; } main { padding: 24px 16px; } }
