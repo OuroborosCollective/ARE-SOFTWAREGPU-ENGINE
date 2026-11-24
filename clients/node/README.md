@@ -12,8 +12,11 @@ are-gradio probe https://your-real-gradio.example/
 are-gradio open https://your-real-gradio.example/
 ```
 
-The SHA-bound GitHub Release also ships npm `.tgz` and portable Linux/Windows
-bundles which **require an installed Node.js 20+ runtime**. Source and backend remain separate.
+The shared `vX.Y.Z` GitHub Release also ships a matching-version npm `.tgz` and
+portable Linux/Windows bundles which **require an installed Node.js 20+ runtime**.
+`node-release.json` binds their checksums to the release tag and source commit.
+Node publication runs independently of Android signing after the desktop release
+has passed its source and installation gates. Source and backend remain separate.
 
 GitHub Packages installation may require authentication and package visibility permissions. A public GitHub repository does not automatically imply an anonymously installable package.
 

@@ -3,11 +3,13 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile, ZipInfo
 
-from tools import release_gate
+from tools import platform_release, release_gate
 
 
 SHA = "a" * 40
@@ -124,6 +126,15 @@ class PlatformReleaseGateTests(unittest.TestCase):
             with self.assertRaises(release_gate.ReleaseGateError):
                 release_gate.verify_desktop_packages(root, "v1.2.50", SHA)
 
+    def test_receipt_json_budget_precedes_hashing_and_parsing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); packages(root)
+            receipt = root / "desktop-windows-x64.json"
+            with receipt.open("ab") as output:
+                output.write(b" " * (256 * 1024))
+            with self.assertRaisesRegex(release_gate.ReleaseGateError, "JSON.*budget"):
+                release_gate.verify_desktop_packages(root, "v1.2.50", SHA)
+
     def test_existing_release_manifest_must_match_source_version_and_every_byte(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder); packages(root)
@@ -176,6 +187,65 @@ class PlatformReleaseGateTests(unittest.TestCase):
                 with self.assertRaises(release_gate.ReleaseGateError):
                     release_gate.extract_desktop_artifact(archive, expected, "linux-x86_64", "v1.2.50", root / "result")
                 self.assertFalse((root / "result").exists())
+
+
+class DownloadBudgetTests(unittest.TestCase):
+    """Metadata fixtures and real local transport children, never GitHub/runtime evidence."""
+
+    def release(self, assets):
+        return {"tag_name": "v1.2.50", "draft": False, "assets": [
+            {"id": index, "name": name, "size": size, "state": "uploaded"}
+            for index, (name, size) in enumerate(assets, 1)
+        ]}
+
+    def test_all_requested_metadata_is_admitted_before_any_download(self):
+        release = self.release([("small.json", 4), ("oversized.json", 256 * 1024 + 1)])
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(platform_release, "api", return_value=release), \
+                    patch.object(platform_release.subprocess, "Popen") as process:
+                with self.assertRaisesRegex(release_gate.ReleaseGateError, "budget"):
+                    platform_release.download_release_files("test/repository", "v1.2.50",
+                                                            ["small.json", "oversized.json"], Path(folder))
+                process.assert_not_called()
+            self.assertEqual([], list(Path(folder).iterdir()))
+
+    def test_download_plan_rejects_ambiguous_unavailable_nonpositive_and_total_budget(self):
+        valid = self.release([("a.run", 5)])
+        self.assertEqual([valid["assets"][0]], platform_release.release_download_plan(valid, "v1.2.50", ["a.run"]))
+        variants = []
+        for size in (0, -1, True, "5", 512 * 1024 * 1024 + 1):
+            variants.append((self.release([("a.run", size)]), ["a.run"]))
+        data = copy.deepcopy(valid); data["assets"][0]["state"] = "new"; variants.append((data, ["a.run"]))
+        data = copy.deepcopy(valid); data["assets"].append(copy.deepcopy(data["assets"][0])); variants.append((data, ["a.run"]))
+        data = copy.deepcopy(valid); data["tag_name"] = "v1.2.51"; variants.append((data, ["a.run"]))
+        variants.extend([(valid, ["absent.run"]), (valid, ["a.run", "a.run"]), (valid, ["../a.run"])])
+        data = self.release([(f"{i}.run", 512 * 1024 * 1024) for i in range(3)])
+        variants.append((data, [asset["name"] for asset in data["assets"]]))
+        for release, names in variants:
+            with self.subTest(release=release, names=names), self.assertRaises(release_gate.ReleaseGateError):
+                platform_release.release_download_plan(release, "v1.2.50", names)
+
+    def test_real_download_child_must_match_exact_size_and_exit_success(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / "asset.bin"
+            platform_release.download_to_file([sys.executable, "-c", "import sys;sys.stdout.buffer.write(b'good')"], output, 4)
+            self.assertEqual(b"good", output.read_bytes())
+            for code in ("import sys;sys.stdout.buffer.write(b'bad')",
+                         "import sys;sys.stdout.buffer.write(b'excess' * 1000000)",
+                         "import sys;sys.stdout.buffer.write(b'good');sys.exit(2)"):
+                target = Path(folder) / "rejected.bin"
+                with self.subTest(code=code), self.assertRaises(release_gate.ReleaseGateError):
+                    platform_release.download_to_file([sys.executable, "-c", code], target, 4)
+                self.assertFalse(target.exists(), "partial or excessive downloaded bytes must be removed")
+            with self.assertRaises((release_gate.ReleaseGateError, FileExistsError)):
+                platform_release.download_to_file([sys.executable, "-c", "print('replace')"], output, 4)
+            self.assertEqual(b"good", output.read_bytes())
+
+    def test_action_artifact_budget_rejects_excess_before_transfer(self):
+        platform_release.check_download_budget([1024, 4096])
+        for sizes in ([0], [True], [512 * 1024 * 1024 + 1], [512 * 1024 * 1024] * 3):
+            with self.subTest(sizes=sizes), self.assertRaises(release_gate.ReleaseGateError):
+                platform_release.check_download_budget(sizes)
 
 
 if __name__ == "__main__":

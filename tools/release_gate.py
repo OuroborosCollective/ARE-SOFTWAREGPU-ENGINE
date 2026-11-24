@@ -29,6 +29,7 @@ DESKTOP_JOBS = {
     "windows-x64": "Windows x64 install / render / uninstall",
     "linux-x86_64": "Linux x86_64 install / render / uninstall",
 }
+MAX_DESKTOP_JSON_BYTES = 256 * 1024
 
 
 def release_tag_for_lineage(lineage, sha):
@@ -42,6 +43,105 @@ def release_tag_for_lineage(lineage, sha):
     if patch < 1:
         raise ReleaseGateError("Release must follow the v1.2.0 automation baseline")
     return f"v1.2.{patch}"
+
+
+def parse_followup_event(event, event_name, repo):
+    """A green branch-only snapshot is never a release authorization."""
+    expected = "OuroborosCollective/ARE-SOFTWAREGPU-ENGINE"
+    if (repo != expected or not isinstance(event, dict)
+            or not isinstance(event.get("repository"), dict)
+            or event.get("repository", {}).get("full_name") != expected):
+        raise ReleaseGateError("Untrusted follow-up repository")
+    if event_name == "workflow_run":
+        run = event.get("workflow_run")
+        if (not isinstance(run, dict) or run.get("name") != "Verified GoReleaser release"
+                or run.get("path") != ".github/workflows/goreleaser.yml"
+                or run.get("event") not in ("push", "workflow_dispatch")
+                or run.get("status") != "completed" or run.get("conclusion") != "success"
+                or not isinstance(run.get("head_repository"), dict)
+                or run.get("head_repository", {}).get("full_name") != expected
+                or type(run.get("id")) is not int or run["id"] < 1
+                or not isinstance(run.get("head_sha"), str) or not _SHA.fullmatch(run["head_sha"])):
+            raise ReleaseGateError("Untrusted or unsuccessful release workflow")
+        result = {"tag": run.get("head_branch"), "sha": run["head_sha"], "run_id": run["id"]}
+    elif event_name == "workflow_dispatch":
+        if not isinstance(event.get("inputs"), dict):
+            raise ReleaseGateError("Manual retry requires explicit tag input")
+        result = {"tag": event.get("inputs", {}).get("tag"), "sha": None, "run_id": None}
+    else:
+        raise ReleaseGateError("Follow-up requires a release event or explicit retry")
+    version = validate_tag(result["tag"])
+    if "-" in version:
+        raise ReleaseGateError("Follow-up requires a stable release tag")
+    return result
+
+
+def verify_followup_publisher_jobs(payload, run_id, sha):
+    if (not isinstance(payload, dict) or not isinstance(payload.get("jobs"), list)
+            or type(payload.get("total_count")) is not int
+            or len(payload["jobs"]) != payload["total_count"]):
+        raise ReleaseGateError("Incomplete release publisher job listing")
+    required = ("Validate configuration, wheel and snapshot without publishing",
+                "Publish only exact-main fully green CPU CI tag",
+                "Publish PyPI on verified SemVer tag (Trusted Publishing)")
+    for name in required:
+        matches = [job for job in payload["jobs"] if isinstance(job, dict) and job.get("name") == name]
+        if (len(matches) != 1 or matches[0].get("run_id") != run_id
+                or matches[0].get("head_sha") != sha or matches[0].get("status") != "completed"
+                or matches[0].get("conclusion") != "success"):
+            raise ReleaseGateError("Required release publisher job was not successful: " + name)
+
+
+def android_version(tag):
+    """Bounded order-preserving SemVer encoding; never depends on run number/time."""
+    version = validate_tag(tag)
+    if "-" in version:
+        raise ReleaseGateError("Android releases require stable SemVer")
+    major, minor, patch = map(int, version.split("."))
+    code = major * 10_000_000 + minor * 100_000 + patch
+    if major > 209 or minor > 99 or patch > 99999 or not 1 <= code <= 2_100_000_000:
+        raise ReleaseGateError("Android version exceeds the documented noncolliding versionCode bounds")
+    return {"version": version, "version_code": code}
+
+
+def verify_android_badging(output, tag):
+    expected = android_version(tag)
+    package = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)' versionName='([^']+)'", output, re.M)
+    if (package is None or package.groups() != ("de.arelorian.softwaregpu", str(expected["version_code"]), expected["version"])
+            or "application-debuggable" in output
+            or re.findall(r"^sdkVersion:'([^']+)'", output, re.M) != ["26"]
+            or re.findall(r"^targetSdkVersion:'([^']+)'", output, re.M) != ["35"]):
+        raise ReleaseGateError("Android package/version/SDK/release-variant mismatch")
+    return expected
+
+
+def android_signer_fingerprint(output, scope):
+    fingerprints = re.findall(r"^Signer #[0-9]+ certificate SHA-256 digest: ([0-9a-fA-F]{64})$", output, re.M)
+    subjects = re.findall(r"^Signer #[0-9]+ certificate DN: (.+)$", output, re.M)
+    if (scope not in ("release", "ci-test") or len(fingerprints) != 1 or len(subjects) != 1
+            or "Verified using v2 scheme (APK Signature Scheme v2): true" not in output
+            or "android debug" in subjects[0].lower()
+            or (scope == "release" and "are ci test only" in subjects[0].lower())):
+        raise ReleaseGateError("APK requires a single valid non-debug signing certificate")
+    return fingerprints[0].lower()
+
+
+def verify_android_source(path, tag, sha):
+    expected = {"schema": "are.android-source.v1", **android_version(tag),
+                "source_sha": sha, "runtime": "https-companion"}
+    if not isinstance(sha, str) or not _SHA.fullmatch(sha):
+        raise ReleaseGateError("Invalid Android source SHA")
+    try:
+        with ZipFile(path) as archive:
+            names = [info for info in archive.infolist() if info.filename == "assets/are-release.json"]
+            if len(names) != 1 or names[0].file_size > 4096:
+                raise ReleaseGateError("APK source metadata is missing, duplicate or excessive")
+            actual = json.loads(archive.read(names[0]))
+    except (BadZipFile, UnicodeError, json.JSONDecodeError) as error:
+        raise ReleaseGateError("Invalid Android source archive metadata") from error
+    if actual != expected:
+        raise ReleaseGateError("APK embedded source/version differs from release")
+    return expected
 
 
 def validate_tag(tag):
@@ -156,6 +256,9 @@ def verify_desktop_packages(directory, tag, sha):
         if ({p.name for p in paths} != expected
                 or any(p.is_symlink() or not p.is_file() for p in paths)):
             raise ReleaseGateError("Installer release must contain exactly both products and four receipts")
+        if any(path.suffix == ".json" and not 0 < path.stat().st_size <= MAX_DESKTOP_JSON_BYTES
+               for path in paths):
+            raise ReleaseGateError("Installer JSON exceeds metadata byte budget")
         hashes = {}
         for path in paths:
             with path.open("rb") as source:

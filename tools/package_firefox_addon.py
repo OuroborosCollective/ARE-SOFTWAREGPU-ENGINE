@@ -5,7 +5,9 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import stat
+import subprocess
 import zipfile
 
 
@@ -52,12 +54,24 @@ def write_archive(entries: dict, destination: Path) -> dict:
             "sha256": hashlib.sha256(destination.read_bytes()).hexdigest()}
 
 
-def build_package(source: Path, destination: Path) -> dict:
-    source, destination = Path(source), Path(destination)
+def validate_version(version: str) -> str:
+    if (not isinstance(version, str)
+            or re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version) is None
+            or any(int(part) > 65535 for part in version.split("."))):
+        raise ValueError("ADDON_RELEASE_VERSION_INVALID")
+    return version
+
+
+def runtime_entries(source: Path, version: str | None = None) -> dict:
+    source = Path(source)
     entries = read_entries(source, FILES)
     manifest = json.loads(entries["manifest.json"])
-    if manifest.get("manifest_version") != 3 or manifest.get("version") != "0.1.0":
+    if manifest.get("manifest_version") != 3:
         raise ValueError("ADDON_MANIFEST_VERSION")
+    validate_version(manifest.get("version"))
+    if version is not None:
+        manifest["version"] = validate_version(version)
+        entries["manifest.json"] = (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
     forbidden = ("permissions", "optional_permissions", "host_permissions", "optional_host_permissions",
                  "content_scripts", "externally_connectable", "web_accessible_resources")
     if any(manifest.get(key) for key in forbidden):
@@ -79,6 +93,13 @@ def build_package(source: Path, destination: Path) -> dict:
         raise ValueError("ADDON_DATA_DECLARATION")
     if gecko.get("id") != "are-softwaregpu-diagnostics@arelogic.space":
         raise ValueError("ADDON_ID")
+    return entries
+
+
+def build_package(source: Path, destination: Path, version: str | None = None) -> dict:
+    entries = runtime_entries(Path(source), version)
+    manifest = json.loads(entries["manifest.json"])
+    gecko = manifest["browser_specific_settings"]["gecko"]
     package = write_archive(entries, destination)
     return {
         "schema": "are.firefox-addon-package.v1", "signed": False,
@@ -93,12 +114,27 @@ def build_package(source: Path, destination: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--version", help="Stage this release version; keep tracked source untouched")
+    parser.add_argument("--source-sha", help="Require this exact clean Git checkout and bind it in the receipt")
     args = parser.parse_args()
+    if args.version is not None:
+        validate_version(args.version)
+    if args.source_sha:
+        if (re.fullmatch(r"[0-9a-f]{40}", args.source_sha) is None
+                or subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != args.source_sha):
+            raise ValueError("ADDON_SOURCE_REVISION_MISMATCH")
+        if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=ROOT, text=True).strip():
+            raise ValueError("ADDON_RELEASE_REQUIRES_CLEAN_SOURCE")
+    entries = runtime_entries(ROOT / "clients/firefox-addon", args.version)
+    version = json.loads(entries["manifest.json"])["version"]
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    output = args.output_dir / "are-softwaregpu-diagnostics-0.1.0.xpi"
-    receipt = build_package(ROOT / "clients/firefox-addon", output)
+    label = "-unsigned" if args.version else ""
+    output = args.output_dir / f"are-softwaregpu-diagnostics-{version}{label}.xpi"
+    receipt = build_package(ROOT / "clients/firefox-addon", output, args.version)
+    receipt.update({"source_sha": args.source_sha, "source_clean": args.source_sha is not None})
     source_entries = read_entries(ROOT, SOURCE_FILES)
-    receipt["sourceArchive"] = write_archive(source_entries, args.output_dir / "are-softwaregpu-diagnostics-0.1.0-source.zip")
+    source_entries["clients/firefox-addon/manifest.json"] = entries["manifest.json"]
+    receipt["sourceArchive"] = write_archive(source_entries, args.output_dir / f"are-softwaregpu-diagnostics-{version}-source.zip")
     receipt["sourceFiles"] = [{"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
                               for name, data in source_entries.items()]
     with (args.output_dir / "package-receipt.json").open("x", encoding="utf-8") as handle:

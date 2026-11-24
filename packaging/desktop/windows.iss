@@ -19,6 +19,7 @@ DefaultDirName={localappdata}\Programs\ARE-SoftwareGPU
 DefaultGroupName=ARE SoftwareGPU
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
+MinVersion=10.0
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 LicenseFile={#SourceDir}\LICENSE.md

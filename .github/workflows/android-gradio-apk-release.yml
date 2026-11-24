@@ -1,159 +1,274 @@
-name: Android Gradio APK prerelease
+name: Android companion release
+
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android-gradio-apk-release.yml'
+  push:
+    branches: [main]
   workflow_run:
-    workflows: ["CPU regressions"]
+    workflows: ['Verified GoReleaser release']
     types: [completed]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Published desktop SemVer tag to retry, for example v1.2.50'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: gradio-android-apk-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: android-companion-${{ github.event.workflow_run.head_sha || inputs.tag || github.sha }}
   cancel-in-progress: false
 
 jobs:
-  apk:
-    permissions:
-      contents: write
-      packages: write
-    if: >-
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'main' &&
-       github.event.workflow_run.head_repository.full_name == github.repository &&
-       github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
-      github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  ci:
+    name: Android release APK / emulator install and launch
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-      - name: Checkout exactly tested main revision
-        uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: Install JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Check negative release/version/signature cases
+        run: |
+          python -B -S -m unittest discover -s software_gpu/tests -p test_release_followup.py -v
+          python -B -S -m unittest discover -s software_gpu/tests -p test_android_release.py -v
+      - name: Derive prospective first-parent version for this exact PR test merge
+        id: version
+        run: python tools/release_version.py --sha "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Install Android SDK Platform 35
-        run: |
-          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build and test portable Node client
+      - name: Install Android tools and isolated emulator image
         run: |
           set -euo pipefail
-          cd clients/node
-          npm test
-          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
-          short="${sha:0:12}"
-          npm version "0.1.0-ci.${short}" --no-git-tag-version --allow-same-version
-          npm pack --pack-destination "$GITHUB_WORKSPACE"
-          cd "$GITHUB_WORKSPACE"
-          mkdir -p dist/linux dist/windows
-          cp clients/node/bin/are-gradio.mjs dist/linux/are-gradio.mjs
-          cp clients/node/bin/are-gradio.mjs dist/windows/are-gradio.mjs
-          printf '%s\n' '#!/bin/sh' 'exec node "$(dirname "$0")/are-gradio.mjs" "$@"' > dist/linux/are-gradio
-          chmod +x dist/linux/are-gradio
-          printf '%s\r\n' '@echo off' 'node "%~dp0are-gradio.mjs" %*' > dist/windows/are-gradio.cmd
-          bash -n dist/linux/are-gradio
-          test "$(head -n1 dist/linux/are-gradio)" = '#!/bin/sh'
-          python -c 'from pathlib import Path; p=Path("dist/windows/are-gradio.cmd").read_bytes(); assert p.startswith(b"@echo off\r\nnode ")'
-          cp clients/node/LICENSE.md clients/node/NOTICE dist/linux/
-          cp clients/node/LICENSE.md clients/node/NOTICE dist/windows/
-          cp clients/node/README.md dist/linux/README.md
-          cp clients/node/README.md dist/windows/README.md
-          (cd dist && zip -qr "$GITHUB_WORKSPACE/ARE-Gradio-Linux.zip" linux)
-          (cd dist && zip -qr "$GITHUB_WORKSPACE/ARE-Gradio-Windows.zip" windows)
-          sha256sum ARE-Gradio-Linux.zip ARE-Gradio-Windows.zip *.tgz > desktop-node.sha256
-      - name: Build real debug APK
-        run: gradle -p android :app:assembleDebug --no-daemon
-      - name: Verify APK archive and native Android package metadata
+          python - <<'PY'
+          import os, subprocess
+          manager = os.environ['ANDROID_HOME'] + '/cmdline-tools/latest/bin/sdkmanager'
+          subprocess.run([manager, '--licenses'], input='y\n' * 100, text=True, check=True)
+          subprocess.run([manager, 'platforms;android-35', 'build-tools;35.0.0', 'platform-tools', 'emulator', 'system-images;android-35;google_apis;x86_64'], check=True)
+          PY
+          test -c /dev/kvm
+          sudo chmod 666 /dev/kvm
+          printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name are_release --package 'system-images;android-35;google_apis;x86_64' --device pixel_7
+      - name: Compile real release variant with embedded source identity
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gradle -p android :app:assembleRelease --no-daemon "-PareReleaseVersion=$VERSION" "-PareSourceSha=$GITHUB_SHA"
+      - name: Sign with an explicit throwaway CI test key (never published)
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          set -euo pipefail
-          apk=android/app/build/outputs/apk/debug/app-debug.apk
-          test -s "$apk"
-          unzip -t "$apk" >/dev/null
-          "${ANDROID_HOME}/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='de.arelorian.softwaregpu'"
-          sha256sum "$apk" | tee android-apk.sha256
-          cp "$apk" ARE-SoftwareGPU-Gradio-Android-preview.apk
-          sha256sum ARE-SoftwareGPU-Gradio-Android-preview.apk > ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
-      - name: Upload SHA-bound Android debug APK for PR device testing
-        if: github.event_name == 'pull_request'
+          python tools/android_release.py sign --ci-test --tag "$TAG" --sha "$GITHUB_SHA" \
+            --unsigned android/app/build/outputs/apk/release/app-release-unsigned.apk --output-dir release-assets/android
+          python tools/android_release.py node --tag "$TAG" --sha "$GITHUB_SHA" --output-dir release-assets/android
+      - name: Install, launch, inspect actual UI, read back APK and uninstall
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python tools/android_emulator_smoke.py --scope ci-test --tag "$TAG" --sha "$GITHUB_SHA" \
+            --apk "release-assets/android/ARE-SoftwareGPU-$VERSION-android-companion.apk" \
+            --output-dir "$RUNNER_TEMP/android-smoke"
+      - name: Preserve actual CI APK and emulator diagnostics
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: android-guided-test-${{ github.event.pull_request.head.sha }}
+          name: android-ci-test-key-${{ github.sha }}-${{ github.run_attempt }}
           path: |
-            ARE-SoftwareGPU-Gradio-Android-preview.apk
-            ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256
+            release-assets/android/
+            ${{ runner.temp }}/android-smoke/
           if-no-files-found: error
           retention-days: 14
-      - name: Verify Node packages and platform archives
-        run: |
-          set -euo pipefail
-          tar -tzf ouroboroscollective-softwaregpu-gradio-client-*.tgz | grep -F 'package/bin/are-gradio.mjs'
-          unzip -t ARE-Gradio-Linux.zip >/dev/null
-          unzip -t ARE-Gradio-Windows.zip >/dev/null
-          sha256sum -c desktop-node.sha256
-      - name: Publish npm package to GitHub Packages
-        if: github.event_name != 'pull_request'
-        env:
-          NODE_AUTH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          cd clients/node
-          printf '%s\n' '@ouroboroscollective:registry=https://npm.pkg.github.com' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
-          test "$(wc -l < .npmrc)" -eq 2
-          grep -qxF '@ouroboroscollective:registry=https://npm.pkg.github.com' .npmrc
-          configured_registry="$(npm config get @ouroboroscollective:registry)"
-          test "${configured_registry%/}" = 'https://npm.pkg.github.com'
-          trap 'rm -f .npmrc' EXIT
-          npm publish --registry=https://npm.pkg.github.com --access public
-          rm -f .npmrc
-      - name: Verify GitHub registry publication
-        if: github.event_name != 'pull_request'
-        env:
-          NODE_AUTH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          cd clients/node
-          printf '%s\n' '@ouroboroscollective:registry=https://npm.pkg.github.com' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
-          trap 'rm -f .npmrc' EXIT
-          version=$(node -p "require('./package.json').version")
-          published=$(npm view "@ouroboroscollective/softwaregpu-gradio-client@${version}" version --registry=https://npm.pkg.github.com)
-          test "$published" = "$version"
-      - name: Publish immutable SHA-tagged preview release
-        if: github.event_name != 'pull_request'
+
+  context:
+    name: Admit published desktop tag before Android signing
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      tag: ${{ steps.context.outputs.tag }}
+      version: ${{ steps.context.outputs.version }}
+      sha: ${{ steps.context.outputs.sha }}
+    steps:
+      - name: Load admission code from trusted main before any candidate checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Require trusted publisher jobs, immutable tag, main source and published desktop bytes
+        id: context
         env:
           GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          python tools/release_followup.py resolve --event "$GITHUB_EVENT_PATH" \
+            --repo "$GITHUB_REPOSITORY" --github-output "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish persistent-key Android companion
+    needs: context
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    concurrency:
+      group: android-apk-publish-${{ needs.context.outputs.tag }}
+      cancel-in-progress: false
+    env:
+      TAG: ${{ needs.context.outputs.tag }}
+      VERSION: ${{ needs.context.outputs.version }}
+      SOURCE_SHA: ${{ needs.context.outputs.sha }}
+    steps:
+      - name: Checkout only the SHA admitted by trusted-main desktop gate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.context.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Report presence only; missing configuration blocks Android without changing desktop release
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          HAS_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD != '' }}
+          HAS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS != '' }}
+          HAS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD != '' }}
+        run: |
+          python - <<'PY'
+          import json, os
+          names = {'ANDROID_KEYSTORE_BASE64': 'HAS_KEYSTORE', 'ANDROID_KEYSTORE_PASSWORD': 'HAS_STORE_PASSWORD', 'ANDROID_KEY_ALIAS': 'HAS_ALIAS', 'ANDROID_KEY_PASSWORD': 'HAS_KEY_PASSWORD'}
+          missing = [name for name, flag in names.items() if os.environ[flag] != 'true']
+          print(json.dumps({'status': 'BLOCKED_MISSING_ANDROID_SIGNING_SECRETS' if missing else 'SIGNING_CONFIGURATION_PRESENT_UNVERIFIED', 'missing': missing}))
+          if missing:
+              raise SystemExit('Configure the permanent signing key via docs/ANDROID_RELEASE_SIGNING.md and retry this tag')
+          PY
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android tools and isolated emulator image
         run: |
           set -euo pipefail
-          tag="gradio-android-${SHA}"
-          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release exists for exact commit: $tag"
-            exit 0
-          fi
-          gh release create "$tag" \
-            ARE-SoftwareGPU-Gradio-Android-preview.apk \
-            ARE-SoftwareGPU-Gradio-Android-preview.apk.sha256 \
-            ARE-Gradio-Linux.zip ARE-Gradio-Windows.zip \
-            ouroboroscollective-softwaregpu-gradio-client-*.tgz desktop-node.sha256 \
-            --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "Gradio Android preview ${SHA:0:12}" \
-            --notes "CI-tested source SHA: $SHA. Android HTTPS Gradio companion plus Linux/Windows portable Node launchers and npm tarball. Linux/Windows require Node 20+. Ephemeral APK debug signing: preview only. GitHub Packages npm publish uses a SHA-specific package version; no embedded renderer or demo endpoint." \
-            --prerelease
+          python - <<'PY'
+          import os, subprocess
+          manager = os.environ['ANDROID_HOME'] + '/cmdline-tools/latest/bin/sdkmanager'
+          subprocess.run([manager, '--licenses'], input='y\n' * 100, text=True, check=True)
+          subprocess.run([manager, 'platforms;android-35', 'build-tools;35.0.0', 'platform-tools', 'emulator', 'system-images;android-35;google_apis;x86_64'], check=True)
+          PY
+          test -c /dev/kvm
+          sudo chmod 666 /dev/kvm
+          printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name are_release --package 'system-images;android-35;google_apis;x86_64' --device pixel_7
+      - name: Reuse immutable APK after a partially completed release attempt
+        id: reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/android_release.py reuse --tag "$TAG" --sha "$SOURCE_SHA" --repo "$GITHUB_REPOSITORY" \
+            --output-dir release-assets/android --github-output "$GITHUB_OUTPUT"
+      - name: Compile real release variant with shared version and exact source
+        if: steps.reuse.outputs.reused != 'true'
+        run: gradle -p android :app:assembleRelease --no-daemon "-PareReleaseVersion=$VERSION" "-PareSourceSha=$SOURCE_SHA"
+      - name: Sign using the persistent owner key
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          python tools/android_release.py sign --tag "$TAG" --sha "$SOURCE_SHA" \
+            --unsigned android/app/build/outputs/apk/release/app-release-unsigned.apk --output-dir release-assets/android
+      - name: Install, launch, inspect UI, read back production-signed APK and uninstall
+        run: |
+          python tools/android_emulator_smoke.py --scope release --tag "$TAG" --sha "$SOURCE_SHA" \
+            --apk "release-assets/android/ARE-SoftwareGPU-$VERSION-android-companion.apk" \
+            --output-dir "$RUNNER_TEMP/android-smoke"
+      - name: Recheck published desktop identity before companion publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/release_followup.py desktop-gate --tag "$TAG" --sha "$SOURCE_SHA" --repo "$GITHUB_REPOSITORY" \
+            --output-dir "$RUNNER_TEMP/desktop-readback"
+      - name: Publish same-version companion assets and read back all bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/android_release.py publish --tag "$TAG" --sha "$SOURCE_SHA" --repo "$GITHUB_REPOSITORY" \
+            --output-dir release-assets/android --smoke "$RUNNER_TEMP/android-smoke/android-emulator-smoke.json"
+      - name: Preserve Android publication evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-release-${{ needs.context.outputs.sha }}-${{ github.run_attempt }}
+          path: |
+            release-assets/android/
+            ${{ runner.temp }}/android-smoke/
+          if-no-files-found: warn
+          retention-days: 30
+
+  node:
+    name: Publish same-version Node clients independently of Android signing
+    needs: context
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      packages: write
+    concurrency:
+      group: node-client-publish-${{ needs.context.outputs.tag }}
+      cancel-in-progress: false
+    env:
+      TAG: ${{ needs.context.outputs.tag }}
+      SOURCE_SHA: ${{ needs.context.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.context.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recheck published desktop source/version before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/release_followup.py desktop-gate --tag "$TAG" --sha "$SOURCE_SHA" --repo "$GITHUB_REPOSITORY" \
+            --output-dir "$RUNNER_TEMP/desktop-readback"
+      - name: Build, test, publish and read back actual npm tarball and portable archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/android_release.py publish-node --tag "$TAG" --sha "$SOURCE_SHA" --repo "$GITHUB_REPOSITORY" \
+            --output-dir release-assets/node

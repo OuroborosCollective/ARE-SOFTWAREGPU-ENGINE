@@ -38,7 +38,7 @@ Download the package for the desired tag from
 [GitHub Releases](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases).
 Verify its SHA-256 against the release's `checksums.txt` before installing.
 
-### Windows x64
+### Windows 10/11 x64
 
 Open `ARE-SoftwareGPU-X.Y.Z-windows-x64-setup.exe`. The default destination is
 `%LOCALAPPDATA%\Programs\ARE-SoftwareGPU`. The Start menu entry
@@ -53,8 +53,9 @@ are-softwaregpu --blender
 The last command executes the existing CPU rendering demo. The shortcut adjusts
 only its own console's PATH. The same application ID supports later installer
 versions. Uninstall through Windows Settings or the supplied Start menu entry.
-The setup EXE is not Authenticode-signed; no Windows signing certificate is
-configured by this change.
+The installer requires Windows 10 or newer; native CI runs on Windows Server
+2022. The setup EXE is not Authenticode-signed; no Windows signing certificate
+is configured by this change.
 
 ### Linux x86_64
 
@@ -92,6 +93,44 @@ is needed to install the downloaded package.
    an ephemeral debug identity or a claim of store approval.
 5. Keep download publication, successful signing, store review and real-device
    acceptance as separate recorded outcomes.
+
+### One version across the release jobs
+
+`main-pypi-release.yml` waits for the source commit's CPU, installed-wheel and
+native desktop jobs, creates its tag, and explicitly dispatches
+`goreleaser.yml`. The Android and Firefox companion workflows listen for that
+publisher's successful completion. Their admission job runs trusted `main`
+code and verifies the actual publisher jobs, the tag's source ancestry and the
+published desktop bytes before releasing a source SHA to a privileged job.
+A successful PR snapshot or branch-only dispatch cannot authorize signing.
+
+Android's `versionName` and the staged Firefox manifest use the same `X.Y.Z`
+as the desktop installers. Pull-request Android runs use a clearly marked CI
+test key and exercise the real release variant in an emulator. Production
+signing requires the persistent key documented in
+[Android signing setup](ANDROID_RELEASE_SIGNING.md). GitHub's Node client
+package is published separately so an Android signing problem does not stop
+that established distribution path.
+
+Firefox publishes an explicitly `unsigned` XPI, its matching source ZIP and
+checksums to the common GitHub release. The separate AMO job uses
+`AMO_JWT_ISSUER` and `AMO_JWT_SECRET` to submit a **listed** version. It verifies
+the actual Mozilla status and signed download before reporting a public listing;
+a pending review remains pending. See
+[Firefox signing setup](FIREFOX_RELEASE_SIGNING.md). The project source and
+`arelogic.space` are included in the listing metadata.
+
+If credentials are added after the desktop release, retry the companion for
+that existing tag from `main`; no new merge or replacement tag is needed:
+
+```sh
+gh workflow run android-gradio-apk-release.yml --ref main -f tag=vX.Y.Z
+gh workflow run firefox-addon-release.yml --ref main -f tag=vX.Y.Z
+```
+
+Each retry reads back existing assets and refuses different bytes under an
+existing name. Release checksums for the companion packages have their own
+filenames, so parallel jobs do not rewrite the desktop release's checksums.
 
 Existing published versions remain available for rollback. A new installation
 does not silently change the system graphics driver or the engine's simulation

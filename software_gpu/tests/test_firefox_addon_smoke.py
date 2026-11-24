@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import Mock, patch
 
 from tools import firefox_addon_smoke as smoke
@@ -22,7 +23,7 @@ BUILD_ID = "20261123184640"
 class UnitMarionetteDouble:
     """Scripted transport for receipt/verdict boundaries, not browser evidence."""
 
-    def __init__(self, root, observed_build, uninstall_error):
+    def __init__(self, root, observed_build, uninstall_error, version="0.1.0", displayed_version=None):
         self.root = root
         self.observed_build = observed_build
         self.uninstall_error = uninstall_error
@@ -31,13 +32,14 @@ class UnitMarionetteDouble:
         self.socket = Mock()
         self.handles_requested = 0
         self.clicks = []
-        self.report = {"complete": True, "webgl": {"status": "pass"}, "webgpu": {}}
+        self.scripts = []
+        self.report = {"complete": True, "addon": {"version": version}, "webgl": {"status": "pass"}, "webgpu": {}}
         self.script_results = iter([
             True,
             [{"tag": "unit-toolbar-item", "id": "unit-action", "action": True}],
             "BUTTON",
             True,
-            {"url": "moz-extension://unit-test-double/diagnostics.html", "version": "v0.1.0",
+            {"url": "moz-extension://unit-test-double/diagnostics.html", "version": "v" + (displayed_version or version),
              "progress": "Ready", "saveDisabled": True, "report": "No checks have run."},
             {"running": False, "saveDisabled": False, "progress": "Done",
              "report": json.dumps(self.report)},
@@ -65,6 +67,7 @@ class UnitMarionetteDouble:
         return {}
 
     def script(self, script, args=None):
+        self.scripts.append((script, args))
         return next(self.script_results)
 
     def click(self, selector):
@@ -74,16 +77,19 @@ class UnitMarionetteDouble:
 
 
 class FirefoxAddonSmokeUnitTests(unittest.TestCase):
-    def run_harness_unit(self, observed_build=BUILD_ID, uninstall_error=False):
+    def run_harness_unit(self, observed_build=BUILD_ID, uninstall_error=False,
+                         version="0.1.0", displayed_version=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             run = root / "unit-run"
             package, binary, install = root / "unit.xpi", root / "unit-firefox", root / "install.json"
-            package.write_bytes(b"unit-package-not-an-extension")
+            with zipfile.ZipFile(package, "w") as archive:
+                archive.writestr("manifest.json", json.dumps({"manifest_version": 3, "version": version,
+                    "browser_specific_settings": {"gecko": {"id": smoke.ADDON_ID}}}))
             binary.write_bytes(b"unit-browser-not-executable")
             install.write_text(json.dumps({"expectedBuildId": BUILD_ID,
                                           "files": {"firefox": {"path": str(binary), "sha256": smoke.sha(binary)}}}))
-            client = UnitMarionetteDouble(run, observed_build, uninstall_error)
+            client = UnitMarionetteDouble(run, observed_build, uninstall_error, version, displayed_version)
             process = Mock(returncode=0)
             process.poll.return_value = None
             process.wait.return_value = 0
@@ -144,6 +150,20 @@ class FirefoxAddonSmokeUnitTests(unittest.TestCase):
         self.assertTrue(receipt["temporaryAddonRemoved"])
         self.assertEqual(client.clicks, ["#run", "#download"])
         self.assertNotIn("error", receipt)
+
+    def test_release_version_is_read_from_exact_package_not_a_fixed_ui_constant(self):
+        exit_code, receipt, printed, client = self.run_harness_unit(version="1.2.50")
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(receipt.get("addonVersion"), "1.2.50")
+        ready_scripts = [(code, args) for code, args in client.scripts if "?.textContent" in code]
+        self.assertEqual(len(ready_scripts), 1)
+        self.assertEqual(ready_scripts[0][1], ["v1.2.50"])
+
+    def test_wrong_ui_version_fails_before_graphics_are_started(self):
+        exit_code, receipt, printed, client = self.run_harness_unit(version="1.2.50", displayed_version="0.1.0")
+        self.assertEqual(exit_code, 1)
+        self.assertFalse(receipt["passed"])
+        self.assertNotIn("#run", client.clicks)
 
 
 if __name__ == "__main__":
