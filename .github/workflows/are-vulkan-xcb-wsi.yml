@@ -1,0 +1,56 @@
+name: ARE real Vulkan XCB Swapchain and Native Present evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'native/vulkan/weighted/**'
+      - 'native/raster/**'
+      - 'native/symbolic/core.hpp'
+      - 'software_gpu/drivers/build_weighted_icd.py'
+      - 'software_gpu/drivers/weighted_icd.py'
+      - 'software_gpu/drivers/verify_weighted_wsi.py'
+      - '.github/workflows/are-vulkan-xcb-wsi.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'native/vulkan/weighted/**'
+      - 'native/raster/**'
+      - 'software_gpu/drivers/build_weighted_icd.py'
+      - 'software_gpu/drivers/weighted_icd.py'
+      - 'software_gpu/drivers/verify_weighted_wsi.py'
+      - '.github/workflows/are-vulkan-xcb-wsi.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-vulkan-xcb-wsi:
+    name: Real VkQueueSubmit/Present and XCB independent GetImage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install actual Vulkan Loader, SPIR-V and isolated XCB/Xvfb dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libvulkan-dev vulkan-tools glslang-tools spirv-tools libxcb1-dev xvfb xauth
+          python -m pip install --disable-pip-version-check 'numpy>=1.26,<3' 'vulkan==1.3.275.1'
+      - name: Real Vulkan device to native CPU draw and window pixel readback
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python -m software_gpu.drivers.verify_weighted_wsi evidence-local/real-vulkan-xcb --expected-revision "$EXPECTED_REVISION"
+      - name: Archive original window, depth, driver and source SHA receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: are-real-vulkan-xcb-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-local/real-vulkan-xcb/
+          if-no-files-found: ignore
+          retention-days: 30

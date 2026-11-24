@@ -75,9 +75,10 @@ def build(out, registry, include):
         libdir = Path(sysconfig.get_config_var("LIBDIR"))
     subprocess.run([compiler(), *FLAGS, "-shared", "-fPIC", "-I" + str(include),
                     "-I" + str(out), "-I" + str(inc), str(root / "native/vulkan/weighted/entry.cpp"),
-                    str(root / "native/raster/driver_adapter.cpp"), "-L" + str(libdir),
+                    str(root / "native/raster/driver_adapter.cpp"),
+                    str(root / "native/vulkan/weighted/xcb_wsi.cpp"), "-L" + str(libdir),
                     "-Wl,-rpath," + str(libdir), "-lpython" + sysconfig.get_python_version(),
-                    "-ldl", "-o", str(lib)], check=True)
+                    "-ldl", "-lxcb", "-o", str(lib)], check=True)
     manifest = out / "are.json"
     manifest.write_text(json.dumps({"file_format_version":"1.0.0",
                                    "ICD":{"library_path":str(lib), "api_version":"1.0.0"}}) + "\n")
