@@ -1,5 +1,7 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
+import {spawnSync} from "node:child_process";
+import {fileURLToPath} from "node:url";
 import {parseEndpoint,checkEndpoint,openEndpoint} from "../bin/are-gradio.mjs";
 
 test("HTTPS is mandatory; no credentials or redirect injection", () => {
@@ -51,4 +53,20 @@ test("Linux and Windows launch without shell injection",()=>{
     assert.equal(used.opts.shell,false);
     assert.equal(used.args.at(-1),"https://gradio.example.org/");
   }
+});
+
+test("probe redacts malformed config parser errors", () => {
+  const cli = fileURLToPath(new URL("../bin/are-gradio.mjs", import.meta.url));
+  const preload = 'globalThis.fetch = async () => new Response("invalid config");';
+  const run = spawnSync(process.execPath,
+    ["--import", "data:text/javascript," + encodeURIComponent(preload),
+     cli, "probe", "https://gradio.example.org/"], {encoding: "utf8"});
+  assert.ifError(run.error);
+  assert.equal(run.status, 1);
+  assert.equal(run.stdout, "");
+  assert.equal(run.stderr, "ENDPOINT_CONFIG_UNREADABLE\n");
+});
+test("malformed JSON from an in-limit response reports unreadable config", async () => {
+  await assert.rejects(checkEndpoint("https://gradio.example.org/",
+    async () => new Response("not json")), {message:"ENDPOINT_CONFIG_UNREADABLE"});
 });
