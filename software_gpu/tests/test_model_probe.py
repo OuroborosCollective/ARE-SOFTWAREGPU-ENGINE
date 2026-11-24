@@ -154,6 +154,18 @@ class TestModelProbe(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertGreater(len(np.unique((legacy if name=='legacy' else studio)['frames'][0].reshape(-1,4),axis=0)),8)
 
+    def test_studio_uses_the_validated_projection_basis(self):
+        asset = self.asset(profile='pbr', surface=True, static=True)
+        options = dict(projection='perspective', render_profile='pbr', repeats=1,
+                       lighting_profile='studio-v1', workers=1)
+        camera = dict(eye=[0,0,4], target=[0,0,0], up=[0,1,0],
+                      fov_y_degrees=50, near=.1, far=20)
+        reference = self.run_asset(asset, [0], camera=camera, **options)
+        camera['up'] = [0,1e-11,1]
+        actual = self.run_asset(asset, [0], camera=camera, **options)
+        for key in ('frames', 'resolved', 'depth'):
+            np.testing.assert_array_equal(actual[key], reference[key])
+
     def test_studio_lighting_rejects_unknown_and_non_pbr_profiles(self):
         asset=self.asset(profile='pbr',surface=True,static=True)
         with self.assertRaisesRegex(ValueError,'MODEL_LIGHTING_PROFILE'):

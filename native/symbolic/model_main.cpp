@@ -23,7 +23,9 @@ int main(int argc,char**argv){try{
     need(lighting_profile=="legacy"||(scene.pbr&&mode=="render"),"MODEL_LIGHTING_PROFILE");
     if(lighting_profile=="studio-v1"){
         const auto to_surface=[](const V3& v){return are::rooms::SurfaceV3{float(v[0]),float(v[1]),float(v[2])};};
-        scene.lighting=are::rooms::surface_studio_lighting(to_surface(scene.camera.eye),to_surface(scene.camera.target),to_surface(scene.camera.up));
+        const auto basis=projection::make_projector(scene.camera,double(scene.config.width)/scene.config.height);
+        scene.lighting=are::rooms::surface_studio_lighting(to_surface(basis.eye),to_surface(basis.right),
+            to_surface(basis.up),are::rooms::surface_mul(to_surface(basis.forward),-1.0f));
     }
     if(mode=="pose"){
         need(scene.vertices*scene.times.size()<=16000000,"MODEL_POSE_OUTPUT_BUDGET");std::cout.write("AREPOSE1",8);
