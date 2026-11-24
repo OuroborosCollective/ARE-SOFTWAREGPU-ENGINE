@@ -35,6 +35,11 @@ jobs:
         run: python -m compileall -q software_gpu main.py
       - name: Run real CPU and loopback-network regression tests
         run: python -m unittest discover -s software_gpu/tests -v
+      - name: Real Linux cross-UID IPC and foreign-owned ancestor gate
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: |
+          sudo "$(command -v python)" -c 'import os, socket; assert os.geteuid() == 0 and hasattr(socket, "SO_PEERCRED")'
+          sudo "$(command -v python)" -m unittest software_gpu.tests.test_android_ipc_owner_security.AndroidOwnerBoundIpcTest.test_real_distinct_uid_filesystem_and_abstract_socket software_gpu.tests.test_android_ipc_owner_security.AndroidOwnerBoundIpcTest.test_foreign_owned_ancestor_rejected -v
       - name: CLI import and help smoke test
         run: python main.py --help
       - name: Real CPU reference/tile parity and timings

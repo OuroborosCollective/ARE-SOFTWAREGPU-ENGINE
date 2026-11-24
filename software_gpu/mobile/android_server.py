@@ -1,7 +1,7 @@
 """
-Android & Mobile Low-Latency GPU Server Subsystem.
-Implements Unix Domain Sockets (UDS) and Linux Abstract Namespace Sockets (`\0software_gpu`)
-to provide zero-permission, ultra-fast IPC for native Android NDK apps and Android services.
+Experimental owner-bound Linux/Android Unix-domain IPC.
+Explicit filesystem or abstract sockets require kernel-attested peer UID
+verification. This module does not establish Android device/SELinux admission.
 """
 
 import os
@@ -73,6 +73,13 @@ class AndroidIPCServer(threading.Thread):
                 raise ValueError("UDS_PARENT_NOT_DIRECTORY")
             if os.path.islink(ancestor):
                 raise ValueError("UDS_PARENT_SYMLINK")
+            # A private final directory is insufficient if another UID can
+            # rename it through an untrusted ancestor. Root and the service
+            # UID are trusted; sticky directories such as /tmp are safe only
+            # when their owner and each descendant are also trusted.
+            if (info.st_uid not in (0, self.owner_uid)
+                    or (info.st_mode & 0o022 and not info.st_mode & stat.S_ISVTX)):
+                raise ValueError("UDS_ANCESTOR_NOT_TRUSTED")
             next_ancestor = os.path.dirname(ancestor)
             if ancestor == next_ancestor:
                 break

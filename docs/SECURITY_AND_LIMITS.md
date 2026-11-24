@@ -27,7 +27,10 @@ Then configure the Python client with its \`token=\` argument or the same enviro
 The `AndroidIPCServer` remains **opt-in**. Its default constructor does **not** start a listener.
 An operator must provide an explicit filesystem socket under a pre-existing,
 owner-controlled **0700** directory. The final path must not exist (including
-symlinks); its components must not traverse symlinks. On successful bind the
+symlinks); its components must not traverse symlinks. Every ancestor must be
+owned by root or the service UID; group/other-writable ancestors must have
+the sticky bit set (for example, root-owned `/tmp`). A foreign-owned ancestor
+is rejected even when its final child is private. On successful bind the
 server enforces **0600** on the socket and verifies its owning UID; shutdown
 removes only the exact socket inode created by this process. No shared
 `/tmp/software_gpu.sock` unlink or anonymous abstract namespace fallback.
@@ -68,6 +71,21 @@ turn the unsafe defaults back on for compatibility. This source contract is
 on an actual device, or deployed multi-tenant authorization. Those require
 native Android instrumentation and device/UID/readback evidence under
 [Issue #235](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/issues/235).
+
+The dedicated Linux regression starts the real listener and dispatcher and
+uses an independent subprocess with real/effective UID and GID 65534 and no
+supplementary groups. The private filesystem endpoint must deny access and
+the abstract endpoint must connect but return no response to that foreign UID.
+An owner request must still succeed, and stop must release both endpoints.
+The test uses root only on an isolated Linux runner to drop the child's UID;
+no users, permissions outside temporary fixtures, or host services are changed.
+This is Linux kernel evidence, **not Android cross-app/SELinux evidence**.
+
+```bash
+python -m unittest software_gpu.tests.test_android_ipc_owner_security software_gpu.tests.test_android_ipc_validation -v
+# Only in a disposable Linux test environment:
+sudo "$(command -v python)" -m unittest software_gpu.tests.test_android_ipc_owner_security.AndroidOwnerBoundIpcTest.test_real_distinct_uid_filesystem_and_abstract_socket software_gpu.tests.test_android_ipc_owner_security.AndroidOwnerBoundIpcTest.test_foreign_owned_ancestor_rejected -v
+```
 
 ## Explicit remaining blockers
 
