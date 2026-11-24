@@ -28,6 +28,28 @@ The protected GLB2 container preflight `tools/glb_container_preflight.py` remain
 - SHA-recheck a cached WorldForge source before reusing an existing report. Check the report's schema/engine/job/receipt/model identity and all six preview BMP SHA-256 values (if status=reviewed); reject tampering or changed source rather than returning a stale success.
 - Only known valid-but-unsupported geometry states may write `manual-review`; corrupt GLB framing, invalid accessors/metadata and source mismatches abort without publishing `report.json`. Fresh reports are staged and atomically renamed.
 
+### WorldForge sources beyond the review budget
+
+The review and incremental scan check the real regular-file size against the
+export receipt before opening the model or looking up a geometry report. A
+matching source larger than 8 MiB is **not admitted**. It produces the separate
+`are.worldforge.admission.v1` diagnostic with `GLB_REVIEW_SIZE_LIMIT`,
+`sourceHashVerified: false`, `geometryReviewed: false` and
+`manualReviewRequired: true`. `receiptSha256` identifies the receipt bytes;
+`declaredModelSha256` is only the exporter's claim and is not a verified source
+hash. Neither the GLB container nor its geometry has been validated.
+
+The Python `review()` API raises `WorldForgeBudgetRefusal` (a `ValueError`) for
+this result. Both CLI actions print its JSON diagnostic; `scan` continues to
+other jobs without consuming a geometry-review slot. Completing that scan does
+not admit the oversized input. No geometry report is created or reused for this
+state, and existing reports are left untouched. Each repeated scan checks the
+receipt and source metadata again, without hashing the oversized source. A
+same-size content change therefore remains rejected and unverified, not a
+claimed hash match. Missing files, symlinks, size mismatches and bounded-input
+hash or parser failures still fail the scan. A subsequently smaller source must
+pass normal size, hash, parser and cache checks before producing a review.
+
 These are admission/receipt safeguards, **not** proof of general glTF compatibility, complete parser fuzzing or renderer parity for 100/1300/3500-mesh scenes.
 
 ## RED / positive baseline / CI
