@@ -111,6 +111,8 @@ def _texture_info(info, doc, decoded, resources, resource_ids, srgb):
 def load_surface_subset(doc, binary, primitive, accessor):
     """Return bounded render attributes, decoded texture records and one core material."""
     attrs = primitive.get('attributes', {})
+    # AREMDL03 has no vertex-color field; accepting it would silently lose tint/alpha.
+    _need(not any(name.startswith('COLOR_') for name in attrs), 'MODEL_VERTEX_COLOR_SUBSET')
     _need('NORMAL' in attrs and 'TEXCOORD_0' in attrs, 'MODEL_SURFACE_ATTRIBUTES')
     _need('TANGENT' not in attrs, 'MODEL_TANGENT_SUBSET')  # target GLBs have no tangents; TBN is derived per triangle
     normals = accessor(doc, binary, attrs['NORMAL'])

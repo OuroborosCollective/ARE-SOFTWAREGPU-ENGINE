@@ -64,6 +64,23 @@ python tools/benchmark_models.py ... --bio-policy locality
 
 Nicht enthalten sind Hardware-GPU-Ausführung, alpha blending/masking, mehrere GLB-Primitives, zusätzliche UV-Sets, beliebige glTF-Erweiterungen/Transforms, HDR-IBL, Schatten, Morph Targets, pixelgleiche Three.js-Reproduktion sowie eine 60-FPS-Leistungsfreigabe. Der nächste Schritt ist Profiler-getriebene Optimierung bei unveränderter Vollpufferparität; zusätzliche Materialfeatures benötigen jeweils einen expliziten, versionierten Vertrag und eigene Fixtures/Oracles.
 
+### Aktualisierung 2026-11-24: Vertex-Farben ausdrücklich ablehnen
+
+`AREMDL03` / `are.model-input.v3` enthält kein Feld für glTF-Vertex-Farben.
+Der PBR-Surface-Importer weist daher `COLOR_0` und weitere `COLOR_`-Attribute mit
+`MODEL_VERTEX_COLOR_SUBSET` ab, statt ihre Farbmultiplikation still zu verlieren.
+Das gilt auch für fehlerhafte Accessor-Referenzen in diesen Attributen. Eine
+Ablehnung bestätigt keinen Vertex-Farbsupport; dieser benötigt künftig einen
+eigenen Transport-, Interpolations- und Materialvertrag.
+
+Die Diagnoseprofile `AREMDL01` und `AREMDL02` verwenden weiterhin ihre expliziten
+Instanz-/Diagnosefarben. Der neue Guard gilt nur für `render_profile=pbr`;
+Wireformat und Protokollversion bleiben unverändert. Reale GLB-Regressionen in
+`software_gpu/tests/test_model_vertex_color.py` prüfen sechs gültige RGB-/RGBA-
+Encodings, ungültige Farbreferenzen, unveränderte vorhandene Szenen bei Ablehnung
+sowie native PBR-/Diagnoseausgaben. Die generierten Fixtures sind Testdaten,
+keine Produktions- oder Unity-Runtime-Evidence.
+
 ## Aktualisierung 2026-10-13: Bio-Lane locality optimization
 
 Ein kontrollierter 15-Paar-Lauf mit identischem Source-Stand und identischer
