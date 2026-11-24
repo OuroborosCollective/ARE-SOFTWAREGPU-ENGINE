@@ -135,6 +135,36 @@ class TestModelProbe(unittest.TestCase):
         self.assertEqual(receipt['color_pipeline'],'linear-msaa>exposure>reinhard>srgb>fxaa-srgb')
         self.assertTrue(receipt['full_buffer_parity'])
 
+    def test_studio_lighting_changes_real_shading_but_preserves_depth_and_replay(self):
+        asset=self.asset(profile='pbr',surface=True,static=True)
+        options=dict(projection='perspective',render_profile='pbr',repeats=1)
+        legacy=self.run_asset(asset,[0],workers=1,**options)
+        explicit=self.run_asset(asset,[0],workers=1,lighting_profile='legacy',**options)
+        studio=self.run_asset(asset,[0],workers=1,lighting_profile='studio-v1',**options)
+        parallel=self.run_asset(asset,[0],workers=4,lighting_profile='studio-v1',**options)
+        for key in ('frames','resolved','depth'):
+            np.testing.assert_array_equal(legacy[key],explicit[key])
+            np.testing.assert_array_equal(studio[key],parallel[key])
+        np.testing.assert_array_equal(legacy['depth'],studio['depth'])
+        self.assertEqual(studio['receipt']['lighting_profile'],'studio-v1')
+        self.assertEqual(legacy['receipt']['lighting_profile'],'legacy')
+        self.assertTrue(studio['receipt']['full_buffer_parity'])
+        self.assertNotEqual(legacy['receipt']['frame_sha256'],studio['receipt']['frame_sha256'])
+        for name in ('legacy','studio-v1'):
+            with self.subTest(name=name):
+                self.assertGreater(len(np.unique((legacy if name=='legacy' else studio)['frames'][0].reshape(-1,4),axis=0)),8)
+
+    def test_studio_lighting_rejects_unknown_and_non_pbr_profiles(self):
+        asset=self.asset(profile='pbr',surface=True,static=True)
+        with self.assertRaisesRegex(ValueError,'MODEL_LIGHTING_PROFILE'):
+            self.run_asset(asset,[0],projection='perspective',render_profile='pbr',
+                           repeats=1,lighting_profile='invented')
+        with self.assertRaisesRegex(ValueError,'MODEL_LIGHTING_PROFILE'):
+            self.run_asset(asset,[0],repeats=1,lighting_profile='studio-v1')
+        with self.assertRaisesRegex(ValueError,'MODEL_LIGHTING_PROFILE'):
+            self.run_asset(asset,[0],projection='perspective',render_profile='pbr',
+                           mode='pose',lighting_profile='studio-v1')
+
     def test_aremdl03_importer_rejects_external_and_transformed_textures(self):
         path=self.root/'unsafe.glb'
         def external(doc,binary):doc['images'][0]['uri']='https://example.invalid/texture.png'
