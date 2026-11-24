@@ -47,6 +47,26 @@ jobs:
           set -euo pipefail
           python -m unittest software_gpu.tests.test_weighted_wsi_registry
           python -m software_gpu.drivers.verify_weighted_wsi evidence-local/real-vulkan-xcb --expected-revision "$EXPECTED_REVISION"
+      - name: Real ARE Vulkan -> Mesa Zink profile admission (incompatible is not OpenGL success)
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          python -m unittest software_gpu.tests.test_opengl_zink_preflight -v
+          python -m software_gpu.drivers.verify_opengl_zink_preflight             evidence-local/real-vulkan-xcb/zink-capability             --manifest evidence-local/real-vulkan-xcb/icd/are.json             --expected-revision "$EXPECTED_REVISION"
+          python - <<'PYZINK'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("evidence-local/real-vulkan-xcb/zink-capability/receipt.json").read_text())
+          assert data["source_revision"] == __import__("os").environ["EXPECTED_REVISION"]
+          assert data["real_glx_context_verified"] is False
+          assert data["real_heaven_score_verified"] is False
+          assert data["zink_vulkan_minimum_status"] == "incompatible"
+          assert data["native_probe_exit"] == 3
+          assert data["real_vulkan_device"]["missing_gl21_features"]
+          assert data["real_vulkan_device"]["missing_gl21_extensions"]
+          print("ARE_ZINK_MINIMUM_VULKAN_PROFILE_INCOMPATIBLE_NOT_GL_SUCCESS")
+          PYZINK
       - name: Archive original window, depth, driver and source SHA receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
