@@ -36,12 +36,39 @@ static void json_list(const std::vector<std::string>& values) {
     std::cout << ']';
 }
 int main() {
+    // Query the actual instance capabilities before enabling the optional
+    // Vulkan 1.0 extension required to inspect device extension feature bits.
+    std::uint32_t instance_extensions_count = 0;
+    VkResult extension_result = vkEnumerateInstanceExtensionProperties(
+        nullptr, &instance_extensions_count, nullptr);
+    if (extension_result != VK_SUCCESS) {
+        std::cerr << "ARE_ZINK_INSTANCE_EXTENSION_ENUMERATION_FAILED\n";
+        return 2;
+    }
+    std::vector<VkExtensionProperties> instance_extensions(instance_extensions_count);
+    if (instance_extensions_count) {
+        extension_result = vkEnumerateInstanceExtensionProperties(
+            nullptr, &instance_extensions_count, instance_extensions.data());
+        if (extension_result != VK_SUCCESS) {
+            std::cerr << "ARE_ZINK_INSTANCE_EXTENSION_DETAILS_FAILED\n";
+            return 2;
+        }
+    }
+    const bool can_query_ext_features = std::any_of(
+        instance_extensions.begin(), instance_extensions.end(),
+        [](const VkExtensionProperties& item) {
+            return std::strcmp(item.extensionName,
+                VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) == 0;
+        });
+    const char* features2_extension = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
     VkApplicationInfo app{};
     app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app.apiVersion = VK_API_VERSION_1_0;
     VkInstanceCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     info.pApplicationInfo = &app;
+    info.enabledExtensionCount = can_query_ext_features ? 1u : 0u;
+    info.ppEnabledExtensionNames = can_query_ext_features ? &features2_extension : nullptr;
     VkInstance instance{};
     VkResult result = vkCreateInstance(&info, nullptr, &instance);
     if (result != VK_SUCCESS || !instance) {
@@ -105,8 +132,92 @@ int main() {
     if(!advertised.count("VK_EXT_scalar_block_layout") &&
        props.apiVersion<VK_API_VERSION_1_2)
         missing_extensions.emplace_back("VK_EXT_scalar_block_layout|Vulkan1.2");
+    // These properties are Vulkan 1.0 mandatory minima, not optional Zink
+    // improvements. Incomplete ARE limits must never pass the profile gate.
+    if (props.limits.maxBoundDescriptorSets < 4)
+        missing_features.emplace_back("coreLimit.maxBoundDescriptorSets");
+    if (props.limits.maxColorAttachments < 4)
+        missing_features.emplace_back("coreLimit.maxColorAttachments");
+    if (props.limits.maxMemoryAllocationCount < 4096)
+        missing_features.emplace_back("coreLimit.maxMemoryAllocationCount");
+
+    const bool robustness_ext = advertised.count("VK_EXT_robustness2") != 0;
+    const bool robustness_khr = advertised.count("VK_KHR_robustness2") != 0;
+    const bool custom_border = advertised.count("VK_EXT_custom_border_color") != 0;
+    const bool line_raster = advertised.count("VK_EXT_line_rasterization") != 0;
+    const bool scalar_layout = advertised.count("VK_EXT_scalar_block_layout") != 0 ||
+                               props.apiVersion >= VK_API_VERSION_1_2;
+    const bool needs_features2 = robustness_ext || robustness_khr ||
+                                 custom_border || line_raster || scalar_layout;
+    bool extended_features_queried = false;
+    if (needs_features2) {
+        auto core_query = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2>(
+            vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceFeatures2"));
+        auto extension_query = can_query_ext_features
+            ? reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2KHR>(
+                vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceFeatures2KHR"))
+            : nullptr;
+        if (!core_query && !extension_query) {
+            missing_features.emplace_back("extendedFeatures2QueryUnavailable");
+        } else {
+            VkPhysicalDeviceFeatures2 features2{};
+            features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            VkPhysicalDeviceRobustness2FeaturesEXT robustness{};
+            robustness.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+            VkPhysicalDeviceCustomBorderColorFeaturesEXT border{};
+            border.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT;
+            VkPhysicalDeviceLineRasterizationFeaturesEXT lines{};
+            lines.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
+            VkPhysicalDeviceScalarBlockLayoutFeatures scalar{};
+            scalar.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES;
+            void** tail = &features2.pNext;
+            if (robustness_ext) {
+                *tail = &robustness;
+                tail = &robustness.pNext;
+            }
+            if (custom_border) {
+                *tail = &border;
+                tail = &border.pNext;
+            }
+            if (line_raster) {
+                *tail = &lines;
+                tail = &lines.pNext;
+            }
+            if (scalar_layout) {
+                *tail = &scalar;
+                tail = &scalar.pNext;
+            }
+            *tail = nullptr;
+            if (core_query) core_query(physical, &features2);
+            else extension_query(physical, &features2);
+            extended_features_queried = true;
+            if (robustness_ext && !robustness.nullDescriptor)
+                missing_features.emplace_back("nullDescriptor");
+            if (robustness_khr && !robustness_ext)
+                missing_features.emplace_back("nullDescriptorKHRFeatureQueryUnavailable");
+            if (custom_border && !border.customBorderColorWithoutFormat)
+                missing_features.emplace_back("customBorderColorWithoutFormat");
+            if (line_raster) {
+                if (!lines.rectangularLines)
+                    missing_features.emplace_back("rectangularLines");
+                if (!lines.bresenhamLines)
+                    missing_features.emplace_back("bresenhamLines");
+                if (!lines.smoothLines)
+                    missing_features.emplace_back("smoothLines");
+                if (!lines.stippledRectangularLines)
+                    missing_features.emplace_back("stippledRectangularLines");
+                if (!lines.stippledBresenhamLines)
+                    missing_features.emplace_back("stippledBresenhamLines");
+                if (!lines.stippledSmoothLines)
+                    missing_features.emplace_back("stippledSmoothLines");
+            }
+            if (scalar_layout && !scalar.scalarBlockLayout)
+                missing_features.emplace_back("scalarBlockLayout");
+        }
+    }
     const bool gl21_ready =
         props.apiVersion >= VK_API_VERSION_1_0 &&
+        extended_features_queried &&
         missing_features.empty() && missing_extensions.empty();
     std::cout << "{\"protocol\":\"are.zink-capability-preflight.v1\","
               << "\"device\":";
@@ -122,7 +233,9 @@ int main() {
     json_list(missing_features);
     std::cout << ",\"missing_gl21_extensions\":";
     json_list(missing_extensions);
-    std::cout << ",\"minimum_gl21_ready\":"
+    std::cout << ",\"extended_feature_bits_queried\":"
+              << (extended_features_queried?"true":"false")
+              << ",\"minimum_gl21_ready\":"
               << (gl21_ready?"true":"false")
               << ",\"gl45_and_heaven_verified\":false}\n";
     vkDestroyInstance(instance,nullptr);

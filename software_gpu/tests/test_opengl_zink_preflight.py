@@ -40,21 +40,20 @@ class TestZinkAdmissionContract(unittest.TestCase):
             classify(3, observed)
 
     def test_claimed_ready_cannot_contain_missing_features(self):
-        observed = {"protocol":"are.zink-capability-preflight.v1",
-                    "device":"ARE SoftwareGPU",
-                    "minimum_gl21_ready":True,
-                    "missing_gl21_features":["logicOp"],
-                    "missing_gl21_extensions":[]}
-        with self.assertRaises(ValueError):
+        observed = self._data_contract()
+        observed["minimum_gl21_ready"] = True
+        observed["missing_gl21_extensions"] = []
+        observed["extended_feature_bits_queried"] = True
+        with self.assertRaisesRegex(ValueError,
+                                    "ARE_ZINK_PROBE_STATUS_CAPABILITIES_CONTRADICTION"):
             classify(0, observed)
 
     def test_missing_capabilities_without_failure_cannot_pass(self):
-        observed = {"protocol":"are.zink-capability-preflight.v1",
-                    "device":"ARE SoftwareGPU",
-                    "minimum_gl21_ready":False,
-                    "missing_gl21_features":["logicOp"],
-                    "missing_gl21_extensions":[]}
-        with self.assertRaises(ValueError):
+        observed = self._data_contract()
+        observed["missing_gl21_extensions"] = []
+        observed["extended_feature_bits_queried"] = True
+        with self.assertRaisesRegex(ValueError,
+                                    "ARE_ZINK_PROBE_STATUS_CAPABILITIES_CONTRADICTION"):
             classify(0, observed)
 
     def _data_contract(self):
@@ -219,6 +218,7 @@ class TestZinkAdmissionContract(unittest.TestCase):
         rec["minimum_gl21_ready"] = True
         rec["missing_gl21_features"] = []
         rec["missing_gl21_extensions"] = []
+        rec["extended_feature_bits_queried"] = True
         self.assertEqual(classify(0, rec), "minimum-vulkan-capabilities")
 
     def test_canonical_receipt_binds_original_six_real_files_by_sha256(self):
@@ -280,3 +280,39 @@ class TestZinkAdmissionContract(unittest.TestCase):
             self.assertNotEqual(baseline["receipt_sha256"], other["receipt_sha256"])
             self.assertIs(other["real_glx_context_verified"], False)
             self.assertIs(other["real_heaven_score_verified"], False)
+
+    def test_native_claimed_ready_requires_actual_extension_feature_query(self):
+        rec = self._data_contract()
+        rec["minimum_gl21_ready"] = True
+        rec["missing_gl21_features"] = []
+        rec["missing_gl21_extensions"] = []
+        rec["extended_feature_bits_queried"] = False
+        with self.assertRaisesRegex(ValueError, "ARE_ZINK_EXTENSION_FEATURE_BITS_UNVERIFIED"):
+            classify(0, rec)
+
+    def test_probe_source_bytes_match_the_actual_committed_tree(self):
+        # Real isolated Git repository, no mocked git status or Vulkan device.
+        from software_gpu.drivers.verify_opengl_zink_preflight import checked_source_at_revision
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True, capture_output=True)
+            src = root / "native/vulkan/weighted/source.cpp"
+            src.parent.mkdir(parents=True)
+            src.write_bytes(b"original-source-code\n")
+            subprocess.run(["git", "add", "native/vulkan/weighted/source.cpp"],
+                           cwd=root, check=True, capture_output=True)
+            subprocess.run(["git", "-c", "user.name=ARE Test",
+                            "-c", "user.email=are-test@example.invalid", "commit",
+                            "-qm", "frozen original source"], cwd=root,
+                           check=True, capture_output=True)
+            sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+            self.assertEqual(
+                checked_source_at_revision(root, sha, "native/vulkan/weighted/source.cpp"),
+                src)
+            src.write_bytes(b"uncommitted-modification\n")
+            with self.assertRaisesRegex(ValueError, "ARE_ZINK_PROBE_SOURCE_TREE_DRIFT"):
+                checked_source_at_revision(root, sha, "native/vulkan/weighted/source.cpp")
+            # Git HEAD is still unchanged despite tampered source.
+            self.assertEqual(subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), sha)

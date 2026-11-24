@@ -43,6 +43,8 @@ def classify(returncode, record):
         raise ValueError("ARE_ZINK_UNKNOWN_VULKAN_API")
     ready = record.get("minimum_gl21_ready")
     if returncode == 0 and ready is True and not features and not missing:
+        if record.get("extended_feature_bits_queried") is not True:
+            raise ValueError("ARE_ZINK_EXTENSION_FEATURE_BITS_UNVERIFIED")
         return "minimum-vulkan-capabilities"
     if returncode == 3 and ready is False and (features or missing):
         return "incompatible"
@@ -77,12 +79,25 @@ def build_receipt(expected_revision, source, library, manifest, executable,
     return report
 
 
+def checked_source_at_revision(root, expected_revision, relative_path):
+    """Prevent a dirty probe source from being relabeled as committed code."""
+    source = root / relative_path
+    expected_bytes = subprocess.check_output(
+        ["git", "show", expected_revision + ":" + relative_path],
+        cwd=root, timeout=15)
+    if hashlib.sha256(expected_bytes).hexdigest() != digest(source):
+        raise ValueError("ARE_ZINK_PROBE_SOURCE_TREE_DRIFT")
+    return source
+
+
 def verify(output, manifest, expected_revision, include):
     root = Path(__file__).resolve().parents[2]
     actual_revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], text=True, cwd=root).strip()
     if not re.fullmatch(r"[0-9a-f]{40}", expected_revision) or actual_revision != expected_revision:
         raise ValueError("ARE_ZINK_SOURCE_REVISION_MISMATCH")
+    source = checked_source_at_revision(
+        root, expected_revision, "native/vulkan/weighted/opengl_zink_capability_probe.cpp")
     manifest = manifest.resolve(strict=True)
     metadata = json.loads(manifest.read_text())
     library = Path(metadata["ICD"]["library_path"]).resolve(strict=True)
@@ -95,7 +110,6 @@ def verify(output, manifest, expected_revision, include):
         raise ValueError("ARE_ZINK_OUTPUT_MUST_BE_EMPTY")
     output.mkdir(parents=True, exist_ok=True)
     executable = output / "are-zink-native-probe"
-    source = root / "native/vulkan/weighted/opengl_zink_capability_probe.cpp"
     subprocess.run([compiler(), "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     "-I" + str(include), str(source), "-lvulkan", "-o",
                     str(executable)], check=True, timeout=120)
