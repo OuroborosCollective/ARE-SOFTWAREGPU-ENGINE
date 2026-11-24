@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from .geometry import edge_covered
+from .geometry import edge_covered, is_rgb_array, uses_builtin_color
 
 
 def _pair_features(x0, x1, y0, y1, tile_size, scan_min_samples):
@@ -100,6 +100,13 @@ def rasterize_tiles(fb: Any, triangles: list, shader: Any, tile_size: int,
             raise ValueError("OPTIN_BACKEND_UNSUPPORTED")
     if planned and compiled:
         raise ValueError("PLANNED_JIT_COMBINATION_UNSUPPORTED")
+    # Prepared geometry can also be supplied directly. Validate before binning
+    # or starting workers so invalid RGB cannot reach sample-axis broadcasting.
+    if uses_builtin_color(getattr(shader, "vertex_shader", None)):
+        for triangle in triangles:
+            for attrs in triangle[6:9]:
+                if not is_rgb_array(attrs.get("color")):
+                    raise ValueError("TILE_COLOR_INPUT_INVALID")
     requested_plan = planned
     scan_min_samples = None
     dense_fallback = False
