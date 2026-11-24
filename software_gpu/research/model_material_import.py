@@ -4,6 +4,7 @@ import io
 from pathlib import Path
 import numpy as np
 
+EMISSIVE_STRENGTH = 'KHR_materials_emissive_strength'
 MAX_IMAGE_DIMENSION = 4096
 MAX_ASSET_DECODED_BYTES = 128 * 1024 * 1024
 WRAPS = (10497, 33071, 33648)
@@ -128,13 +129,24 @@ def load_surface_subset(doc, binary, primitive, accessor):
     materials = doc.get('materials', [])
     _need(type(material_index) is int and 0 <= material_index < len(materials), 'MODEL_MATERIAL_INDEX')
     material = materials[material_index]
-    _need(isinstance(material, dict) and not material.get('extensions')
+    _need(isinstance(material, dict)
           and material.get('alphaMode', 'OPAQUE') == 'OPAQUE'
           and type(material.get('doubleSided', False)) is bool, 'MODEL_MATERIAL_SUBSET')
     pbr = material.get('pbrMetallicRoughness', {})
     _need(isinstance(pbr, dict) and not pbr.get('extensions'), 'MODEL_PBR_SUBSET')
     base = _array(pbr.get('baseColorFactor', [1, 1, 1, 1]), 4, 'MODEL_BASE_COLOR', 0, 1)
-    emissive = _array(material.get('emissiveFactor', [0, 0, 0]), 3, 'MODEL_EMISSIVE', 0, 1e4)
+    extensions = material.get('extensions', {})
+    _need(isinstance(extensions, dict) and extensions.keys() <= {EMISSIVE_STRENGTH}, 'MODEL_MATERIAL_SUBSET')
+    emissive = _array(material.get('emissiveFactor', [0, 0, 0]), 3, 'MODEL_EMISSIVE',
+                      0, 1 if EMISSIVE_STRENGTH in extensions else 1e4)
+    if EMISSIVE_STRENGTH in extensions:
+        ext = extensions[EMISSIVE_STRENGTH]
+        _need(isinstance(ext, dict) and not ext.get('extensions'), 'MODEL_EMISSIVE_EXTENSION')
+        strength = ext.get('emissiveStrength', 1)
+        _need(type(strength) in (float, int) and 0 <= strength <= np.finfo(float).max,
+              'MODEL_EMISSIVE_STRENGTH')
+        emissive *= float(strength)
+        _need((emissive <= 1e4).all(), 'MODEL_EMISSIVE_RANGE')
     metallic = pbr.get('metallicFactor', 1.0)
     roughness = pbr.get('roughnessFactor', 1.0)
     _need(type(metallic) in (int, float) and np.isfinite(metallic) and 0 <= metallic <= 1,

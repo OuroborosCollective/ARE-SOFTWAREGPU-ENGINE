@@ -26,6 +26,22 @@ int main(){
     SurfaceLighting lighting;lighting.camera={0,0,4};
     const auto color=surface_pbr(mat,std::vector<SurfaceTexture>{normal},{.5f,.5f},{0,0,1},{1,0,0},{0,1,0},
                                  {0,0,0},{0,0},{0,0},lighting);
+    // Singular UV bases and cancelled normal-map samples must use the geometric normal.
+    const auto shade=[&](SurfaceV3 bitangent) {
+        return surface_pbr(mat,{normal},{.5f,.5f},{0,0,1},{1,0,0},bitangent,
+                           {0,0,0},{0,0},{0,0},lighting);
+    };
+    mat.normal_texture=-1;
+    const auto geometric=shade({0,1,0});
+    mat.normal_texture=0;
+    if(shade({1,0,0})!=geometric || shade({0,0,1})!=geometric)return 2;
+    normal.mips[0].rgba={128,255,255,255};
+    if(shade({0,1,0})==shade({0,-1,0}))return 3;
+    normal.mips[0].width=2;
+    normal.mips[0].rgba={255,255,255,255,0,0,0,255};
+    if(shade({0,1,0})!=geometric)return 4;
+    lighting.light_direction={0,0,-1};
+    if(!std::isfinite(shade({0,1,0})[0]))return 5;
     std::cout<<std::setprecision(17)<<"{\"uv\":["<<uv[0]<<','<<uv[1]<<"],\"center\":[";
     for(int k=0;k<4;++k){if(k)std::cout<<',';std::cout<<center[k];}
     std::cout<<"],\"mip\":["<<unsigned(t.mips[1].rgba[0])<<','<<unsigned(t.mips[1].rgba[1])<<','<<unsigned(t.mips[1].rgba[2])

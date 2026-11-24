@@ -20,6 +20,8 @@ import tempfile
 import numpy as np
 from PIL import Image
 
+from software_gpu.graphics.display_bloom import apply_display_bloom
+from software_gpu.graphics.framebuffer import Framebuffer
 from software_gpu.learning import configured_learner
 from software_gpu.research.model_probe import (
     build_model_probe, load_asset, read_glb, run_model, write_scene,
@@ -93,7 +95,7 @@ def _prepare_samples(samples: list[dict]) -> list[dict]:
         asset = load_asset(path, expected, profile='pbr')
         _need(not asset['clips'], 'STATIC_ONLY')
         _need(len(asset['faces']) <= MAX_OVERLAY_TRIANGLES, 'OVERLAY_TRIANGLE_BUDGET')
-        doc, binary = read_glb(path, record['sha256'], record['bytes'])
+        doc, binary = read_glb(path, record['sha256'], record['bytes'], profile='pbr')
         materials, images = _material_evidence(doc, binary)
         prepared.append(dict(id=identifier, source=record, asset=asset,
                              materials=materials, embedded_images=images,
@@ -204,7 +206,7 @@ def _artifact(folder: Path, name: str, data: bytes, *, semantics: str) -> dict:
 
 
 def render_native_asset_lab(samples: list[dict], output_dir: Path, *,
-                            camera: dict, pixels: int = 64, repeats: int = 2) -> dict:
+                            camera: dict, pixels: int = 64, repeats: int = 2, bloom: bool = False) -> dict:
     """Run SHA-pinned C++ PBR for one or more LODs, comparing workers 1 and 2.
 
     This is parity/diagnostic evidence, NOT a CPU performance leaderboard entry.
@@ -299,6 +301,17 @@ def render_native_asset_lab(samples: list[dict], output_dir: Path, *,
                 'uv_seams_svg': _artifact(where, 'uv_seams.svg', uv,
                                           semantics='source_derived_native_pose_nonoccluded_uv_discontinuities'),
             }
+            if bloom:
+                fb = Framebuffer(pixels, pixels)
+                fb.color_buffer[...] = selected['resolved']
+                fb.depth_buffer[...] = selected['depth']
+                preview = apply_display_bloom(fb)
+                stream = io.BytesIO()
+                Image.fromarray(preview.color_buffer).save(stream, format='PNG')
+                output['bloom_png'] = _artifact(where, 'bloom.png', stream.getvalue(),
+                                                 semantics='linear_light_bloom_on_resolved_srgb')
+                output['bloom_png']['learning'] = preview.last_bloom_learning_receipt
+                output['bloom_png']['quality'] = preview.bloom_quality
             artifacts.append(dict(id=record['id'], source_sha256=record['source']['sha256'],
                                   source_bytes=record['source']['bytes'],
                                   source_name=record['source_name'],
@@ -350,6 +363,7 @@ def main(argv=None) -> int:
     parser.add_argument('manifest', type=Path, help='Local manifest with SHA-pinned GLBs')
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--pixels', type=int, default=64)
+    parser.add_argument('--bloom', action='store_true', help='Also export a soft-knee bloom preview')
     args = parser.parse_args(argv)
     try:
         if args.manifest.is_symlink() or not args.manifest.is_file() or args.manifest.stat().st_size > 65536:
@@ -358,7 +372,7 @@ def main(argv=None) -> int:
         _need(isinstance(manifest, dict) and set(manifest) == {'assets', 'camera'},
               'MANIFEST_FIELDS')
         render_native_asset_lab(manifest['assets'], args.output_dir,
-                                camera=manifest['camera'], pixels=args.pixels)
+                                camera=manifest['camera'], pixels=args.pixels, bloom=args.bloom)
     except (ValueError, OSError, RuntimeError, KeyError, TypeError) as exc:
         parser.exit(2, f'ASSET_LAB_REJECTED:{exc}\n')
     return 0
