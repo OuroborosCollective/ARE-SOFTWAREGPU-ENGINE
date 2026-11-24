@@ -21,6 +21,8 @@ from software_gpu.core.output import output_file
 # accommodates the bundled 400 x 300 RGB demo at radius 3.
 _MAX_GAUSSIAN_RADIUS = 63
 _MAX_GAUSSIAN_WORK = 20_000_000
+_MAX_BMP_ROWS = 16_384
+_MAX_BMP_PIXELS = 16_777_216
 
 
 class ImageFilterPipeline:

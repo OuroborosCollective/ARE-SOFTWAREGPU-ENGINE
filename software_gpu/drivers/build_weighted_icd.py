@@ -11,6 +11,26 @@ import xml.etree.ElementTree as ET
 from software_gpu.research.native_symbolic import FLAGS, compiler
 
 
+def canonical_registry_params(command_name, params):
+    """Reject ABI-ambiguous XML rather than compiling a wrong dispatch signature.
+
+    Recent distro registry snapshots duplicate the identical pCreateInfo
+    declaration in vkCreateSwapchainKHR. The authoritative Vulkan header
+    declares this argument ONCE. Only this exact legacy/distro duplicate
+    is normalized, and every unrelated repeated argument fails closed.
+    """
+    names = [param.findtext("name") for param in params]
+    if (command_name == "vkCreateSwapchainKHR" and names ==
+            ["device", "pCreateInfo", "pCreateInfo", "pAllocator", "pSwapchain"]):
+        a, b = ("".join(param.itertext()) for param in params[1:3])
+        if a != b:
+            raise ValueError("ARE_VK_REGISTRY_CONFLICTING_SWAPCHAIN_ABI")
+        return [params[0], params[1], params[3], params[4]]
+    if len(names) != len(set(names)):
+        raise ValueError("ARE_VK_REGISTRY_DUPLICATE_ABI_ARGUMENT:" + command_name)
+    return params
+
+
 def write_dispatch(registry, output):
     from software_gpu.drivers.weighted_icd import Driver
     entries = {n for n in vars(Driver) if n.startswith("vk")}
@@ -21,7 +41,7 @@ def write_dispatch(registry, output):
         if name not in entries:
             continue
         entries.remove(name)
-        params = cmd.findall("param")
+        params = canonical_registry_params(name, cmd.findall("param"))
         decl = ", ".join("".join(p.itertext()) for p in params)
         args = ", ".join("(uintptr_t)" + p.findtext("name") for p in params)
         result = cmd.findtext("proto/type")
@@ -75,9 +95,10 @@ def build(out, registry, include):
         libdir = Path(sysconfig.get_config_var("LIBDIR"))
     subprocess.run([compiler(), *FLAGS, "-shared", "-fPIC", "-I" + str(include),
                     "-I" + str(out), "-I" + str(inc), str(root / "native/vulkan/weighted/entry.cpp"),
-                    str(root / "native/raster/driver_adapter.cpp"), "-L" + str(libdir),
+                    str(root / "native/raster/driver_adapter.cpp"),
+                    str(root / "native/vulkan/weighted/xcb_wsi.cpp"), "-L" + str(libdir),
                     "-Wl,-rpath," + str(libdir), "-lpython" + sysconfig.get_python_version(),
-                    "-ldl", "-o", str(lib)], check=True)
+                    "-ldl", "-lxcb", "-o", str(lib)], check=True)
     manifest = out / "are.json"
     manifest.write_text(json.dumps({"file_format_version":"1.0.0",
                                    "ICD":{"library_path":str(lib), "api_version":"1.0.0"}}) + "\n")

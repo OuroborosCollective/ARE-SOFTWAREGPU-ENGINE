@@ -1,6 +1,8 @@
 // Developer-only Linux ICD. CPython owns bounded Vulkan objects and queue policy.
 // Submitted packed triangles execute in the native raster adapter in this DSO.
 #include <Python.h>
+#define VK_USE_PLATFORM_XCB_KHR 1
+#include <vulkan/vulkan.h>
 #include <vulkan/vk_icd.h>
 #include <dlfcn.h>
 #include <cstdint>
@@ -60,7 +62,13 @@ extern "C" VKAPI_ATTR VkResult VKAPI_CALL vk_icdNegotiateLoaderICDInterfaceVersi
     return VK_SUCCESS;
 }
 extern "C" VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
-vk_icdGetPhysicalDeviceProcAddr(VkInstance, const char*) { return nullptr; }
+vk_icdGetPhysicalDeviceProcAddr(VkInstance, const char* name) {
+    if (!name) return nullptr;
+    if (!std::strncmp(name, "vkGetPhysicalDeviceSurface", 26) ||
+        !std::strcmp(name, "vkGetPhysicalDeviceXcbPresentationSupportKHR"))
+        return lookupInstance(name);
+    return nullptr;
+}
 
 static PFN_vkVoidFunction VKAPI_CALL deviceProc(VkDevice, const char* name) {
     if (!name) return nullptr;
