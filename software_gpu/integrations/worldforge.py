@@ -30,6 +30,34 @@ def receipt(job):
     return hashlib.sha256(raw).hexdigest(), model
 
 
+class WorldForgeBudgetRefusal(ValueError):
+    """Metadata-only refusal, never a validated source or geometry report."""
+    def __init__(self, job, digest, model, size):
+        super().__init__("GLB_REVIEW_SIZE_LIMIT")
+        self.diagnostic = {
+            "schema": "are.worldforge.admission.v1", "engineVersion": __version__,
+            "jobId": job.name, "receiptSha256": digest,
+            "declaredModelSha256": model["sha256"], "observedBytes": size,
+            "maxReviewBytes": MAX_GLB_BYTES, "status": "not-admitted",
+            "reason": str(self), "manualReviewRequired": True,
+            "sourceHashVerified": False, "geometryReviewed": False,
+        }
+
+
+def _check_review_source(job, digest, model):
+    """Refuse large sources before fresh import or any report-cache lookup."""
+    source = job / "model.glb"
+    if source.is_symlink() or not source.is_file():
+        raise ValueError("SOURCE_FILE_MISSING_OR_LINK")
+    size = source.stat().st_size
+    if size != model["size"]:
+        raise ValueError("SOURCE_SIZE_MISMATCH")
+    if size > MAX_GLB_BYTES:
+        # No source open/hash, geometry parse, or persisted review takes place.
+        # Rechecking metadata is not a claim that these bytes match the receipt.
+        raise WorldForgeBudgetRefusal(job, digest, model, size)
+
+
 def cluster(points, faces, cells):
     grid = np.floor((points - points.min(axis=0)) * cells / np.ptp(points, axis=0).max())
     _, index, counts = np.unique(grid.astype(np.int32), axis=0, return_inverse=True, return_counts=True)
@@ -154,6 +182,7 @@ def _verified_cached_review(final, job, digest, model):
 
 def review(job, destination):
     digest, model = receipt(job)
+    _check_review_source(job, digest, model)
     # Version and receipt address each independent report. The producer keeps sole ownership of results/.
     destination = destination / job.name / __version__
     destination.mkdir(parents=True, exist_ok=True)
@@ -173,7 +202,7 @@ def review(job, destination):
             # geometry may be marked manual-review. Corrupt or ambiguous
             # containers, source hashes, accessors and external URIs fail closed.
             manual_reasons = {"STATIC_GEOMETRY_REVIEW_REQUIRED", "MESH_TOO_LARGE",
-                              "SCENE_COMPLEXITY_LIMIT", "GLB_REVIEW_SIZE_LIMIT",
+                              "SCENE_COMPLEXITY_LIMIT",
                               "NO_SUPPORTED_TRIANGLE_GEOMETRY"}
             if str(exc) not in manual_reasons:
                 raise
@@ -197,6 +226,7 @@ def scan(results, output, limit):
             continue
         try:
             digest, model = receipt(job)
+            _check_review_source(job, digest, model)
             cached = output / job.name / __version__ / digest
             if (cached / "report.json").is_file():
                 # Cache skips may not silently hide a changed source or
@@ -205,6 +235,11 @@ def scan(results, output, limit):
                 continue
             print(review(job, output), flush=True)
             processed += 1
+        except WorldForgeBudgetRefusal as error:
+            # A rejected/unverified input does not consume a geometry-review
+            # slot. Invalid receipts, changed sizes/hashes and corrupt inputs
+            # still take the failure path below.
+            print(json.dumps(error.diagnostic, sort_keys=True), flush=True)
         except (ValueError, OSError, KeyError) as error:
             failures.append(f"{job.name}: {error}")
         if processed >= limit:
@@ -224,7 +259,10 @@ def main(argv=None):
     if args.limit < 1:
         parser.error("--limit must be positive")
     if args.action == "review":
-        print(review(args.source, args.output))
+        try:
+            print(review(args.source, args.output))
+        except WorldForgeBudgetRefusal as error:
+            print(json.dumps(error.diagnostic, sort_keys=True))
     else:
         scan(args.source, args.output, args.limit)
 
