@@ -12,13 +12,48 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
+import sysconfig
+import tempfile
 
 _CPU = "PHYSICAL_DEVICE_TYPE_CPU"
 _API = re.compile(r"1\.\d+\.\d+\Z")
 _LIBRARY = re.compile(r"libvulkan_lvp(?:\.so(?:\.[0-9]+)*)?\Z")
 _DEVICE_TYPE = re.compile(r"^\s*deviceType\s*=\s*([A-Z_0-9]+)\s*$", re.MULTILINE)
 _DEVICE_NAME = re.compile(r"^\s*deviceName\s*=\s*(.*?)\s*$", re.MULTILINE)
+
+
+_SYSTEM_LIB_DIRS = tuple(map(Path, ("/usr/lib", "/lib", "/usr/lib64", "/lib64")))
+
+
+def _trusted_library(declared: str, manifest_dir: Path) -> Path:
+    if os.name != "posix":
+        raise ValueError("VULKAN_REFERENCE_SYSTEM_LIBRARY_REQUIRED")
+    if "/" in declared:
+        candidates = [manifest_dir / declared]
+    else:
+        # Pin bare sonames to a distribution directory, independent of ld.so search overrides.
+        multiarch = sysconfig.get_config_var("MULTIARCH")
+        dirs = [root / multiarch for root in _SYSTEM_LIB_DIRS] if multiarch else []
+        candidates = [directory / declared for directory in (*dirs, *_SYSTEM_LIB_DIRS)]
+    for candidate in candidates:
+        try:
+            library = candidate.resolve(strict=True)
+        except FileNotFoundError:
+            continue
+        if not _LIBRARY.fullmatch(library.name) or not any(
+                root in library.parents for root in _SYSTEM_LIB_DIRS):
+            continue
+        # Check from the filesystem root down: each protected parent anchors the next lookup.
+        for entry in (*reversed(library.parents), library):
+            info = entry.lstat()
+            kind = stat.S_ISREG if entry == library else stat.S_ISDIR
+            if info.st_uid != 0 or info.st_mode & 0o022 or not kind(info.st_mode):
+                break
+        else:
+            return library
+    raise ValueError("VULKAN_REFERENCE_SYSTEM_LIBRARY_REQUIRED")
 
 
 def validate_reference_manifest(path: Path) -> dict:
@@ -43,15 +78,14 @@ def validate_reference_manifest(path: Path) -> dict:
             not set(icd).issubset({"library_path", "api_version", "is_portability_driver"}) or
             type(icd["library_path"]) is not str or
             not _LIBRARY.fullmatch(Path(icd["library_path"]).name) or
-            ("/" in icd["library_path"] and not
-             (icd["library_path"].startswith("/usr/lib/") or
-              icd["library_path"].startswith("/lib/"))) or
             type(icd["api_version"]) is not str or not _API.fullmatch(icd["api_version"]) or
             icd.get("is_portability_driver", False) not in (False,)):
         raise ValueError("VULKAN_REFERENCE_LVP_ONLY")
     return {
         "path": str(path), "manifest_sha256": hashlib.sha256(raw).hexdigest(),
         "library_name": Path(icd["library_path"]).name, "library_path_declared": icd["library_path"],
+        "library_path_resolved": str(_trusted_library(icd["library_path"], path.parent)),
+        "file_format_version": document["file_format_version"],
         "api_version_declared": icd["api_version"],
     }
 
@@ -79,11 +113,20 @@ def run_reference_probe(manifest: Path, *, vulkaninfo: str = "vulkaninfo",
     env.pop("VK_ADD_DRIVER_FILES", None)
     env.pop("VK_LOADER_DRIVERS_SELECT", None)
     env.pop("VK_LOADER_DRIVERS_DISABLE", None)
-    env["VK_DRIVER_FILES"] = verified_manifest["path"]
     env["VK_LOADER_DEBUG"] = "driver"
-    result = subprocess.run([vulkaninfo, "--summary"], env=env,
-                            capture_output=True, text=True, timeout=45,
-                            check=False)
+    # The caller owns the input manifest. Give the loader only validated fields
+    # and the absolute, protected library path in a private manifest.
+    with tempfile.TemporaryDirectory(prefix="are-lvp-", dir="/tmp") as directory:
+        pinned = Path(directory) / "lvp_icd.json"
+        pinned.write_text(json.dumps({
+            "file_format_version": verified_manifest["file_format_version"],
+            "ICD": {"library_path": verified_manifest["library_path_resolved"],
+                    "api_version": verified_manifest["api_version_declared"]},
+        }), encoding="utf-8")
+        env["VK_DRIVER_FILES"] = str(pinned)
+        result = subprocess.run([vulkaninfo, "--summary"], env=env,
+                                capture_output=True, text=True, timeout=45,
+                                check=False)
     if result.returncode:
         raise RuntimeError("VULKAN_REFERENCE_LOADER_FAILED:" + str(result.returncode) +
                            ":" + result.stderr[-800:])
