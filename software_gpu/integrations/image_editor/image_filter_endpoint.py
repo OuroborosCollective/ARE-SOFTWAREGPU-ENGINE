@@ -15,6 +15,10 @@ from software_gpu.compute.kernels import conv2d_simt_kernel, VectorizedGPUKernel
 from software_gpu.core.output import output_file
 
 
+_MAX_BMP_ROWS = 16_384
+_MAX_BMP_PIXELS = 4096 * 4096  # 48 MiB of decoded RGB
+
+
 class ImageFilterPipeline:
     """Image processing pipeline utilizing SoftwareGPU acceleration."""
     def __init__(self):
@@ -110,16 +114,44 @@ class ImageFilterPipeline:
 
     @staticmethod
     def load_bmp(file_path: str) -> np.ndarray:
-        """Loads 24-bit uncompressed BMP into numpy array [H, W, 3] (RGB)."""
+        """Load a bottom-up, uncompressed 24-bit BMP as uint8 RGB [H, W, 3].
+
+        Invalid or unsupported BMPs raise ValueError. Images are limited to
+        16,384 rows and 16,777,216 pixels.
+        """
         with open(file_path, "rb") as f:
-            data = f.read()
-        w, h = struct.unpack("<II", data[18:26])
-        offset = struct.unpack("<I", data[10:14])[0]
-        row_stride = (w * 3 + 3) & ~3
+            # The file header and common 40-byte DIB prefix cover all fields used.
+            header = f.read(54)
+            if len(header) != 54 or header[:2] != b"BM":
+                raise ValueError("Invalid or truncated BMP header")
+            offset, dib_size, w, h, planes, bpp, compression = struct.unpack_from(
+                "<IIiiHHI", header, 10
+            )
+            if dib_size not in (40, 52, 56, 64, 108, 124):
+                raise ValueError("Unsupported BMP DIB header")
+            if planes != 1 or bpp != 24 or compression != 0:
+                raise ValueError("BMP must use one plane and uncompressed 24-bit pixels")
+            if w <= 0 or h <= 0:
+                raise ValueError("BMP width and height must be positive")
+            if h > _MAX_BMP_ROWS or w * h > _MAX_BMP_PIXELS:
+                raise ValueError("BMP exceeds the row or pixel limit")
+            if offset < 14 + dib_size:
+                raise ValueError("BMP pixel offset overlaps the header")
+
+            row_bytes_count = w * 3
+            row_stride = (row_bytes_count + 3) & ~3
+            pixel_size = row_stride * h
+            if offset + pixel_size > f.seek(0, 2):
+                raise ValueError("Truncated BMP pixel data")
+            f.seek(offset)
+            data = f.read(pixel_size)
+            if len(data) != pixel_size:
+                raise ValueError("Truncated BMP pixel data")
+
         pixels = np.zeros((h, w, 3), dtype=np.uint8)
         for y in range(h):
-            row_start = offset + (h - 1 - y) * row_stride
-            row_bytes = data[row_start:row_start + w * 3]
+            row_start = (h - 1 - y) * row_stride
+            row_bytes = data[row_start:row_start + row_bytes_count]
             row_arr = np.frombuffer(row_bytes, dtype=np.uint8).reshape((w, 3))
             # BGR to RGB
             pixels[y, :, 0] = row_arr[:, 2]

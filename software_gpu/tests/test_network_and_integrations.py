@@ -8,12 +8,70 @@ import unittest
 import time
 import os
 import secrets
+import struct
+import tempfile
+from pathlib import Path
 import numpy as np
 
 from software_gpu.network.server import SoftwareGPUServer
 from software_gpu.clients.python_client import SoftwareGPUClient
 from software_gpu.integrations.mmorpg.game_compute_adapter import GameComputeEngine
 from software_gpu.integrations.image_editor.image_filter_endpoint import ImageFilterPipeline
+
+
+class TestImageFilterBMP(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = Path(tmp.name) / "image.bmp"
+        # Distinct colors and rows exercise BGR order, row order, and padding.
+        self.image = np.array([[[1, 2, 3]], [[4, 5, 6]]], dtype=np.uint8)
+        ImageFilterPipeline.save_bmp(str(self.path), self.image)
+        self.bmp = self.path.read_bytes()
+
+    def test_round_trip_with_padded_rows_and_extended_header(self):
+        np.testing.assert_array_equal(ImageFilterPipeline.load_bmp(self.path), self.image)
+        header = bytearray(self.bmp[:54])
+        extension = bytes(108 - 40)
+        size = len(self.bmp) + len(extension)
+        struct.pack_into("<I", header, 2, size)
+        struct.pack_into("<II", header, 10, 54 + len(extension), 108)
+        self.path.write_bytes(header + extension + self.bmp[54:])
+        np.testing.assert_array_equal(ImageFilterPipeline.load_bmp(self.path), self.image)
+
+    def test_rejects_invalid_headers(self):
+        for field, fmt, offset, value, error in (
+            ("signature", "<2s", 0, b"ZZ", "header"),
+            ("DIB size", "<I", 14, 12, "DIB header"),
+            ("zero width", "<i", 18, 0, "must be positive"),
+            ("negative height", "<i", 22, -2, "must be positive"),
+            ("planes", "<H", 26, 2, "one plane"),
+            ("bit depth", "<H", 28, 32, "24-bit"),
+            ("compression", "<I", 30, 1, "uncompressed"),
+            ("overlapping pixel offset", "<I", 10, 53, "overlaps"),
+            ("pixel offset past EOF", "<I", 10, 100, "Truncated"),
+            ("row limit", "<i", 22, 16_385, "row or pixel limit"),
+        ):
+            with self.subTest(field=field):
+                data = bytearray(self.bmp)
+                struct.pack_into(fmt, data, offset, value)
+                self.path.write_bytes(data)
+                with self.assertRaisesRegex(ValueError, error):
+                    ImageFilterPipeline.load_bmp(self.path)
+
+    def test_rejects_pixel_budget_excess(self):
+        data = bytearray(self.bmp)
+        struct.pack_into("<ii", data, 18, 4097, 4096)
+        self.path.write_bytes(data)
+        with self.assertRaisesRegex(ValueError, "row or pixel limit"):
+            ImageFilterPipeline.load_bmp(self.path)
+
+    def test_rejects_truncated_header_and_missing_row_padding(self):
+        for data in (self.bmp[:53], self.bmp[:-1]):
+            with self.subTest(size=len(data)):
+                self.path.write_bytes(data)
+                with self.assertRaisesRegex(ValueError, "[Tt]runcated"):
+                    ImageFilterPipeline.load_bmp(self.path)
 
 
 class TestNetworkAndIntegrations(unittest.TestCase):
