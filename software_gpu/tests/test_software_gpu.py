@@ -4,6 +4,8 @@ NO MOCKS, NO STUBS - executes real mathematical algorithms and rendering pipelin
 Verifies numerical precision against CPU analytical references.
 """
 
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 import unittest
 import numpy as np
 import os
@@ -48,6 +50,76 @@ class TestSoftwareGPU(unittest.TestCase):
         # Verify content copied to host matches exactly
         copied_back = dev_arr.to_numpy()
         np.testing.assert_array_equal(copied_back, host_data)
+
+    def test_cuda_constructor_failure_preserves_budget_and_address(self):
+        device = VirtualGPU(vram_bytes=4)
+        previous = VirtualGPU.get_current_device()
+        VirtualGPU.set_current_device(device)
+        self.addCleanup(VirtualGPU.set_current_device, previous)
+        base = device.memory._next_virtual_addr
+
+        # The byte count fits; NumPy still rejects the unsupported rank.
+        with self.assertRaises(ValueError):
+            cuda.device_array((1,) * 65)
+        self.assertEqual(device.memory.allocated_bytes, 0)
+        self.assertEqual(device.memory.peak_allocated_bytes, 0)
+        buffer = cuda.device_array(())
+        self.assertEqual(buffer.device_ptr, base)
+        self.assertEqual(device.memory.allocated_bytes, 4)
+
+    def test_memory_rejects_invalid_dimensions_and_over_budget_shapes(self):
+        memory = GPUMemoryManager(total_vram_bytes=8)
+        for shape, error in (
+            ((-1,), ValueError),
+            ((1.5,), TypeError),
+            ((True,), TypeError),
+            ((np.bool_(True),), TypeError),
+            ((2**32, 2**32), MemoryError),
+        ):
+            with self.subTest(shape=shape), self.assertRaises(error):
+                memory.allocate(shape)
+        self.assertEqual(memory.allocated_bytes, 0)
+        self.assertEqual(memory.peak_allocated_bytes, 0)
+        self.assertEqual(memory.allocate([np.int32(2)]).nbytes, 8)
+
+    def test_memory_accounts_for_numpy_backing_and_releases_the_correct_buffer(self):
+        memory = GPUMemoryManager(total_vram_bytes=4)
+        empty = memory.allocate((0,))
+        with self.assertRaises(MemoryError):
+            memory.allocate((2,), dtype="U")
+        buffer = memory.allocate((1,), dtype="U")
+        self.assertEqual(memory.allocated_bytes, buffer.raw_buffer.nbytes)
+        self.assertNotEqual(empty.device_ptr, buffer.device_ptr)
+        memory.free(empty)
+        self.assertEqual(memory.allocated_bytes, 4)
+        memory.free(buffer)
+        self.assertEqual(memory.allocated_bytes, 0)
+
+        memory.reset()
+        replacement = memory.allocate((1,))
+        memory.free(empty)
+        self.assertEqual(memory.allocated_bytes, 4)
+        memory.free(replacement)
+        self.assertEqual(memory.allocated_bytes, 0)
+
+    def test_concurrent_allocations_share_one_budget(self):
+        memory = GPUMemoryManager(total_vram_bytes=4)
+        start = Barrier(8)
+
+        def allocate():
+            start.wait(timeout=10)
+            try:
+                return memory.allocate((1,))
+            except MemoryError:
+                return None
+
+        with ThreadPoolExecutor(max_workers=8) as workers:
+            allocated = [buffer for buffer in workers.map(lambda _: allocate(), range(8))
+                         if buffer is not None]
+        self.assertEqual(len(allocated), 1)
+        self.assertEqual(memory.allocated_bytes, 4)
+        memory.free(allocated[0])
+        self.assertEqual(memory.allocated_bytes, 0)
 
     def test_simt_vector_add_kernel(self):
         """Test real SIMT kernel launch across grid and blocks for vector addition."""

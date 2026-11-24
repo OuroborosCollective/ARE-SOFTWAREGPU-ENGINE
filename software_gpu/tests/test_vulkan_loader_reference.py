@@ -1,5 +1,6 @@
 """Source-bound Vulkan Loader reference tests, never an ARE-ICD success."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -24,9 +25,21 @@ class TestVulkanLoaderReference(unittest.TestCase):
                 path.write_text(json.dumps(content), encoding="utf-8")
                 with self.assertRaises(ValueError):
                     validate_reference_manifest(path)
-            path.write_text(json.dumps({"file_format_version": "1.0.0", "ICD":
-                {"library_path": "libvulkan_lvp.so", "api_version": "1.3.0"}}), encoding="utf-8")
-            self.assertEqual(validate_reference_manifest(path)["library_name"], "libvulkan_lvp.so")
+
+    def test_probe_rejects_library_outside_system_directories_before_launch(self):
+        with tempfile.TemporaryDirectory() as root:
+            manifest = Path(root) / "lvp_icd.json"
+            library = Path(root) / "libvulkan_lvp.so"
+            library.touch()
+            declarations = [str(library), "./libvulkan_lvp.so"]
+            if os.name == "posix" and Path("/usr/lib").is_dir():
+                declarations.append("/usr/lib/" + os.path.relpath(library, "/usr/lib"))
+            for declared in declarations:
+                with self.subTest(declared=declared):
+                    manifest.write_text(json.dumps({"file_format_version": "1.0.0", "ICD":
+                        {"library_path": declared, "api_version": "1.3.0"}}))
+                    with self.assertRaisesRegex(ValueError, "SYSTEM_LIBRARY_REQUIRED"):
+                        run_reference_probe(manifest, vulkaninfo="nonexistent-vulkaninfo")
 
     def test_summary_must_contain_true_cpu_physical_device(self):
         with self.assertRaises(ValueError):
@@ -41,12 +54,13 @@ class TestVulkanLoaderReference(unittest.TestCase):
         self.assertEqual(result["device_type"], "PHYSICAL_DEVICE_TYPE_CPU")
 
     def test_probe_missing_real_vulkaninfo_fails_closed(self):
-        with tempfile.TemporaryDirectory() as root:
-            manifest = Path(root) / "lvp_icd.x86_64.json"
-            manifest.write_text(json.dumps({"file_format_version": "1.0.0", "ICD":
-                {"library_path": "libvulkan_lvp.so", "api_version": "1.3.0"}}), encoding="utf-8")
-            with self.assertRaises(FileNotFoundError):
-                run_reference_probe(manifest, vulkaninfo="/definitely/not/an/installed/vulkaninfo")
+        manifest = next(Path("/usr/share/vulkan/icd.d").glob("lvp_icd*.json"), None)
+        if manifest is None:
+            self.skipTest("requires the distribution Lavapipe installation")
+        verified = validate_reference_manifest(manifest)
+        self.assertTrue(Path(verified["library_path_resolved"]).is_file())
+        with self.assertRaises(FileNotFoundError):
+            run_reference_probe(manifest, vulkaninfo="/definitely/not/an/installed/vulkaninfo")
 
 
 if __name__ == "__main__":

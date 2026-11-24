@@ -4,12 +4,16 @@ This intentionally never registers a Vulkan driver, presents swapchains,
 parses SPIR-V or reports a VkPhysicalDevice. The native bridge is an exact
 capability-checked, synchronous C ABI adapter onto are::raster::draw.
 """
+from contextlib import ExitStack
 import ctypes
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
 import subprocess
 import sys
+from threading import RLock
 import time
 
 import numpy as np
@@ -94,14 +98,124 @@ def build_driver_bridge(directory):
     return binary, receipt
 
 
+_MAX_DRIVER_BYTES = 64 * 1024 * 1024
+_LOAD_LOCK = RLock()
+# dlopen can reuse a loaded library by name. Keep its procfd name reserved for
+# the life of the native image; ctypes does not unload images on object cleanup.
+_LINUX_IMAGES = {}
+_WINDOWS_DIGESTS = {}
+
+
+def _verified_bytes(path, expected_sha256):
+    # A nonblocking open avoids waiting on a FIFO before we can check its type.
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) |
+                 getattr(os, "O_BINARY", 0))
+    with os.fdopen(fd, "rb") as source:
+        info = os.fstat(source.fileno())
+        if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= _MAX_DRIVER_BYTES:
+            raise ValueError("ARE_DRIVER_BINARY_SIZE_OR_TYPE")
+        snapshot = source.read(_MAX_DRIVER_BYTES + 1)
+    if not 0 < len(snapshot) <= _MAX_DRIVER_BYTES:
+        raise ValueError("ARE_DRIVER_BINARY_SIZE_OR_TYPE")
+    if hashlib.sha256(snapshot).hexdigest() != expected_sha256:
+        raise ValueError("ARE_DRIVER_BINARY_HASH")
+    return snapshot
+
+
+def _load_linux(snapshot, digest):
+    import fcntl
+
+    with _LOAD_LOCK:
+        if digest in _LINUX_IMAGES:
+            return _LINUX_IMAGES[digest][1]
+        # Linux UAPI values; some CPython builds omit these constants.
+        add_seals = getattr(fcntl, "F_ADD_SEALS", 1033)
+        seals = (getattr(fcntl, "F_SEAL_SEAL", 0x1) |
+                 getattr(fcntl, "F_SEAL_SHRINK", 0x2) |
+                 getattr(fcntl, "F_SEAL_GROW", 0x4) |
+                 getattr(fcntl, "F_SEAL_WRITE", 0x8))
+        fd = os.memfd_create("are-driver", os.MFD_CLOEXEC | os.MFD_ALLOW_SEALING)
+        try:
+            with os.fdopen(os.dup(fd), "wb") as copy:
+                copy.write(snapshot)
+            fcntl.fcntl(fd, add_seals, seals)
+            # Verify the sealed image itself before giving its path to dlopen.
+            with os.fdopen(os.dup(fd), "rb") as sealed:
+                sealed.seek(0)
+                if (os.fstat(fd).st_size != len(snapshot) or
+                        hashlib.file_digest(sealed, "sha256").hexdigest() != digest):
+                    raise ValueError("ARE_DRIVER_BINARY_HASH")
+            lib = ctypes.CDLL(f"/proc/self/fd/{fd}")
+        except BaseException:
+            os.close(fd)
+            raise
+        _LINUX_IMAGES[digest] = (fd, lib)
+        return lib
+
+
+def _load_windows(path, digest):
+    import _winapi
+    from ctypes import wintypes
+
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    drive_type = kernel.GetDriveTypeW
+    drive_type.argtypes = (wintypes.LPCWSTR,)
+    drive_type.restype = wintypes.UINT
+    # Keep Win32 loader name normalization and remote filesystems outside
+    # the pinned-path contract. All repository Windows builds produce DLLs.
+    if (len(path.drive) != 2 or path.drive[1] != ":" or
+            drive_type(path.anchor) not in (3, 6) or  # DRIVE_FIXED, DRIVE_RAMDISK
+            path.suffix.lower() != ".dll" or any(":" in p for p in path.parts[1:])):
+        raise ValueError("ARE_DRIVER_BINARY_PATH")
+    file_info = kernel.GetFileInformationByHandleEx
+    file_info.argtypes = (wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD)
+    file_info.restype = wintypes.BOOL
+    get_module = kernel.GetModuleHandleW
+    get_module.argtypes = (wintypes.LPCWSTR,)
+    get_module.restype = wintypes.HMODULE
+    generic_read, share_read, open_existing = 0x80000000, 1, 3
+    backup_semantics, open_reparse_point = 0x02000000, 0x00200000
+    file_attribute_tag_info = 9
+    # Pin each component from the drive root down. Reject reparse points so
+    # later lookups cannot escape the pinned chain. FILE_SHARE_READ denies
+    # write and delete access, including existing writable mappings. A rename
+    # also requires write access to the destination directory, including when
+    # replacing a target via POSIX rename semantics.
+    with _LOAD_LOCK, ExitStack() as pins:
+        for part in (*reversed(path.parents), path):
+            handle = _winapi.CreateFile(str(part), generic_read, share_read, 0,
+                                        open_existing, backup_semantics | open_reparse_point, 0)
+            pins.callback(_winapi.CloseHandle, handle)
+            tag_info = (wintypes.DWORD * 2)()
+            if not file_info(handle, file_attribute_tag_info, tag_info, ctypes.sizeof(tag_info)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            if tag_info[0] & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+                raise ValueError("ARE_DRIVER_BINARY_REPARSE_POINT")
+
+        _verified_bytes(path, digest)
+        loaded = get_module(str(path))
+        if loaded and _WINDOWS_DIGESTS.get(loaded) != digest:
+            raise ValueError("ARE_DRIVER_BINARY_ALREADY_LOADED")
+        # These builds use static C++ runtime linking. Do not search the
+        # artifact's directory for dependencies of the verified image.
+        load_library_search_default_dirs = 0x1000
+        lib = ctypes.CDLL(str(path), winmode=load_library_search_default_dirs)
+        _WINDOWS_DIGESTS[lib._handle] = digest
+        return lib
+
+
 class AREDriverBridge:
     """Trusted, digest-pinned native CPU entry point; callers own their buffers."""
     def __init__(self, binary, expected_sha256):
         self.binary_path = Path(binary).resolve()
-        self.binary_sha256 = hashlib.sha256(self.binary_path.read_bytes()).hexdigest()
-        if self.binary_sha256 != expected_sha256:
-            raise ValueError("ARE_DRIVER_BINARY_HASH")
-        self._lib = ctypes.CDLL(str(self.binary_path))
+        if sys.platform == "linux":
+            snapshot = _verified_bytes(self.binary_path, expected_sha256)
+            self._lib = _load_linux(snapshot, expected_sha256)
+        elif sys.platform == "win32":
+            self._lib = _load_windows(self.binary_path, expected_sha256)
+        else:
+            raise OSError("ARE_DRIVER_SECURE_LOAD_UNSUPPORTED")
+        self.binary_sha256 = expected_sha256
         self._lib.are_driver_abi.argtypes = []
         self._lib.are_driver_abi.restype = ctypes.c_uint32
         if self._lib.are_driver_abi() != 1:

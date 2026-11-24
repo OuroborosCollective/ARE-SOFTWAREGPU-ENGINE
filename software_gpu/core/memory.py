@@ -4,7 +4,11 @@ Emulates VRAM addressing, Host-to-Device transfers, Shared Memory Banking,
 and Unified Memory architecture based on GPU hardware principles.
 """
 
-from typing import Dict, Optional, Tuple, Any
+from math import prod
+from operator import index
+from sys import maxsize
+from threading import Lock
+from typing import Dict, Tuple, Any
 import numpy as np
 from .types import GPUArray
 
@@ -24,7 +28,8 @@ class GPUMemoryManager:
         self.allocated_bytes = 0
         self.peak_allocated_bytes = 0
         self._next_virtual_addr = 0x10000000  # Base virtual address
-        self._allocations: Dict[int, GPUArray] = {}
+        self._allocations: Dict[int, Tuple[GPUArray, int]] = {}
+        self._allocation_lock = Lock()
         
         # Telemetry metrics
         self.total_host_to_device_bytes = 0
@@ -33,30 +38,44 @@ class GPUMemoryManager:
 
     def allocate(self, shape: Tuple[int, ...], dtype: np.dtype = np.float32) -> GPUArray:
         """Allocates contiguous GPU device memory buffer (cudaMalloc)."""
+        dimensions = []
+        for dim in shape:
+            if isinstance(dim, (bool, np.bool_)):
+                raise TypeError("GPU array dimensions must be integers")
+            dim = index(dim)
+            if not 0 <= dim <= maxsize:
+                raise ValueError("GPU array dimensions must be non-negative and fit in an index")
+            dimensions.append(dim)
+        shape = tuple(dimensions)
+
         dt = np.dtype(dtype)
-        size = int(np.prod(shape))
-        nbytes = size * dt.itemsize
+        if dt.itemsize == 0 and dt.kind in ("S", "U"):
+            # NumPy allocates at least one character per element for these dtypes.
+            dt = np.empty((0,), dtype=dt).dtype
+        nbytes = prod(shape) * dt.itemsize
 
-        if self.allocated_bytes + nbytes > self.total_vram_bytes:
-            raise MemoryError(
-                f"Virtual GPU Out of Memory! Requested {nbytes} bytes, "
-                f"Available {self.total_vram_bytes - self.allocated_bytes} bytes."
+        with self._allocation_lock:
+            available = self.total_vram_bytes - self.allocated_bytes
+            if nbytes > available:
+                raise MemoryError(
+                    f"Virtual GPU Out of Memory! Requested {nbytes} bytes, "
+                    f"Available {available} bytes."
+                )
+
+            addr = self._next_virtual_addr
+            gpu_array = GPUArray(
+                shape=shape,
+                dtype=dt,
+                device_ptr=addr,
+                memory_manager=self
             )
-
-        # Align address to 128-byte boundary (standard GPU coalescing alignment)
-        addr = self._next_virtual_addr
-        self._next_virtual_addr += ((nbytes + 127) // 128) * 128
-        self.allocated_bytes += nbytes
-        self.peak_allocated_bytes = max(self.peak_allocated_bytes, self.allocated_bytes)
-
-        gpu_array = GPUArray(
-            shape=shape,
-            dtype=dt,
-            device_ptr=addr,
-            memory_manager=self
-        )
-        self._allocations[addr] = gpu_array
-        return gpu_array
+            if nbytes:
+                self._allocations[addr] = (gpu_array, nbytes)
+            # Keep addresses aligned and distinct even for empty buffers.
+            self._next_virtual_addr += max(1, (nbytes + 127) // 128) * 128
+            self.allocated_bytes += nbytes
+            self.peak_allocated_bytes = max(self.peak_allocated_bytes, self.allocated_bytes)
+            return gpu_array
 
     def to_device(self, host_array: np.ndarray) -> GPUArray:
         """Allocates GPU memory and copies host data into it (cudaMemcpyHostToDevice)."""
@@ -72,9 +91,11 @@ class GPUMemoryManager:
     def free(self, gpu_array: GPUArray) -> None:
         """Frees allocated device memory (cudaFree)."""
         addr = gpu_array.device_ptr
-        if addr in self._allocations:
-            self.allocated_bytes -= gpu_array.nbytes
-            del self._allocations[addr]
+        with self._allocation_lock:
+            allocation = self._allocations.get(addr)
+            if allocation is not None and allocation[0] is gpu_array:
+                self.allocated_bytes -= allocation[1]
+                del self._allocations[addr]
 
     def memcpy(self, dst: Any, src: Any, count: int, kind: int) -> None:
         """Generic memory copy bus emulation."""
@@ -95,9 +116,10 @@ class GPUMemoryManager:
 
     def reset(self) -> None:
         """Resets the memory manager allocations and stats."""
-        self._allocations.clear()
-        self.allocated_bytes = 0
-        self._next_virtual_addr = 0x10000000
+        with self._allocation_lock:
+            self._allocations.clear()
+            self.allocated_bytes = 0
+            self._next_virtual_addr = 0x10000000
 
 
 class SharedMemoryBank:

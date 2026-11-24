@@ -153,5 +153,36 @@ class TestNetworkAndIntegrations(unittest.TestCase):
         self.assertGreater(np.max(edges), 0)
 
 
+class TestGaussianBlur(unittest.TestCase):
+    def test_rejects_invalid_radius_before_device_transfer(self):
+        pipeline = ImageFilterPipeline()
+        image = np.zeros((1, 1), dtype=np.uint8)
+        transfers = pipeline.device.memory.transfer_count
+        for radius, error in ((-1, ValueError), (64, ValueError), (1.5, TypeError)):
+            with self.subTest(radius=radius), self.assertRaises(error):
+                pipeline.gaussian_blur(image, radius)
+        self.assertEqual(pipeline.device.memory.transfer_count, transfers)
+
+    def test_work_limit_counts_all_channels(self):
+        pipeline = ImageFilterPipeline()
+        image = np.zeros((32, 32, 3), dtype=np.uint8)
+        transfers = pipeline.device.memory.transfer_count
+        with self.assertRaisesRegex(ValueError, "convolution work limit"):
+            pipeline.gaussian_blur(image, radius=42)
+        self.assertEqual(pipeline.device.memory.transfer_count, transfers)
+
+    def test_radius_boundaries_and_normal_output(self):
+        pipeline = ImageFilterPipeline()
+        pixel = np.array([[200]], dtype=np.float32)
+        np.testing.assert_allclose(pipeline.gaussian_blur(pixel, radius=63), pixel, rtol=1e-5)
+
+        image = np.array([[[240, 100, 0], [0, 50, 240]]], dtype=np.uint8)
+        np.testing.assert_array_equal(pipeline.gaussian_blur(image, radius=0), image)
+        blurred = pipeline.gaussian_blur(image, radius=np.int64(1))
+        expected = np.array([[[214, 94, 25], [25, 55, 214]]], dtype=np.uint8)
+        self.assertEqual(blurred.dtype, image.dtype)
+        np.testing.assert_array_equal(blurred, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

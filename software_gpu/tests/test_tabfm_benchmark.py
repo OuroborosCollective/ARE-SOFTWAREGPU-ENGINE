@@ -83,6 +83,25 @@ class TestTabFMOfflineResearch(unittest.TestCase):
             with self.assertRaisesRegex(PermissionError, "NOT_AUTHORIZED"):
                 analysis.evaluate(nonexistent, "tabfm", confirm_research_rights=True)
 
+    def test_scene_label_budget_counts_utf8_and_json_escaping(self):
+        receipt = copy.deepcopy(self.real)
+        at_limit = "é" * 511
+        receipt["results"][0]["scene"] = at_limit
+        self.assertIn(at_limit, analysis.load_real_receipt(
+            self.changed_receipt(receipt))["scenes"])
+        for label in (at_limit + "é", "\x00" * 171):
+            with self.subTest(label=label[:1]):
+                receipt["results"][0]["scene"] = label
+                with self.assertRaisesRegex(ValueError, "SCENE_LABEL_TOO_LARGE"):
+                    analysis.load_real_receipt(self.changed_receipt(receipt))
+
+    def test_row_budget_counts_all_balanced_scenes(self):
+        with mock.patch.object(analysis, "MAX_RECEIPT_ROWS", 40):
+            self.assertEqual(len(analysis.load_real_receipt(RECEIPT)["rows"]), 40)
+        with mock.patch.object(analysis, "MAX_RECEIPT_ROWS", 39):
+            with self.assertRaisesRegex(ValueError, "RECEIPT_TOO_MANY_ROWS"):
+                analysis.load_real_receipt(RECEIPT)
+
     def test_cli_produces_a_real_receipt_without_model_weights(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "analysis.json"

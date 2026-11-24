@@ -17,6 +17,7 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -169,6 +170,40 @@ class TestGeometryDefensivePaths(unittest.TestCase):
             geometry.prepare_triangles(verts, [(0, 1, 2)], BadShader(), 64, 64)
         self.assertIn("varyings must be a dict", str(cm.exception))
 
+    def test_mismatched_array_layout_discards_only_the_affected_face(self):
+        class VaryingShader(Shader):
+            def vertex_shader(self, vertex):
+                return vertex.position, {"payload": vertex.uv, "flat": 7}
+
+        for z in (0.0, -1.5):
+            with self.subTest(clipped=z < -1.0):
+                verts = [
+                    Vertex([-.7, -.6, z], uv=np.ones((2, 2))),
+                    Vertex([.7, -.6, 0], uv=np.zeros((2, 2))),
+                    Vertex([0, .7, 0], uv=np.zeros((2, 2))),
+                    Vertex([0, .7, 0], uv=np.zeros(3)),
+                ]
+                source_faces = []
+                triangles = geometry.prepare_triangles(
+                    verts, [(0, 1, 3), (0, 1, 2)], VaryingShader(), 64, 64,
+                    source_faces=source_faces)
+                self.assertEqual(len(triangles), 2 if z < -1.0 else 1)
+                self.assertEqual(source_faces, [1] * len(triangles))
+                for triangle in triangles:
+                    for attrs in triangle[6:9]:
+                        self.assertEqual(attrs["payload"].shape, (2, 2))
+                        self.assertEqual(attrs["flat"], 7)
+
+    def test_clip_rejects_mixed_flat_and_array_before_interpolation(self):
+        triangle = [
+            (np.array([-.7, -.6, -1.5, 1.0]), {"payload": 1}),
+            (np.array([.7, -.6, 0.0, 1.0]), {"payload": np.ones(2)}),
+            (np.array([0.0, .7, 0.0, 1.0]), {"payload": np.ones(2)}),
+        ]
+        with patch.object(geometry, "_interpolate") as interpolate:
+            self.assertEqual(geometry.clip_triangle(triangle), [])
+        interpolate.assert_not_called()
+
     def test_ragged_face_records_fail_fast_with_index_error(self):
         verts = [V(0, 0, 0.5), V(0.5, 0, 0.5), V(0, 0.5, 0.5)]
         with self.assertRaises(IndexError) as cm:
@@ -226,6 +261,11 @@ class TestShaderMathContract(unittest.TestCase):
         self.assertEqual(list(v2.uv), [0.25, 0.75])
         self.assertEqual(v2.color.dtype, np.float32)
         self.assertAlmostEqual(float(v2.color[2]), 0.125, places=6)
+
+    def test_vertex_rejects_non_rgb_color_shapes(self):
+        for color in ([1.0, 0.0], [[1.0], [0.0], [0.0]], [1.0, 0.0, 0.0, 1.0]):
+            with self.subTest(color=color), self.assertRaisesRegex(ValueError, "RGB triple"):
+                Vertex([0, 0, 0], color=color)
 
     def test_base_shader_stages_raise_not_implemented(self):
         shader = Shader()

@@ -4,6 +4,8 @@ Offloads spatial filtering (Gaussian blur, Sobel edge detection, sharpen, color 
 for graphics editors (GIMP, Photoshop, Krita, web editors) onto SoftwareGPU.
 """
 
+from operator import index
+
 import numpy as np
 from typing import Tuple, Optional
 import struct
@@ -15,8 +17,10 @@ from software_gpu.compute.kernels import conv2d_simt_kernel, VectorizedGPUKernel
 from software_gpu.core.output import output_file
 
 
-_MAX_BMP_ROWS = 16_384
-_MAX_BMP_PIXELS = 4096 * 4096  # 48 MiB of decoded RGB
+# Radius 63 keeps the float32 kernel below 64 KiB. The work budget
+# accommodates the bundled 400 x 300 RGB demo at radius 3.
+_MAX_GAUSSIAN_RADIUS = 63
+_MAX_GAUSSIAN_WORK = 20_000_000
 
 
 class ImageFilterPipeline:
@@ -26,12 +30,30 @@ class ImageFilterPipeline:
         self._conv_kernel = cuda_kernel(conv2d_simt_kernel)
 
     def gaussian_blur(self, image: np.ndarray, radius: int = 2) -> np.ndarray:
-        """Applies Gaussian spatial blur filter offloaded to SoftwareGPU."""
+        """Blur a nonempty grayscale or multichannel image on SoftwareGPU.
+
+        Radius must be an integer from 0 through 63. Raises ValueError if
+        the radius, image shape, or total convolution work exceeds the limits.
+        """
+        radius = index(radius)
+        if not 0 <= radius <= _MAX_GAUSSIAN_RADIUS:
+            raise ValueError(f"Gaussian blur radius must be between 0 and {_MAX_GAUSSIAN_RADIUS}")
+        if image.ndim not in (2, 3) or 0 in image.shape:
+            raise ValueError("Gaussian blur requires a nonempty 2D or 3D image")
+
         h, w = image.shape[:2]
-        is_rgb = len(image.shape) == 3
+        is_rgb = image.ndim == 3
+        channel_count = image.shape[2] if is_rgb else 1
+        block_dim = (8, 8)
+        grid_dim = ((w + 7) // 8, (h + 7) // 8)
+
+        ksize = 2 * radius + 1
+        # Count both convolution taps and thread setup, including padded threads.
+        threads = grid_dim[0] * grid_dim[1] * block_dim[0] * block_dim[1]
+        if channel_count * (h * w * ksize**2 + threads) > _MAX_GAUSSIAN_WORK:
+            raise ValueError("Gaussian blur exceeds the convolution work limit")
 
         # Generate 1D Gaussian kernel
-        ksize = 2 * radius + 1
         x = np.arange(-radius, radius + 1, dtype=np.float32)
         sigma = radius / 2.0 if radius > 0 else 1.0
         gauss_1d = np.exp(-0.5 * (x / sigma) ** 2)
@@ -40,12 +62,9 @@ class ImageFilterPipeline:
 
         d_krn = self.device.memory.to_device(gauss_2d)
 
-        block_dim = (8, 8)
-        grid_dim = ((w + 7) // 8, (h + 7) // 8)
-
         if is_rgb:
             channels = []
-            for c in range(image.shape[2]):
+            for c in range(channel_count):
                 chan = image[..., c].astype(np.float32)
                 d_in = self.device.memory.to_device(chan)
                 d_out = self.device.memory.allocate((h, w), dtype=np.float32)
