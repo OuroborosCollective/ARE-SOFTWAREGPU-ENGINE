@@ -1,0 +1,36 @@
+#!/bin/sh
+# Self-contained per-user installation. No Python, pip, sudo or network needed.
+set -eu
+umask 077
+are_version='@VERSION@'
+are_prefix="${XDG_DATA_HOME:-${HOME:?HOME is required}/.local/share}/ARE-SoftwareGPU/$are_version"
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --prefix) [ "$#" -ge 2 ] || { echo '--prefix needs an absolute directory' >&2; exit 2; }; are_prefix=$2; shift 2 ;;
+        --help) printf 'ARE SoftwareGPU %s\nUsage: sh installer.run [--prefix /absolute/new/directory]\n' "$are_version"; exit 0 ;;
+        *) echo 'Unknown installer argument' >&2; exit 2 ;;
+    esac
+done
+case "$are_prefix" in /*) ;; *) echo 'Prefix must be absolute' >&2; exit 2 ;; esac
+case "$are_prefix" in /|*/../*|*/..|*/./*|*/.) echo 'Unsafe installation prefix' >&2; exit 2 ;; esac
+[ "$(uname -m)" = x86_64 ] || { echo 'This installer requires Linux x86_64' >&2; exit 2; }
+[ ! -e "$are_prefix" ] && [ ! -L "$are_prefix" ] || { echo 'Prefix already exists; choose a new version directory' >&2; exit 2; }
+for are_command in tail sha256sum tar mktemp realpath mv; do
+    command -v "$are_command" >/dev/null || { echo "Required command unavailable: $are_command" >&2; exit 2; }
+done
+are_work=$(mktemp -d)
+are_stage=''
+trap 'rm -rf -- "$are_work"; [ -z "$are_stage" ] || rm -rf -- "$are_stage"' EXIT HUP INT TERM
+tail -n +@PAYLOAD_LINE@ "$0" > "$are_work/payload.tar.gz"
+printf '%s  %s\n' '@PAYLOAD_SHA256@' "$are_work/payload.tar.gz" | sha256sum --check --status - || { echo 'Installer payload checksum mismatch' >&2; exit 3; }
+mkdir -p -- "$(dirname -- "$are_prefix")"
+# Stage beside the destination so the final rename stays on the same filesystem.
+are_stage=$(mktemp -d "$(dirname -- "$are_prefix")/.are-softwaregpu-XXXXXX")
+tar --extract --gzip --file "$are_work/payload.tar.gz" --directory "$are_stage" --no-same-owner --no-same-permissions
+[ -x "$are_stage/app/are-softwaregpu" ] && [ -x "$are_stage/uninstall.sh" ] && [ -f "$are_stage/.are-uninstall-files" ] && [ -f "$are_stage/.are-uninstall-dirs" ] || { echo 'Installer payload is incomplete' >&2; exit 3; }
+# --no-clobber also protects a destination that appeared during extraction.
+mv -Tn -- "$are_stage" "$are_prefix"
+[ ! -e "$are_stage" ] || { echo 'Installation destination appeared during extraction; nothing overwritten' >&2; exit 2; }
+are_stage=''
+printf 'Installed ARE SoftwareGPU %s\nRun: "%s/bin/are-softwaregpu" --help\nUninstall: "%s/uninstall.sh"\n' "$are_version" "$are_prefix" "$are_prefix"
+exit 0

@@ -4,14 +4,24 @@
 >
 > Die öffentliche Website liest bestehende, revisionsgebundene CPU-Evidence aus diesem Repository. Historische Werte sind keine Live-FPS; neue Rekorde erfordern reale, geprüfte Benchmark-Receipts. Kein VPS-Zugriff durch die Website.
 
-## Linux / Windows: öffentliche Python-Paketinstallation (in Vorbereitung)
+## Installation und versionierte Releases
+
+Der [Plattform-Releasepfad](docs/PLATFORM_RELEASES.md) ergänzt echte
+Windows-x64-EXE- und Linux-x86_64-Installer mit eingebettetem Python.
+Die Installation, ein tatsächlicher Renderlauf und die Deinstallation werden
+auf dem jeweiligen Betriebssystem geprüft. Android und Firefox folgen diesem
+Desktop-Gate. Downloads und der tatsächlich veröffentlichte Stand stehen unter
+[GitHub Releases](https://github.com/OuroborosCollective/ARE-SOFTWAREGPU-ENGINE/releases)
+und im [Release-Status](docs/RELEASE_STATUS.md).
+
+### Python-Paket für Linux und Windows
 
 Die CPU-only-Python-Engine hat einen separaten öffentlichen PyPI-Veröffentlichungspfad
 [`ouroboroscollective-softwaregpu`](docs/PYPI_PACKAGE.md); der importierbare
 API-Name bleibt `software_gpu`, der CLI-Befehl `software-gpu`.
-**Nach erstmalig bestätigtem PyPI-Registry-Readback** lautet die Installation
+Für eine veröffentlichte und im Registry-Readback bestätigte Version lautet die Installation
 `python -m pip install ouroboroscollective-softwaregpu` (Python 3.11/3.12).
-Vorher ist der [Quellcode-Schnellstart](docs/QUICKSTART.md) der verifizierte Weg.
+Der [Quellcode-Schnellstart](docs/QUICKSTART.md) beschreibt zusätzlich den Entwicklungsweg.
 Die `[jit]`-Option nutzt optional Numba; die native C++17-Rasterizer-Binärdatei
 ist nicht Teil dieses Wheels. Die separate npm-/Node-Gradio-Vorschau installiert
 keine Engine. Jede SemVer-Veröffentlichung benötigt erfolgreiche exakte
