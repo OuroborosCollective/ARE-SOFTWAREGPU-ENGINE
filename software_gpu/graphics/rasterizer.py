@@ -68,7 +68,11 @@ class SoftwareRasterizer:
         self.executor = ThreadPoolExecutor(max_workers=self.num_threads, thread_name_prefix="SoftGPU_RasterTile")
 
     def draw_mesh(self, vertices: List[Vertex], indices: List[Tuple[int, int, int]], shader: Shader) -> None:
-        """Processes 3D mesh through Vertex Shader -> Clipping -> Rasterization -> Fragment Shader."""
+        """Processes 3D mesh through Vertex Shader -> Clipping -> Rasterization -> Fragment Shader.
+
+        Tile binning raises ValueError("TILE_CANDIDATE_PAIR_LIMIT") before
+        writing pixels if a draw exceeds the tile candidate pair budget.
+        """
         device = VirtualGPU.get_current_device()
         device.total_draw_calls += 1
         self.last_learning_receipt = None
