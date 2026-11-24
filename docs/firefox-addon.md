@@ -51,8 +51,8 @@ repository root, choose a new output directory:
 
 ```sh
 python tools/package_firefox_addon.py --output-dir build/firefox-addon
-python -m unittest discover -s software_gpu/tests -p test_firefox_addon_package.py -v
-node --test tools/firefox-addon-tests/readback.test.mjs
+python -m unittest discover -s software_gpu/tests -p 'test_firefox_addon*.py' -v
+node --test tools/firefox-addon-tests/*.test.mjs
 ```
 
 The build creates the unsigned XPI, a source ZIP, and a receipt with file hashes.
@@ -82,20 +82,22 @@ python tools/firefox_addon_smoke.py \
 Run it as an unprivileged user. The installation receipt supplies
 `expectedBuildId` and a `files` mapping whose entries contain `path` and `sha256`,
 including `firefox`. The harness verifies those files before and after, starts
-its own profile and Xvfb, temporarily installs the exact XPI, opens its toolbar
+its own profile and Xvfb, checks the running browser's `moz:buildID` against the
+expected build before installing the exact XPI, opens its toolbar
 action, clicks the run and download buttons, independently checks exported
 pixels, captures the actual page, uninstalls the temporary add-on, and stops
 its own process group. `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` is used solely for
 Marionette automation of the fresh browser's extension menu; it is not an
 add-on permission. The tested Nightly requires this environment variable rather
 than the older `--allow-system-access` switch. No graphics
-force flags or sandbox bypasses are set. Keep private runtime receipts outside
+force flags or sandbox bypasses are set. Any later exception, including an
+uninstall failure, invalidates the receipt. Keep private runtime receipts outside
 the public source tree because they contain local installation paths.
 
 ## Recorded validation, 2026-11-24
 
 The exact unsigned XPI SHA-256
-`4ae3faf9f0139f0c3492cdee21237c7d476e94f87229c691e513f297fa46a0e7`
+`333bbef377251b35a4f1f3abffb9aa952f2d777c66da72b756e43b1ca0ce8af7`
 was installed temporarily in Firefox Nightly 163.0a1, build `20261123184640`,
 on Linux/Xvfb. The toolbar action opened the real `moz-extension` page; its run
 button completed and its downloaded JSON matched the displayed report. WebGL
@@ -104,15 +106,28 @@ returned 16,384 actual bytes, all 4,096 pixels verified, SHA-256
 Both WebGPU requests were unavailable and were not accepted as rendering passes.
 This establishes the extension workflow and WebGL test, not ARE native-driver
 rendering or WebGPU rendering. Runtime receipt SHA-256:
-`ed7240f5bb3b407fc80990d82f7d20e288ff4ca37901a6234667712ad428f1f4`.
+`ef8f8b6ea2eb56aabb613f51f06fe8286bf27737239017a05731d271fa689479`.
 
 Two earlier harness failures are retained separately: an incorrect assumption
 about Marionette's window-list response, and the obsolete CLI method for
 enabling privileged test automation. Correcting the harness did not change the
 XPI. The final package raises the desktop minimum to Firefox 142 for the strict
 Mozilla data-declaration compatibility check and was executed again in Nightly.
-Android availability is not declared. Unit verification comprises five Node readback tests and six Python
-package/source-rebuild tests. GitHub CI, signing and AMO review are independent
+Android availability is not declared. Three additional Node control-flow tests
+reproduce delayed device loss, normal destruction and missing loss notification;
+they use explicitly synthetic test doubles, not runtime rendering evidence.
+The WebGPU case now waits for the device's loss notification after its own
+destruction before accepting the result; timeout or unexpected loss prevents a
+pass. This follows the WebGPU [promise-ordering contract](https://gpuweb.github.io/gpuweb/#promise-ordering)
+and [device destruction](https://gpuweb.github.io/gpuweb/#dom-gpudevice-destroy).
+Four Python harness tests cover the observed build and exceptions after readback;
+together with the six packaging tests and eight Node tests they all pass. A
+separate real-browser negative run with an intentionally wrong expected build
+recorded the actual build and exited with failure before installing the add-on
+(receipt SHA-256 `e998aa8655bbfe8c8642bf1bdbcc93505bb6f771a1c72434b5368172408eb1ad`).
+WebGPU rendering and device-loss behavior on an available real WebGPU device
+remain unverified in this environment; unit doubles do not change that limit.
+GitHub CI, signing and AMO review are independent
 gates and must be checked on the submitted source revision.
 
 ## Source boundaries and license

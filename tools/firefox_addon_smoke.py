@@ -162,7 +162,8 @@ def main():
                "-screen 0 1100x1000x24 -nolisten tcp", files["firefox"]["path"],
                "-no-remote", "-profile", str(profile), "--marionette", "about:blank"]
     receipt = {"schema": "are.firefox-addon-smoke.v1", "uid": os.geteuid(), "packageSha256": sha(package),
-               "harnessSha256": sha(__file__), "browserBuildId": install["expectedBuildId"],
+               "harnessSha256": sha(__file__), "browserBuildId": None,
+               "expectedBrowserBuildId": install["expectedBuildId"],
                "browserFilesBefore": hashes_before, "profilePreferences": prefs, "processEnvironment": selected_environment,
                "command": command, "scope": "Temporary local add-on UI and actual shader/readback; no ARE driver attribution or AMO approval.",
                "passed": False}
@@ -190,6 +191,10 @@ def main():
                 client = None
                 raise ValueError("Marionette session is not the newly created test profile")
             receipt["profileBound"] = True
+            receipt["browserBuildId"] = receipt["session"].get("capabilities", {}).get("moz:buildID")
+            if (not isinstance(receipt["browserBuildId"], str) or not receipt["browserBuildId"]
+                    or receipt["browserBuildId"] != install["expectedBuildId"]):
+                raise ValueError("Running Firefox build ID is missing or differs from the pinned expected build ID")
             client.command("WebDriver:SetTimeouts", {"script": 10000, "pageLoad": 20000, "implicit": 0})
             receipt["installedId"] = client.command("Addon:Install", {"path": str(package), "temporary": True})["value"]
             if receipt["installedId"] != ADDON_ID:
@@ -259,6 +264,7 @@ def main():
             client.command("Addon:Uninstall", {"id": ADDON_ID})
             receipt["temporaryAddonRemoved"] = True
     except Exception as error:
+        receipt["passed"] = False
         receipt["error"] = {"type": type(error).__name__, "message": str(error)}
     finally:
         if client:

@@ -140,7 +140,7 @@ export async function runDiagnostics(canvases, onUpdate = () => {}) {
     publish();
     const step = stageRunner(record);
     if (!navigator.gpu) { record.status = "unavailable"; record.reason = "navigator.gpu unavailable"; return record; }
-    let device, texture, readbackBuffer, closed = false, cleanupStarted = false, scopeCount = 0;
+    let device, texture, readbackBuffer, deviceLoss, closed = false, destroyRequested = false, scopeCount = 0;
     const onError = event => { if (!closed) record.errors.push({ source: "uncapturederror", ...describe(event.error) }); };
     try {
       const adapter = await step("requestAdapter", () => navigator.gpu.requestAdapter({ forceFallbackAdapter }));
@@ -160,9 +160,12 @@ export async function runDiagnostics(canvases, onUpdate = () => {}) {
         return pending;
       });
       device.addEventListener("uncapturederror", onError);
-      device.lost.then(info => {
-        if (!closed && !cleanupStarted) record.deviceLost.push({ reason: info.reason, message: info.message });
-      });
+      deviceLoss = device.lost.then(info => {
+        record.deviceLossObserved = true;
+        if (!destroyRequested || info.reason !== "destroyed") {
+          record.deviceLost.push({ reason: info.reason, message: info.message });
+        }
+      }, error => { record.cleanupErrors.push(describe(error)); });
       for (const filter of ["out-of-memory", "internal", "validation"]) { device.pushErrorScope(filter); scopeCount++; }
       const module = device.createShaderModule({ label: "actual-red-triangle", code: `
         @vertex fn vertex_main(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
@@ -207,16 +210,21 @@ export async function runDiagnostics(canvases, onUpdate = () => {}) {
             if (error) record.errors.push({ source: "error-scope", ...describe(error) });
           } catch (error) { record.cleanupErrors.push(describe(error)); }
         }
-        if (record.status === "pass" && (record.errors.length || record.deviceLost.length || record.shaderMessages.some(message => message.type === "error"))) record.status = "fail";
-        cleanupStarted = true;
-        for (const resource of [readbackBuffer, texture, device]) {
+        for (const resource of [readbackBuffer, texture]) {
           if (resource) {
             try { resource.destroy(); }
             catch (error) { record.cleanupErrors.push(describe(error)); }
           }
         }
+        try { destroyRequested = true; device.destroy(); }
+        catch (error) { record.cleanupErrors.push(describe(error)); }
+        // popErrorScope and device.lost have no mutual settlement-order guarantee.
+        // Destruction must settle the one loss promise before a passing snapshot.
+        try { await bounded(deviceLoss, "device-lost-after-destroy", 1000); }
+        catch (error) { record.cleanupErrors.push(describe(error)); }
         try { device.removeEventListener("uncapturederror", onError); }
         catch (error) { record.cleanupErrors.push(describe(error)); }
+        if (record.status === "pass" && (record.errors.length || record.deviceLost.length || record.shaderMessages.some(message => message.type === "error"))) record.status = "fail";
         if (record.status === "pass" && record.cleanupErrors.length) record.status = "error";
       }
       closed = true;
@@ -235,7 +243,7 @@ export async function runDiagnostics(canvases, onUpdate = () => {}) {
     record.acceptedPass = !result.fatalError && acceptedCase(record);
   }
   result.complete = true;
-  // Late device-lost/error callbacks must not change the exported report.
+  // Device loss has settled, or its bounded cleanup has already prevented a pass.
   const finished = JSON.parse(JSON.stringify(result));
   onUpdate(finished);
   return finished;

@@ -16,7 +16,8 @@ FILES = (
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FILES = tuple("clients/firefox-addon/" + name for name in FILES) + (
     "LICENSE.md", "NOTICE", "tools/package_firefox_addon.py", "tools/firefox_addon_smoke.py",
-    "tools/firefox-addon-tests/readback.test.mjs", "software_gpu/tests/test_firefox_addon_package.py",
+    "tools/firefox-addon-tests/readback.test.mjs", "tools/firefox-addon-tests/device-loss.test.mjs",
+    "software_gpu/tests/test_firefox_addon_package.py", "software_gpu/tests/test_firefox_addon_smoke.py",
     "docs/firefox-addon.md", "docs/firefox-addon-privacy.md", "docs/firefox-addon-amo-listing.md",
     ".github/workflows/firefox-addon.yml",
 )
