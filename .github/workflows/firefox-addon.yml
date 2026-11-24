@@ -3,26 +3,8 @@ name: Firefox add-on
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'clients/firefox-addon/**'
-      - 'tools/firefox-addon-tests/**'
-      - 'tools/*firefox_addon*.py'
-      - 'software_gpu/tests/test_firefox_addon*.py'
-      - 'docs/firefox-addon*.md'
-      - '.github/workflows/firefox-addon.yml'
-      - 'LICENSE.md'
-      - 'NOTICE'
   push:
     branches: [main]
-    paths:
-      - 'clients/firefox-addon/**'
-      - 'tools/firefox-addon-tests/**'
-      - 'tools/*firefox_addon*.py'
-      - 'software_gpu/tests/test_firefox_addon*.py'
-      - 'docs/firefox-addon*.md'
-      - '.github/workflows/firefox-addon.yml'
-      - 'LICENSE.md'
-      - 'NOTICE'
   workflow_dispatch:
 
 permissions:
@@ -36,6 +18,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -47,13 +30,20 @@ jobs:
           node --version
           node --test tools/firefox-addon-tests/*.test.mjs
           python -m unittest discover -s software_gpu/tests -p 'test_firefox_addon*.py' -v
-      - name: Validate original extension source with Mozilla web-ext
-        run: npx --yes web-ext@10.8.0 lint --source-dir clients/firefox-addon --warnings-as-errors
-      - name: Build unsigned package and original source archive
-        run: python tools/package_firefox_addon.py --output-dir build/firefox-addon
+      - name: Derive the same release version as Windows and Linux
+        id: version
+        run: python tools/release_version.py --sha "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT"
+      - name: Build and admit the exact versioned source
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python tools/package_firefox_addon.py --version "$RELEASE_VERSION" --source-sha "$GITHUB_SHA" --output-dir "$RUNNER_TEMP/firefox-addon"
+          python tools/firefox_release.py prepare --version "$RELEASE_VERSION" --sha "$GITHUB_SHA" --directory "$RUNNER_TEMP/firefox-addon" --stage-dir "$RUNNER_TEMP/firefox-staged"
+      - name: Validate the actual versioned extension with Mozilla web-ext
+        run: npx --yes web-ext@10.8.0 lint --source-dir "$RUNNER_TEMP/firefox-staged" --warnings-as-errors
       - name: Preserve exact unsigned artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: firefox-addon-${{ github.sha }}
-          path: build/firefox-addon/
+          name: firefox-addon-${{ steps.version.outputs.version }}-${{ github.sha }}
+          path: ${{ runner.temp }}/firefox-addon/
           if-no-files-found: error

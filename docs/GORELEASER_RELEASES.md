@@ -1,25 +1,29 @@
 # Verified versioned releases and announcements
 
-GoReleaser OSS is a **separate** semver release lane. It does not replace
-`.github/workflows/android-gradio-apk-release.yml`, which builds SHA-specific
-Android debug APK and portable Node preview clients and publishes the npm
-package to GitHub Packages.
+GoReleaser OSS publishes the common immutable SemVer release. The
+[application release contract](PLATFORM_RELEASES.md) binds the Python
+distributions and the native-platform desktop installers to the same version
+and tested source. The historical Android/Node preview lane is described in
+[release status](RELEASE_STATUS.md); a debug preview is not an update-ready
+Android release.
 
 ## Release procedure
 
 1. Merge the reviewed change containing `.goreleaser.yaml`, workflow, release
    gate and regression tests **only after full exact-head CI is green**. Keep
    `Memory.md` as an append-only record of change, learning and evidence.
-2. Confirm the exact `main` commit has a successful **push** run of the existing
-   `CPU regressions` workflow, with at least all its eight matrix/package/UI
-   jobs green. A green PR, manual dispatch or older run does not qualify.
-3. Match the version in `setup.py` to a strict semantic tag such as `v1.2.0`.
-   Tag the **same reviewed main commit** and push the tag. No release is made
-   merely by merging or by running tests. Avoid reusing published tags.
-4. On tag push, the workflow checks source ancestry, reads GitHub Actions jobs
-   for the exact SHA, builds the wheel with `LICENSE.md` and `NOTICE`, tests
-   GoReleaser config, publishes source + wheel + checksums and reads back
-   the actual GitHub Release. Failed gates block publication.
+2. Confirm the exact `main` commit has successful **push** runs of the CPU,
+   installed-wheel and desktop-installer workflows. All required jobs must
+   succeed; a green PR, manual dispatch or older run does not qualify.
+3. `main-pypi-release.yml` derives `v1.2.N` from the existing first-parent
+   baseline, creates the tag on that exact tested integration and explicitly
+   dispatches `goreleaser.yml` on the tag. A merge starts this process
+   automatically; failed checks prevent publication. Reruns retain the version.
+4. The tagged workflow checks source ancestry and exact-SHA CI, builds the
+   Python distributions with `LICENSE.md` and `NOTICE`, and downloads the
+   already tested desktop artifacts from their bound workflow run. After
+   validating their version, source, receipt and bytes, it publishes the
+   packages and checksums and reads back the actual GitHub Release.
 5. Confirm published assets, checksums and the GitHub Release target/commit.
    Treat CI success without these readbacks as incomplete evidence.
 
@@ -46,8 +50,9 @@ Gradio npm launcher are **not** included in this wheel.
 - A separate API readback at `pypi.org/pypi/<project>/<version>/json`
   compares both published filenames and their SHA-256 digests.
   `PYPI_REGISTRY_SHA256_READBACK_OK` is the only PyPI success receipt.
-- PyPI rejects re-uploading the same version. Every new SemVer release must
-  bump both `setup.py` and `software_gpu/__init__.py` before tagging.
+- PyPI rejects re-uploading the same version. The existing `ARE_BUILD_TAG`
+  build-version contract supplies the derived version; no source-file version
+  bump is required for each integration.
 
 **One-time owner setup on PyPI (outside GitHub and not automated here):**
 Create a *pending trusted publisher* for the name

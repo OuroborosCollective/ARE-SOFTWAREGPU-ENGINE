@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Wait for both main CI suites and dispatch the immutable tag
+      - name: Wait for CPU, installed-wheel and native desktop gates before immutable tag
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tools/main_pypi_release.py

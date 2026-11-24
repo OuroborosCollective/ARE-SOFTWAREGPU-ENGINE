@@ -14,6 +14,49 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class FirefoxAddonPackageTests(unittest.TestCase):
+    def test_release_version_is_staged_without_changing_source_and_rebuilds(self):
+        source_manifest = ROOT / "clients/firefox-addon/manifest.json"
+        before = source_manifest.read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "release"
+            result = subprocess.run([sys.executable, "tools/package_firefox_addon.py", "--version", "1.2.50",
+                                     "--output-dir", str(output)], cwd=ROOT, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            package = output / "are-softwaregpu-diagnostics-1.2.50-unsigned.xpi"
+            with zipfile.ZipFile(package) as archive:
+                self.assertEqual(json.loads(archive.read("manifest.json"))["version"], "1.2.50")
+                self.assertEqual(archive.read("diagnostics.mjs"), (ROOT / "clients/firefox-addon/diagnostics.mjs").read_bytes())
+            unpacked = root / "source"
+            with zipfile.ZipFile(output / "are-softwaregpu-diagnostics-1.2.50-source.zip") as archive:
+                archive.extractall(unpacked)
+            rebuilt = root / "rebuilt"
+            subprocess.run([sys.executable, "tools/package_firefox_addon.py", "--version", "1.2.50",
+                            "--output-dir", str(rebuilt)], cwd=unpacked, check=True, capture_output=True)
+            self.assertEqual(package.read_bytes(), (rebuilt / package.name).read_bytes())
+            receipt = json.loads((output / "package-receipt.json").read_text())
+            self.assertFalse(receipt["signed"])
+            self.assertEqual(receipt["version"], "1.2.50")
+            self.assertEqual(source_manifest.read_bytes(), before)
+
+    def test_release_version_refuses_noncanonical_or_unsafe_manifest_values(self):
+        for bad in ("v1.2.50", "01.2.50", "1.2", "1.2.50;whoami", "1.2.65536", "1.2.50-rc.1"):
+            with self.subTest(version=bad), tempfile.TemporaryDirectory() as directory:
+                result = subprocess.run([sys.executable, "tools/package_firefox_addon.py", "--version", bad,
+                                         "--output-dir", directory], cwd=ROOT, capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("ADDON_RELEASE_VERSION_INVALID", result.stderr)
+                self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_source_revision_cannot_be_asserted_by_an_unrelated_cli_argument(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run([sys.executable, "tools/package_firefox_addon.py", "--version", "1.2.50",
+                                     "--source-sha", "0" * 40, "--output-dir", directory],
+                                    cwd=ROOT, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("ADDON_SOURCE_REVISION_MISMATCH", result.stderr)
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
     def test_source_archive_rebuilds_identical_runtime_without_repository_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

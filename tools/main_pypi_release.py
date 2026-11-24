@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 
-from release_gate import select_run, verify_jobs
+from release_gate import select_run, verify_jobs, verify_desktop_jobs, release_tag_for_lineage
 
 
 def output(*args):
@@ -18,23 +18,23 @@ def api(path):
 def main():
     repo = os.environ["GITHUB_REPOSITORY"]
     sha = os.environ["GITHUB_SHA"]
-    anchor = "22c436385fad7bf79d074d9eaf2cce458a81810e"
     if output("git", "rev-parse", "HEAD") != sha:
         raise ValueError("Release checkout differs from event SHA")
     lineage = output("git", "rev-list", "--first-parent", sha).splitlines()
-    patch = lineage.index(anchor)
-    if patch < 1:
-        raise ValueError("Release must follow the v1.2.0 automation baseline")
-    tag = f"v1.2.{patch}"
+    tag = release_tag_for_lineage(lineage, sha)
     base = f"repos/{repo}"
-    pending = {"cpu-regressions.yml": 9, "public-package-install.yml": 4}
+    pending = {"cpu-regressions.yml": 9, "public-package-install.yml": 4,
+               "desktop-installers.yml": 2}
     for _ in range(135):
         for name, minimum in list(pending.items()):
             runs = api(f"{base}/actions/workflows/{name}/runs?head_sha={sha}&event=push&per_page=100")
             exact = [r for r in runs["workflow_runs"] if r["head_branch"] == "main" and r["head_sha"] == sha]
             if exact and max(exact, key=lambda r: r["id"])["status"] == "completed":
                 run = select_run(runs, sha, repo)
-                verify_jobs(api(f"{base}/actions/runs/{run}/jobs?per_page=100"), run, minimum=minimum)
+                jobs = api(f"{base}/actions/runs/{run}/jobs?per_page=100")
+                verify_jobs(jobs, run, minimum=minimum)
+                if name == "desktop-installers.yml":
+                    verify_desktop_jobs(jobs, run)
                 print("verified", name, run, flush=True)
                 del pending[name]
         if not pending:

@@ -1,0 +1,128 @@
+name: Firefox companion release
+
+on:
+  workflow_run:
+    workflows: [Verified GoReleaser release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing verified desktop release tag, for example v1.2.50
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: firefox-release-${{ github.event.workflow_run.head_branch || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  context:
+    if: >-
+      github.repository == 'OuroborosCollective/ARE-SOFTWAREGPU-ENGINE' &&
+      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      tag: ${{ steps.admit.outputs.tag }}
+      version: ${{ steps.admit.outputs.version }}
+      sha: ${{ steps.admit.outputs.sha }}
+    steps:
+      # Never run an event-controlled checkout with a write token or AMO secrets.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Admit the completed publisher and the actual desktop release bytes
+        id: admit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/release_followup.py resolve --event "$GITHUB_EVENT_PATH" --repo "$GITHUB_REPOSITORY" --github-output "$GITHUB_OUTPUT"
+
+  unsigned:
+    name: Publish verified unsigned Firefox package and source
+    needs: context
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    env:
+      RELEASE_VERSION: ${{ needs.context.outputs.version }}
+      RELEASE_SHA: ${{ needs.context.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.context.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Verify package and diagnostic contracts at the admitted source
+        run: |
+          node --test tools/firefox-addon-tests/*.test.mjs
+          python -m unittest discover -s software_gpu/tests -p 'test_firefox_addon*.py' -v
+      - name: Stage the matching release version without modifying tracked files
+        run: |
+          python tools/package_firefox_addon.py --version "$RELEASE_VERSION" --source-sha "$RELEASE_SHA" --output-dir "$RUNNER_TEMP/firefox-addon"
+          python tools/firefox_release.py prepare --version "$RELEASE_VERSION" --sha "$RELEASE_SHA" --directory "$RUNNER_TEMP/firefox-addon" --stage-dir "$RUNNER_TEMP/firefox-staged"
+          npx --yes web-ext@10.8.0 lint --source-dir "$RUNNER_TEMP/firefox-staged" --warnings-as-errors
+      - name: Publish immutable unsigned downloads with full byte readback
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/firefox_release.py publish --version "$RELEASE_VERSION" --sha "$RELEASE_SHA" --directory "$RUNNER_TEMP/firefox-addon"
+      - name: Record unsigned publication status
+        run: |
+          echo '### Firefox unsigned package and source published' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The XPI is explicitly unsigned. Mozilla signing and public listing are tracked in the separate AMO job.' >> "$GITHUB_STEP_SUMMARY"
+
+  amo:
+    name: Sign and list on Mozilla AMO, or report BLOCKED
+    needs: [context, unsigned]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      actions: read
+    env:
+      RELEASE_VERSION: ${{ needs.context.outputs.version }}
+      RELEASE_SHA: ${{ needs.context.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.context.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install the pinned Mozilla submission tool before exposing credentials
+        run: npm install --prefix "$RUNNER_TEMP/mozilla-tool" --no-audit --no-fund --ignore-scripts web-ext@10.8.0
+      - name: Check credential presence, submit listed, and verify the signed download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: python tools/firefox_release.py amo --version "$RELEASE_VERSION" --sha "$RELEASE_SHA" --directory "$RUNNER_TEMP/firefox-amo" --stage-dir "$RUNNER_TEMP/firefox-amo-staged" --web-ext "$RUNNER_TEMP/mozilla-tool/node_modules/.bin/web-ext"
+      - name: Explain blocked or pending Mozilla publication
+        if: failure()
+        run: |
+          echo '### Mozilla publication is BLOCKED or awaiting review' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The exact cause is in the AMO step. Missing credentials, rejected submission, or pending review never count as an official listing. The unsigned GitHub download remains published. See docs/FIREFOX_RELEASE_SIGNING.md.' >> "$GITHUB_STEP_SUMMARY"

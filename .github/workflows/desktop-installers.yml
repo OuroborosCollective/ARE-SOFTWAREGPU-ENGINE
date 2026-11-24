@@ -1,0 +1,73 @@
+name: Native desktop installers
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+            name: Windows x64 install / render / uninstall
+          - os: ubuntu-22.04
+            platform: linux-x86_64
+            name: Linux x86_64 install / render / uninstall
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Derive one immutable version from this exact source
+        id: version
+        run: python tools/release_version.py --sha "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT"
+      - name: Install pinned standalone build dependencies
+        env:
+          ARE_BUILD_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          python -m pip install --disable-pip-version-check pyinstaller==6.22.3 numpy==2.2.6 Pillow==11.3.0
+          python -m pip install --no-deps .
+      - name: Exercise installer and release admission regressions
+        run: |
+          python -m unittest discover -s software_gpu/tests -p test_desktop_release.py -v
+          python -m unittest discover -s software_gpu/tests -p test_platform_release_gate.py -v
+      - name: Build a real standalone installer with embedded Python runtime
+        env:
+          ARE_BUILD_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: python tools/package_desktop.py --version "$RELEASE_VERSION" --source-sha "$GITHUB_SHA" --output-dir release-assets
+      - name: Install, run real rasterizer, compare bytes and uninstall
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          python tools/verify_desktop_install.py --directory release-assets \
+            --version "$RELEASE_VERSION" --source-sha "$GITHUB_SHA" \
+            --receipt "release-assets/desktop-${PLATFORM}-smoke.json"
+      - name: Preserve exact successful product and real install receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: desktop-${{ github.sha }}-${{ matrix.platform }}-${{ github.run_attempt }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

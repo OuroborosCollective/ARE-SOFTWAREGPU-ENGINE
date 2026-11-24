@@ -11,13 +11,32 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import socket
 import subprocess
 import time
+import zipfile
 
 
 ADDON_ID = "are-softwaregpu-diagnostics@arelogic.space"
+
+
+def package_version(path):
+    """Read identity from the exact XPI; no browser version or success is invented."""
+    with zipfile.ZipFile(path) as archive:
+        entries = [item for item in archive.infolist() if item.filename == "manifest.json"]
+        if len(entries) != 1 or entries[0].file_size > 64 * 1024:
+            raise ValueError("Invalid add-on manifest entry")
+        manifest = json.loads(archive.read(entries[0]))
+    version = manifest.get("version")
+    if (manifest.get("manifest_version") != 3
+            or manifest.get("browser_specific_settings", {}).get("gecko", {}).get("id") != ADDON_ID
+            or not isinstance(version, str)
+            or re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", version) is None
+            or any(int(part) > 65535 for part in version.split("."))):
+        raise ValueError("Invalid add-on package identity/version")
+    return version
 
 
 def sha(path):
@@ -133,6 +152,7 @@ def main():
     for directory in (profile, downloads, runtime):
         directory.mkdir(mode=0o700)
     package = args.package.resolve(strict=True)
+    addon_version = package_version(package)
     install = json.loads(args.install_receipt.read_text())
     files = install["files"]
     hashes_before = {name: sha(spec["path"]) for name, spec in files.items()}
@@ -174,6 +194,7 @@ def main():
                "-screen 0 1100x1000x24 -nolisten tcp", files["firefox"]["path"],
                "-no-remote", "-profile", str(profile), "--marionette", "about:blank"]
     receipt = {"schema": "are.firefox-addon-smoke.v1", "uid": os.geteuid(), "packageSha256": sha(package),
+               "addonVersion": addon_version,
                "harnessSha256": sha(__file__), "browserBuildId": None,
                "expectedBrowserBuildId": install["expectedBuildId"],
                "browserFilesBefore": hashes_before, "profilePreferences": prefs, "processEnvironment": selected_environment,
@@ -239,13 +260,15 @@ def main():
             client.command("WebDriver:SwitchToWindow", {"handle": new_tabs[0], "focus": True})
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
-                ready = client.script("return !!document.getElementById('run') && document.getElementById('version')?.textContent === 'v0.1.0';")
+                ready = client.script("return !!document.getElementById('run') && document.getElementById('version')?.textContent === arguments[0];", ["v" + addon_version])
                 if ready:
                     break
                 time.sleep(0.2)
             receipt["initialUi"] = client.script("return {url:location.href,version:document.getElementById('version').textContent,progress:document.getElementById('progress').textContent,saveDisabled:document.getElementById('download').disabled,report:document.getElementById('report').textContent};")
             if not receipt["initialUi"]["url"].startswith("moz-extension://") or receipt["initialUi"]["saveDisabled"] is not True or receipt["initialUi"]["report"] != "No checks have run.":
                 raise ValueError("Unexpected initial extension UI")
+            if receipt["initialUi"].get("version") != "v" + addon_version:
+                raise ValueError("Extension UI version differs from the exact XPI")
             client.click("#run")
             deadline = time.monotonic() + 85
             while time.monotonic() < deadline:
@@ -257,6 +280,8 @@ def main():
             if state["running"] or state["saveDisabled"]:
                 raise RuntimeError("Diagnostics did not finish with an exportable result")
             report = json.loads(state["report"])
+            if report.get("addon", {}).get("version") != addon_version:
+                raise ValueError("Exported add-on version differs from the exact XPI")
             (root / "dom-report.json").write_text(json.dumps(report, indent=2) + "\n")
             client.click("#download")
             downloaded = downloads / "are-firefox-graphics-report.json"

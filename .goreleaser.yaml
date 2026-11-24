@@ -1,4 +1,4 @@
-# Stable, tagged GitHub releases only; SHA-tagged Android/Node previews stay separate.
+# Stable tagged releases include exact-main-tested Windows/Linux installers.
 version: 2
 project_name: ARE-SoftwareGPU-Engine
 
@@ -15,23 +15,26 @@ source:
 checksum:
   name_template: checksums.txt
   extra_files:
-    - glob: ./release-assets/ouroboroscollective_softwaregpu-*
+    - glob: ./release-assets/*
 
 release:
   github:
     owner: OuroborosCollective
     name: ARE-SOFTWAREGPU-ENGINE
   prerelease: auto
+  # Slow older merges must not replace a newer SemVer release as latest.
+  make_latest: 'legacy'
   extra_files:
-    - glob: ./release-assets/ouroboroscollective_softwaregpu-*
+    - glob: ./release-assets/*
   header: |
     CPU-only software rasterization research, with reproducible tests and
     source-bound evidence. No hardware-GPU parity or FPS guarantee.
   footer: |
     PolyForm Noncommercial 1.0.0; retain the Required Notice.
-    This Python wheel is not an Android application or a native GPU driver.
-    Separate Gradio Android/Linux/Windows preview clients remain under
-    `gradio-android-<commit>` tags.
+    Windows x64 EXE and Linux x86_64 .run installers contain the CPU renderer
+    and Python runtime. See platform-release.json and native installation receipts.
+    The Windows installer is not Authenticode signed. No system GPU driver is installed.
+    Android companion and Firefox signing status are documented separately.
 
 # Optional cross-posting: enabled only if both Discord webhook secrets exist.
 announce:

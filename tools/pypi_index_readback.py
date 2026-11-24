@@ -71,6 +71,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
     parser.add_argument("--dist", type=Path, required=True)
+    parser.add_argument("--probe-existing", action="store_true",
+                        help="Only HTTP 404 permits a new upload; existing bytes must match")
+    parser.add_argument("--github-output", type=Path)
     args = parser.parse_args()
     from release_gate import wheel_version
     version = wheel_version("v" + args.version)
@@ -89,13 +92,24 @@ def main() -> int:
                     raise ValueError("PYPI_HTTP_STATUS_INVALID")
                 payload = json.loads(response.read(2_000_000))
             validate_registry_payload(payload, files, version)
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as output:
+                    output.write("exists=true\n")
             print(json.dumps({"status": "PYPI_REGISTRY_SHA256_READBACK_OK",
                               "name": PROJECT, "version": version,
                               "artifacts": [path.name for path in files]}, sort_keys=True))
             return 0
         except (HTTPError, URLError, TimeoutError, ValueError, OSError,
                 json.JSONDecodeError) as exc:
+            if args.probe_existing and isinstance(exc, HTTPError) and exc.code == 404:
+                if args.github_output:
+                    with args.github_output.open("a", encoding="utf-8") as output:
+                        output.write("exists=false\n")
+                print("PYPI_VERSION_NOT_YET_PUBLISHED", version)
+                return 0
             error = type(exc).__name__
+            if args.probe_existing:
+                break
             if attempt < 5:
                 time.sleep(8)
     print("PYPI_READBACK_BLOCKED: " + str(error), file=sys.stderr)
