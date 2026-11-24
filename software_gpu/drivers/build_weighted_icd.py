@@ -11,6 +11,26 @@ import xml.etree.ElementTree as ET
 from software_gpu.research.native_symbolic import FLAGS, compiler
 
 
+def canonical_registry_params(command_name, params):
+    """Reject ABI-ambiguous XML rather than compiling a wrong dispatch signature.
+
+    Recent distro registry snapshots duplicate the identical pCreateInfo
+    declaration in vkCreateSwapchainKHR. The authoritative Vulkan header
+    declares this argument ONCE. Only this exact legacy/distro duplicate
+    is normalized, and every unrelated repeated argument fails closed.
+    """
+    names = [param.findtext("name") for param in params]
+    if (command_name == "vkCreateSwapchainKHR" and names ==
+            ["device", "pCreateInfo", "pCreateInfo", "pAllocator", "pSwapchain"]):
+        a, b = ("".join(param.itertext()) for param in params[1:3])
+        if a != b:
+            raise ValueError("ARE_VK_REGISTRY_CONFLICTING_SWAPCHAIN_ABI")
+        return [params[0], params[1], params[3], params[4]]
+    if len(names) != len(set(names)):
+        raise ValueError("ARE_VK_REGISTRY_DUPLICATE_ABI_ARGUMENT:" + command_name)
+    return params
+
+
 def write_dispatch(registry, output):
     from software_gpu.drivers.weighted_icd import Driver
     entries = {n for n in vars(Driver) if n.startswith("vk")}
@@ -21,7 +41,7 @@ def write_dispatch(registry, output):
         if name not in entries:
             continue
         entries.remove(name)
-        params = cmd.findall("param")
+        params = canonical_registry_params(name, cmd.findall("param"))
         decl = ", ".join("".join(p.itertext()) for p in params)
         args = ", ".join("(uintptr_t)" + p.findtext("name") for p in params)
         result = cmd.findtext("proto/type")

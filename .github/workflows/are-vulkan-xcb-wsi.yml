@@ -45,6 +45,7 @@ jobs:
           EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
+          python -m unittest software_gpu.tests.test_weighted_wsi_registry
           python -m software_gpu.drivers.verify_weighted_wsi evidence-local/real-vulkan-xcb --expected-revision "$EXPECTED_REVISION"
       - name: Archive original window, depth, driver and source SHA receipts
         if: always()
