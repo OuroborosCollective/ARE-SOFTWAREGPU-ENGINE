@@ -7,10 +7,56 @@ import struct
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
-from software_gpu.network.server import SoftwareGPUServer
+from software_gpu.network.server import BinaryTCPServer, SoftwareGPUServer, _DeadlineReader
 from software_gpu.network.protocol import pack_message, unpack_header, HEADER_SIZE, MsgType
 from software_gpu.network.security import SecurityLimits, RequestRejected, validate_request
+
+
+class TestReceptionDeadline(unittest.TestCase):
+    def test_http_idle_and_incomplete_body_release_connection(self):
+        secret = secrets.token_urlsafe(40)
+        server = SoftwareGPUServer(http_port=0, tcp_port=0, auth_token=secret,
+                                   limits=SecurityLimits(max_clients=1, io_timeout_seconds=.25))
+        server.start()
+        self.addCleanup(server.stop)
+        incomplete = (f"POST /rpc HTTP/1.0\r\nAuthorization: Bearer {secret}\r\n"
+                      "Content-Length: 2\r\n\r\n{").encode("ascii")
+        for initial_data in (b"", incomplete):
+            with self.subTest(has_body=bool(initial_data)):
+                with socket.create_connection(("127.0.0.1", server.http_port), timeout=3) as client:
+                    if initial_data:
+                        client.sendall(initial_data)
+                    self.assertEqual(client.recv(1), b"")
+                self.assertTrue(server.policy.connections.acquire(timeout=1))
+                server.policy.connections.release()
+
+    def test_http_successful_read_does_not_extend_deadline(self):
+        writer, reader = socket.socketpair()
+        with writer, reader:
+            reader.settimeout(1)
+            writer.sendall(b"ab")
+            with patch("software_gpu.network.server.time") as clock:
+                clock.monotonic.return_value = 0
+                with _DeadlineReader(reader) as stream:
+                    clock.monotonic.return_value = .75
+                    self.assertEqual(stream.read(1), b"a")
+                    self.assertEqual(reader.gettimeout(), 1)
+                    clock.monotonic.return_value = 1
+                    with self.assertRaises(TimeoutError):
+                        stream.read(1)
+
+    def test_binary_header_and_body_share_reception_budget(self):
+        writer, reader = socket.socketpair()
+        with writer, reader:
+            writer.sendall(b"ab")
+            with patch("software_gpu.network.server.time") as clock:
+                clock.monotonic.return_value = .75
+                self.assertEqual(BinaryTCPServer._read(reader, 1, 1), b"a")
+                clock.monotonic.return_value = 1
+                with self.assertRaises(TimeoutError):
+                    BinaryTCPServer._read(reader, 1, 1)
 
 
 class TestSecurity(unittest.TestCase):

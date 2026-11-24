@@ -4,9 +4,11 @@ No public bind, no wildcard CORS and no unrestricted in-process compute.
 """
 from __future__ import annotations
 
+import io
 import json
 import socket
 import threading
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
@@ -25,6 +27,35 @@ PATHS = {
 }
 
 
+def _remaining_io_time(deadline):
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("Request reception deadline exceeded")
+    return remaining
+
+
+class _DeadlineReader(io.RawIOBase):
+    """Apply one deadline across the buffered HTTP parser's socket reads."""
+
+    def __init__(self, connection):
+        super().__init__()
+        self.connection = connection
+        self.timeout = connection.gettimeout()
+        self.deadline = time.monotonic() + self.timeout
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        self.connection.settimeout(_remaining_io_time(self.deadline))
+        try:
+            count = self.connection.recv_into(buffer)
+            _remaining_io_time(self.deadline)
+            return count
+        finally:
+            self.connection.settimeout(self.timeout)
+
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -38,6 +69,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
             request.close()
             return
         try:
+            request.settimeout(self.policy.limits.io_timeout_seconds)
             super().process_request(request, client_address)
         except BaseException:
             self.policy.connections.release()
@@ -77,6 +109,11 @@ class ServicePolicy:
 
 class GPUHTTPRequestHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.0"
+
+    def setup(self):
+        super().setup()
+        self.rfile.close()
+        self.rfile = io.BufferedReader(_DeadlineReader(self.connection))
 
     def log_message(self, format, *args):
         pass
@@ -147,6 +184,9 @@ class GPUHTTPRequestHandler(BaseHTTPRequestHandler):
             self._reply(exc.status, {"error": exc.code})
         except (ValueError, UnicodeError, TypeError):
             self._reply(400, {"error": "MALFORMED_REQUEST"})
+        except TimeoutError:
+            # Let the HTTP handler discard the connection on timeout.
+            raise
         except BaseException:
             self._reply(500, {"error": "INTERNAL_ERROR"})
 
@@ -180,17 +220,18 @@ class BinaryTCPServer(threading.Thread):
     def _handle_client(self, client):
         try:
             with client:
-                client.settimeout(self.policy.limits.io_timeout_seconds)
-                # One request per connection prevents indefinite idle sessions.
-                header = self._read(client, HEADER_SIZE)
+                timeout = self.policy.limits.io_timeout_seconds
+                deadline = time.monotonic() + timeout
+                header = self._read(client, HEADER_SIZE, deadline)
                 if len(header) != HEADER_SIZE:
                     return
                 kind, flags, length = unpack_header(header)
                 if kind != MsgType.JSON_REQUEST or flags != 0 or length < 1 or length > self.policy.limits.max_request_bytes:
                     return
-                payload = self._read(client, length)
+                payload = self._read(client, length, deadline)
                 if len(payload) != length:
                     return
+                client.settimeout(timeout)
                 doc = json.loads(payload.decode("utf-8"))
                 bounded_json(doc)
                 if not isinstance(doc, dict) or not authorized(self.policy.token, doc.get("token", "")):
@@ -210,13 +251,15 @@ class BinaryTCPServer(threading.Thread):
             self.policy.connections.release()
 
     @staticmethod
-    def _read(conn, count):
+    def _read(conn, count, deadline):
         out = bytearray()
         while len(out) < count:
+            conn.settimeout(_remaining_io_time(deadline))
             chunk = conn.recv(min(count - len(out), 65536))
             if not chunk:
                 break
             out.extend(chunk)
+        _remaining_io_time(deadline)
         return bytes(out)
 
     def stop(self):

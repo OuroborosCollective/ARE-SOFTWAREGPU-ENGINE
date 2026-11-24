@@ -37,6 +37,8 @@ class Vertex:
             self.color = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         else:
             self.color = np.array(self.color, dtype=np.float32)
+            if self.color.shape != (3,):
+                raise ValueError("vertex color must be an RGB triple")
 
 
 # =====================================================================

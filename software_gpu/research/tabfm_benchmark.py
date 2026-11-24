@@ -19,6 +19,9 @@ OUTPUT_PROTOCOL = "are.tabfm.offline-research.v1"
 UPSTREAM_SHA = "fbb665569425fd2f490c6576b3af967876fe11ff"
 FEATURES = ("triangles", "pixels", "workers", "plan")
 MAX_INPUT_BYTES = 2_000_000
+# Bound scene labels after JSON escaping; they repeat in rows and report folds.
+MAX_SCENE_JSON_BYTES = 1_024
+MAX_RECEIPT_ROWS = 4_096
 MAX_TABFM_CONTEXT = 100
 
 
@@ -67,6 +70,9 @@ def load_real_receipt(path):
         name = scene.get("scene")
         if not isinstance(name, str) or not name or name in scenes:
             raise ValueError("SCENE_DUPLICATE_OR_MISSING")
+        if (len(name) + 2 > MAX_SCENE_JSON_BYTES
+                or len(_canonical(name)) > MAX_SCENE_JSON_BYTES):
+            raise ValueError("SCENE_LABEL_TOO_LARGE")
         scenes.add(name)
         if scene.get("byte_identical") is not True:
             raise ValueError("RENDER_PARITY_REQUIRED")
@@ -82,6 +88,9 @@ def load_real_receipt(path):
         if not stats or set(stats) != set(samples):
             raise ValueError("PLAN_SAMPLES_MISMATCH")
         if plan_set is None:
+            # Every scene must have this same plan set.
+            if len(results) * len(stats) > MAX_RECEIPT_ROWS:
+                raise ValueError("RECEIPT_TOO_MANY_ROWS")
             plan_set = set(stats)
         if set(stats) != plan_set:
             raise ValueError("UNBALANCED_SCENE_PLANS")

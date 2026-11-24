@@ -2,9 +2,12 @@
 import copy
 import ctypes
 import hashlib
+import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -109,6 +112,47 @@ class TestDriverBridge(unittest.TestCase):
         overlap.depth = overlap.rgba
         self.assertEqual(self.bridge._draw(ctypes.byref(overlap), ctypes.sizeof(overlap)), 8)
         self.assertEqual((fb.color_buffer.tobytes(), fb.depth_buffer.tobytes()), before)
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux sealed image")
+    def test_native_image_is_sealed_and_matches_approved_binary(self):
+        import fcntl
+
+        with open(self.bridge._lib._name, "rb") as image:
+            self.assertFalse(os.path.samestat(os.fstat(image.fileno()),
+                                              self.bridge.binary_path.stat()))
+            seals = fcntl.fcntl(image, getattr(fcntl, "F_GET_SEALS", 1034))
+            required = 0xF  # Linux UAPI: seal, shrink, grow, write.
+            self.assertEqual(seals & required, required)
+            self.assertEqual(hashlib.file_digest(image, "sha256").hexdigest(),
+                             self.bridge.binary_sha256)
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows DLL path pins")
+    def test_driver_directory_is_pinned_during_native_load(self):
+        import _winapi
+
+        load = ctypes.CDLL
+        binary = self.bridge.binary_path
+
+        def check_pins(name, **kwargs):
+            for part, flags in ((binary, 0), (binary.parent, 0x02000000)):
+                with self.assertRaises(OSError) as denied:
+                    _winapi.CreateFile(str(part), 0x40000000, 7, 0, 3, flags, 0)
+                self.assertEqual(denied.exception.winerror, 32)  # Sharing violation.
+            return load(name, **kwargs)
+
+        with patch("ctypes.CDLL", side_effect=check_pins) as patched:
+            AREDriverBridge(binary, self.bridge.binary_sha256)
+            patched.assert_called_once()
+
+    def test_oversized_driver_is_rejected_before_loading(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / "oversized.dll"
+            with binary.open("wb") as stream:
+                stream.truncate(64 * 1024 * 1024 + 1)
+            with patch("ctypes.CDLL") as load:
+                with self.assertRaisesRegex(ValueError, "BINARY_SIZE_OR_TYPE"):
+                    AREDriverBridge(binary, "0" * 64)
+                load.assert_not_called()
 
     def test_binary_hash_and_packed_buffer_validation(self):
         with self.assertRaisesRegex(ValueError, "BINARY_HASH"):

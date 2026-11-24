@@ -3,6 +3,35 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
+const MAX_CONFIG_BYTES = 8 * 1024 * 1024;
+
+async function readConfig(response) {
+  if (!response.body) throw new Error("NOT_A_GRADIO_CONFIG");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    // Fetch exposes decoded bytes here; Content-Length may describe compressed data.
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_CONFIG_BYTES) {
+        void reader.cancel().catch(() => {});
+        throw new Error("GRADIO_CONFIG_TOO_LARGE");
+      }
+      if (value.byteLength) chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(Buffer.concat(chunks, size)));
+  } catch {
+    throw new Error("ENDPOINT_CONFIG_UNREADABLE");
+  }
+}
+
 export function parseEndpoint(raw) {
   if (typeof raw !== "string" || raw.length > 2048) throw new Error("ENDPOINT_INVALID");
   let url;
@@ -22,12 +51,7 @@ export async function checkEndpoint(raw, fetcher = fetch) {
     return {endpoint: base.origin, status: "authentication-required", http_status: response.status};
   if (response.status !== 200)
     throw new Error("ENDPOINT_UNAVAILABLE_HTTP_" + response.status);
-  let body;
-  try {
-    body = await response.json();
-  } catch {
-    throw new Error("ENDPOINT_CONFIG_UNREADABLE");
-  }
+  const body = await readConfig(response);
   if (!body || !Array.isArray(body.components) || !Array.isArray(body.dependencies))
     throw new Error("NOT_A_GRADIO_CONFIG");
   return {endpoint: base.origin, status: "gradio-ready", http_status: 200,

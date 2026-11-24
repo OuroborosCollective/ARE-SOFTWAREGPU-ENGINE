@@ -6,6 +6,9 @@
 const http = require('http');
 const net = require('net');
 
+const HEADER_SIZE = 20;
+const MAX_FRAME_BYTES = 1_048_576n; // Payload ceiling in network/protocol.py.
+
 class SoftwareGPUClient {
     constructor(options = {}) {
         this.host = options.host || '127.0.0.1';
@@ -46,7 +49,7 @@ class SoftwareGPUClient {
                 const payloadBuf = Buffer.from(reqJson, 'utf-8');
 
                 // Header: Magic(4) + MsgType(4) + Flags(4) + PayloadLen(8) = 20 Bytes
-                const header = Buffer.alloc(20);
+                const header = Buffer.alloc(HEADER_SIZE);
                 header.write('SGPU', 0, 4, 'ascii');
                 header.writeUInt32BE(1, 4); // MsgType.JSON_REQUEST
                 header.writeUInt32BE(0, 8); // Flags
@@ -55,18 +58,29 @@ class SoftwareGPUClient {
                 client.write(Buffer.concat([header, payloadBuf]));
             });
 
-            let responseBuffer = Buffer.alloc(0);
-            let expectedLen = null;
+            const responseHeader = Buffer.alloc(HEADER_SIZE);
+            let headerBytes = 0;
+            let body = null;
+            let bodyBytes = 0;
 
             client.on('data', (chunk) => {
-                responseBuffer = Buffer.concat([responseBuffer, chunk]);
+                let offset = 0;
+                if (body === null) {
+                    offset = chunk.copy(responseHeader, headerBytes);
+                    headerBytes += offset;
+                    if (headerBytes < HEADER_SIZE) return;
 
-                if (expectedLen === null && responseBuffer.length >= 20) {
-                    expectedLen = Number(responseBuffer.readBigUInt64BE(12));
+                    const length = responseHeader.readBigUInt64BE(12);
+                    if (length > MAX_FRAME_BYTES) {
+                        client.destroy();
+                        reject(new Error('FRAME_TOO_LARGE'));
+                        return;
+                    }
+                    body = Buffer.alloc(Number(length));
                 }
 
-                if (expectedLen !== null && responseBuffer.length >= 20 + expectedLen) {
-                    const body = responseBuffer.slice(20, 20 + expectedLen);
+                bodyBytes += chunk.copy(body, bodyBytes, offset);
+                if (bodyBytes === body.length) {
                     client.destroy();
                     try {
                         const parsed = JSON.parse(body.toString('utf-8'));

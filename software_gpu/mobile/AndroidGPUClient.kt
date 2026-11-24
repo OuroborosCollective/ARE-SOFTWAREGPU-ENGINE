@@ -9,11 +9,15 @@ package com.softwaregpu.client
 import android.net.LocalSocket
 import android.net.LocalSocketAddress
 import org.json.JSONObject
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+
+// Payload ceiling from network/protocol.py.
+private const val MAX_RESPONSE_BYTES = 1_048_576L
 
 class AndroidGPUClient(
     private val useLocalSocket: Boolean = true,
@@ -72,11 +76,21 @@ class AndroidGPUClient(
         readExact(inputStream!!, respHeader, 20)
 
         val headerBuf = ByteBuffer.wrap(respHeader).order(ByteOrder.BIG_ENDIAN)
-        headerBuf.position(12)
-        val respLen = headerBuf.long.toInt()
+        val magic = headerBuf.int
+        val responseType = headerBuf.int
+        val flags = headerBuf.int
+        if (magic != 0x53475055 || (responseType != 2 && responseType != 4) || flags != 0) {
+            throw IOException("Invalid SGPU response header")
+        }
 
-        val respBody = ByteArray(respLen)
-        readExact(inputStream!!, respBody, respLen)
+        // A negative Long represents an unsigned length with its high bit set.
+        val respLen = headerBuf.long
+        if (respLen <= 0 || respLen > MAX_RESPONSE_BYTES) {
+            throw IOException("Invalid SGPU response length")
+        }
+
+        val respBody = ByteArray(respLen.toInt())
+        readExact(inputStream!!, respBody, respBody.size)
 
         val responseJson = JSONObject(String(respBody, Charsets.UTF_8))
         if (responseJson.has("error")) {

@@ -13,6 +13,9 @@ namespace SoftwareGPU.Client
 {
     public class SoftwareGPUClient : IDisposable
     {
+        // Payload ceiling from network/protocol.py.
+        private const ulong MaxResponseBytes = 1_048_576;
+
         private readonly string _host;
         private readonly int _tcpPort;
         private TcpClient _tcpClient;
@@ -63,14 +66,27 @@ namespace SoftwareGPU.Client
             byte[] respHeader = new byte[20];
             await ReadExactAsync(_stream, respHeader, 20);
 
+            if (Encoding.ASCII.GetString(respHeader, 0, 4) != "SGPU" ||
+                respHeader[4] != 0 || respHeader[5] != 0 || respHeader[6] != 0 ||
+                (respHeader[7] != 2 && respHeader[7] != 4) ||
+                respHeader[8] != 0 || respHeader[9] != 0 || respHeader[10] != 0 || respHeader[11] != 0)
+            {
+                throw new InvalidDataException("Invalid SGPU response header");
+            }
+
             ulong respLen = 0;
             for (int i = 0; i < 8; i++)
             {
                 respLen = (respLen << 8) | respHeader[12 + i];
             }
 
-            byte[] respBody = new byte[respLen];
-            await ReadExactAsync(_stream, respBody, (int)respLen);
+            if (respLen == 0 || respLen > MaxResponseBytes)
+            {
+                throw new InvalidDataException("Invalid SGPU response length");
+            }
+
+            byte[] respBody = new byte[(int)respLen];
+            await ReadExactAsync(_stream, respBody, respBody.Length);
 
             return Encoding.UTF8.GetString(respBody);
         }

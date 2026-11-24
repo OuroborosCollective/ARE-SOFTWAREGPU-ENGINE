@@ -4,6 +4,9 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
+// Payload ceiling from network/protocol.py.
+const MAX_RESPONSE_BYTES: u64 = 1_048_576;
+
 pub struct SoftwareGPUClient {
     stream: TcpStream,
 }
@@ -36,11 +39,23 @@ impl SoftwareGPUClient {
         let mut resp_header = [0u8; 20];
         self.stream.read_exact(&mut resp_header)?;
 
+        if &resp_header[..4] != b"SGPU"
+            || (resp_header[4..8] != 2u32.to_be_bytes() && resp_header[4..8] != 4u32.to_be_bytes())
+            || resp_header[8..12] != 0u32.to_be_bytes()
+        {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData,
+                "invalid SGPU response header"));
+        }
+
         let mut len_bytes = [0u8; 8];
         len_bytes.copy_from_slice(&resp_header[12..20]);
-        let resp_len = u64::from_be_bytes(len_bytes) as usize;
+        let resp_len = u64::from_be_bytes(len_bytes);
+        if resp_len == 0 || resp_len > MAX_RESPONSE_BYTES {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData,
+                "invalid SGPU response length"));
+        }
 
-        let mut body = vec![0u8; resp_len];
+        let mut body = vec![0u8; resp_len as usize];
         self.stream.read_exact(&mut body)?;
 
         String::from_utf8(body).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))
