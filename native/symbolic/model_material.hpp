@@ -26,6 +26,21 @@ struct SurfaceTriangle {
     std::array<SurfaceV2,3> uv{};
     std::uint32_t material=0;
 };
+inline double surface_srgb_to_linear(double x) {
+    return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);
+}
+// Byte-addressed textures have exactly 256 possible sRGB inputs. Reuse the
+// original double-precision transfer function under the native FE_TONEAREST
+// contract; filtering still happens in linear space, in the same order.
+inline double surface_srgb_byte_to_linear(std::uint8_t value) {
+    static const auto table=[] {
+        std::array<double,256> values{};
+        for(unsigned i=0;i<values.size();++i)
+            values[i]=surface_srgb_to_linear(double(i)/255.0);
+        return values;
+    }();
+    return table[value];
+}
 struct SurfaceMip { std::uint32_t width=0,height=0; std::vector<std::uint8_t> rgba; };
 struct SurfaceTexture {
     std::vector<SurfaceMip> mips;
@@ -47,7 +62,6 @@ struct SurfaceTexture {
             if(bytes>768u*1024u*1024u || mip_bytes()>768u*1024u*1024u-bytes)
                 throw std::runtime_error("MODEL_TEXTURE_MIP_BUDGET");
             dst.rgba.resize(bytes);
-            auto srgb_decode=[](double x){return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);};
             auto srgb_encode=[](double x){x=std::clamp(x,0.0,1.0);return x<=0.0031308?12.92*x:1.055*std::pow(x,1.0/2.4)-0.055;};
             for(std::uint32_t y=0;y<dst.height;++y)for(std::uint32_t x=0;x<dst.width;++x) {
                 double sum[4]={0,0,0,0};unsigned count=0;
@@ -55,7 +69,7 @@ struct SurfaceTexture {
                     const auto sx=std::min(src.width-1,2*x+dx),sy=std::min(src.height-1,2*y+dy);
                     const auto at=(std::size_t(sy)*src.width+sx)*4;
                     for(unsigned c=0;c<4;++c){double q=double(src.rgba[at+c])/255.0;
-                        if(srgb&&c<3)q=srgb_decode(q);
+                        if(srgb&&c<3)q=surface_srgb_byte_to_linear(src.rgba[at+c]);
                         sum[c]+=q;}
                     ++count;
                 }
@@ -74,17 +88,19 @@ struct SurfaceMaterial {
     std::int32_t base_texture=-1,mr_texture=-1,normal_texture=-1,emissive_texture=-1,occlusion_texture=-1;
     bool double_sided=true;
 };
+struct SurfaceDirectionalLight {
+    SurfaceV3 direction{},radiance{};
+};
 struct SurfaceLighting {
     SurfaceV3 light_direction{-.42f,.82f,.38f}; // direction from surface toward the directional key light
     SurfaceV3 radiance{3.2f,3.0f,2.8f};
     SurfaceV3 camera{0,0,4};
     float ambient=0.035f;
     float exposure=1.0f;
+    std::array<SurfaceDirectionalLight,2> extra_lights{};
+    unsigned extra_count=0;
 };
 
-inline double surface_srgb_to_linear(double x) {
-    return x<=0.04045?x/12.92:std::pow((x+0.055)/1.055,2.4);
-}
 inline double surface_linear_to_srgb(double x) {
     x=std::max(0.0,x);return x<=0.0031308?12.92*x:1.055*std::pow(x,1.0/2.4)-0.055;
 }
@@ -112,6 +128,23 @@ inline SurfaceV3 surface_mul(SurfaceV3 a,float b) {for(auto& x:a)x*=b;return a;}
 inline SurfaceV3 surface_hadamard(const SurfaceV3& a,const SurfaceV3& b) {
     return {a[0]*b[0],a[1]*b[1],a[2]*b[2]};
 }
+// Versioned, camera-relative inspection rig. This changes only light transport,
+// never glTF material factors, texture bytes, geometry, sampling or depth.
+inline SurfaceLighting surface_studio_lighting(const SurfaceV3& eye,const SurfaceV3& right,
+                                              const SurfaceV3& vertical,const SurfaceV3& front) {
+    const auto direction=[&](float x,float y,float z){
+        return surface_normalize(surface_add(surface_add(surface_mul(right,x),surface_mul(vertical,y)),surface_mul(front,z)));};
+    SurfaceLighting light;
+    light.camera=eye;
+    light.light_direction=direction(-.55f,.65f,1.25f);
+    light.radiance={4.5f,4.3f,4.1f};
+    light.extra_lights[0]={direction(.85f,.15f,1.10f),{1.65f,1.8f,2.0f}};
+    light.extra_lights[1]={direction(.85f,.60f,-.55f),{3.2f,3.0f,2.8f}};
+    light.extra_count=2;
+    light.ambient=.25f;
+    light.exposure=2.2f;
+    return light;
+}
 inline double surface_wrap_coordinate(double u,std::uint32_t mode) {
     if(!std::isfinite(u))throw std::runtime_error("MODEL_TEXTURE_UV_NONFINITE");
     if(mode==10497){u-=std::floor(u);return u;}
@@ -126,7 +159,7 @@ inline std::array<double,4> surface_texel(const SurfaceTexture& t,unsigned level
     };
     x=index(x,int(m.width),t.wrap_s);y=index(y,int(m.height),t.wrap_t);
     const auto at=(std::size_t(y)*m.width+std::size_t(x))*4;std::array<double,4> c{};
-    for(unsigned k=0;k<4;++k){c[k]=double(m.rgba[at+k])/255.0;if(linear&&t.srgb&&k<3)c[k]=surface_srgb_to_linear(c[k]);}
+    for(unsigned k=0;k<4;++k){c[k]=double(m.rgba[at+k])/255.0;if(linear&&t.srgb&&k<3)c[k]=surface_srgb_byte_to_linear(m.rgba[at+k]);}
     return c;
 }
 inline std::array<double,4> surface_sample_level(const SurfaceTexture& t,unsigned level,double u,double v,bool linear) {
@@ -203,23 +236,39 @@ inline SurfaceV3 surface_pbr(const SurfaceMaterial& m,const std::vector<SurfaceT
                                            T[2]*q[0]+B[2]*q[1]+N[2]*q[2]});
         }
     }
-    const auto L=surface_normalize(light.light_direction);
-    const auto H=surface_normalize(SurfaceV3{V[0]+L[0],V[1]+L[1],V[2]+L[2]});
-    const double nv=std::max(0.0,double(surface_dot(N,V))),nl=std::max(0.0,double(surface_dot(N,L)));
-    const double nh=std::max(0.0,double(surface_dot(N,H))),vh=std::max(0.0,double(surface_dot(V,H)));
-    const double alpha=double(roughness)*roughness,alpha2=alpha*alpha;
-    const double term=nh*nh*(alpha2-1.0)+1.0;
-    const double D=alpha2/(pi*term*term+1e-12);
-    const double k=std::pow(double(roughness)+1.0,2.0)/8.0;
-    const double Gv=nv/(nv*(1.0-k)+k+1e-12),Gl=nl/(nl*(1.0-k)+k+1e-12),G=Gv*Gl;
-    const double fterm=std::pow(std::max(0.0,1.0-vh),5.0);
-    SurfaceV3 result{},direct_light{},ambient_light{};
+    // The same GGX BRDF is evaluated independently per directional light.
+    // Legacy retains exactly one light and its original float accumulation.
+    const auto direct_for=[&](const SurfaceV3& direction,const SurfaceV3& radiance) {
+        const auto L=surface_normalize(direction);
+        const SurfaceV3 half{V[0]+L[0],V[1]+L[1],V[2]+L[2]};
+        // Opposite view/light directions have no defined half vector; their
+        // front-facing contribution vanishes. Avoid a spurious NaN/reject.
+        if(light.extra_count!=0 && surface_dot(half,half)<1e-20f)return SurfaceV3{};
+        const auto H=surface_normalize(half);
+        const double nv=std::max(0.0,double(surface_dot(N,V))),nl=std::max(0.0,double(surface_dot(N,L)));
+        const double nh=std::max(0.0,double(surface_dot(N,H))),vh=std::max(0.0,double(surface_dot(V,H)));
+        const double alpha=double(roughness)*roughness,alpha2=alpha*alpha;
+        const double term=nh*nh*(alpha2-1.0)+1.0;
+        const double D=alpha2/(pi*term*term+1e-12);
+        const double k=std::pow(double(roughness)+1.0,2.0)/8.0;
+        const double Gv=nv/(nv*(1.0-k)+k+1e-12),Gl=nl/(nl*(1.0-k)+k+1e-12),G=Gv*Gl;
+        const double fterm=std::pow(std::max(0.0,1.0-vh),5.0);
+        SurfaceV3 direct{};
+        for(int c=0;c<3;++c) {
+            const double f0=.04*(1.0-metallic)+base[c]*metallic;
+            const double F=f0+(1.0-f0)*fterm;
+            const double spec=D*G*F/(4.0*nv*nl+1e-8);
+            const double diffuse=(1.0-F)*(1.0-metallic)*base[c]/pi;
+            direct[c]=float((diffuse+spec)*radiance[c]*nl);
+        }
+        return direct;
+    };
+    auto direct_light=direct_for(light.light_direction,light.radiance);
+    if(light.extra_count>light.extra_lights.size())throw std::runtime_error("MODEL_LIGHT_COUNT");
+    for(unsigned i=0;i<light.extra_count;++i)
+        direct_light=surface_add(direct_light,direct_for(light.extra_lights[i].direction,light.extra_lights[i].radiance));
+    SurfaceV3 result{},ambient_light{};
     for(int c=0;c<3;++c) {
-        const double f0=.04*(1.0-metallic)+base[c]*metallic;
-        const double F=f0+(1.0-f0)*fterm;
-        const double spec=D*G*F/(4.0*nv*nl+1e-8);
-        const double diffuse=(1.0-F)*(1.0-metallic)*base[c]/pi;
-        direct_light[c]=float((diffuse+spec)*light.radiance[c]*nl);
         ambient_light[c]=float(base[c]*(1.0-metallic)*light.ambient);
         result[c]=direct_light[c]+ambient_light[c];
     }
