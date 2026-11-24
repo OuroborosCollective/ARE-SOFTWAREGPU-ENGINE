@@ -82,6 +82,27 @@ jobs:
           timeout 30 evidence-local/real-vulkan-xcb/sampler_probe | tee evidence-local/real-vulkan-xcb/sampler.stdout
           grep -q ARE_VK_SAMPLER_REAL_CREATE_DESTROY_PASS evidence-local/real-vulkan-xcb/sampler.stdout
           sha256sum native/vulkan/weighted/sampler_probe.cpp software_gpu/drivers/weighted_icd.py evidence-local/real-vulkan-xcb/icd/libare_weighted.so evidence-local/real-vulkan-xcb/sampler_probe evidence-local/real-vulkan-xcb/sampler.stdout > evidence-local/real-vulkan-xcb/sampler.sha256
+      - name: Real Vulkan Index+Vertex buffers and XCB frame/depth parity (UINT16/UINT32)
+        env:
+          EXPECTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_REVISION"
+          python -m unittest software_gpu.tests.test_vulkan_indexed_buffer_contract -v
+          g++ -std=c++17 -Wall -Wextra -Werror -I/usr/include native/vulkan/weighted/wsi_indexed_probe.cpp -lvulkan -lxcb -o evidence-local/real-vulkan-xcb/wsi_indexed_probe
+          export VK_DRIVER_FILES="$PWD/evidence-local/real-vulkan-xcb/icd/are.json"
+          export VK_ICD_FILENAMES="$VK_DRIVER_FILES"
+          export OPENBLAS_NUM_THREADS=1
+          export PYTHONPATH="$PWD:$(python -c 'import site; print(site.getsitepackages()[0])')"
+          xvfb-run -a -s '-screen 0 256x256x24' timeout 35 evidence-local/real-vulkan-xcb/wsi_indexed_probe evidence-local/real-vulkan-xcb/icd evidence-local/real-vulkan-xcb/indexed-A >evidence-local/real-vulkan-xcb/indexed-A.stdout
+          xvfb-run -a -s '-screen 0 256x256x24' timeout 35 evidence-local/real-vulkan-xcb/wsi_indexed_probe evidence-local/real-vulkan-xcb/icd evidence-local/real-vulkan-xcb/indexed-B rgb-cycle >evidence-local/real-vulkan-xcb/indexed-B.stdout
+          grep -q ARE_VK_REAL_INDEXED_DRAW_AND_NEGATIVE_PASS evidence-local/real-vulkan-xcb/indexed-A.stdout
+          grep -q ARE_VK_REAL_INDEXED_DRAW_AND_NEGATIVE_PASS evidence-local/real-vulkan-xcb/indexed-B.stdout
+          cmp evidence-local/real-vulkan-xcb/frame-A.rgba evidence-local/real-vulkan-xcb/indexed-A.rgba
+          cmp evidence-local/real-vulkan-xcb/frame-A.depth evidence-local/real-vulkan-xcb/indexed-A.depth
+          cmp evidence-local/real-vulkan-xcb/frame-B.rgba evidence-local/real-vulkan-xcb/indexed-B.rgba
+          cmp evidence-local/real-vulkan-xcb/frame-B.depth evidence-local/real-vulkan-xcb/indexed-B.depth
+          sha256sum native/vulkan/weighted/wsi_indexed_probe.cpp software_gpu/drivers/weighted_icd.py evidence-local/real-vulkan-xcb/icd/libare_weighted.so evidence-local/real-vulkan-xcb/wsi_indexed_probe evidence-local/real-vulkan-xcb/indexed-A.rgba evidence-local/real-vulkan-xcb/indexed-B.rgba evidence-local/real-vulkan-xcb/indexed-A.depth evidence-local/real-vulkan-xcb/indexed-B.depth > evidence-local/real-vulkan-xcb/indexed.sha256
       - name: Archive original window, depth, driver and source SHA receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

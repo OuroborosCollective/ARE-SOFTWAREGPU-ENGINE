@@ -25,6 +25,8 @@ from software_gpu.graphics.framebuffer import Framebuffer
 ffi = vk.ffi
 MAX_SAMPLERS = 4000
 MAX_SAMPLER_LOD_BIAS = 2.0
+# fullDrawIndexUint32 is not advertised; admit the Vulkan core minimum.
+MAX_DRAW_INDEXED_INDEX_VALUE = 0x00FFFFFF
 MAX_MEMORY = 128 * 1024 * 1024
 RGBA, DEPTH = vk.VK_FORMAT_R8G8B8A8_UNORM, vk.VK_FORMAT_D32_SFLOAT
 ImageSpec = namedtuple("ImageSpec", "width height format size")
@@ -109,6 +111,37 @@ def sampler_spec(p):
                        bool(p.compareEnable), int(p.compareOp),
                        float(p.minLod), float(p.maxLod), int(p.borderColor),
                        bool(p.unnormalizedCoordinates))
+
+
+def gather_indexed_vertices(vertex_data, vertex_byte_offset, index_data,
+                            index_byte_offset, count, first_index, vertex_offset, index_type):
+    """Decode actual bound VkIndexType bytes into exact position/RGB shader vertices.
+
+    Must only be called on host-coherent bound memory at authoritative queue
+    execution. No fake shader, descriptor or texture path.
+    """
+    require(index_type in (vk.VK_INDEX_TYPE_UINT16, vk.VK_INDEX_TYPE_UINT32))
+    stride = 2 if index_type == vk.VK_INDEX_TYPE_UINT16 else 4
+    require(isinstance(vertex_byte_offset, int) and vertex_byte_offset >= 0
+            and vertex_byte_offset % 4 == 0
+            and isinstance(index_byte_offset, int) and index_byte_offset >= 0
+            and index_byte_offset % stride == 0
+            and 0 <= count <= 600000 and first_index >= 0
+            and count * stride <= len(index_data)
+            and index_byte_offset + (first_index + count) * stride <= len(index_data)
+            and vertex_byte_offset <= len(vertex_data))
+    if count == 0:
+        return np.empty((0, 6), dtype=np.float32)
+    dtype = np.dtype("<u2") if stride == 2 else np.dtype("<u4")
+    idx = np.frombuffer(index_data, dtype=dtype, count=count,
+                        offset=index_byte_offset + first_index * stride).astype(np.int64)
+    require(np.all(idx <= MAX_DRAW_INDEXED_INDEX_VALUE))
+    idx += vertex_offset
+    vertex_count = (len(vertex_data) - vertex_byte_offset) // 24
+    require(vertex_count > 0 and np.all(idx >= 0) and np.all(idx < vertex_count))
+    data = np.frombuffer(vertex_data, dtype=np.float32, count=vertex_count * 6,
+                         offset=vertex_byte_offset).reshape(-1, 6)
+    return data[idx]
 
 
 class Driver:
@@ -297,6 +330,7 @@ class Driver:
         lim.maxImageDimension2D = lim.maxFramebufferWidth = lim.maxFramebufferHeight = 4096
         lim.maxSamplerAllocationCount = MAX_SAMPLERS
         lim.maxSamplerLodBias = MAX_SAMPLER_LOD_BIAS
+        lim.maxDrawIndexedIndexValue = MAX_DRAW_INDEXED_INDEX_VALUE
         lim.maxMemoryAllocationCount = 512
         lim.maxBoundDescriptorSets = 0
         lim.maxVertexInputAttributes = 2
@@ -589,10 +623,12 @@ class Driver:
             device.sampler_count -= 1
 
     def vkCreateBuffer(self, dev, p, alloc, out):
-        require(not alloc and not p.flags and 0 < p.size <= MAX_MEMORY and
-                p.usage == vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT and
+        supported = vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | vk.VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+        usage = int(p.usage)
+        require(not alloc and not p.pNext and not p.flags and 0 < p.size <= MAX_MEMORY and usage
+                and not usage & ~supported and
                 p.sharingMode == vk.VK_SHARING_MODE_EXCLUSIVE)
-        out[0] = self.new("Buffer", dev, size=int(p.size), mem=None).handle
+        out[0] = self.new("Buffer", dev, size=int(p.size), usage=usage, mem=None).handle
 
     def vkCreateImage(self, dev, p, alloc, out):
         spec = image_spec(p)
@@ -730,7 +766,7 @@ class Driver:
         require(cmd.state != "recording" and (cmd.state == "initial" or
                 self.objects[cmd.parent].flags & vk.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT))
         cmd.state, cmd.invalid, cmd.pass_open = "recording", False, False
-        cmd.target = cmd.clear = cmd.pipe = cmd.binding = None
+        cmd.target = cmd.clear = cmd.pipe = cmd.binding = cmd.index_binding = None
         cmd.draws = []
 
     def vkCmdBeginRenderPass(self, handle, p, contents):
@@ -754,7 +790,44 @@ class Driver:
     def vkCmdBindVertexBuffers(self, handle, first, count, buffers, offsets):
         cmd = self.objects[key(handle)]
         require(cmd.state == "recording" and first == 0 and count == 1)
-        cmd.binding = key(buffers[0]), int(offsets[0])
+        buf = self.objects[key(buffers[0])]
+        offset = int(offsets[0])
+        require(buf.kind == "Buffer" and buf.parent == self.objects[cmd.parent].parent
+                and buf.mem is not None and buf.usage & vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+                and 0 <= offset < buf.size and offset % 4 == 0)
+        cmd.binding = key(buffers[0]), offset
+
+    def vkCmdBindIndexBuffer(self, handle, buffer, offset, index_type):
+        cmd = self.objects[key(handle)]
+        buf = self.objects[key(buffer)]
+        pool = self.objects[cmd.parent]
+        stride = 2 if index_type == vk.VK_INDEX_TYPE_UINT16 else 4
+        require(index_type in (vk.VK_INDEX_TYPE_UINT16, vk.VK_INDEX_TYPE_UINT32)
+                and cmd.state == "recording" and not cmd.invalid
+                and buf.kind == "Buffer" and buf.parent == pool.parent
+                and buf.mem is not None and buf.usage & vk.VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+                and offset >= 0 and offset % stride == 0 and offset < buf.size)
+        cmd.index_binding = (key(buffer), int(offset), int(index_type))
+
+    def vkCmdDrawIndexed(self, handle, count, instances, first, vertex_offset, first_instance):
+        cmd = self.objects[key(handle)]
+        require(cmd.state == "recording" and cmd.pass_open and cmd.pipe and cmd.binding
+                and cmd.index_binding and instances == 1 and not first_instance
+                and 0 <= count <= 600000 and first >= 0 and len(cmd.draws) < 256)
+        fb, pipe = self.objects[cmd.target], self.objects[cmd.pipe]
+        require(pipe.extent == (fb.width, fb.height) and pipe.render_pass == fb.render_pass)
+        vertex, vertex_at = cmd.binding
+        index, index_at, index_type = cmd.index_binding
+        size = 2 if index_type == vk.VK_INDEX_TYPE_UINT16 else 4
+        require(self.objects[vertex].mem is not None
+                and self.objects[vertex].usage & vk.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+                and self.objects[index].mem is not None
+                and index_at + (first + count) * size <= self.objects[index].size)
+        # The native dispatcher transports arguments as unsigned uintptr_t.
+        # Recover Vulkan's signed int32_t base vertex before queue execution.
+        signed_offset = ctypes.c_int32(int(vertex_offset)).value
+        cmd.draws.append(("indexed", vertex, vertex_at, index, index_at,
+                          int(index_type), int(first), int(count), signed_offset))
 
     def vkCmdDraw(self, handle, count, instances, first, first_instance):
         cmd = self.objects[key(handle)]
@@ -828,9 +901,20 @@ class Driver:
         frame.color_buffer[:] = cmd.clear[0]
         frame.depth_buffer.fill(cmd.clear[1])
         draws = []
-        for buf, start, count in cmd.draws:
-            data = self.view(self.objects[buf])
-            v = np.frombuffer(data, dtype=np.float32, count=count*6, offset=start).reshape(-1,6)
+        for draw in cmd.draws:
+            if len(draw) == 3:
+                buf, start, count = draw
+                data = self.view(self.objects[buf])
+                v = np.frombuffer(data, dtype=np.float32, count=count*6, offset=start).reshape(-1,6)
+            else:
+                _, vertex, vertex_at, index, index_at, index_type, first, count, vertex_offset = draw
+                v = gather_indexed_vertices(
+                    self.view(self.objects[vertex]), vertex_at,
+                    self.view(self.objects[index]), index_at,
+                    count, first, vertex_offset, index_type)
+                count = len(v)
+            count -= count % 3
+            v = v[:count]
             pos = np.ones((count,4), np.float32)
             pos[:,:3] = v[:,:3]
             draws.append((pos, v[:,3:]))
