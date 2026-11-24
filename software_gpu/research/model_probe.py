@@ -16,7 +16,7 @@ import subprocess
 import sys
 import numpy as np
 from .native_symbolic import FLAGS, NATIVE, compiler
-from .model_material_import import load_surface_subset
+from .model_material_import import EMISSIVE_STRENGTH, load_surface_subset
 
 MAX_BYTES = 256 * 1024 * 1024
 DTYPES = {5120: '<i1', 5121: '<u1', 5122: '<i2', 5123: '<u2', 5125: '<u4', 5126: '<f4'}
@@ -52,7 +52,7 @@ def _vec(value, n):
     return a
 
 
-def read_glb(path, expected_sha256, expected_bytes):
+def read_glb(path, expected_sha256, expected_bytes, *, profile='diagnostic'):
     path = Path(path)
     require(not path.is_symlink() and path.is_file(), 'MODEL_SOURCE_FILE')
     require(32 <= expected_bytes <= MAX_BYTES and path.stat().st_size == expected_bytes, 'MODEL_SOURCE_SIZE')
@@ -72,7 +72,10 @@ def read_glb(path, expected_sha256, expected_bytes):
     require(len(chunks[0][1]) <= 2*1024*1024, 'MODEL_JSON_BUDGET')
     doc = json.loads(bytes(chunks[0][1]), object_pairs_hook=_object,
                      parse_constant=lambda _: require(False, 'MODEL_JSON_NONFINITE'))
-    require(doc.get('asset', {}).get('version') == '2.0' and not doc.get('extensionsRequired'), 'MODEL_GLTF_VERSION_OR_EXTENSION')
+    required = doc.get('extensionsRequired', [])
+    allowed = (EMISSIVE_STRENGTH,) if profile == 'pbr' else ()
+    require(doc.get('asset', {}).get('version') == '2.0' and isinstance(required, list)
+            and all(name in allowed for name in required), 'MODEL_GLTF_VERSION_OR_EXTENSION')
     buffers = doc.get('buffers', [])
     require(len(buffers) == 1 and 'uri' not in buffers[0], 'MODEL_EXTERNAL_BUFFER')
     length = _uint(buffers[0]['byteLength'], len(chunks[1][1]), 1)
@@ -107,7 +110,7 @@ def accessor(doc, binary, index):
 
 def load_asset(path, entry, profile='diagnostic'):
     require(profile in ('diagnostic', 'pbr'), 'MODEL_RENDER_PROFILE')
-    doc, binary = read_glb(path, entry['sha256'], entry['bytes'])
+    doc, binary = read_glb(path, entry['sha256'], entry['bytes'], profile=profile)
     meshes, nodes = doc.get('meshes', []), doc.get('nodes', [])
     require(len(meshes) == 1 and len(meshes[0]['primitives']) == 1 and 1 <= len(nodes) <= 256, 'MODEL_MESH_SUBSET')
     instances = [i for i, n in enumerate(nodes) if 'mesh' in n]

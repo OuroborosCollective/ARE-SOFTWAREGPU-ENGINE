@@ -146,6 +146,9 @@ class FirefoxReleaseTests(unittest.TestCase):
             for index, name in enumerate(("../escape", "/absolute", "C:/absolute", "directory\\escape", "linked")):
                 archive = root / f"bad-{index}.zip"
                 info = zipfile.ZipInfo(name)
+                # zipfile normalizes the separator at construction on Windows.
+                # Write the specified member name so every OS exercises the same input.
+                info.filename = name
                 info.external_attr = ((stat.S_IFLNK if name == "linked" else stat.S_IFREG) | 0o644) << 16
                 with zipfile.ZipFile(archive, "w") as output:
                     output.writestr(info, b"payload")

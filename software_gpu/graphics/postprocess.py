@@ -161,7 +161,8 @@ class GamingPostProcessing:
         fb: Framebuffer,
         bloom_threshold: float = 0.7,
         bloom_intensity: float = 0.4,
-        exposure: float = 1.2
+        exposure: float = 1.2,
+        *, quality_bloom: bool = False
     ) -> Framebuffer:
         """Applies HDR extraction, 2-pass Bloom glow, and ACES tone mapping."""
         h, w = fb.height, fb.width
@@ -169,6 +170,19 @@ class GamingPostProcessing:
 
         # Exposure scaling
         hdr_color = raw_rgb * exposure
+
+        if quality_bloom:
+            from .display_bloom import apply_display_bloom
+            # The gaming pipeline supplies linear RGB8. Apply exposure/ACES once,
+            # then pass an explicitly display-referred image to the bloom stage.
+            mapped = cls.aces_tone_mapping(hdr_color)
+            srgb = np.where(mapped <= .0031308, 12.92 * mapped,
+                            1.055 * mapped ** (1 / 2.4) - .055)
+            display = Framebuffer(w, h)
+            display.color_buffer[..., :3] = np.rint(srgb * 255).astype(np.uint8)
+            display.color_buffer[..., 3] = fb.color_buffer[..., 3]
+            display.depth_buffer[...] = fb.depth_buffer
+            return apply_display_bloom(display, threshold=bloom_threshold, intensity=bloom_intensity)
 
         # 1. High-Pass Brightness Threshold for Bloom
         luma = 0.299 * hdr_color[..., 0] + 0.587 * hdr_color[..., 1] + 0.114 * hdr_color[..., 2]

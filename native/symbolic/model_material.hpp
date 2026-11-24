@@ -249,15 +249,23 @@ inline SurfaceV3 surface_pbr(const SurfaceMaterial& m,const std::vector<SurfaceT
         const double b2=surface_dot(bitangent_in,bitangent_in);
         if(std::isfinite(t2)&&t2>1e-16&&std::isfinite(b2)&&b2>1e-16) {
             T=surface_normalize(T);
-            auto B=surface_normalize(SurfaceV3{bitangent_in[0]-N[0]*surface_dot(N,bitangent_in)-T[0]*surface_dot(T,bitangent_in),
-                                                bitangent_in[1]-N[1]*surface_dot(N,bitangent_in)-T[1]*surface_dot(T,bitangent_in),
-                                                bitangent_in[2]-N[2]*surface_dot(N,bitangent_in)-T[2]*surface_dot(T,bitangent_in)});
-            const auto map=surface_binding(textures,m.normal_texture,uv,duvdx,duvdy,{.5,.5,1,1});
-            SurfaceV3 q{float((2*map[0]-1)*m.normal_scale),float((2*map[1]-1)*m.normal_scale),float(2*map[2]-1)};
-            q=surface_normalize(q);
-            N=surface_normalize(SurfaceV3{T[0]*q[0]+B[0]*q[1]+N[0]*q[2],
-                                           T[1]*q[0]+B[1]*q[1]+N[1]*q[2],
-                                           T[2]*q[0]+B[2]*q[1]+N[2]*q[2]});
+            // Test the projected bitangent: a nonzero input may still lie in span(N,T).
+            const float bn=surface_dot(N,bitangent_in),bt=surface_dot(T,bitangent_in);
+            SurfaceV3 B{};
+            for(int c=0;c<3;++c)B[c]=bitangent_in[c]-N[c]*bn-T[c]*bt;
+            const double projected_b2=surface_dot(B,B);
+            if(projected_b2>std::max(1e-20,b2*1e-12) && t2>tangent_len*1e-12) {
+                B=surface_normalize(B);
+                const auto map=surface_binding(textures,m.normal_texture,uv,duvdx,duvdy,{.5,.5,1,1});
+                SurfaceV3 q{float((2*map[0]-1)*m.normal_scale),float((2*map[1]-1)*m.normal_scale),float(2*map[2]-1)};
+                // Bilinear filtering can cancel opposing tangent-space normals.
+                if(surface_dot(q,q)>1e-20f) {
+                    q=surface_normalize(q);
+                    SurfaceV3 mapped{};
+                    for(int c=0;c<3;++c)mapped[c]=T[c]*q[0]+B[c]*q[1]+N[c]*q[2];
+                    N=surface_normalize(mapped);
+                }
+            }
         }
     }
     // The same GGX BRDF is evaluated independently per directional light.
@@ -267,7 +275,7 @@ inline SurfaceV3 surface_pbr(const SurfaceMaterial& m,const std::vector<SurfaceT
         const SurfaceV3 half{V[0]+L[0],V[1]+L[1],V[2]+L[2]};
         // Opposite view/light directions have no defined half vector; their
         // front-facing contribution vanishes. Avoid a spurious NaN/reject.
-        if(light.extra_count!=0 && surface_dot(half,half)<1e-20f)return SurfaceV3{};
+        if(surface_dot(half,half)<1e-20f)return SurfaceV3{};
         const auto H=surface_normalize(half);
         const double nv=std::max(0.0,double(surface_dot(N,V))),nl=std::max(0.0,double(surface_dot(N,L)));
         const double nh=std::max(0.0,double(surface_dot(N,H))),vh=std::max(0.0,double(surface_dot(V,H)));

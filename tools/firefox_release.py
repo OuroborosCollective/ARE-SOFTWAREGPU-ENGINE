@@ -45,7 +45,7 @@ def archive_entries(path):
             raise ValueError("FIREFOX_ARCHIVE_ENTRY_LIMIT")
         for info in archive.infolist():
             name = info.filename
-            if (name.startswith("/") or "\\" in name or ":" in name
+            if (info.orig_filename != name or name.startswith("/") or "\\" in name or ":" in name
                     or any(part in ("", ".", "..") for part in name.split("/"))
                     or name in result or info.is_dir()
                     or stat.S_IFMT(info.external_attr >> 16) not in (0, stat.S_IFREG)

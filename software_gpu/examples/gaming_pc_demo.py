@@ -132,7 +132,8 @@ def main():
         resolved_fb,
         bloom_threshold=0.6,
         bloom_intensity=0.5,
-        exposure=1.3
+        exposure=1.3,
+        quality_bloom=True,
     )
     time_hdr = (time.perf_counter() - t0) * 1000.0
 

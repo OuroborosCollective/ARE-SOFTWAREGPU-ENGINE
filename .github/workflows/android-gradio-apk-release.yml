@@ -64,7 +64,7 @@ jobs:
           PY
           test -c /dev/kvm
           sudo chmod 666 /dev/kvm
-          printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name are_release --package 'system-images;android-35;google_apis;x86_64' --device pixel_7
+          bash tools/prepare_android_avd.sh
       - name: Compile real release variant with embedded source identity
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -184,7 +184,7 @@ jobs:
           PY
           test -c /dev/kvm
           sudo chmod 666 /dev/kvm
-          printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name are_release --package 'system-images;android-35;google_apis;x86_64' --device pixel_7
+          bash tools/prepare_android_avd.sh
       - name: Reuse immutable APK after a partially completed release attempt
         id: reuse
         env:
