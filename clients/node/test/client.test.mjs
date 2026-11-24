@@ -10,14 +10,38 @@ test("HTTPS is mandatory; no credentials or redirect injection", () => {
 });
 test("real contract decoding of Gradio health and authentication states", async () => {
   const ready = await checkEndpoint("https://gradio.example.org/",
-    async () => ({status:200, json:async()=>({components:[{}],dependencies:[{}]})}));
+    async () => Response.json({components:[{}],dependencies:[{}]}));
   assert.equal(ready.status,"gradio-ready");
   const auth = await checkEndpoint("https://gradio.example.org/",async()=>({status:401}));
   assert.equal(auth.status,"authentication-required");
   await assert.rejects(checkEndpoint("https://gradio.example.org/",
-    async()=>({status:200,json:async()=>({not_gradio:true})})), /NOT_A_GRADIO_CONFIG/);
+    async()=>Response.json({not_gradio:true})), /NOT_A_GRADIO_CONFIG/);
   await assert.rejects(checkEndpoint("https://gradio.example.org/",
     async()=>({status:302})), /ENDPOINT_UNAVAILABLE_HTTP_302/);
+});
+test("accepts a valid Gradio config at the byte limit", async () => {
+  const json = JSON.stringify({components:[{label:"é"}],dependencies:[]});
+  const limit = 8 * 1024 * 1024;
+  const body = json + " ".repeat(limit - Buffer.byteLength(json));
+  const result = await checkEndpoint("https://gradio.example.org/", async () => new Response(body));
+  assert.equal(result.component_count, 1);
+});
+test("rejects and cancels a config stream once decoded bytes exceed the limit", async () => {
+  const chunk = new Uint8Array(1024 * 1024);
+  let reads = 0;
+  let cancelled = false;
+  const body = new ReadableStream({
+    pull(controller) {
+      if (++reads <= 8) controller.enqueue(chunk);
+      else if (reads === 9) controller.enqueue(chunk.subarray(0, 1));
+      else controller.error(new Error("Read past the size limit"));
+    },
+    cancel() { cancelled = true; },
+  }, {highWaterMark: 0});
+  await assert.rejects(checkEndpoint("https://gradio.example.org/",
+    async () => new Response(body, {headers: {"Content-Length": "128"}})),
+    {message: "GRADIO_CONFIG_TOO_LARGE"});
+  assert.equal(cancelled, true);
 });
 test("Linux and Windows launch without shell injection",()=>{
   for (const platform of ["win32","linux"]) {
