@@ -121,6 +121,8 @@ def main():
                         help="Pinned Firefox receipt with files[path, sha256] and expectedBuildId")
     parser.add_argument("--output-dir", type=Path, required=True, help="New isolated run directory")
     parser.add_argument("--require-uid", type=int)
+    parser.add_argument("--mesa-prefix", type=Path,
+                        help="Process-local Mesa installation. Require both WebGPU pixel readbacks.")
     args = parser.parse_args()
     if os.geteuid() == 0 or (args.require_uid is not None and os.geteuid() != args.require_uid):
         raise SystemExit("Run as the designated unprivileged test user")
@@ -157,6 +159,12 @@ def main():
             env.pop(key, None)
     selected_environment = {"XDG_RUNTIME_DIR": str(runtime), "LP_NUM_THREADS": "2", "OMP_NUM_THREADS": "1",
                             "MOZ_REMOTE_ALLOW_SYSTEM_ACCESS": "1"}
+    if args.mesa_prefix:
+        if __package__:
+            from .firefox_addon_runtime import mesa_environment
+        else:
+            from firefox_addon_runtime import mesa_environment
+        selected_environment.update(mesa_environment(args.mesa_prefix, runtime))
     env.update(selected_environment)
     command = ["nice", "-n", "10", "xvfb-run", "-a", "-n", "191", "-s",
                "-screen 0 1100x1000x24 -nolisten tcp", files["firefox"]["path"],
@@ -261,6 +269,10 @@ def main():
             receipt["passed"] = (report.get("complete") is True and not report.get("fatalError")
                                  and receipt["downloadMatchesDom"] and receipt["cases"]["webgl"]["acceptedPass"]
                                  and all(case["acceptedPass"] or case["reportedStatus"] == "unavailable" for case in receipt["cases"].values()))
+            if args.mesa_prefix:
+                receipt["passed"] = receipt["passed"] and all(
+                    receipt["cases"].get(case, {}).get("acceptedPass") is True
+                    for case in ("default", "forceFallback"))
             client.command("Addon:Uninstall", {"id": ADDON_ID})
             receipt["temporaryAddonRemoved"] = True
     except Exception as error:

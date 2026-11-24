@@ -94,6 +94,37 @@ force flags or sandbox bypasses are set. Any later exception, including an
 uninstall failure, invalidates the receipt. Keep private runtime receipts outside
 the public source tree because they contain local installation paths.
 
+## Linux Firefox with a private Mesa software adapter
+
+On Ubuntu 22.04 x86-64, Firefox Nightly build `20261123184640` returned
+two null WebGPU adapters with Mesa 23.2.1. The same browser and shader
+probe passed with Mesa 25.0.7 (lavapipe). Mozilla's Linux WebGPU blocklist
+includes Mesa versions earlier than 25.0.4. The tested packages came from
+the signed Kisak stable (turtle) Jammy archive and were extracted into a
+private directory. Its `usr` directory contains the matching Mesa EGL,
+GLX, DRI, Vulkan and supporting libraries.
+
+Launch the browser in a dedicated profile with that directory:
+
+```sh
+python3 tools/firefox_addon_runtime.py --mesa-prefix /path/to/extracted/usr \
+  --firefox /path/to/firefox --profile /path/to/studio-profile https://cloud.unity.com/studio
+```
+
+The same `--mesa-prefix` option on `tools/firefox_addon_smoke.py` requires
+both the regular WebGPU render and the forced-fallback render to pass the
+full pixel check. A missing adapter fails that run. The default smoke mode
+still records unavailable APIs for diagnostics. The launcher relocates the
+packaged lavapipe ICD manifest into a private run directory and passes its
+GL and Vulkan paths only to that Firefox invocation.
+
+The independent ARE-only comparison loaded the ARE ICD, returned two null
+adapters and produced no native submit receipt. Its Vulkan 1.0 device enabled
+`VK_KHR_swapchain`, while separate real device-creation requests for
+`VK_KHR_maintenance1` and `VK_KHR_storage_buffer_storage_class` each returned
+`VK_ERROR_EXTENSION_NOT_PRESENT`. The Mesa-backed result establishes the
+browser software rendering path. Native ARE WebGPU adapter admission is open.
+
 ## Recorded validation, 2026-11-24
 
 The exact unsigned XPI SHA-256
