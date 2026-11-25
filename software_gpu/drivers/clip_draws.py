@@ -19,6 +19,7 @@ def record_clip_draws(draws, width, height):
     if not isinstance(draws, (list, tuple)) or not 1 <= len(draws) <= 256:
         raise ValueError("ARE_CLIP_DRAW_COUNT")
 
+    prepared = {}
     records = []
     input_total = 0
     output_total = 0
@@ -33,6 +34,18 @@ def record_clip_draws(draws, width, height):
             raise ValueError("ARE_CLIP_INPUT_BUDGET")
         if not np.isfinite(positions).all() or not np.isfinite(colors).all():
             raise ValueError("ARE_CLIP_NONFINITE")
+
+        # The cache lives for one submission. Snapshot the actual bound vertex
+        # and color bytes, so another submission always sees current inputs.
+        key = (positions.tobytes(), colors.tobytes()) if len(positions) <= 96 else None
+        if key is not None:
+            previous = prepared.get(key)
+            if previous is not None:
+                output_total += len(previous)
+                if output_total > 200_000 or output_total * width * height > 64_000_000:
+                    raise ValueError("ARE_CLIP_OUTPUT_BUDGET")
+                records.append(previous)
+                continue
 
         triangles = []
         for start in range(0, len(positions), 3):
@@ -59,5 +72,8 @@ def record_clip_draws(draws, width, height):
                 if output_total > 200_000 or output_total * width * height > 64_000_000:
                     raise ValueError("ARE_CLIP_OUTPUT_BUDGET")
                 triangles.append((*screen, *inv_w, *attrs, area))
-        records.append(pack_triangles(triangles))
+        packed = pack_triangles(triangles)
+        if key is not None:
+            prepared[key] = packed
+        records.append(packed)
     return record_native_draws(records)

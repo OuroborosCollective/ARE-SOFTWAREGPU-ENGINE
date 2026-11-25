@@ -17,6 +17,24 @@ from software_gpu.learning import LocalLearner
 
 
 class ClipDrawTests(unittest.TestCase):
+    def test_identical_draws_reuse_preparation_and_preserve_packet_and_budget(self):
+        positions = np.array([[-1, -1, .5, 1], [1, -1, .5, 1], [-1, 1, .5, 1]], np.float32)
+        red = np.tile(np.float32([1, 0, 0]), (3, 1))
+        green = np.tile(np.float32([0, 1, 0]), (3, 1))
+        from software_gpu.drivers import clip_draws
+
+        with patch.object(clip_draws, "clip_triangle", wraps=clip_draws.clip_triangle) as clip:
+            packet = record_clip_draws([(positions, red), (positions.copy(), red.copy()), (positions, green)], 16, 16)
+            self.assertEqual(clip.call_count, 2)
+        self.assertEqual(len(packet.commands), 3)
+        self.assertEqual(packet.commands[0], packet.commands[1])
+        self.assertNotEqual(packet.commands[0].payload, packet.commands[2].payload)
+        with self.assertRaisesRegex(ValueError, "ARE_CLIP_OUTPUT_BUDGET"):
+            record_clip_draws([(positions, red)] * 62, 1024, 1024)
+        red[:, :] = green
+        refreshed = record_clip_draws([(positions, red)], 16, 16)
+        self.assertEqual(refreshed.commands[0], packet.commands[2])
+
     def test_negative_depth_and_far_plane(self):
         positions = np.array([[-1, -1, -.1, 1], [1, -1, -.1, 1], [-1, 1, -.1, 1]], np.float32)
         colors = np.ones((3, 3), np.float32)
