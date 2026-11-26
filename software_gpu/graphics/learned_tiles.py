@@ -8,6 +8,7 @@ import numpy as np
 
 from ..learning import bucket, implementation_id, scope_key
 from .batch_shader import VertexColorShader, _NATIVE_VERTEX_COLOR_METHODS, _VERTEX_COLOR_BATCH
+from .cag_tone import CagToneShader, _CAG_METHODS
 from .framebuffer import Framebuffer
 from .shader import BlinnPhongShader, _BLINN_PHONG_FRAGMENT
 from .surface_plan import BATCH_FIRST_POLICY
@@ -48,17 +49,23 @@ def measured_draw(renderer, triangles, shader, prepared_bins):
     shader_type = type(shader)
     variant = None
     if (renderer.backend == "tiles" and triangles and renderer.preparation_cache is None
-            and type(fb) is Framebuffer and shader_type in (VertexColorShader, BlinnPhongShader)
+            and type(fb) is Framebuffer and shader_type in (VertexColorShader, BlinnPhongShader, CagToneShader)
             and "fragment_shader" not in vars(shader)
             and "fragment_shader_batch" not in vars(shader)):
         if (shader_type is VertexColorShader
                 and shader_type.fragment_shader is _NATIVE_VERTEX_COLOR_METHODS[1]
                 and shader_type.fragment_shader_batch is _VERTEX_COLOR_BATCH):
             variant = "batch-first"
+        elif (shader_type is CagToneShader and
+              (shader_type.fragment_shader, shader_type.fragment_shader_batch) == _CAG_METHODS):
+            variant = "cag-smoothstep-batch-v1"
         elif (shader_type is BlinnPhongShader and shader_type.fragment_shader is _BLINN_PHONG_FRAGMENT
               and renderer.tile_size <= 128):
             variant = "double-tile"
-    key = scope_key(stage="raster", implementation=_source_id(), numpy=np.__version__,
+    implementation = _source_id()
+    if variant == "cag-smoothstep-batch-v1":
+        implementation += implementation_id(Path(__file__).with_name("cag_tone.py"))
+    key = scope_key(stage="raster", implementation=implementation, numpy=np.__version__,
                     backend=renderer.backend, variant=variant,
                     shader=shader_type.__module__ + "." + shader_type.__qualname__,
                     textured=shader_type is BlinnPhongShader and shader.texture is not None,
@@ -76,7 +83,7 @@ def measured_draw(renderer, triangles, shader, prepared_bins):
         result = copy(fb)
         result.color_buffer = fb.color_buffer.copy()
         result.depth_buffer = fb.depth_buffer.copy()
-        batch = alternative and variant == "batch-first"
+        batch = alternative and variant in ("batch-first", "cag-smoothstep-batch-v1")
         tile = renderer.tile_size * 2 if alternative and variant == "double-tile" else renderer.tile_size
         rasterize_tiles(result, triangles, shader, tile, renderer.executor,
                         renderer.num_threads, planned=batch, plan_policy=BATCH_FIRST_POLICY if batch else None)
