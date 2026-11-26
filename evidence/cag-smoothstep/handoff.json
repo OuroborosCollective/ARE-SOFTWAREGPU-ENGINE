@@ -1,0 +1,8 @@
+{
+  "schema": "are.cag-handoff.v1",
+  "response_uuid": "b6920daf-b0d0-43e3-a950-36896f91dc0b",
+  "table_sha256": "6523c3eed86140a45ec135458031fedbec7f74d8b1969ce71faf7156d1f399ff",
+  "elapsed_ms": 6898,
+  "boundary": "dispatch from benchmark workstation, Sovott queue, provider HTTPS, polling, response validation and local receipt materialization; wall clock resolution milliseconds",
+  "first_provider_uuid": "2535a4cc-5948-4e8a-8fbc-01f33f142216"
+}

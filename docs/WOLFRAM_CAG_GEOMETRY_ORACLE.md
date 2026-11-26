@@ -37,3 +37,9 @@ Expand only after negative tests and CI prove this pilot: right/far-plane clippi
 ## Provenance
 
 Provider: Wolfram Language Evaluator, exact rational arithmetic. Mathematics generated externally to the ARE renderer. Canonical boundary: `numeric_geometry_only`; `mutationAuthority=none`. Optional cross-project reference: `OuroborosCollective/Echoes_of_Aurion/docs/migrations/AIM249_WOLFRAM_CAG_BRIDGE.md`. That Aurora bridge is not activated or modified by ARE.
+
+## Authenticated shader experiment (separate from the geometry fixtures)
+
+The optional [smoothstep pilot](CAG_SHADER_PILOT.md) records authenticated
+WolframLanguageCompute requests and runs the resulting RGB transfer table in
+the local CPU tile renderer.
