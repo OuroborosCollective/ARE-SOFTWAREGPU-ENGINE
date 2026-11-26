@@ -69,6 +69,12 @@ The 0.125 ms median difference between the two fixed batch paths on one host
 does not establish a general advantage for Wolfram. Local generation of the
 identical lookup table took 28.3 µs.
 
+A second offline run at 256 × 256 (eight holdout frames) reversed the fixed
+batch ordering: arithmetic took 16.847 ms, lookup 17.164 ms and the learned
+path 18.061 ms, compared with 160.910 ms scalar. All four paths again agreed
+across the complete buffers, including 37,137 covered pixels. This replay
+made no further provider requests. Both raw reports pin the same source.
+
 The first HTTPS call took 3.981 s, the repeat 3.216 s. The repeat took 6.898 s
 from workstation dispatch through Sovott to local receipt materialization,
 including the provider time. For the four training and twelve evaluation
