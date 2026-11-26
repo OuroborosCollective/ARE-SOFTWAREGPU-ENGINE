@@ -42,3 +42,7 @@ Die bestehenden Raster- und Video-Pfade behalten ihre vorhandene Lernlogik. Bei 
 `run_model(..., workers='auto')` vergleicht native C++17-Ausgaben mit einem und zwei Workern, inklusive aller RGBA8-Frames, resolved Beauty und Float32-Depth. **Explizite Workerzahlen bleiben fest**. Das Visual Asset Lab behaelt seine obligatorische 1/2-Worker-Abnahme und nutzt den gesondert gepaarten Auto-Pfad nur bei aktiviertem Lernen. `convert_ktx2_glb` vergleicht bei vorhandenem signaturgeprueften Khronos-CLI dessen PNG-Extraktion mit offizieller RGBA8-Extraktion und unabhaengiger PNG-Kodierung; massgeblich ist identische dekomprimierte Pixelinformation, nicht die verlustbehaftete Ursprungs-PNG. Bei Paritaetsverlust oder Kandidatenfehler wird die Alternative pro Profil dauerhaft blockiert.
 
 **Grenzen:** Auto-Auswahl wird nie fuer fest vorgegebene Benchmark-Worker erzwungen; Writer lernen nur ihre Byte-Kodierung (nicht Shader/Pixel). Keine Gewichte in World-Seeds, Spielregeln, Replay- oder Source-SHA-Identitaet; keine Geschwindigkeitsgewinne ohne reale gepaarte Messwerte. KTX2-Authoring bleibt offline und SHA-/Lizenz-geprueft.
+
+Ein explizit angelegter `CagToneShader` kann im bestehenden Raster-Lerner
+gegen die skalare Ganzzahlreferenz antreten. Anleitung, Batch-Gegenprobe und
+Kaltstartkosten stehen im [CAG-Shader-Piloten](CAG_SHADER_PILOT.md).
